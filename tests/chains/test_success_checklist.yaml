@@ -1,0 +1,113 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - 0.0.0.0:8935
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: http://0.0.0.0:8935/ping
+  response:
+    content: ought-ice says pong
+    headers:
+      content-length:
+      - '19'
+      content-type:
+      - text/plain; charset=utf-8
+      date:
+      - Tue, 07 Feb 2023 14:17:43 GMT
+      server:
+      - uvicorn
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"prompt": ["You are a button presser who has access to a Bash terminal.
+      You have diligently pored over your employee training manual, which reads:\n\n-----\n#
+      General documentation\n\n## Python projects\n\nWhen creating a new project,
+      do so with [the `poetry` tool](#poetry-tool-usage).\n\n## Poetry tool usage\n\n[`poetry`](https://python-poetry.org/)
+      is the newest Python tool for packaging and dependency management that is in
+      popular use.\n\n### Project creation\n\nTo create a new project, run the command\n\n```bash\npoetry
+      new <PROJECT_NAME>\n```\n\nwhere `<PROJECT_NAME>` is the name of the new project
+      you want to start.\n\nSource: https://python-poetry.org/docs/basic-usage/\n\n**Success
+      checklist**\n\n1. Verify that the output looks like\n\n    ```\n    Created
+      package <PACKAGE_NAME> in <PROJECT_NAME>\n    ```\n\n2. There should now be
+      a new folder under the name of `<PACKAGE_NAME>` in the current directory. Go
+      into that folder and verify that a Poetry environment can be activated there.\n\n**Example
+      Success**\n\nTo create a new project named `hello-world`, run the command\n\n```bash\n$
+      poetry new hello-world\nCreated package hello_world in hello-world\n```\n\nNow
+      a folder named `hello_world` should be created. We enter the new project\n\n```bash\n$
+      cd hello_world\n```\n\nand follow instructions for [activating a virtual environment](#virtual-environment-activation)
+      inside the project.\n\n### Virtual environment management\n\nPoetry automatically
+      creates and manages virutalenvs for its projects.\n\n#### Virtual environment
+      activation\n\n**Prerequisites checklist**\n\n1. Make sure you''re already inside
+      the project folder\n\nTo activate the virutal env for the project, run the command\n\n```bash\npoetry
+      shell\n```\n\n**Success checklist**\n\n1. Verify that the output contains a
+      line that looks like this:\n\n    ```\n    Spawning shell within /home/<USER_DIR>/.cache/pypoetry/virtualenvs/<POETRY_ENV>\n    ```\n\n**Example
+      success**\n\n```bash\n$ poetry shell\nCreating virtualenv hello-world-gMSUUyFe-py3.10
+      in /home/amos/.cache/pypoetry/virtualenvs\nSpawning shell within /home/<USER_DIR>/.cache/pypoetry/virtualenvs/hello-world-gMSUUyFe-py3.10\n```\n\n####
+      Virtual environment cleanup\n\nTo remove a virtualenv, run the command\n\n```bash\npoetry
+      env remove python\n```\n\n**Success checklist**\n\n1. Verify that the output
+      contains a line that looks like this:\n\n    ```\n    Deleted virtualenv: /home/<USER_DIR>/.cache/pypoetry/virtualenvs/<POETRY_ENV>\n    ```\n\n-----\n\nNow
+      your boss has a task for you:\n\nStart a new Python project called ZAMM\n\nYou
+      jot down a one-line version of each item in the success checklist for this task
+      on a notepad:\n\n1. "], "model": "text-davinci-003", "temperature": 0.0, "max_tokens":
+      256, "top_p": 1, "frequency_penalty": 0, "presence_penalty": 0, "n": 1, "best_of":
+      1, "logit_bias": {}, "stop": ["\n\n"]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '2883'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - OpenAI/v1 PythonBindings/0.26.4
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-6hJ57TKab64BrQMWYpsZdm2lwvD6O","object":"text_completion","created":1675779473,"model":"text-davinci-003","choices":[{"text":"
+        Verify that the output looks like `Created package ZAMM in ZAMM`\n2.  Verify
+        that a folder named `ZAMM` is created and that a Poetry environment can be
+        activated there","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":760,"completion_tokens":43,"total_tokens":803}}
+
+        '
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '432'
+      Content-Type:
+      - application/json
+      Date:
+      - Tue, 07 Feb 2023 14:17:58 GMT
+      Openai-Model:
+      - text-davinci-003
+      Openai-Organization: user-dummy
+      Openai-Processing-Ms:
+      - '5448'
+      Openai-Version:
+      - '2020-10-01'
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      X-Request-Id:
+      - 8af395c9cb6f0d3e3361dc0bb07c4903
+    status:
+      code: 200
+      message: OK
+version: 1

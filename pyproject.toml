@@ -1,0 +1,53 @@
+[tool.poetry]
+name = "zamm"
+version = "0.0.0"
+description = "General automation driver"
+authors = ["Amos Jun-yeung Ng <me@amos.ng>"]
+readme = "README.md"
+
+[tool.poetry.scripts]
+zamm = "zamm.cli:app"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<3.11"
+vcr-langchain = "^0.0.13"
+langchain-visualizer = "^0.0.10"
+openai = "^0.26.4"
+simple-term-menu = "^1.6.1"
+pexpect = "^4.8.0"
+typer = {extras = ["all"], version = "^0.7.0"}
+pyyaml = "^6.0"
+ulid = "^1.1"
+appdirs = "^1.4.4"
+
+[tool.poetry.group.dev.dependencies]
+mypy = "^0.991"
+black = "^22.12.0"
+isort = "^5.11.4"
+flake8 = "^6.0.0"
+pytest = "^7.2.1"
+pytest-asyncio = "^0.20.3"
+autoflake = "^2.0.1"
+types-pyyaml = "^6.0.12.6"
+pre-commit = "^3.0.4"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+    'ignore:There is no current event loop:DeprecationWarning',
+]
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+line_length = 88
+profile = "black"
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = "True"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
