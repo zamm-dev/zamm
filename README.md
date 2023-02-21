@@ -1,6 +1,6 @@
 # ZAMM
 
-Teach GPT how to do something, and have it do it for you afterwards. This is good for boring but straightforward tasks that you haven't gotten around to writing a proper script to automate.
+This is an informal automation tool where you show GPT how to do something, and have it do it for you afterwards. This is good for boring but straightforward tasks that you haven't gotten around to writing a proper script to automate.
 
 We are entering a time when our target audiences may include machines as well as humans. As such, this tool will generate tutorials that you can edit to make pleasant for both humans and LLMs alike to read.
 
@@ -8,25 +8,35 @@ We are entering a time when our target audiences may include machines as well as
 
 ## Quickstart
 
+`pipx` recommended over `pip` for install because it should allow you to run this with a different version of `langchain` than the one you might have installed:
+
+```bash
+pipx install zamm
+```
+
 Teach GPT to do something:
 
 ```bash
 zamm teach
 ```
 
-You will be roleplaying the LLM. Sessions are recorded in case a crash happens, or if you want to change something up. On Linux, sessions are saved to `~/.local/share/zamm/sessions/`. To continue from a previous session, run:
+You will be roleplaying the LLM. The results of your interaction will be output as a Markdown tutorial file, which you can then edit to be more human-readable. See [this example](zamm/resources/tutorials/hello.md) of teaching the LLM how to create a "Hello world" script.
 
-```bash
-zamm teach --session-recording <path-to-recording>
-```
-
-Once a session finishes, you can use the newly generated tutorial file to do something. For example, to run the recording I made at [zamm/resources/tutorials/hello.md](zamm/resources/tutorials/hello.md):
+Afterwards, you can tell the LLM to do a slightly different task using that same tutorial:
 
 ```bash
 zamm execute --task 'Write a script goodbye.sh that prints out "Goodbye world". Execute it.' --documentation zamm/resources/tutorials/hello.md
 ```
 
-**Note that GPT successfully generalizes from the tutorial to code in a completely different language based just on the difference in filenames.** Imagine having to manually add that feature to a script!
+This results in [this example transcript](demos/hello-transcript.md) of LLM interactions. **Note that GPT successfully generalizes from the tutorial to code in a completely different language based just on the difference in filenames.** Imagine having to manually add that feature to a script!
+
+### Sessions
+
+Sessions are recorded in case a crash happens, or if you want to change something up. On Linux, sessions are saved to `~/.local/share/zamm/sessions/`. To continue from a previous session, run:
+
+```bash
+zamm teach --session-recording <path-to-recording>
+```
 
 ### Free-styling
 
@@ -35,3 +45,5 @@ You can also simply tell the LLM to do something without teaching it to do so be
 ```bash
 zamm execute --task 'Write a script hello.py that prints out "Hello world". Execute it.'
 ```
+
+The resulting transcript can be found [here](demos/freestyle-hello-transcript.md).
