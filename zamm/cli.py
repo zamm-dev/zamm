@@ -2,6 +2,7 @@ import langchain_visualizer  # isort:skip  # noqa: F401
 import asyncio
 import os
 import sys
+from enum import Enum
 from importlib import resources
 from typing import Callable, Optional
 
@@ -72,13 +73,12 @@ def play_interactions(
 
 
 def execute_llm_task(
-    llm: BaseLLM,
+    employee: ZammEmployee,
     task: str,
     tutorial: Optional[str],
     cassette_path: str,
 ):
     async def run():
-        employee = ZammEmployee(llm=llm, terminal_safe_mode=True)
         args = {"task": task}
         if tutorial is not None:
             args["documentation"] = tutorial
@@ -173,6 +173,12 @@ def re_record(
         print(exc)
 
 
+class Safety(str, Enum):
+    # todo: use Python's Flag instead
+    on = "on"
+    off = "off"
+
+
 @app.command()
 def execute(
     task: str = typer.Option(
@@ -187,6 +193,13 @@ def execute(
         ),
     ),
     session_recording: Optional[typer.FileText] = SESSION_RECORD_OPTION,
+    safety: Safety = typer.Option(
+        Safety.on,
+        help=(
+            "If on, will ask user to confirm every terminal command. If off, will run "
+            "LLM commands automatically, WHICH MAY EXPOSE YOU TO LLM ATTACKS."
+        ),
+    ),
 ):
     """Ask the LLM to do something."""
 
@@ -206,4 +219,7 @@ def execute(
         else:
             with open(documentation) as f:
                 tutorial = f.read()
-    execute_llm_task(llm=llm, task=task, tutorial=tutorial, cassette_path=cassette_path)
+    employee = ZammEmployee(llm=llm, terminal_safe_mode=safety.value == "on")
+    execute_llm_task(
+        employee=employee, task=task, tutorial=tutorial, cassette_path=cassette_path
+    )
