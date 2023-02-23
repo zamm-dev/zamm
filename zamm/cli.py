@@ -1,5 +1,6 @@
 import langchain_visualizer  # isort:skip  # noqa: F401
 import asyncio
+import glob
 import os
 import sys
 from enum import Enum
@@ -105,6 +106,7 @@ def get_cassette_path(cassette: Optional[typer.FileText]):
         os.makedirs(ZAMM_SESSION_PATH, exist_ok=True)
         return f"{ZAMM_SESSION_PATH}/session_{ulid.new()}.yaml"
     else:
+        cassette.close()
         return cassette.name
 
 
@@ -124,9 +126,22 @@ def get_cassette_and_output(
     return cassette_path, output_path
 
 
+def get_last_session():
+    # https://stackoverflow.com/a/39327156
+    files = glob.glob(f"{ZAMM_SESSION_PATH}/session_*.yaml")
+    if len(files) == 0:
+        print("No sessions found.")
+        sys.exit(1)
+    return max(files, key=os.path.getctime)
+
+
 @app.command()
 def teach(
     session_recording: Optional[typer.FileText] = SESSION_RECORD_OPTION,
+    last_session: bool = typer.Option(
+        False,
+        help="The last session that was in progress",
+    ),
     output: Optional[typer.FileTextWrite] = OUTPUT_OPTION,
 ):
     """Record a tutorial interaction."""
@@ -135,9 +150,10 @@ def teach(
         cassette=session_recording, output=output
     )
 
+    if last_session:
+        cassette_path = get_last_session()
+
     llm = Human()
-    if session_recording is not None:
-        session_recording.close()
     play_interactions(
         llm=llm, cassette_path=cassette_path, tutorial_output_path=output_path
     )
@@ -145,9 +161,13 @@ def teach(
 
 @app.command()
 def re_record(
-    session_recording: typer.FileText = typer.Option(
-        ...,
+    session_recording: Optional[typer.FileText] = typer.Option(
+        None,
         help="Recorded interactions from a previous unfinished session.",
+    ),
+    last_session: bool = typer.Option(
+        False,
+        help="The last session that was in progress",
     ),
     output: Optional[typer.FileTextWrite] = OUTPUT_OPTION,
 ):
@@ -156,19 +176,28 @@ def re_record(
     Keep all inputs the same. Useful for when you're making cosmetic changes to the
     prompting, but wish to otherwise keep everything the same.
     """
-    _, output_path = get_cassette_and_output(cassette=session_recording, output=output)
+    if not session_recording and not last_session:
+        print("You must either specify session-recording or use --last-session.")
+        sys.exit(1)
+
+    cassette_path, output_path = get_cassette_and_output(
+        cassette=session_recording, output=output
+    )
+
+    if last_session:
+        cassette_path = get_last_session()
 
     try:
-        interactions = yaml.load(session_recording, Loader=yaml.Loader)["interactions"]
-        session_recording.close()
+        with open(cassette_path) as c:
+            interactions = yaml.load(c, Loader=yaml.Loader)["interactions"]
         inputs = [
             i["response"]
             for i in interactions
             if i["request"]["uri"].startswith("tool://Human")
         ]
         llm = Human(prerecorded_responses=inputs)
-        os.remove(session_recording.name)
-        play_interactions(llm, session_recording.name, tutorial_output_path=output_path)
+        os.remove(cassette_path)
+        play_interactions(llm, cassette_path, tutorial_output_path=output_path)
     except yaml.YAMLError as exc:
         print(exc)
 

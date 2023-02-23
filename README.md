@@ -44,10 +44,10 @@ to protect the `main` branch of the project in the current directory on Github. 
 
 ### Sessions
 
-Sessions are recorded in case a crash happens, or if you want to change something up. On Linux, sessions are saved to `~/.local/share/zamm/sessions/`. To continue from a previous session, run:
+Sessions are recorded in case a crash happens, or if you want to change something up. On Linux, sessions are saved to `~/.local/share/zamm/sessions/`. To continue from the most recent session, run
 
 ```bash
-zamm teach --session-recording <path-to-recording>
+zamm teach --last-session
 ```
 
 ### Free-styling
