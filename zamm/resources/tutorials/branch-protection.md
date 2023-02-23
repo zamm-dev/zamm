@@ -102,7 +102,7 @@ Now we're ready to build the final command. We collect all the data we remember 
 And build the command as mentioned at https://docs.github.com/en/rest/branches/branch-protection#update-branch-protection:
 
 ```bash
-$ curl -X PUT -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/amosjyng/zamm/branches/main/protection -d '{"required_status_checks":{"strict":true,"checks":[{"context":"Lint (3.9)","app_id":15368},{"context":"Lint (3.10)","app_id":15368},{"context":"Tests (3.9)","app_id":15368},{"context":"Tests (3.10)","app_id":15368}]},"enforce_admins":true,"required_linear_history":true,"required_pull_request_reviews":null,"restrictions":null}'
+$ curl -X PUT -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/amosjyng/zamm/branches/main/protection -d '{"required_status_checks":{"strict":true,"checks":[{"context":"Lint (3.9)","app_id":15368},{"context":"Lint (3.10)","app_id":15368},{"context":"Tests (3.9)","app_id":15368},{"context":"Tests (3.10)","app_id":15368}]},"enforce_admins":true,"required_pull_request_reviews":null,"restrictions":null}'
 {
   "url": "https://api.github.com/repos/amosjyng/zamm/branches/main/protection",
   "required_status_checks": {
@@ -140,9 +140,6 @@ $ curl -X PUT -H "Accept: application/vnd.github+json" -H "Authorization: Bearer
   },
   "enforce_admins": {
     "url": "https://api.github.com/repos/amosjyng/zamm/branches/main/protection/enforce_admins",
-    "enabled": true
-  },
-  "required_linear_history": {
     "enabled": true
   },
   ...
