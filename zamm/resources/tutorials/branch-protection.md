@@ -57,18 +57,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Install poetry
         run: |
-          pipx install poetry==$POETRY_VERSION
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: poetry
-      - name: Install dependencies
-        run: |
-          poetry install
-      - name: Analysing the code with our lint
-        run: |
-          make lint
+...
 ```
 
 The `jobs.build.name` here is `Lint`, and the `jobs.build.strategy.matrix.python-version` has `3.10` and `3.9` as entries. Therefore, check names would be `Lint (3.9)` and `Lint (3.10)`. Remember this for the future.
@@ -98,19 +87,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
-        run: pipx install poetry==$POETRY_VERSION
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-          cache: "poetry"
-      - name: Install dependencies
-        run: poetry install
-      - name: Make Bash not have weird prompt
-        run: echo "PS1='$ '" > ~/.bashrc
-      - name: Run unit tests
-        run: |
-          make tests
+...
 ```
 
 The `jobs.build.name` here is `Tests`, and the `jobs.build.strategy.matrix.python-version` has `3.9` and `3.10` as entries. Therefore, check names would be `Tests (3.9)` and `Tests (3.10)`. Remember this for the future.
@@ -125,7 +102,7 @@ Now we're ready to build the final command. We collect all the data we remember 
 And build the command as mentioned at https://docs.github.com/en/rest/branches/branch-protection#update-branch-protection:
 
 ```bash
-$ curl -X PUT -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/amosjyng/zamm/branches/main/protection -d '{"required_status_checks":{"strict":true,"checks":[{"context":"Lint (3.9)","app_id":15368},{"context":"Lint (3.10)","app_id":15368},{"context":"Tests (3.9)","app_id":15368},{"context":"Tests (3.10)","app_id":15368}]},"enforce_admins":true,"required_pull_request_reviews":null,"restrictions":null}'
+$ curl -X PUT -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/amosjyng/zamm/branches/main/protection -d '{"required_status_checks":{"strict":true,"checks":[{"context":"Lint (3.9)","app_id":15368},{"context":"Lint (3.10)","app_id":15368},{"context":"Tests (3.9)","app_id":15368},{"context":"Tests (3.10)","app_id":15368}]},"enforce_admins":true,"required_linear_history":true,"required_pull_request_reviews":null,"restrictions":null}'
 {
   "url": "https://api.github.com/repos/amosjyng/zamm/branches/main/protection",
   "required_status_checks": {
@@ -166,26 +143,9 @@ $ curl -X PUT -H "Accept: application/vnd.github+json" -H "Authorization: Bearer
     "enabled": true
   },
   "required_linear_history": {
-    "enabled": false
+    "enabled": true
   },
-  "allow_force_pushes": {
-    "enabled": false
-  },
-  "allow_deletions": {
-    "enabled": false
-  },
-  "block_creations": {
-    "enabled": false
-  },
-  "required_conversation_resolution": {
-    "enabled": false
-  },
-  "lock_branch": {
-    "enabled": false
-  },
-  "allow_fork_syncing": {
-    "enabled": false
-  }
+  ...
 }
 ```
 

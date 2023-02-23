@@ -19,6 +19,7 @@ typer = {extras = ["all"], version = "^0.7.0"}
 pyyaml = "^6.0"
 ulid = "^1.1"
 appdirs = "^1.4.4"
+tiktoken = "^0.2.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^0.991"

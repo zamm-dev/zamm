@@ -209,7 +209,7 @@ def execute(
 
     cassette_path = get_cassette_path(cassette=session_recording)
 
-    llm = OpenAI(model_name=model, temperature=0)
+    llm = OpenAI(model_name=model, temperature=0, max_tokens=-1)
     if session_recording is not None:
         session_recording.close()
     if documentation is None:
