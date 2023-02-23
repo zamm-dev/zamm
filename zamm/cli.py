@@ -5,7 +5,7 @@ import os
 import sys
 from enum import Enum
 from importlib import resources
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 import typer
 import ulid
@@ -32,21 +32,26 @@ INTERNAL_TUTORIAL_PACKAGE = "zamm.resources.tutorials"
 app = typer.Typer(pretty_exceptions_show_locals=False)
 
 
-def run_chain(cassette_path: str, run: Callable):
+def visualize_or_run(fn: Callable):
     # todo: change ICE to allow for running from other modules
-    run.__module__ = "__main__"
+    fn.__module__ = "__main__"
 
+    if VISUALIZE:
+        # ICE has its own defopts
+        sys.argv = sys.argv[:1]
+        return langchain_visualizer.visualize(fn)
+    else:
+        return asyncio.get_event_loop().run_until_complete(fn())
+
+
+def run_chain(cassette_path: str, run: Callable):
     with vcr.use_cassette(
         path=cassette_path,
         record_mode=RecordMode.NEW_EPISODES,
     ):
         with current_directory(os.getcwd()):
             try:
-                if VISUALIZE:
-                    sys.argv = sys.argv[:1]
-                    return langchain_visualizer.visualize(run)
-                else:
-                    return asyncio.get_event_loop().run_until_complete(run())
+                visualize_or_run(run)
             except RuntimeError:
                 print(f"Exiting, session recording should be saved to {cassette_path}")
 
@@ -256,3 +261,24 @@ def execute(
     execute_llm_task(
         employee=employee, task=task, tutorial=tutorial, cassette_path=cassette_path
     )
+
+
+@app.command()
+def prompt(
+    raw: Optional[typer.FileText] = typer.Option(
+        ...,
+        help="Raw prompt to be sent to the LLM verbatim",
+    ),
+    stop: List[str] = typer.Option(
+        [],
+        help="LLM stopping tokens",
+    ),
+):
+    llm = OpenAI(temperature=0, max_tokens=-1)
+
+    async def run():
+        print("hi")
+        result = llm(prompt=raw.read(), stop=stop)
+        print(result)
+
+    visualize_or_run(run)
