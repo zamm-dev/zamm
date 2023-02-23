@@ -2,6 +2,7 @@ import langchain_visualizer  # isort:skip  # noqa: F401
 import asyncio
 import os
 import sys
+from importlib import resources
 from typing import Callable, Optional
 
 import typer
@@ -22,6 +23,8 @@ DOCUMENTATION_PATH = "documentation.zamm.md"
 VISUALIZE = True
 app_dirs = AppDirs(appname="zamm")
 ZAMM_SESSION_PATH = app_dirs.user_data_dir + "/sessions"
+INTERNAL_TUTORIAL_PREFIX = "@internal"
+INTERNAL_TUTORIAL_PACKAGE = "zamm.resources.tutorials"
 
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
@@ -176,9 +179,12 @@ def execute(
         ...,
         help="What you'd like the LLM to do",
     ),
-    documentation: Optional[typer.FileText] = typer.Option(
+    documentation: Optional[str] = typer.Option(
         None,
-        help="Documentation file to help the LLM accomplish the task",
+        help=(
+            "Documentation file to help the LLM accomplish the task. Prefix with "
+            "@internal for internal help files."
+        ),
     ),
     session_recording: Optional[typer.FileText] = SESSION_RECORD_OPTION,
 ):
@@ -192,6 +198,12 @@ def execute(
     if documentation is None:
         tutorial = None
     else:
-        tutorial = documentation.read()
-        documentation.close()
+        if documentation.startswith(INTERNAL_TUTORIAL_PREFIX):
+            internal_path = documentation[len(INTERNAL_TUTORIAL_PREFIX) + 1 :]
+            if not internal_path.endswith(".md"):
+                internal_path += ".md"
+            tutorial = resources.read_text(INTERNAL_TUTORIAL_PACKAGE, internal_path)
+        else:
+            with open(documentation) as f:
+                tutorial = f.read()
     execute_llm_task(llm=llm, task=task, tutorial=tutorial, cassette_path=cassette_path)
