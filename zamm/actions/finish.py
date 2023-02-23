@@ -8,6 +8,8 @@ from zamm.actions.base import Action
 from zamm.agents.step import StepOutput
 from zamm.prompts.dummy import DummyPromptTemplate
 
+FINISH_LINE = "That's all! **Don't take any more steps** because the task is now done!"
+
 
 class FinishChain(Chain):
     @property
@@ -41,7 +43,7 @@ class FinishOutput(StepOutput):
         return cls(
             decision=AgentFinish(
                 return_values={"output": "Finished task."},
-                log="That's all! You now know how to finish tasks of this kind.",
+                log=FINISH_LINE,
             ),
             observation=None,
         )

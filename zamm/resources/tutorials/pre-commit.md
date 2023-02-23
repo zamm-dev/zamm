@@ -111,4 +111,4 @@ Type check...............................................................Passed
  create mode 100644 .pre-commit-config.yaml
 ```
 
-That's all! You now know how to finish tasks of this kind.
+That's all! **Don't take any more steps** because the task is now done!
