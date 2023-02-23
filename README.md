@@ -30,6 +30,18 @@ zamm execute --task 'Write a script goodbye.sh that prints out "Goodbye world". 
 
 This results in [this example transcript](demos/hello-transcript.md) of LLM interactions. **Note that GPT successfully generalizes from the tutorial to code in a completely different language based just on the difference in filenames.** Imagine having to manually add that feature to a script!
 
+### Using internal tutorials
+
+Select any of the [prepackaged tutorials](zamm/resources/tutorials/) as documentation by prefacing their filename with `@internal`. The `.md` extension is optional.
+
+For example:
+
+```bash
+zamm execute --task 'Protect the `main` branch' --documentation @internal/branch-protection
+```
+
+to protect the `main` branch of the project in the current directory on Github. (Note that this tutorial was written in mind for ZAMM-built projects, so YMMV for using this on custom projects.)
+
 ### Sessions
 
 Sessions are recorded in case a crash happens, or if you want to change something up. On Linux, sessions are saved to `~/.local/share/zamm/sessions/`. To continue from a previous session, run:
