@@ -15,6 +15,10 @@ from zamm.utils import remove_ansi_escapes
 ALWAYS_EXECUTE = False
 
 
+class UnknownResult(Exception):
+    pass
+
+
 class ZTerminal(BaseModel):
     """A virtual terminal that supports interactive shell commands."""
 
@@ -48,10 +52,16 @@ class ZTerminal(BaseModel):
     def _get_raw_shell_update_uncached(self, cmd: str) -> str:
         self.shell.sendline(cmd)
         results = ""
-        while not results.endswith(self.bash_prompt):
-            latest_output = self.shell.read_nonblocking(size=self.output_size)
-            results += latest_output
-            time.sleep(0.1)
+        try:
+            while not results.endswith(self.bash_prompt):
+                latest_output = self.shell.read_nonblocking(size=self.output_size)
+                results += latest_output
+                time.sleep(0.1)
+        except pexpect.TIMEOUT as e:
+            raise UnknownResult(
+                "Terminal output does not have initial prompt of: "
+                f"'{self.bash_prompt}':\n\n{results}"
+            ) from e
 
         # todo: more robust way of syncing terminal actions to action chain state
         parsed_cmd = shlex.split(cmd)
