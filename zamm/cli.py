@@ -193,6 +193,10 @@ def execute(
         ),
     ),
     session_recording: Optional[typer.FileText] = SESSION_RECORD_OPTION,
+    model: str = typer.Option(
+        "text-davinci-003",
+        help="What OpenAI large language model to use for execution",
+    ),
     safety: Safety = typer.Option(
         Safety.on,
         help=(
@@ -205,7 +209,7 @@ def execute(
 
     cassette_path = get_cassette_path(cassette=session_recording)
 
-    llm = OpenAI(model_name="text-davinci-003", temperature=0)
+    llm = OpenAI(model_name=model, temperature=0)
     if session_recording is not None:
         session_recording.close()
     if documentation is None:
