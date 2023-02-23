@@ -1,4 +1,4 @@
-
+# Creating a new `git` branch for a task
 
 Say you want to do the following task:
 
@@ -30,4 +30,4 @@ $ git checkout -b rename-test-workflow
 Switched to a new branch 'rename-test-workflow'
 ```
 
-That's all! You now know how to finish tasks of this kind.
+That's all! **Don't take any more steps** because the task is now done!
