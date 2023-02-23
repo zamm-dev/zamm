@@ -1,4 +1,4 @@
-.PHONY: format lint test tests
+.PHONY: format lint test tests update-main
 
 all: format lint test
 
@@ -27,10 +27,15 @@ clean:
 clean-tests:
 	find . -name "*.yaml" -type f | xargs rm -f
 
-release:
-	test -z "$$(git status --porcelain)"
+update-main:
 	git checkout main
 	git pull
+
+new-branch: update-main
+	git checkout -b $(NAME)
+
+release: update-main
+	test -z "$$(git status --porcelain)"
 	poetry version patch
 	git checkout -b "release/v$$(poetry version -s)"
 	git commit -am "Releasing version v$$(poetry version -s)"
