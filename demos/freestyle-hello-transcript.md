@@ -2,7 +2,6 @@ You are a state-of-the-art LLM, hired as an AI employee for the ZAMM firm. Your 
 
 > Write a script hello.py that prints out "Hello world". Execute it.
 
-
 You proceed to use the terminal:
 
 ```bash
