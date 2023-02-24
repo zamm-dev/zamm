@@ -1,10 +1,13 @@
 import vcr_langchain as vcr
 from langchain.llms import OpenAI
+from tiktoken_ext.openai_public import p50k_base
 
 from zamm.agents.employee import ZammEmployee
 
 
 def test_execute_goodbye_task():
+    p50k_base()  # run this before cassette to download tiktoken blob first
+
     with open("zamm/resources/tutorials/hello.md") as tutorial:
         with vcr.use_cassette("tests/resources/goodbye.yaml"):
             llm = OpenAI(model_name="text-davinci-003", temperature=0, max_tokens=-1)
