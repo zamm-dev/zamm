@@ -277,6 +277,7 @@ def prompt(
         help="LLM stopping tokens",
     ),
 ):
+    """Test a single verbatim prompt. Good for iterative prompt development."""
     llm = OpenAI(temperature=0, max_tokens=-1)
     escaped_stops = [s.encode("utf-8").decode("unicode_escape") for s in stop]
 
