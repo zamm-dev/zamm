@@ -1,4 +1,5 @@
 import os
+import re
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Optional
 
@@ -24,9 +25,28 @@ class FileRead:
 class FileSystemTool(BaseModel):
     """Tool for file system interactions."""
 
+    spaces_in_tab = 8
+    """If there's this many spaces at the beginning of the line, it gets treated as a
+    tab.
+    """
+
     def interpret_path(self, file_path: str) -> str:
         """Makes sure that ~ gets interpreted as home directory instead of filename."""
         return os.path.expanduser(file_path)
+
+    @property
+    def tab_regex(self):
+        return re.compile(f"^ {{{self.spaces_in_tab}}}")
+
+    def _spaces_to_tabs_per_line(self, line: str) -> str:
+        while re.search(self.tab_regex, line) is not None:
+            line = re.sub(self.tab_regex, "\t", line)
+        return line
+
+    def spaces_to_tabs(self, input: str) -> str:
+        lines = input.split("\n")
+        tabbed_lines = [self._spaces_to_tabs_per_line(line) for line in lines]
+        return "\n".join(tabbed_lines)
 
     def read_file(self, file_path: str) -> FileRead:
         file_path = self.interpret_path(file_path)
@@ -41,7 +61,7 @@ class FileSystemTool(BaseModel):
         if folder != "":
             os.makedirs(folder, exist_ok=True)
         with open(file_path, "w") as f:
-            f.write(contents)
+            f.write(self.spaces_to_tabs(contents))
         return True
 
 
