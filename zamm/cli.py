@@ -90,7 +90,10 @@ def execute_llm_task(
             args["documentation"] = tutorial
         result = employee(args)
         if result is not None:
-            print("LLM indicates it has completed the task")
+            print(
+                "LLM indicates it has completed the task. Session recording should be "
+                f"saved to {cassette_path}"
+            )
 
     run_chain(cassette_path, run)
 
