@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "zamm"
-version = "0.0.2"
+version = "0.0.3"
 description = "General automation driver"
 authors = ["Amos Jun-yeung Ng <me@amos.ng>"]
 readme = "README.md"
