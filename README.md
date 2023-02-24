@@ -59,3 +59,11 @@ zamm execute --task 'Write a script hello.py that prints out "Hello world". Exec
 ```
 
 The resulting transcript can be found [here](demos/freestyle-hello-transcript.md).
+
+## Prompting
+
+When a step is failing and you need faster iteration by repeatedly testing a single prompt, you can do so with the `prompt` command. First, write your prompt out to a file on disk. Then run this command:
+
+```bash
+zamm prompt --stop '\n' --raw <path-to-prompt>
+```
