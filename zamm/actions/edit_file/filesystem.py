@@ -24,13 +24,19 @@ class FileRead:
 class FileSystemTool(BaseModel):
     """Tool for file system interactions."""
 
+    def interpret_path(self, file_path: str) -> str:
+        """Makes sure that ~ gets interpreted as home directory instead of filename."""
+        return os.path.expanduser(file_path)
+
     def read_file(self, file_path: str) -> FileRead:
+        file_path = self.interpret_path(file_path)
         if os.path.isfile(file_path):
             with open(file_path) as f:
                 return FileRead(file_exists=True, contents=f.read())
         return FileRead(file_exists=False)
 
     def write_file(self, file_path: str, contents: str) -> bool:
+        file_path = self.interpret_path(file_path)
         folder = os.path.dirname(file_path)
         if folder != "":
             os.makedirs(folder, exist_ok=True)
