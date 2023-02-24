@@ -1,9 +1,8 @@
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, Type
+from typing import Any, Dict, Type
 
-from langchain.agents.tools import Tool
 from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
+from langchain.tools.base import BaseTool
 
 from zamm.agents.z_step import DummyStepOutput, ZStepOutput
 from zamm.chains.dummy import DummyLLMChain
@@ -13,11 +12,17 @@ def dummy_func(input: str) -> str:
     raise NotImplementedError()
 
 
-@dataclass(kw_only=True)
-class Action(Tool):
+class Action(BaseTool):
+    name: str
+    description: str = "Dummy description"
     chain: Chain
     output_type: Type[ZStepOutput]
-    func: Callable[[str], str] = dummy_func
+
+    def _run(self, tool_input: str) -> str:
+        raise NotImplementedError()
+
+    async def _arun(self, tool_input: str) -> str:
+        raise NotImplementedError()
 
     @property
     def choice_text(self) -> str:

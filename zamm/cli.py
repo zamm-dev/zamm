@@ -8,12 +8,12 @@ from importlib import resources
 from typing import Callable, List, Optional
 
 import typer
-import ulid
 import vcr_langchain as vcr
 import yaml
 from appdirs import AppDirs
 from langchain.llms.base import BaseLLM
 from langchain.llms.openai import OpenAI
+from ulid import ULID
 from vcr.record_mode import RecordMode
 
 from zamm.agents.employee import ZammEmployee
@@ -109,7 +109,7 @@ OUTPUT_OPTION = typer.Option(
 def get_cassette_path(cassette: Optional[typer.FileText]):
     if cassette is None:
         os.makedirs(ZAMM_SESSION_PATH, exist_ok=True)
-        return f"{ZAMM_SESSION_PATH}/session_{ulid.new()}.yaml"
+        return f"{ZAMM_SESSION_PATH}/session_{ULID()}.yaml"
     else:
         cassette.close()
         return cassette.name
