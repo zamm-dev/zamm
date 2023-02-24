@@ -18,6 +18,12 @@ class Human(LLM):
     def _llm_type(self) -> str:
         return "Human"
 
+    def _stop_hit(self, input: str, stops: List[str]) -> Optional[str]:
+        for stop in stops:
+            if stop in input:
+                return stop
+        return None
+
     def _call(self, prompt: str, stop: Optional[List[str]] = None) -> str:
         """Run the LLM on the given prompt and input."""
         if self.prerecorded_responses and self.playback_index < len(
@@ -44,18 +50,16 @@ class Human(LLM):
 
         user_input = input(prompt)
 
-        if stop is None:
-            return user_input
-        elif stop == ["\n"]:
+        if stop is None or stop == ["\n"]:
             return user_input
 
-        if len(stop) > 1:
-            raise ValueError("Multiple stops not yet supported for humans")
+        stop_hit = self._stop_hit(user_input, stop)
+        while stop_hit is None:
+            new_input = input()
+            stop_hit = self._stop_hit(new_input, stop)
+            user_input += "\n" + new_input
 
-        while stop[0] not in user_input:
-            user_input += "\n" + input()
-
-        separated_inputs = [x for x in user_input.split(stop[0]) if x]
+        separated_inputs = [x for x in user_input.split(stop_hit) if x]
         result = separated_inputs[0]
         if len(separated_inputs) > 1:
             warnings.warn(f"Ignoring rest of input after stop: {separated_inputs[1:]}")
