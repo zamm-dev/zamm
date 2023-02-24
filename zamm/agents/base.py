@@ -1,9 +1,9 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional, Sequence, Tuple
 
 from langchain.agents.agent import Agent
-from langchain.agents.tools import Tool
 from langchain.llms.base import BaseLLM
 from langchain.prompts.base import BasePromptTemplate
+from langchain.tools import BaseTool
 from pydantic import root_validator
 
 from zamm.chains.dummy import DummyLLMChain
@@ -28,7 +28,7 @@ class CustomAgent(Agent):
         raise NotImplementedError()
 
     @classmethod
-    def create_prompt(cls, tools: List[Tool]) -> BasePromptTemplate:
+    def create_prompt(cls, tools: Sequence[BaseTool]) -> BasePromptTemplate:
         """Create a prompt for this class."""
         raise NotImplementedError()
 

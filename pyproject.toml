@@ -10,8 +10,8 @@ zamm = "zamm.cli:app"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-vcr-langchain = "^0.0.13"
-langchain-visualizer = "^0.0.10"
+vcr-langchain = "^0.0.15"
+langchain-visualizer = "^0.0.12"
 openai = "^0.26.4"
 simple-term-menu = "^1.6.1"
 pexpect = "^4.8.0"

@@ -1,9 +1,9 @@
 from dataclasses import dataclass
 from typing import Any, Callable, Dict, Type
 
-from langchain.agents.tools import Tool
 from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
+from langchain.tools.base import BaseTool
 
 from zamm.agents.z_step import DummyStepOutput, ZStepOutput
 from zamm.chains.dummy import DummyLLMChain
@@ -14,14 +14,15 @@ def dummy_func(input: str) -> str:
 
 
 @dataclass(kw_only=True)
-class Action(Tool):
+class Action(BaseTool):
+    name: str
     chain: Chain
     output_type: Type[ZStepOutput]
     func: Callable[[str], str] = dummy_func
 
     @property
     def choice_text(self) -> str:
-        return self.name
+        return self.description
 
     def use(self, inputs: Dict[str, str]) -> Dict[str, Any]:
         return self.chain(inputs)
