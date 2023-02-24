@@ -5,7 +5,7 @@ from langchain.prompts.base import BasePromptTemplate
 from langchain.schema import AgentFinish
 
 from zamm.actions.base import Action
-from zamm.agents.step import StepOutput
+from zamm.agents.z_step import ZStepOutput
 from zamm.prompts.dummy import DummyPromptTemplate
 
 FINISH_LINE = "That's all! **Don't take any more steps** because the task is now done!"
@@ -26,7 +26,7 @@ class FinishChain(Chain):
         return {}
 
 
-class FinishOutput(StepOutput):
+class FinishOutput(ZStepOutput):
     logger_template: BasePromptTemplate = DummyPromptTemplate()
 
     def log(self, **kwargs) -> str:

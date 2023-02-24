@@ -1,5 +1,4 @@
-from dataclasses import dataclass
-from typing import Any, Callable, Dict, Type
+from typing import Any, Dict, Type
 
 from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
@@ -13,16 +12,21 @@ def dummy_func(input: str) -> str:
     raise NotImplementedError()
 
 
-@dataclass(kw_only=True)
 class Action(BaseTool):
     name: str
+    description: str = "Dummy description"
     chain: Chain
     output_type: Type[ZStepOutput]
-    func: Callable[[str], str] = dummy_func
+
+    def _run(self, tool_input: str) -> str:
+        raise NotImplementedError()
+
+    async def _arun(self, tool_input: str) -> str:
+        raise NotImplementedError()
 
     @property
     def choice_text(self) -> str:
-        return self.description
+        return self.name
 
     def use(self, inputs: Dict[str, str]) -> Dict[str, Any]:
         return self.chain(inputs)
