@@ -277,7 +277,6 @@ def prompt(
     llm = OpenAI(temperature=0, max_tokens=-1)
 
     async def run():
-        print("hi")
         result = llm(prompt=raw.read(), stop=stop)
         print(result)
 
