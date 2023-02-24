@@ -11,7 +11,10 @@ def test_execute_goodbye_task():
             employee = ZammEmployee(llm=llm, terminal_safe_mode=True)
             results = employee(
                 {
-                    "task": 'Write a script goodbye.sh that prints out "Goodbye world". Execute it.',
+                    "task": (
+                        'Write a script goodbye.sh that prints out "Goodbye world". '
+                        "Execute it."
+                    ),
                     "documentation": tutorial.read(),
                 }
             )
