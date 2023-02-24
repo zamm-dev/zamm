@@ -46,7 +46,7 @@ env:
 
 jobs:
   build:
-    name: Lint
+    name: ZAMM Linting
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -60,7 +60,7 @@ jobs:
 ...
 ```
 
-The `jobs.build.name` here is `Lint`, and the `jobs.build.strategy.matrix.python-version` has `3.10` and `3.9` as entries. Therefore, check names would be `Lint (3.9)` and `Lint (3.10)`. Remember this for the future.
+The `jobs.build.name` here is `ZAMM Linting`, and the `jobs.build.strategy.matrix.python-version` has `3.10` and `3.9` as entries. Therefore, check names would be `ZAMM Linting (3.9)` and `ZAMM Linting (3.10)`. Remember this for the future.
 
 ```bash
 $ cat .github/workflows/test.yml
@@ -77,7 +77,7 @@ env:
 
 jobs:
   build:
-    name: Tests
+    name: ZAMM Testing
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -90,46 +90,46 @@ jobs:
 ...
 ```
 
-The `jobs.build.name` here is `Tests`, and the `jobs.build.strategy.matrix.python-version` has `3.9` and `3.10` as entries. Therefore, check names would be `Tests (3.9)` and `Tests (3.10)`. Remember this for the future.
+The `jobs.build.name` here is `ZAMM Testing`, and the `jobs.build.strategy.matrix.python-version` has `3.9` and `3.10` as entries. Therefore, check names would be `ZAMM Testing (3.9)` and `ZAMM Testing (3.10)`. Remember this for the future.
 
 Now we're ready to build the final command. We collect all the data we remember from above:
 
 - Owner is `amosjyng`
 - Repo is `zamm`
 - We're protecting the `main` branch
-- `Lint (3.9)`, `Lint (3.10)`, `Tests (3.9)`, and `Tests (3.10)` are the entries
+- `ZAMM Linting (3.9)`, `ZAMM Linting (3.10)`, `ZAMM Testing (3.9)`, and `ZAMM Testing (3.10)` are the entries
 
 And build the command as mentioned at https://docs.github.com/en/rest/branches/branch-protection#update-branch-protection:
 
 ```bash
-$ curl -X PUT -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/amosjyng/zamm/branches/main/protection -d '{"required_status_checks":{"strict":true,"checks":[{"context":"Lint (3.9)","app_id":15368},{"context":"Lint (3.10)","app_id":15368},{"context":"Tests (3.9)","app_id":15368},{"context":"Tests (3.10)","app_id":15368}]},"enforce_admins":true,"required_pull_request_reviews":null,"restrictions":null}'
+$ curl -X PUT -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" https://api.github.com/repos/amosjyng/zamm/branches/main/protection -d '{"required_status_checks":{"strict":true,"checks":[{"context":"ZAMM Linting (3.9)","app_id":15368},{"context":"ZAMM Linting (3.10)","app_id":15368},{"context":"ZAMM Testing (3.9)","app_id":15368},{"context":"ZAMM Testing (3.10)","app_id":15368}]},"enforce_admins":true,"required_pull_request_reviews":null,"restrictions":null}'
 {
   "url": "https://api.github.com/repos/amosjyng/zamm/branches/main/protection",
   "required_status_checks": {
     "url": "https://api.github.com/repos/amosjyng/zamm/branches/main/protection/required_status_checks",
     "strict": true,
     "contexts": [
-      "Tests (3.10)",
-      "Lint (3.10)",
-      "Lint (3.9)",
-      "Tests (3.9)"
+      "ZAMM Testing (3.10)",
+      "ZAMM Linting (3.10)",
+      "ZAMM Linting (3.9)",
+      "ZAMM Testing (3.9)"
     ],
     "contexts_url": "https://api.github.com/repos/amosjyng/zamm/branches/main/protection/required_status_checks/contexts",
     "checks": [
       {
-        "context": "Tests (3.10)",
+        "context": "ZAMM Testing (3.10)",
         "app_id": 15368
       },
       {
-        "context": "Lint (3.10)",
+        "context": "ZAMM Linting (3.10)",
         "app_id": 15368
       },
       {
-        "context": "Lint (3.9)",
+        "context": "ZAMM Linting (3.9)",
         "app_id": 15368
       },
       {
-        "context": "Tests (3.9)",
+        "context": "ZAMM Testing (3.9)",
         "app_id": 15368
       }
     ]

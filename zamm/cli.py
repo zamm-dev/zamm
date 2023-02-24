@@ -90,7 +90,10 @@ def execute_llm_task(
             args["documentation"] = tutorial
         result = employee(args)
         if result is not None:
-            print("LLM indicates it has completed the task")
+            print(
+                "LLM indicates it has completed the task. Session recording should be "
+                f"saved to {cassette_path}"
+            )
 
     run_chain(cassette_path, run)
 
@@ -275,9 +278,10 @@ def prompt(
     ),
 ):
     llm = OpenAI(temperature=0, max_tokens=-1)
+    escaped_stops = [s.encode("utf-8").decode("unicode_escape") for s in stop]
 
     async def run():
-        result = llm(prompt=raw.read(), stop=stop)
+        result = llm(prompt=raw.read(), stop=escaped_stops)
         print(result)
 
     visualize_or_run(run)

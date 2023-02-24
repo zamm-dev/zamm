@@ -1,0 +1,476 @@
+interactions:
+- request:
+    body: ''
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      connection:
+      - keep-alive
+      host:
+      - 0.0.0.0:8935
+      user-agent:
+      - python-httpx/0.23.3
+    method: GET
+    uri: http://0.0.0.0:8935/ping
+  response:
+    content: ought-ice says pong
+    headers:
+      content-length:
+      - '19'
+      content-type:
+      - text/plain; charset=utf-8
+      date:
+      - Fri, 24 Feb 2023 19:41:09 GMT
+      server:
+      - uvicorn
+    http_version: HTTP/1.1
+    status_code: 200
+- request:
+    body: '{"prompt": ["You are a simple button presser who simply follows instructions
+      without doing things very creatively. You always follow every instruction, in
+      order, until the task is done. This includes following instructions in the **Confirmation**
+      section of your employee training manual.\n\nYou have access to a Bash terminal
+      and a file editor. The Bash terminal is unable to edit files, so instead you
+      always use the file editor for that.\n\nYou have diligently pored over your
+      employee training manual, which reads:\n\n-----\n# Automating \"Hello World\"
+      with ZAMM\n\nSay you want to do the following task:\n\n> Write a script hello.py
+      that prints out \"Hello world\". Execute it.\n\nYou can do so by following these
+      steps:\n\nFirst, edit the file `hello.py`. It probably doesn''t yet exist. Put
+      code in it that accomplishes the task:\n\n```\nprint(\"Hello world\")\n```\n\nNow,
+      execute it from the terminal:\n\n```bash\n$ python3 hello.py\nHello world\n```\n\nThat''s
+      all! **Don''t take any more steps** because the task is now done!\n\n-----\n\nYour
+      boss has asked you to perform the following task:\n\n> Write a script goodbye.sh
+      that prints out \"Goodbye world\". Execute it.\n\nFortunately, this is exactly
+      the task that the training manual has prepared you for! You follow its instructions
+      closely.\n\n\nYou now contemplate your next step:\n\n1. Make a mental note to
+      yourself\n2. Use the terminal (to run a command, not to edit a file)\n3. Edit
+      a file\n4. Declare the task done\n\nYou decide it''s #"], "model": "text-davinci-003",
+      "temperature": 0.0, "max_tokens": 3731, "top_p": 1, "frequency_penalty": 0,
+      "presence_penalty": 0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": [" "]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1691'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - OpenAI/v1 PythonBindings/0.26.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-6nYEJ8PMzdirjRBRl8oOeaTI24tuY","object":"text_completion","created":1677267671,"model":"text-davinci-003","choices":[{"text":"3:","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":366,"completion_tokens":2,"total_tokens":368}}
+
+        '
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '265'
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 24 Feb 2023 19:41:11 GMT
+      Openai-Model:
+      - text-davinci-003
+      Openai-Organization: user-dummy
+      Openai-Processing-Ms:
+      - '607'
+      Openai-Version:
+      - '2020-10-01'
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      X-Request-Id:
+      - bdc22f18477d8bb8c0ef64300735cef6
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"prompt": ["You are a simple button presser who simply follows instructions
+      without doing things very creatively. You always follow every instruction, in
+      order, until the task is done. This includes following instructions in the **Confirmation**
+      section of your employee training manual.\n\nYou have access to a Bash terminal
+      and a file editor. The Bash terminal is unable to edit files, so instead you
+      always use the file editor for that.\n\nYou have diligently pored over your
+      employee training manual, which reads:\n\n-----\n# Automating \"Hello World\"
+      with ZAMM\n\nSay you want to do the following task:\n\n> Write a script hello.py
+      that prints out \"Hello world\". Execute it.\n\nYou can do so by following these
+      steps:\n\nFirst, edit the file `hello.py`. It probably doesn''t yet exist. Put
+      code in it that accomplishes the task:\n\n```\nprint(\"Hello world\")\n```\n\nNow,
+      execute it from the terminal:\n\n```bash\n$ python3 hello.py\nHello world\n```\n\nThat''s
+      all! **Don''t take any more steps** because the task is now done!\n\n-----\n\nYour
+      boss has asked you to perform the following task:\n\n> Write a script goodbye.sh
+      that prints out \"Goodbye world\". Execute it.\n\nFortunately, this is exactly
+      the task that the training manual has prepared you for! You follow its instructions
+      closely.\n\n\nYou decide to edit the file located at: `"], "model": "text-davinci-003",
+      "temperature": 0.0, "max_tokens": 3777, "top_p": 1, "frequency_penalty": 0,
+      "presence_penalty": 0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": ["`",
+      "\n"]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1543'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - OpenAI/v1 PythonBindings/0.26.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-6nYEKa0a2Zd3dkcNR7HGmlydkZTo4","object":"text_completion","created":1677267672,"model":"text-davinci-003","choices":[{"text":"goodbye.sh","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":320,"completion_tokens":4,"total_tokens":324}}
+
+        '
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '273'
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 24 Feb 2023 19:41:12 GMT
+      Openai-Model:
+      - text-davinci-003
+      Openai-Organization: user-dummy
+      Openai-Processing-Ms:
+      - '703'
+      Openai-Version:
+      - '2020-10-01'
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      X-Request-Id:
+      - 87f309ce8ec23c1e4713f08217a4e87e
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"file_path": "goodbye.sh"}'
+    headers: {}
+    method: POST
+    uri: tool://FileSystemTool
+  response: !!python/object:zamm.actions.edit_file.filesystem.FileRead
+    contents: null
+    file_exists: false
+- request:
+    body: '{"prompt": ["You are a simple button presser who simply follows instructions
+      without doing things very creatively. You always follow every instruction, in
+      order, until the task is done. This includes following instructions in the **Confirmation**
+      section of your employee training manual.\n\nYou have access to a Bash terminal
+      and a file editor. The Bash terminal is unable to edit files, so instead you
+      always use the file editor for that.\n\nYou have diligently pored over your
+      employee training manual, which reads:\n\n-----\n# Automating \"Hello World\"
+      with ZAMM\n\nSay you want to do the following task:\n\n> Write a script hello.py
+      that prints out \"Hello world\". Execute it.\n\nYou can do so by following these
+      steps:\n\nFirst, edit the file `hello.py`. It probably doesn''t yet exist. Put
+      code in it that accomplishes the task:\n\n```\nprint(\"Hello world\")\n```\n\nNow,
+      execute it from the terminal:\n\n```bash\n$ python3 hello.py\nHello world\n```\n\nThat''s
+      all! **Don''t take any more steps** because the task is now done!\n\n-----\n\nYour
+      boss has asked you to perform the following task:\n\n> Write a script goodbye.sh
+      that prints out \"Goodbye world\". Execute it.\n\nFortunately, this is exactly
+      the task that the training manual has prepared you for! You follow its instructions
+      closely.\n\n\nYou decide to edit the file `goodbye.sh`. It currently does not
+      exist.\n\nYou write this content out to the file:\n\n```\n"], "model": "text-davinci-003",
+      "temperature": 0.0, "max_tokens": 3753, "top_p": 1, "frequency_penalty": 0,
+      "presence_penalty": 0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": ["```"]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1620'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - OpenAI/v1 PythonBindings/0.26.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-6nYELTtzdaE9EWomoOojLqSEtzmbU","object":"text_completion","created":1677267673,"model":"text-davinci-003","choices":[{"text":"#!/bin/bash\necho
+        \"Goodbye world\"\n","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":344,"completion_tokens":13,"total_tokens":357}}
+
+        '
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '301'
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 24 Feb 2023 19:41:13 GMT
+      Openai-Model:
+      - text-davinci-003
+      Openai-Organization: user-dummy
+      Openai-Processing-Ms:
+      - '755'
+      Openai-Version:
+      - '2020-10-01'
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      X-Request-Id:
+      - 9dfd7dd61c5a5768f43340e4e5f5c26e
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"contents": "#!/bin/bash\necho \"Goodbye world\"", "file_path": "goodbye.sh"}'
+    headers: {}
+    method: POST
+    uri: tool://FileSystemTool
+  response: true
+- request:
+    body: '{"prompt": ["You are a simple button presser who simply follows instructions
+      without doing things very creatively. You always follow every instruction, in
+      order, until the task is done. This includes following instructions in the **Confirmation**
+      section of your employee training manual.\n\nYou have access to a Bash terminal
+      and a file editor. The Bash terminal is unable to edit files, so instead you
+      always use the file editor for that.\n\nYou have diligently pored over your
+      employee training manual, which reads:\n\n-----\n# Automating \"Hello World\"
+      with ZAMM\n\nSay you want to do the following task:\n\n> Write a script hello.py
+      that prints out \"Hello world\". Execute it.\n\nYou can do so by following these
+      steps:\n\nFirst, edit the file `hello.py`. It probably doesn''t yet exist. Put
+      code in it that accomplishes the task:\n\n```\nprint(\"Hello world\")\n```\n\nNow,
+      execute it from the terminal:\n\n```bash\n$ python3 hello.py\nHello world\n```\n\nThat''s
+      all! **Don''t take any more steps** because the task is now done!\n\n-----\n\nYour
+      boss has asked you to perform the following task:\n\n> Write a script goodbye.sh
+      that prints out \"Goodbye world\". Execute it.\n\nFortunately, this is exactly
+      the task that the training manual has prepared you for! You follow its instructions
+      closely.\n\n\n\nYou decide to edit the file `goodbye.sh`. It doesn''t yet exist.\n\nYou
+      write out to the file the contents\n\n```\n#!/bin/bash\necho \"Goodbye world\"\n```\n\nYou
+      now contemplate your next step:\n\n1. Make a mental note to yourself\n2. Use
+      the terminal (to run a command, not to edit a file)\n3. Edit a file\n4. Declare
+      the task done\n\nYou decide it''s #"], "model": "text-davinci-003", "temperature":
+      0.0, "max_tokens": 3680, "top_p": 1, "frequency_penalty": 0, "presence_penalty":
+      0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": [" "]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1851'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - OpenAI/v1 PythonBindings/0.26.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-6nYEMKLjMsdQYhYt5nQfVABb9F7HX","object":"text_completion","created":1677267674,"model":"text-davinci-003","choices":[{"text":"2,","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":417,"completion_tokens":2,"total_tokens":419}}
+
+        '
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '265'
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 24 Feb 2023 19:41:14 GMT
+      Openai-Model:
+      - text-davinci-003
+      Openai-Organization: user-dummy
+      Openai-Processing-Ms:
+      - '189'
+      Openai-Version:
+      - '2020-10-01'
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      X-Request-Id:
+      - 7dd2131617efc9deadfeaf78ce555602
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"prompt": ["You are a simple button presser who simply follows instructions
+      without doing things very creatively. You always follow every instruction, in
+      order, until the task is done. This includes following instructions in the **Confirmation**
+      section of your employee training manual.\n\nYou have access to a Bash terminal
+      and a file editor. The Bash terminal is unable to edit files, so instead you
+      always use the file editor for that.\n\nYou have diligently pored over your
+      employee training manual, which reads:\n\n-----\n# Automating \"Hello World\"
+      with ZAMM\n\nSay you want to do the following task:\n\n> Write a script hello.py
+      that prints out \"Hello world\". Execute it.\n\nYou can do so by following these
+      steps:\n\nFirst, edit the file `hello.py`. It probably doesn''t yet exist. Put
+      code in it that accomplishes the task:\n\n```\nprint(\"Hello world\")\n```\n\nNow,
+      execute it from the terminal:\n\n```bash\n$ python3 hello.py\nHello world\n```\n\nThat''s
+      all! **Don''t take any more steps** because the task is now done!\n\n-----\n\nYour
+      boss has asked you to perform the following task:\n\n> Write a script goodbye.sh
+      that prints out \"Goodbye world\". Execute it.\n\nFortunately, this is exactly
+      the task that the training manual has prepared you for! You follow its instructions
+      closely.\n\n\n\nYou decide to edit the file `goodbye.sh`. It doesn''t yet exist.\n\nYou
+      write out to the file the contents\n\n```\n#!/bin/bash\necho \"Goodbye world\"\n```\n\nYou
+      proceed to use the terminal:\n\n```bash\n$ "], "model": "text-davinci-003",
+      "temperature": 0.0, "max_tokens": 3721, "top_p": 1, "frequency_penalty": 0,
+      "presence_penalty": 0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": ["\n"]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1704'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - OpenAI/v1 PythonBindings/0.26.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-6nYEMiDSZE9DjoIRnDUsSyofob5Bb","object":"text_completion","created":1677267674,"model":"text-davinci-003","choices":[{"text":"
+        bash goodbye.sh","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":376,"completion_tokens":4,"total_tokens":380}}
+
+        '
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '279'
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 24 Feb 2023 19:41:15 GMT
+      Openai-Model:
+      - text-davinci-003
+      Openai-Organization: user-dummy
+      Openai-Processing-Ms:
+      - '660'
+      Openai-Version:
+      - '2020-10-01'
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      X-Request-Id:
+      - 7332d7c13ec4dc34d8b99a923055963e
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"prompt": "The LLM would like to run the command `bash goodbye.sh`\n\n1.
+      Proceed\n2. Edit command\n3. Stop (or Ctrl-C)\n\n", "stop": [" "]}'
+    headers: {}
+    method: POST
+    uri: tool://Human
+  response: '1'
+- request:
+    body: '{"cmd": "bash goodbye.sh"}'
+    headers: {}
+    method: POST
+    uri: tool://ZTerminal
+  response: "bash goodbye.sh\r\nGoodbye world\r\n$ "
+- request:
+    body: '{"prompt": ["You are a simple button presser who simply follows instructions
+      without doing things very creatively. You always follow every instruction, in
+      order, until the task is done. This includes following instructions in the **Confirmation**
+      section of your employee training manual.\n\nYou have access to a Bash terminal
+      and a file editor. The Bash terminal is unable to edit files, so instead you
+      always use the file editor for that.\n\nYou have diligently pored over your
+      employee training manual, which reads:\n\n-----\n# Automating \"Hello World\"
+      with ZAMM\n\nSay you want to do the following task:\n\n> Write a script hello.py
+      that prints out \"Hello world\". Execute it.\n\nYou can do so by following these
+      steps:\n\nFirst, edit the file `hello.py`. It probably doesn''t yet exist. Put
+      code in it that accomplishes the task:\n\n```\nprint(\"Hello world\")\n```\n\nNow,
+      execute it from the terminal:\n\n```bash\n$ python3 hello.py\nHello world\n```\n\nThat''s
+      all! **Don''t take any more steps** because the task is now done!\n\n-----\n\nYour
+      boss has asked you to perform the following task:\n\n> Write a script goodbye.sh
+      that prints out \"Goodbye world\". Execute it.\n\nFortunately, this is exactly
+      the task that the training manual has prepared you for! You follow its instructions
+      closely.\n\n\n\nYou decide to edit the file `goodbye.sh`. It doesn''t yet exist.\n\nYou
+      write out to the file the contents\n\n```\n#!/bin/bash\necho \"Goodbye world\"\n```\n\nYou
+      proceed to use the terminal:\n\n```bash\n$ bash goodbye.sh\nGoodbye world\n```\n\nYou
+      now contemplate your next step:\n\n1. Make a mental note to yourself\n2. Use
+      the terminal (to run a command, not to edit a file)\n3. Edit a file\n4. Declare
+      the task done\n\nYou decide it''s #"], "model": "text-davinci-003", "temperature":
+      0.0, "max_tokens": 3653, "top_p": 1, "frequency_penalty": 0, "presence_penalty":
+      0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": [" "]}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '1937'
+      Content-Type:
+      - application/json
+      User-Agent:
+      - OpenAI/v1 PythonBindings/0.26.5
+    method: POST
+    uri: https://api.openai.com/v1/completions
+  response:
+    body:
+      string: '{"id":"cmpl-6nYEbexTvCIdZCg3GKlMHryWdVcXg","object":"text_completion","created":1677267689,"model":"text-davinci-003","choices":[{"text":"4,","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":444,"completion_tokens":2,"total_tokens":446}}
+
+        '
+    headers:
+      Access-Control-Allow-Origin:
+      - '*'
+      Cache-Control:
+      - no-cache, must-revalidate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '265'
+      Content-Type:
+      - application/json
+      Date:
+      - Fri, 24 Feb 2023 19:41:29 GMT
+      Openai-Model:
+      - text-davinci-003
+      Openai-Organization: user-dummy
+      Openai-Processing-Ms:
+      - '601'
+      Openai-Version:
+      - '2020-10-01'
+      Strict-Transport-Security:
+      - max-age=15724800; includeSubDomains
+      X-Request-Id:
+      - 36ba3edac7b8bcf90ef9f4610f537c52
+    status:
+      code: 200
+      message: OK
+version: 1
