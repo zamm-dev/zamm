@@ -1,33 +1,5 @@
 interactions:
 - request:
-    body: ''
-    headers:
-      accept:
-      - '*/*'
-      accept-encoding:
-      - gzip, deflate
-      connection:
-      - keep-alive
-      host:
-      - 0.0.0.0:8935
-      user-agent:
-      - python-httpx/0.23.3
-    method: GET
-    uri: http://0.0.0.0:8935/ping
-  response:
-    content: ought-ice says pong
-    headers:
-      content-length:
-      - '19'
-      content-type:
-      - text/plain; charset=utf-8
-      date:
-      - Fri, 24 Feb 2023 19:41:09 GMT
-      server:
-      - uvicorn
-    http_version: HTTP/1.1
-    status_code: 200
-- request:
     body: '{"prompt": ["You are a simple button presser who simply follows instructions
       without doing things very creatively. You always follow every instruction, in
       order, until the task is done. This includes following instructions in the **Confirmation**
@@ -46,9 +18,10 @@ interactions:
       the task that the training manual has prepared you for! You follow its instructions
       closely.\n\n\nYou now contemplate your next step:\n\n1. Make a mental note to
       yourself\n2. Use the terminal (to run a command, not to edit a file)\n3. Edit
-      a file\n4. Declare the task done\n\nYou decide it''s #"], "model": "text-davinci-003",
-      "temperature": 0.0, "max_tokens": 3731, "top_p": 1, "frequency_penalty": 0,
-      "presence_penalty": 0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": [" "]}'
+      a file\n4. Follow a tutorial\n5. Declare the task done\n\nYou decide it''s #"],
+      "model": "text-davinci-003", "temperature": 0.0, "max_tokens": 3725, "top_p":
+      1, "frequency_penalty": 0, "presence_penalty": 0, "n": 1, "best_of": 1, "logit_bias":
+      {}, "stop": [" "]}'
     headers:
       Accept:
       - '*/*'
@@ -57,7 +30,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '1691'
+      - '1713'
       Content-Type:
       - application/json
       User-Agent:
@@ -66,7 +39,7 @@ interactions:
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6nYEJ8PMzdirjRBRl8oOeaTI24tuY","object":"text_completion","created":1677267671,"model":"text-davinci-003","choices":[{"text":"3:","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":366,"completion_tokens":2,"total_tokens":368}}
+      string: '{"id":"cmpl-6oZLBjTGlqVKdIZgNHIQ6hVkPdoI4","object":"text_completion","created":1677510269,"model":"text-davinci-003","choices":[{"text":"3","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":372,"completion_tokens":1,"total_tokens":373}}
 
         '
     headers:
@@ -77,22 +50,22 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '265'
+      - '264'
       Content-Type:
       - application/json
       Date:
-      - Fri, 24 Feb 2023 19:41:11 GMT
+      - Mon, 27 Feb 2023 15:04:29 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '607'
+      - '760'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       X-Request-Id:
-      - bdc22f18477d8bb8c0ef64300735cef6
+      - 1572a2ae21b8343f97c9476124e56de4
     status:
       code: 200
       message: OK
@@ -134,7 +107,7 @@ interactions:
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6nYEKa0a2Zd3dkcNR7HGmlydkZTo4","object":"text_completion","created":1677267672,"model":"text-davinci-003","choices":[{"text":"goodbye.sh","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":320,"completion_tokens":4,"total_tokens":324}}
+      string: '{"id":"cmpl-6oZLCXShMtzQ32U9jbdOJxRE62J21","object":"text_completion","created":1677510270,"model":"text-davinci-003","choices":[{"text":"goodbye.sh","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":320,"completion_tokens":4,"total_tokens":324}}
 
         '
     headers:
@@ -149,18 +122,18 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 24 Feb 2023 19:41:12 GMT
+      - Mon, 27 Feb 2023 15:04:30 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '703'
+      - '808'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       X-Request-Id:
-      - 87f309ce8ec23c1e4713f08217a4e87e
+      - 9eff9318c85c04a13f1102471589404c
     status:
       code: 200
       message: OK
@@ -210,7 +183,7 @@ interactions:
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6nYELTtzdaE9EWomoOojLqSEtzmbU","object":"text_completion","created":1677267673,"model":"text-davinci-003","choices":[{"text":"#!/bin/bash\necho
+      string: '{"id":"cmpl-6oZLDF3ebfsOuSJrYti58todss1L5","object":"text_completion","created":1677510271,"model":"text-davinci-003","choices":[{"text":"#!/bin/bash\necho
         \"Goodbye world\"\n","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":344,"completion_tokens":13,"total_tokens":357}}
 
         '
@@ -226,18 +199,18 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 24 Feb 2023 19:41:13 GMT
+      - Mon, 27 Feb 2023 15:04:37 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '755'
+      - '6405'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       X-Request-Id:
-      - 9dfd7dd61c5a5768f43340e4e5f5c26e
+      - 422de25570497d64f1c15f8edf743892
     status:
       code: 200
       message: OK
@@ -267,10 +240,10 @@ interactions:
       closely.\n\n\n\nYou decide to edit the file `goodbye.sh`. It doesn''t yet exist.\n\nYou
       write out to the file the contents\n\n```\n#!/bin/bash\necho \"Goodbye world\"\n```\n\nYou
       now contemplate your next step:\n\n1. Make a mental note to yourself\n2. Use
-      the terminal (to run a command, not to edit a file)\n3. Edit a file\n4. Declare
-      the task done\n\nYou decide it''s #"], "model": "text-davinci-003", "temperature":
-      0.0, "max_tokens": 3680, "top_p": 1, "frequency_penalty": 0, "presence_penalty":
-      0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": [" "]}'
+      the terminal (to run a command, not to edit a file)\n3. Edit a file\n4. Follow
+      a tutorial\n5. Declare the task done\n\nYou decide it''s #"], "model": "text-davinci-003",
+      "temperature": 0.0, "max_tokens": 3674, "top_p": 1, "frequency_penalty": 0,
+      "presence_penalty": 0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": [" "]}'
     headers:
       Accept:
       - '*/*'
@@ -279,7 +252,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '1851'
+      - '1873'
       Content-Type:
       - application/json
       User-Agent:
@@ -288,7 +261,7 @@ interactions:
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6nYEMKLjMsdQYhYt5nQfVABb9F7HX","object":"text_completion","created":1677267674,"model":"text-davinci-003","choices":[{"text":"2,","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":417,"completion_tokens":2,"total_tokens":419}}
+      string: '{"id":"cmpl-6oZLKpPPGESEgCH3PCfXO7UsdSSG3","object":"text_completion","created":1677510278,"model":"text-davinci-003","choices":[{"text":"2,","index":0,"logprobs":null,"finish_reason":null}],"usage":{"prompt_tokens":423,"completion_tokens":2,"total_tokens":425}}
 
         '
     headers:
@@ -299,22 +272,22 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '265'
+      - '263'
       Content-Type:
       - application/json
       Date:
-      - Fri, 24 Feb 2023 19:41:14 GMT
+      - Mon, 27 Feb 2023 15:04:40 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '189'
+      - '2999'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       X-Request-Id:
-      - 7dd2131617efc9deadfeaf78ce555602
+      - c203d3c923e2660134ab67d5dbd4f4e0
     status:
       code: 200
       message: OK
@@ -357,7 +330,7 @@ interactions:
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6nYEMiDSZE9DjoIRnDUsSyofob5Bb","object":"text_completion","created":1677267674,"model":"text-davinci-003","choices":[{"text":"
+      string: '{"id":"cmpl-6oZLNkMIexGrpUlV66qmjxHEhzCtH","object":"text_completion","created":1677510281,"model":"text-davinci-003","choices":[{"text":"
         bash goodbye.sh","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":376,"completion_tokens":4,"total_tokens":380}}
 
         '
@@ -373,18 +346,18 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Fri, 24 Feb 2023 19:41:15 GMT
+      - Mon, 27 Feb 2023 15:04:41 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '660'
+      - '423'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       X-Request-Id:
-      - 7332d7c13ec4dc34d8b99a923055963e
+      - 6d4d8446161f383f410b9aaba5a56318
     status:
       code: 200
       message: OK
@@ -422,10 +395,10 @@ interactions:
       write out to the file the contents\n\n```\n#!/bin/bash\necho \"Goodbye world\"\n```\n\nYou
       proceed to use the terminal:\n\n```bash\n$ bash goodbye.sh\nGoodbye world\n```\n\nYou
       now contemplate your next step:\n\n1. Make a mental note to yourself\n2. Use
-      the terminal (to run a command, not to edit a file)\n3. Edit a file\n4. Declare
-      the task done\n\nYou decide it''s #"], "model": "text-davinci-003", "temperature":
-      0.0, "max_tokens": 3653, "top_p": 1, "frequency_penalty": 0, "presence_penalty":
-      0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": [" "]}'
+      the terminal (to run a command, not to edit a file)\n3. Edit a file\n4. Follow
+      a tutorial\n5. Declare the task done\n\nYou decide it''s #"], "model": "text-davinci-003",
+      "temperature": 0.0, "max_tokens": 3647, "top_p": 1, "frequency_penalty": 0,
+      "presence_penalty": 0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": [" "]}'
     headers:
       Accept:
       - '*/*'
@@ -434,7 +407,7 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '1937'
+      - '1959'
       Content-Type:
       - application/json
       User-Agent:
@@ -443,7 +416,7 @@ interactions:
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6nYEbexTvCIdZCg3GKlMHryWdVcXg","object":"text_completion","created":1677267689,"model":"text-davinci-003","choices":[{"text":"4,","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":444,"completion_tokens":2,"total_tokens":446}}
+      string: '{"id":"cmpl-6oZLRWXVcNTWFAgkwuyrplx7yDQwT","object":"text_completion","created":1677510285,"model":"text-davinci-003","choices":[{"text":"5","index":0,"logprobs":null,"finish_reason":null}],"usage":{"prompt_tokens":450,"completion_tokens":1,"total_tokens":451}}
 
         '
     headers:
@@ -454,22 +427,22 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '265'
+      - '262'
       Content-Type:
       - application/json
       Date:
-      - Fri, 24 Feb 2023 19:41:29 GMT
+      - Mon, 27 Feb 2023 15:04:46 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '601'
+      - '824'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
       X-Request-Id:
-      - 36ba3edac7b8bcf90ef9f4610f537c52
+      - a23ebd1550da59f0223a1cac3c14f323
     status:
       code: 200
       message: OK
