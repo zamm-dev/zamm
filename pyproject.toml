@@ -9,7 +9,7 @@ readme = "README.md"
 zamm = "zamm.cli:app"
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.11"
+python = "^3.9"
 vcr-langchain = "^0.0.15"
 langchain-visualizer = "^0.0.12"
 openai = "^0.26.4"
