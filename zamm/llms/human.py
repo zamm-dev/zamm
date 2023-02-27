@@ -60,9 +60,14 @@ class Human(LLM):
             user_input += "\n" + new_input
 
         separated_inputs = [x for x in user_input.split(stop_hit) if x]
-        result = separated_inputs[0]
-        if len(separated_inputs) > 1:
-            warnings.warn(f"Ignoring rest of input after stop: {separated_inputs[1:]}")
+        if separated_inputs == []:
+            result = ""
+        else:
+            result = separated_inputs[0]
+            if len(separated_inputs) > 1:
+                warnings.warn(
+                    f"Ignoring rest of input after stop: {separated_inputs[1:]}"
+                )
 
         return result
 
