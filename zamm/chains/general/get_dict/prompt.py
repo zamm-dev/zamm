@@ -79,7 +79,7 @@ class MultipleOutputsPrompter(BaseModel):
             new_configs = []
             for variable in variable_configs:
                 if variable.display_suffix is None:
-                    new_suffix = f": {variable.stop}"
+                    new_suffix = f": {variable.stop.strip()}"
                 else:
                     new_suffix = variable.display_suffix  # keep the old one
                 new_configs.append(
@@ -96,15 +96,23 @@ class MultipleOutputsPrompter(BaseModel):
         """Output keys from this whole chain."""
         return [v.output_key for v in self.variables]
 
+    def _add_variable_values_template(
+        self, template: str, inputs: List[VariableConfig]
+    ) -> str:
+        """Add templating for variable values up until variable i."""
+        for input in inputs:
+            template += input.prompt_with_value
+            if input.stop != "\n":
+                template += "\n"
+        return template
+
     def prompt_template_for_variable_at(self, i: int) -> PromptTemplate:
         """Prompt for a single output variable to be filled in."""
         output = self.variables[i]
         inputs = self.variables[:i]
         input_keys = [v.output_key for v in inputs]
 
-        template = self.prefix
-        for input in inputs:
-            template += input.prompt_with_value + "\n"
+        template = self._add_variable_values_template(self.prefix, inputs)
         template += output.prompt
 
         return PromptTemplate(
@@ -127,9 +135,7 @@ class MultipleOutputsPrompter(BaseModel):
         """Output the entirety of the LLM's inputs in this chain."""
         initial_prompt = self.prompt_template_for_variable_at(0).format()
 
-        final_prompt = self.prefix
-        for var in self.variables:
-            final_prompt += var.prompt_with_value + "\n"
+        final_prompt = self._add_variable_values_template(self.prefix, self.variables)
         final_prompt = final_prompt.format(**completions)
 
         assert final_prompt.startswith(initial_prompt), "Prompt reconstruction failed"

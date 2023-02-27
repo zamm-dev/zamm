@@ -1,16 +1,16 @@
 """Test that GetMultipleOutputsChain can run successfully."""
 
-from zamm.chains.general.multiple_outputs import GetMultipleOutputsChain
+from zamm.chains.general.get_dict import GetDictChain
 from zamm.llms.fake import FakeLLM
 from zamm.prompts.fake_parser import FakeDictParser
 
 
 def test_multiple_outputs_can_run() -> None:
     """Test that GetMultipleOutputsChain can run successfully with multiple steps."""
-    chain = GetMultipleOutputsChain(
+    chain = GetDictChain(
         llm=FakeLLM(
             ensure_and_remove_stop=True,
-            sequenced_responses=['fake tool"', 'fake input"'],
+            sequenced_responses=["fake tool\n", "fake input\n"],
         ),
         prefix="Figure out what to do next.\n\n",
         variables={"tool": "Action", "tool_input": "Action Input"},
@@ -23,7 +23,7 @@ def test_multiple_outputs_can_run() -> None:
 
 def test_multiple_outputs_can_run_in_one_step() -> None:
     """Test that GetMultipleOutputsChain can run successfully in a single step."""
-    chain = GetMultipleOutputsChain(
+    chain = GetDictChain(
         llm=FakeLLM(
             ensure_and_remove_stop=True,
             sequenced_responses=["fake tool\nAction Input: fake input\nObservation:"],

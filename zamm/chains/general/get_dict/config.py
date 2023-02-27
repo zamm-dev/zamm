@@ -48,7 +48,7 @@ class VariableConfig:
     }
     ```
     """
-    stop: str = '"'
+    stop: str = "\n"
     """The character to stop at when completing the value for this variable.
 
     This defaults to a single double-quote, so that if your prompt goes
@@ -87,6 +87,24 @@ class VariableConfig:
         just a marker for the template to eventually fill it in with.
         """
         return self.prompt + "{" + self.output_key + "}" + self.stop
+
+    @classmethod
+    def for_string(
+        cls: Type[VC],
+        output_key: str,
+        display: str,
+        enclosure: str = '"',
+    ) -> VC:
+        """Configure a variable that should be enclosed in double quotes.
+
+        Optionally use a different enclosure fo the variable.
+        """
+        return cls(
+            output_key=output_key,
+            display=display,
+            display_suffix=f": {enclosure}",
+            stop=enclosure,
+        )
 
     @classmethod
     def for_code(

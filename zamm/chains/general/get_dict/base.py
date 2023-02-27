@@ -13,7 +13,7 @@ from .config import VariableConfig
 from .prompt import MultipleOutputsPrompter
 
 
-class GetMultipleOutputsChain(Chain, BaseModel):
+class GetDictChain(Chain, BaseModel):
     """Chain that gets multiple outputs from the LLM, one at a time by default.
 
     Use this over manually parsing the outputs if the outputs can be hard to parse

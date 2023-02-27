@@ -2,7 +2,7 @@
 
 from collections import OrderedDict
 
-from zamm.chains.general.multiple_outputs import MultipleOutputsPrompter, VariableConfig
+from zamm.chains.general.get_dict import MultipleOutputsPrompter, VariableConfig
 from zamm.prompts.fake_parser import FakeDictParser
 
 
@@ -24,8 +24,7 @@ def test_prompter_with_defaults() -> None:
         == """
 Figure out what to do next.
 
-Action: "
-    """.strip()
+Action: """.lstrip()
     )
 
     second_prompt_template = prompter.prompt_template_for_variable_at(1)
@@ -36,9 +35,8 @@ Action: "
         == """
 Figure out what to do next.
 
-Action: "Search"
-Action Input: "
-    """.strip()
+Action: Search
+Action Input: """.lstrip()
     )
 
 
@@ -46,7 +44,7 @@ def test_prompter_without_auto_suffixing() -> None:
     """Test templating without automatic suffixes applied."""
     prompter = MultipleOutputsPrompter(
         prefix="Figure out what to do next.\n\n",
-        variables=OrderedDict(tool='Action: "', tool_input='Action Input: "'),
+        variables=OrderedDict(tool="Action=", tool_input="Action Input="),
         auto_suffix_variable_display=False,
         # also test that output parser doesn't leak into templates by default
         output_parser=FakeDictParser(),
@@ -60,8 +58,7 @@ def test_prompter_without_auto_suffixing() -> None:
         == """
 Figure out what to do next.
 
-Action: "
-    """.strip()
+Action=""".lstrip()
     )
 
     second_prompt_template = prompter.prompt_template_for_variable_at(1)
@@ -72,9 +69,8 @@ Action: "
         == """
 Figure out what to do next.
 
-Action: "Search"
-Action Input: "
-    """.strip()
+Action=Search
+Action Input=""".lstrip()
     )
 
 
@@ -83,7 +79,7 @@ def test_prompter_with_specified_variables() -> None:
     prompter = MultipleOutputsPrompter(
         prefix="Write some code.\n\n",
         variable_configs=[
-            VariableConfig(display="File Path", output_key="path"),
+            VariableConfig.for_string(display="File Path", output_key="path"),
             VariableConfig(display="Code", output_key="code", stop="```"),
             VariableConfig(display="Tests", output_key="test_code", stop="```"),
         ],
@@ -141,7 +137,7 @@ def test_prompter_dont_override_custom_suffix() -> None:
     prompter = MultipleOutputsPrompter(
         prefix="Write some code.\n\n",
         variable_configs=[
-            VariableConfig(display="File Path", output_key="path"),
+            VariableConfig.for_string(display="File Path", output_key="path"),
             VariableConfig(display="Code", output_key="code", stop="```"),
             VariableConfig(
                 display="Tests",
@@ -299,8 +295,7 @@ def test_prompter_full_input() -> None:
         == """
 Figure out what to do next.
 
-Action: "
-    """.strip()
+Action: """.lstrip()
     )
 
 
@@ -322,7 +317,6 @@ def test_prompter_log() -> None:
             }
         )
         == """
-Search"
-Action Input: "Olivia Wilde boyfriend"
-    """.strip()
+Search
+Action Input: Olivia Wilde boyfriend""".lstrip()
     )
