@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from langchain.prompts.base import BasePromptTemplate
 
@@ -14,7 +14,7 @@ class ZStepOutput(StepOutput):
     def log(self, **kwargs) -> str:
         return self._log(kwargs["previous"], kwargs["next"])
 
-    def _log(self, previous: StepOutput | None, next: StepOutput | None) -> str:
+    def _log(self, previous: Optional[StepOutput], next: Optional[StepOutput]) -> str:
         return self.logger_template.format(**self.template_args)
 
     @classmethod

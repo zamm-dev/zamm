@@ -52,7 +52,7 @@ class EditFileOutput(ZStepOutput):
             args["old_contents"] = self.old_contents
         return args
 
-    def _log(self, previous: StepOutput | None, next: StepOutput | None) -> str:
+    def _log(self, previous: Optional[StepOutput], next: Optional[StepOutput]) -> str:
         if self.file_exists:
             return safe_format(EDIT_LOGGER, self.template_args)
         else:
