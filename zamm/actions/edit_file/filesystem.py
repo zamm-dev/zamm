@@ -48,6 +48,9 @@ class FileSystemTool(BaseModel):
         tabbed_lines = [self._spaces_to_tabs_per_line(line) for line in lines]
         return "\n".join(tabbed_lines)
 
+    def should_convert_spaces_to_tabs(self, filename: str) -> bool:
+        return filename == "Makefile" or filename.endswith(".mk")
+
     def read_file(self, file_path: str) -> FileRead:
         file_path = self.interpret_path(file_path)
         if os.path.isfile(file_path):
@@ -60,8 +63,15 @@ class FileSystemTool(BaseModel):
         folder = os.path.dirname(file_path)
         if folder != "":
             os.makedirs(folder, exist_ok=True)
+
+        if self.should_convert_spaces_to_tabs(file_path):
+            tabbed_contents = self.spaces_to_tabs(contents)
+        else:
+            tabbed_contents = contents
+
         with open(file_path, "w") as f:
-            f.write(self.spaces_to_tabs(contents))
+            f.write(tabbed_contents)
+
         return True
 
 
