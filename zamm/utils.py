@@ -1,7 +1,7 @@
 import os
 import re
 from contextlib import contextmanager
-from typing import Any
+from typing import Any, Dict, List, Union
 
 from fvalues import F
 from langchain.chains.base import Chain
@@ -9,8 +9,8 @@ from langchain.prompts import BasePromptTemplate
 
 
 def safe_inputs(
-    lc_object: Chain | BasePromptTemplate, inputs: dict[str, str]
-) -> dict[str, str]:
+    lc_object: Union[Chain, BasePromptTemplate], inputs: Dict[str, str]
+) -> Dict[str, str]:
     if isinstance(lc_object, Chain):
         input_variables = lc_object.input_keys
     elif isinstance(lc_object, BasePromptTemplate):
@@ -20,15 +20,15 @@ def safe_inputs(
     return {k: v for k, v in inputs.items() if k in input_variables}
 
 
-def safe_call(chain: Chain, inputs: dict[str, str]) -> dict[str, Any]:
+def safe_call(chain: Chain, inputs: Dict[str, str]) -> Dict[str, Any]:
     return chain(safe_inputs(chain, inputs))
 
 
-def safe_format(template: BasePromptTemplate, inputs: dict[str, str]) -> str:
+def safe_format(template: BasePromptTemplate, inputs: Dict[str, str]) -> str:
     return template.format(**safe_inputs(template, inputs))
 
 
-def f_join(joiner: str, substrings: list[str | F]) -> F:
+def f_join(joiner: str, substrings: List[Union[str, F]]) -> F:
     if substrings == []:
         return F("")
 

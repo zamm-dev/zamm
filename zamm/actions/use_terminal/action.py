@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from langchain.llms.base import BaseLLM
 from langchain.prompts.prompt import PromptTemplate
@@ -34,7 +34,7 @@ class TerminalOutput(ZStepOutput):
             logger_template=TerminalUsageLogger(),
         )
 
-    def _log(self, previous: StepOutput | None, next: StepOutput | None) -> str:
+    def _log(self, previous: Optional[StepOutput], next: Optional[StepOutput]) -> str:
         template = self.logger_template
         if self.output == "":
             template = PromptTemplate(
