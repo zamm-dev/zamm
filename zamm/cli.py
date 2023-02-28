@@ -230,6 +230,10 @@ def execute(
         ),
     ),
     session_recording: Optional[typer.FileText] = SESSION_RECORD_OPTION,
+    last_session: bool = typer.Option(
+        False,
+        help="The last session that was in progress",
+    ),
     model: str = typer.Option(
         "text-davinci-003",
         help="What OpenAI large language model to use for execution",
@@ -245,6 +249,8 @@ def execute(
     """Ask the LLM to do something."""
 
     cassette_path = get_cassette_path(cassette=session_recording)
+    if last_session:
+        cassette_path = get_last_session()
 
     llm = OpenAI(model_name=model, temperature=0, max_tokens=-1)
     if session_recording is not None:
