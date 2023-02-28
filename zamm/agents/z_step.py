@@ -12,9 +12,18 @@ class ZStepOutput(StepOutput):
     logger_template: BasePromptTemplate
 
     def log(self, **kwargs) -> str:
-        return self._log(kwargs["previous"], kwargs["next"])
+        return self._log(
+            condensed=kwargs["condensed"],
+            previous=kwargs["previous"],
+            next=kwargs["next"],
+        )
 
-    def _log(self, previous: Optional[StepOutput], next: Optional[StepOutput]) -> str:
+    def _log(
+        self,
+        condensed: bool,
+        previous: Optional[StepOutput],
+        next: Optional[StepOutput],
+    ) -> str:
         return self.logger_template.format(**self.template_args)
 
     @classmethod

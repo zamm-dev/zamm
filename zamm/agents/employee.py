@@ -27,6 +27,8 @@ from .step import StepOutput
 
 
 class ZammEmployeeBrain(CustomAgent):
+    condense_memory: bool = False
+
     @property
     def _agent_type(self) -> str:
         """Return Identifier of agent type."""
@@ -35,17 +37,25 @@ class ZammEmployeeBrain(CustomAgent):
     def _get_next_action(self, full_inputs: Dict[str, str]) -> AgentAction:
         raise NotImplementedError()
 
-    def _construct_scratchpad_structured(self, memory: BaseAgentMemory) -> str:
+    def _construct_scratchpad_base(
+        self, memory: BaseAgentMemory, condensed: bool
+    ) -> str:
         logs = []
         steps = memory.steps()
         for i, output in enumerate(steps):
             previous = steps[i - 1] if i > 0 else None
             next = steps[i + 1] if i < len(steps) - 1 else None
-            logs.append(output.log(previous=previous, next=next))
+            logs.append(output.log(previous=previous, next=next, condensed=condensed))
         scratch = f_join("\n", logs)
         if scratch == "":
             return scratch
         return "\n" + scratch + "\n"
+
+    def _construct_scratchpad_structured(self, memory: BaseAgentMemory) -> str:
+        return self._construct_scratchpad_base(memory, condensed=self.condense_memory)
+
+    def _construct_scratchpad_final(self, memory: BaseAgentMemory) -> str:
+        return self._construct_scratchpad_base(memory, condensed=False)
 
 
 def default_action_chain(
@@ -83,13 +93,16 @@ class ZammEmployee(AgentExecutor):
     def __init__(
         self,
         llm: BaseLLM,
+        condense_memory: bool = False,
         tools: Optional[List[Tool]] = None,
         terminal_safe_mode: bool = True,
         **kwargs,
     ):
         tools = tools if tools else []
+        brain = ZammEmployeeBrain.from_llm(llm)
+        brain.condense_memory = condense_memory
         super().__init__(
-            agent=ZammEmployeeBrain.from_llm(llm),
+            agent=brain,
             tools=tools,
             terminal=ZTerminal(safe_mode=terminal_safe_mode),
             **kwargs,
@@ -123,7 +136,7 @@ class ZammEmployee(AgentExecutor):
     ) -> Dict[str, Any]:
         memory.add_step(output)
         task = memory.inputs["task"]
-        logs = self.agent._construct_scratchpad_structured(memory)
+        logs = self.agent._construct_scratchpad_final(memory)
         tutorial = f"""
 Say you want to do the following task:
 

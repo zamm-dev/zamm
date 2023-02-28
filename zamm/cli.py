@@ -234,6 +234,13 @@ def execute(
         False,
         help="The last session that was in progress",
     ),
+    condense_memory: bool = typer.Option(
+        False,
+        help=(
+            "Condense agent memory during in-progress execution. Saves on tokens but "
+            "may result in decreased performance."
+        ),
+    ),
     model: str = typer.Option(
         "text-davinci-003",
         help="What OpenAI large language model to use for execution",
@@ -266,7 +273,11 @@ def execute(
         else:
             with open(documentation) as f:
                 tutorial = f.read()
-    employee = ZammEmployee(llm=llm, terminal_safe_mode=safety.value == "on")
+    employee = ZammEmployee(
+        llm=llm,
+        condense_memory=condense_memory,
+        terminal_safe_mode=safety.value == "on",
+    )
     execute_llm_task(
         employee=employee, task=task, tutorial=tutorial, cassette_path=cassette_path
     )
