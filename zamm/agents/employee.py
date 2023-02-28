@@ -5,23 +5,15 @@ from langchain.agents.tools import Tool
 from langchain.llms.base import BaseLLM
 from langchain.schema import AgentAction, AgentFinish
 
-from zamm.actions.base import Action
-from zamm.actions.edit_file import EditFile
-from zamm.actions.finish import Finish
-from zamm.actions.note import MakeNote
-from zamm.actions.use_terminal import UseTerminal, ZTerminal
+from zamm.actions.use_terminal import ZTerminal
 from zamm.chains.bash_action_prompt import (
     EMPLOYEE_TEACHING_INTRO_TEMPLATE,
     FOLLOW_INSTRUCTIONS_TEMPLATE,
 )
-from zamm.chains.general import ActionChain
-from zamm.chains.general.choice.base import ChoiceChain
-from zamm.chains.general.choice.prompt import ChoicePromptTemplate
-from zamm.prompts.chained import ChainedPromptTemplate
-from zamm.prompts.prefixed import Prefix
 from zamm.utils import f_join
 
 from .base import CustomAgent
+from .employee_actions import default_action_chain
 from .memory import AgentMemory, BaseAgentMemory
 from .step import StepOutput
 
@@ -58,33 +50,6 @@ class ZammEmployeeBrain(CustomAgent):
         return self._construct_scratchpad_base(memory, condensed=False)
 
 
-def default_action_chain(
-    llm: BaseLLM,
-    prefix: Prefix,
-    terminal: ZTerminal,
-    choice_prompt: str = "You now contemplate your next step:",
-):
-    actions: List[Action] = [
-        MakeNote.default(llm=llm, prefix=prefix),
-        UseTerminal.default(llm=llm, prefix=prefix, terminal=terminal),
-        EditFile.default(llm=llm, prefix=prefix),
-        Finish.default(),
-    ]
-
-    action_choice_template = ChoicePromptTemplate(
-        prefix=ChainedPromptTemplate("", prefix, choice_prompt),
-        choices=[action.choice_text for action in actions],
-    )
-    action_choice = ChoiceChain(
-        llm=llm,
-        prompt=action_choice_template,
-        choice_num_key="action_num",
-        choice_key="action",
-    )
-
-    return ActionChain(option_picker=action_choice, actions=actions)
-
-
 class ZammEmployee(AgentExecutor):
     agent: ZammEmployeeBrain
     terminal: ZTerminal
@@ -118,10 +83,18 @@ class ZammEmployee(AgentExecutor):
         else:
             prefix = EMPLOYEE_TEACHING_INTRO_TEMPLATE
 
+        def create_new_employee() -> AgentExecutor:
+            return self.__class__(
+                llm=self.agent.llm_chain.llm,
+                condense_memory=self.agent.condense_memory,
+                terminal_safe_mode=self.terminal.safe_mode,
+            )
+
         action_chain = default_action_chain(
             llm=self.agent.llm_chain.llm,
             prefix=prefix,
             terminal=self.terminal,
+            agent_creator=create_new_employee,
         )
         results = action_chain(
             {
@@ -129,7 +102,7 @@ class ZammEmployee(AgentExecutor):
                 "agent_scratchpad": self.agent._construct_scratchpad_structured(memory),
             }
         )
-        return results[action_chain.step_output_key]
+        return results[action_chain.chains[-1].step_output_key]
 
     def _return_structured(
         self, output: StepOutput, memory: AgentMemory
