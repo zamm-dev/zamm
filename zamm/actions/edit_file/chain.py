@@ -46,7 +46,7 @@ class FileOutputChain(LLMChain, BaseModel):
         return self.prompt.input_variables + ["new_contents"]
 
     def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
-        new_contents = self.llm(self.prompt.format(**inputs), stop=["```"]).strip()
+        new_contents = self.llm(self.prompt.format(**inputs), stop=["```"]).strip("\n")
         FileSystemTool().write_file(inputs["file_path"], new_contents)
         return {**inputs, "new_contents": new_contents}
 

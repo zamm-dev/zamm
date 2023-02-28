@@ -13,12 +13,18 @@ Let's first create the private Makefile that we want to apply every time we run 
 ```
 .PHONY: update-main
 
+CURRENT_BRANCH := $(shell git branch --show-current)
+
 update-main:
-        git checkout main
-        git pull
+	git checkout main
+	git pull
 
 new-branch: update-main
-        git checkout -b $(NAME)
+	git checkout -b $(NAME)
+
+sync-main: update-main
+	git checkout $(CURRENT_BRANCH)
+	git rebase main
 ```
 
 ## Defining the custom `make` command
