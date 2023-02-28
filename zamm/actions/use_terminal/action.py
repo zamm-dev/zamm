@@ -34,7 +34,12 @@ class TerminalOutput(ZStepOutput):
             logger_template=TerminalUsageLogger(),
         )
 
-    def _log(self, previous: Optional[StepOutput], next: Optional[StepOutput]) -> str:
+    def _log(
+        self,
+        condensed: bool,
+        previous: Optional[StepOutput],
+        next: Optional[StepOutput],
+    ) -> str:
         template = self.logger_template
         if self.output == "":
             template = PromptTemplate(

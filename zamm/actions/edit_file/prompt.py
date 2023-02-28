@@ -60,3 +60,10 @@ You replace the file contents with
 ```
 """.rstrip(),
 )
+
+CONDENSED_LOGGER = PromptTemplate(
+    input_variables=["file_path"],
+    template="""
+You have edited `{file_path}` as per instructions.
+""".rstrip(),
+)

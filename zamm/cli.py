@@ -230,6 +230,17 @@ def execute(
         ),
     ),
     session_recording: Optional[typer.FileText] = SESSION_RECORD_OPTION,
+    last_session: bool = typer.Option(
+        False,
+        help="The last session that was in progress",
+    ),
+    condense_memory: bool = typer.Option(
+        False,
+        help=(
+            "Condense agent memory during in-progress execution. Saves on tokens but "
+            "may result in decreased performance."
+        ),
+    ),
     model: str = typer.Option(
         "text-davinci-003",
         help="What OpenAI large language model to use for execution",
@@ -245,6 +256,8 @@ def execute(
     """Ask the LLM to do something."""
 
     cassette_path = get_cassette_path(cassette=session_recording)
+    if last_session:
+        cassette_path = get_last_session()
 
     llm = OpenAI(model_name=model, temperature=0, max_tokens=-1)
     if session_recording is not None:
@@ -260,7 +273,11 @@ def execute(
         else:
             with open(documentation) as f:
                 tutorial = f.read()
-    employee = ZammEmployee(llm=llm, terminal_safe_mode=safety.value == "on")
+    employee = ZammEmployee(
+        llm=llm,
+        condense_memory=condense_memory,
+        terminal_safe_mode=safety.value == "on",
+    )
     execute_llm_task(
         employee=employee, task=task, tutorial=tutorial, cassette_path=cassette_path
     )

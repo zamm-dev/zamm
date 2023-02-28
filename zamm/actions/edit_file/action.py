@@ -9,7 +9,7 @@ from zamm.prompts.prefixed import Prefix
 from zamm.utils import safe_format
 
 from .chain import EditFileChain
-from .prompt import EDIT_LOGGER, NEW_FILE_LOGGER
+from .prompt import CONDENSED_LOGGER, EDIT_LOGGER, NEW_FILE_LOGGER
 
 
 class EditFileOutput(ZStepOutput):
@@ -52,8 +52,15 @@ class EditFileOutput(ZStepOutput):
             args["old_contents"] = self.old_contents
         return args
 
-    def _log(self, previous: Optional[StepOutput], next: Optional[StepOutput]) -> str:
-        if self.file_exists:
+    def _log(
+        self,
+        condensed: bool,
+        previous: Optional[StepOutput],
+        next: Optional[StepOutput],
+    ) -> str:
+        if condensed:
+            return safe_format(CONDENSED_LOGGER, self.template_args)
+        elif self.file_exists:
             return safe_format(EDIT_LOGGER, self.template_args)
         else:
             return safe_format(NEW_FILE_LOGGER, self.template_args)
