@@ -1,5 +1,6 @@
-from typing import List
+from typing import Callable, List
 
+from langchain.agents.agent import AgentExecutor
 from langchain.llms.base import BaseLLM
 
 from zamm.actions.base import Action
@@ -19,13 +20,14 @@ def default_action_chain(
     llm: BaseLLM,
     prefix: Prefix,
     terminal: ZTerminal,
+    agent_creator: Callable[[], AgentExecutor],
     choice_prompt: str = "You now contemplate your next step:",
 ):
     actions: List[Action] = [
         MakeNote.default(llm=llm, prefix=prefix),
         UseTerminal.default(llm=llm, prefix=prefix, terminal=terminal),
         EditFile.default(llm=llm, prefix=prefix),
-        FollowTutorial.default(llm=llm, prefix=prefix),
+        FollowTutorial.default(llm=llm, prefix=prefix, agent_creator=agent_creator),
         Finish.default(),
     ]
 

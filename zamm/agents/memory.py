@@ -43,19 +43,29 @@ class BaseAgentMemory(BaseModel, ABC):
 class AgentMemory(BaseAgentMemory):
     """Default Agent memory that assumes StepOutput type for all steps."""
 
-    _steps: List[StepOutput] = []
+    m_steps: List[StepOutput] = []
+    """Intermediate steps.
+
+    Prefixed with `m` because fields prefixed with underscores do not accept
+    assignment: https://github.com/pydantic/pydantic/issues/288 . We need assignment
+    because Pydnatic is in fact not creating a fresh new array upon object creation
+    here like it's supposed to.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(m_steps=[], **kwargs)
 
     def add_step(self, output: StepOutput) -> None:
         """Add step output to memory."""
-        self._steps.append(output)
+        self.m_steps.append(output)
 
     def steps(self) -> Sequence[StepOutput]:
         """Return all steps so far."""
-        return self._steps
+        return self.m_steps
 
     def as_intermediate_steps(self) -> List[Tuple[AgentAction, str]]:
         """Return intermediate steps in unstructured form.
 
         For backwards compatibility.
         """
-        return [output.as_intermediate_step() for output in self._steps]
+        return [output.as_intermediate_step() for output in self.m_steps]

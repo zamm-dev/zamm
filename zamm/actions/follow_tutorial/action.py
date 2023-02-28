@@ -1,5 +1,6 @@
-from typing import Any, Dict
+from typing import Any, Callable, Dict
 
+from langchain.agents.agent import AgentExecutor
 from langchain.llms.base import BaseLLM
 from langchain.schema import AgentAction
 
@@ -13,7 +14,10 @@ from .prompt import FOLLOW_TUTORIAL_LOGGER, FOLLOW_TUTORIAL_PROMPT
 
 
 class FollowTutorialOutput(ZStepOutput):
-    tutorial: str
+    documentation_path: str
+    documentation: str
+    task: str
+    output: str
 
     @classmethod
     def from_chain_output(cls, output: Dict[str, Any]):
@@ -24,24 +28,30 @@ class FollowTutorialOutput(ZStepOutput):
                 log="dummy log",
             ),
             observation="dummy observation",
-            tutorial=output["tutorial"],
+            documentation_path=output["documentation_path"],
+            documentation=output["documentation"],
+            task=output["task"],
+            output=output["output"],
             logger_template=FOLLOW_TUTORIAL_LOGGER,
         )
 
     @property
     def template_args(self) -> Dict[str, str]:
         """Construct the dict used to render this output"""
-        return {"tutorial": self.tutorial}
+        return {"documentation_path": self.documentation_path, "task": self.task}
 
 
 class FollowTutorial(Action):
     @classmethod
-    def default(cls, llm: BaseLLM, prefix: Prefix):
+    def default(
+        cls, llm: BaseLLM, prefix: Prefix, agent_creator: Callable[[], AgentExecutor]
+    ):
         return cls(
-            name="Follow a tutorial",
+            name="Follow instructions in a different file",
             output_type=FollowTutorialOutput,
             chain=FollowTutorialChain(
                 llm=llm,
                 prompt=ChainedPromptTemplate("", prefix, FOLLOW_TUTORIAL_PROMPT),
+                agent_creator=agent_creator,
             ),
         )

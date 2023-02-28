@@ -83,10 +83,18 @@ class ZammEmployee(AgentExecutor):
         else:
             prefix = EMPLOYEE_TEACHING_INTRO_TEMPLATE
 
+        def create_new_employee() -> AgentExecutor:
+            return self.__class__(
+                llm=self.agent.llm_chain.llm,
+                condense_memory=self.agent.condense_memory,
+                terminal_safe_mode=self.terminal.safe_mode,
+            )
+
         action_chain = default_action_chain(
             llm=self.agent.llm_chain.llm,
             prefix=prefix,
             terminal=self.terminal,
+            agent_creator=create_new_employee,
         )
         results = action_chain(
             {
