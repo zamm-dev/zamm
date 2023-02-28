@@ -4,7 +4,6 @@ import glob
 import os
 import sys
 from enum import Enum
-from importlib import resources
 from typing import Callable, List, Optional
 
 import typer
@@ -19,14 +18,12 @@ from vcr.record_mode import RecordMode
 from zamm.agents.employee import ZammEmployee
 from zamm.chains.ask_task import AskForTaskChain
 from zamm.llms.human import Human
-from zamm.utils import current_directory
+from zamm.utils import current_directory, read_documentation
 
 DOCUMENTATION_PATH = "documentation.zamm.md"
 VISUALIZE = True
 app_dirs = AppDirs(appname="zamm")
 ZAMM_SESSION_PATH = app_dirs.user_data_dir + "/sessions"
-INTERNAL_TUTORIAL_PREFIX = "@internal"
-INTERNAL_TUTORIAL_PACKAGE = "zamm.resources.tutorials"
 
 
 app = typer.Typer(pretty_exceptions_show_locals=False)
@@ -265,14 +262,7 @@ def execute(
     if documentation is None:
         tutorial = None
     else:
-        if documentation.startswith(INTERNAL_TUTORIAL_PREFIX):
-            internal_path = documentation[len(INTERNAL_TUTORIAL_PREFIX) + 1 :]
-            if not internal_path.endswith(".md"):
-                internal_path += ".md"
-            tutorial = resources.read_text(INTERNAL_TUTORIAL_PACKAGE, internal_path)
-        else:
-            with open(documentation) as f:
-                tutorial = f.read()
+        tutorial = read_documentation(documentation)
     employee = ZammEmployee(
         llm=llm,
         condense_memory=condense_memory,

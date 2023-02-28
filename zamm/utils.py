@@ -1,11 +1,16 @@
 import os
 import re
 from contextlib import contextmanager
+from importlib import resources
 from typing import Any, Dict, List, Union
 
 from fvalues import F
 from langchain.chains.base import Chain
 from langchain.prompts import BasePromptTemplate
+
+INTERNAL_TUTORIAL_PREFIX = "@internal"
+INTERNAL_TUTORIAL_PACKAGE = "zamm.resources.tutorials"
+INTERNAL_TUTORIAL_PATH = re.compile("^/zamm/resources/tutorials")
 
 
 def safe_inputs(
@@ -85,6 +90,21 @@ def remove_ansi_escapes(input):
             next_match = re.search(regex, line)
         cleaned.append(line)
     return "\n".join(cleaned)
+
+
+def read_documentation(documentation: str) -> str:
+    """Read documentation from a potentially internal path"""
+    documentation = re.sub(
+        INTERNAL_TUTORIAL_PATH, INTERNAL_TUTORIAL_PREFIX, documentation
+    )
+    if documentation.startswith(INTERNAL_TUTORIAL_PREFIX):
+        internal_path = documentation[len(INTERNAL_TUTORIAL_PREFIX) + 1 :]
+        if not internal_path.endswith(".md"):
+            internal_path += ".md"
+        return resources.read_text(INTERNAL_TUTORIAL_PACKAGE, internal_path)
+
+    with open(documentation) as f:
+        return f.read()
 
 
 @contextmanager
