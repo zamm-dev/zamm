@@ -1,6 +1,5 @@
 import langchain_visualizer  # isort:skip  # noqa: F401
 
-import pytest
 import vcr_langchain as vcr
 from langchain.llms import OpenAI
 
@@ -12,7 +11,6 @@ with open(DOCUMENTATION_PATH) as f:
     documentation = f.read()
 
 
-@pytest.mark.asyncio
 @vcr.use_cassette()
 async def test_success_checklist():
     llm = OpenAI(temperature=0)
