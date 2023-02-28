@@ -102,7 +102,7 @@ class ZammEmployee(AgentExecutor):
                 "agent_scratchpad": self.agent._construct_scratchpad_structured(memory),
             }
         )
-        return results[action_chain.step_output_key]
+        return results[action_chain.chains[-1].step_output_key]
 
     def _return_structured(
         self, output: StepOutput, memory: AgentMemory

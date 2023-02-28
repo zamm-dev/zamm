@@ -47,7 +47,7 @@ class FollowTutorial(Action):
         cls, llm: BaseLLM, prefix: Prefix, agent_creator: Callable[[], AgentExecutor]
     ):
         return cls(
-            name="Follow instructions in a different file",
+            name="Follow instructions from a file",
             output_type=FollowTutorialOutput,
             chain=FollowTutorialChain(
                 llm=llm,
