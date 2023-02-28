@@ -19,6 +19,18 @@ def test_directory_change():
         assert t.run_bash_command("pwd").strip().endswith("tests")
 
 
+def test_tabbed_script():
+    """Check whether we can capture tabbed output from the terminal."""
+    t = get_terminal()
+    assert t.run_bash_command("tests/resources/tabbed.sh") == "\\ta\n"
+
+
+def test_tabbed_file():
+    """Check whether we can capture tabbed output from files."""
+    t = get_terminal()
+    assert t.run_bash_command("cat tests/resources/tabbed.txt") == "\ta\n"
+
+
 def test_no_ansi_color():
     t = get_terminal()
     assert t.run_bash_command("tests/resources/colored.sh") == "Hello\nWorld\n"
