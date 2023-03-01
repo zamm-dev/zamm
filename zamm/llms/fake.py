@@ -27,13 +27,13 @@ class FakeLLM(LLM, BaseModel):
     def _check_stop(self, result: str, stop: Optional[List[str]]) -> str:
         if self.ensure_and_remove_stop:
             assert stop is not None, "Stop has not been set"
-            # stop is apparently a list... but it's a string everywhere else in the
-            # project. Just make it a str to stop mypy complaining
-            str_stop = str(stop)
-            assert result.endswith(
-                str_stop
-            ), f"Output '{result}' does not end in {stop}"
-            result = result[: len(result) - len(stop)]
+            found_stop = False
+            for s in stop:
+                if result.endswith(s):
+                    found_stop = True
+                    result = result[: len(result) - len(s)]
+                    break
+            assert found_stop, f"Output '{result}' does not end in {stop}"
 
         return result
 
