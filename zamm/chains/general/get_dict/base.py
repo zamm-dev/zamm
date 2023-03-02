@@ -2,11 +2,12 @@
 
 from typing import Any, Dict, List, Optional
 
-from langchain.chains import LLMChain, SequentialChain
+from langchain.chains import SequentialChain
 from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
 from pydantic import BaseModel, Extra
 
+from zamm.chains.general.llm import ZLLMChain
 from zamm.prompts.parser import DictOutputParser
 
 from .config import VariableConfig
@@ -24,12 +25,10 @@ class GetDictChain(Chain, BaseModel):
     and multi-step generation for comparison.
     """
 
-    one_step_stop: Optional[str]
-    """Stop specifically for one-step output."""
     prompter: MultipleOutputsPrompter  #: :meta private:
     # putting these two separately instead of a Union type because pydantic validation
     # fails when the LLMChain does not have values["chains"]
-    one_step_chain: Optional[LLMChain]  #: :meta private:
+    one_step_chain: Optional[ZLLMChain]  #: :meta private:
     multi_step_chain: Optional[SequentialChain]  #: :meta private:
     completions: Optional[Dict[str, str]]  #: :meta private:
 
@@ -66,19 +65,22 @@ class GetDictChain(Chain, BaseModel):
         one_step_chain = None
         multi_step_chain = None
         if one_step:
-            one_step_chain = LLMChain(
+            one_step_chain = ZLLMChain(
                 llm=llm,
                 prompt=prompter.prompt_template_for_full_input(),
+                # custom stop when running whole interaction
+                default_stop=[one_step_stop],
                 **chain_options,
             )
         else:
             chains = []
             for i, var in enumerate(prompter.variables):
                 chains.append(
-                    LLMChain(
+                    ZLLMChain(
                         llm=llm,
                         prompt=prompter.prompt_template_for_variable_at(i),
                         output_key=var.output_key,
+                        default_stop=[var.stop],
                         **chain_options,
                     )
                 )
@@ -93,7 +95,6 @@ class GetDictChain(Chain, BaseModel):
             prompter=prompter,
             one_step_chain=one_step_chain,
             multi_step_chain=multi_step_chain,
-            one_step_stop=one_step_stop,
             **chain_options,
         )
 
@@ -118,25 +119,13 @@ class GetDictChain(Chain, BaseModel):
 
     def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
         if self.one_step_chain:
-            with_stop = {**inputs, "stop": self.one_step_stop}
-            result = self.one_step_chain.apply_and_parse([with_stop])[0]
+            result = self.one_step_chain.apply_and_parse([inputs])[0]
             # typechecking above should ensure a DictOutputParser gets passed in if
             # we're doing this in one step
             assert isinstance(result, dict), "Please set DictOutputParser"
             self.completions = result
         else:
             assert self.multi_step_chain is not None, "No chains configured"
-            self.completions = {}
-            for var, chain in zip(
-                self.prompter.variables, self.multi_step_chain.chains
-            ):
-                assert isinstance(chain, LLMChain)
-                known_values = {
-                    **inputs,
-                    **self.completions,
-                    "stop": var.stop,
-                }
-                llm_result = chain.generate([known_values])
-                self.completions[var.output_key] = llm_result.generations[0][0].text
+            self.completions = self.multi_step_chain._call(inputs)
 
         return self.completions

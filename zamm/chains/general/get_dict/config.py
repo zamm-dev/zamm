@@ -51,11 +51,11 @@ class VariableConfig:
     stop: str = "\n"
     """The character to stop at when completing the value for this variable.
 
-    This defaults to a single double-quote, so that if your prompt goes
+    This defaults to a single newline, so that if your prompt goes
 
-    Action Input: "
+        Action Input:
 
-    then the LLM can know to terminate its input with a double-quote. If you expect the
+    then the LLM can know to terminate its input with a newline. If you expect the
     output to be multiline, then you may instead want to go with ''' or ```, and adjust
     the display string accordingly
 
