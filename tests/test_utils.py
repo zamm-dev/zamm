@@ -38,3 +38,13 @@ def test_escape_extraction():
 
     assert re.search(regex, "Detect\x1b[2Kthis").group() == "\x1b[2K"
     assert re.search(regex, "Detect\x1b[2Kthis").groups() == ("\x1b", "2K")
+
+
+def test_remove_multiple_lines():
+    input = b"  \x1b[34;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mfaiss-cpu\x1b[39m\x1b[39m (\x1b[39m\x1b[39;1m1.7.3\x1b[39;22m\x1b[39m)\x1b[39m: \x1b[34mInstalling...\x1b[39m\r\n  \x1b[32;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mflake8\x1b[39m\x1b[39m (\x1b[39m\x1b[32m6.0.0\x1b[39m\x1b[39m)\x1b[39m\r\n  \x1b[32;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mgoogle-search-results\x1b[39m\x1b[39m (\x1b[39m\x1b[32m2.4.1\x1b[39m\x1b[39m)\x1b[39m\r\n  \x1b[32;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mgorilla\x1b[39m\x1b[39m (\x1b[39m\x1b[32m0.4.0\x1b[39m\x1b[39m)\x1b[39m\r\n  \x1b[32;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36misort\x1b[39m\x1b[39m (\x1b[39m\x1b[32m5.11.4\x1b[39m\x1b[39m)\x1b[39m\r\n  \x1b[32;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mlangchain\x1b[39m\x1b[39m (\x1b[39m\x1b[32m0.0.100\x1b[39m\x1b[39m)\x1b[39m\r\n  \x1b[32;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mmypy\x1b[39m\x1b[39m (\x1b[39m\x1b[32m0.991\x1b[39m\x1b[39m)\x1b[39m\r\n  \x1b[32;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mopenai\x1b[39m\x1b[39m (\x1b[39m\x1b[32m0.26.4\x1b[39m\x1b[39m)\x1b[39m\r\n  \x1b[32;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mpytest\x1b[39m\x1b[39m (\x1b[39m\x1b[32m7.2.1\x1b[39m\x1b[39m)\x1b[39m\r\n  \x1b[32;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mvcrpy\x1b[39m\x1b[39m (\x1b[39m\x1b[32m4.2.1\x1b[39m\x1b[39m)\x1b[39m\r\n\x1b[10A\x1b[0J  \x1b[32;1m\xe2\x80\xa2\x1b[39;22m \x1b[39mInstalling \x1b[39m\x1b[36mflake8\x1b[39m\x1b[39m (\x1b[39m\x1b[32m6.0.0\x1b[39m\x1b[39m)\x1b[39m\r\n".decode(  # noqa
+        "utf-8"
+    )
+    assert (
+        remove_ansi_escapes(input.replace("\r\n", "\n"))
+        == "  • Installing flake8 (6.0.0)\n"
+    )
