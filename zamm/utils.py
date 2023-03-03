@@ -59,7 +59,7 @@ def f_join(joiner: str, substrings: List[Union[str, F]]) -> F:
 
 
 def ansi_escape_regex():
-    escape_command = r"\[([\d;]*m|\d+[A-K])"
+    escape_command = r"\[([\d;]*m|\d*[A-K])"
     rs = r"\r|\\r"
     escape_prefixes = "|".join([r"\\033", r"\\e", r"\x1b"])
     escapes = f"({escape_prefixes}){escape_command}"
@@ -83,7 +83,7 @@ def remove_ansi_escapes(input):
         while next_match is not None:
             full_match = next_match.group()
             _, command = next_match.groups()
-            if full_match == "\r" or full_match == "\\r" or command.endswith("K"):
+            if full_match == "\r" or full_match == "\\r":
                 line = line[next_match.end() :]
             elif command.endswith("A"):
                 num_lines = int(command[:-1])
@@ -97,6 +97,12 @@ def remove_ansi_escapes(input):
                     # do nothing because it only affects things after the cursor
                     pass
                 line = remove_match(line, next_match)
+            elif command.endswith("K"):
+                if command == "K" or command == "0K":
+                    # erase after cursor. no-op because not tracking cursor
+                    line = remove_match(line, next_match)
+                else:
+                    line = line[next_match.end() :]
             else:  # just remove the ANSI escape code if we can't interpret it
                 line = remove_match(line, next_match)
             next_match = re.search(regex, line)
