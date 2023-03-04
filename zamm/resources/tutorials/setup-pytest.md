@@ -1,8 +1,12 @@
 # Setting up `pytest`
 
-Every project should have automated testing set up, and `pytest` is a sensible default testing framework to use for Python projects. You can set up `pytest` for your project by following these steps:
+Every project should have automated testing set up, and `pytest` is a sensible default testing framework to use for Python projects. As such, if you are given a task such as:
 
-First, install `pytest` as as dev dependency.
+> Set up testing in this Python project
+
+then you can set up `pytest` for your project by following these steps:
+
+The very first command we run is to install `pytest` as a dev dependency.
 
 ```bash
 $ poetry add pytest --group dev

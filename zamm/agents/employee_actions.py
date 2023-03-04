@@ -31,7 +31,7 @@ def default_action_chain(
         PromptTemplate(
             input_variables=[],
             template="""
-Now, the next step in the employee training manual is (quoted below as a single line):
+Now, the next step or command in the employee training manual is (quoted below as a single line):
 
 > """.lstrip(),
         ),
