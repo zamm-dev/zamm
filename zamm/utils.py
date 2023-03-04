@@ -1,8 +1,9 @@
 import os
 import re
+import warnings
 from contextlib import contextmanager
 from importlib import resources
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Optional, Union
 
 from fvalues import F
 from langchain.chains.base import Chain
@@ -123,6 +124,34 @@ def read_documentation(documentation: str) -> str:
 
     with open(documentation) as f:
         return f.read()
+
+
+def get_stop_hit(input: str, stops: List[str]) -> Optional[str]:
+    """Find out which stop, if any, have been triggered."""
+    for stop in stops:
+        if stop in input:
+            return stop
+    return None
+
+
+def artificial_stop(
+    input: str, stops: List[str], stop_hit: Optional[str] = None
+) -> str:
+    if stop_hit is None:
+        stop_hit = get_stop_hit(input, stops)
+        assert stop_hit is not None, f"No stop from {stops} found in {input}"
+    separated_inputs = [x for x in input.split(stop_hit) if x]
+    if separated_inputs == []:
+        result = ""
+    else:
+        result = separated_inputs[0]
+        if len(separated_inputs) > 1:
+            rest = stop_hit.join(separated_inputs[1:])
+            warnings.warn(
+                f"Input: '{result}'\nIgnoring rest of input after stop: '{rest}'"
+            )
+
+    return result
 
 
 @contextmanager
