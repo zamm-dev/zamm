@@ -8,39 +8,6 @@ You can do so by following these steps:
 
 You proceed to use the terminal:
 
-```bash
-$ poetry new hello-world
-Created package hello_world in hello-world
-$ cd hello-world
-$ poetry version 0.0.0
-Bumping version from 0.1.0 to 0.0.0
-```
-
-You note that every project should have automated testing set up, and `pytest` is a sensible default testing framework to use for Python. So let's install `pytest` and make sure it's working.
-
-You proceed to use the terminal:
-
-```bash
-$ poetry add pytest --group dev
-Using version ^7.2.1 for pytest
-
-Updating dependencies
-Resolving dependencies... (0.3s)
-
-Writing lock file
-
-No dependencies to install or update
-$ poetry run pytest
-============================= test session starts ==============================
-platform linux -- Python 3.10.9, pytest-7.2.1, pluggy-1.0.0
-rootdir: /tmp/zamm/scratch/hello-world
-plugins: anyio-3.6.2, Faker-17.0.0, asyncio-0.20.3
-asyncio: mode=strict
-collected 0 items                                                              
-
-============================ no tests ran in 0.01s =============================
-```
-
 You note that this is a success! `pytest` runs successfully. Let's now turn our attention towards Python linting practices that will keep our projects in consistently good shape. `black` is a Python code formatter that ensures a consistent coding style throughout the codebase.
 
 You proceed to use the terminal:
@@ -385,21 +352,6 @@ release:
 	git tag -a -m "Creating version v$$(poetry version -s)" "v$$(poetry version -s)"
 	git push --follow-tags
 	poetry publish --build --username $$PYPI_USERNAME --password $$PYPI_PASSWORD
-```
-
-You note that we should create a test file so that `pytest` detects and runs our tests successfully.
-
-You decide to edit the file `tests/test_pytest_works.py`. It doesn't yet exist.
-
-You write out to the file the contents
-
-```
-"""Dummy test file."""
-
-
-def test_pytest_works() -> None:
-    """Make sure pytest can find and execute this test."""
-    assert 1 == 1
 ```
 
 You note that as usual, we check that we've configured `make` successfully.

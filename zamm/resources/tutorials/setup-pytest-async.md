@@ -57,7 +57,7 @@ If the `[tool.pytest.ini_options]` section doesn't yet exist, you should create 
 
 ## Confirmation
 
-Finally, let's create a new test file to test out our new async test config. Let's say we create `tests/test_new_async.py`:
+Let's create a new test file to test out our new async test config. Let's say we create `tests/test_new_async.py`:
 
 ```
 async def test_async_setup():
@@ -78,6 +78,12 @@ collected 1 item
 tests/test_new_async.py .                                                [100%]
 
 ============================== 1 passed in 0.03s ===============================
+```
+
+Finally, we clean up after ourselves by deleting that test:
+
+```bash
+$ rm tests/test_new_async.py
 ```
 
 That's all! **Don't take any more steps** because the task is now done!
