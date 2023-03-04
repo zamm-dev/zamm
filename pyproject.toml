@@ -12,7 +12,7 @@ zamm = "zamm.cli:app"
 python = "^3.9"
 vcr-langchain = "^0.0.16"
 langchain-visualizer = "^0.0.13"
-openai = "^0.26.4"
+openai = "^0.27.0"
 simple-term-menu = "^1.6.1"
 pexpect = "^4.8.0"
 typer = {extras = ["all"], version = "^0.7.0"}

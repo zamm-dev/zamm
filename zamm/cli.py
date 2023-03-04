@@ -11,12 +11,12 @@ import vcr_langchain as vcr
 import yaml
 from appdirs import AppDirs
 from langchain.llms.base import BaseLLM
-from langchain.llms.openai import OpenAI
 from ulid import ULID
 from vcr.record_mode import RecordMode
 
 from zamm.agents.employee import ZammEmployee
 from zamm.chains.ask_task import AskForTaskChain
+from zamm.llms.chat import new_openai
 from zamm.llms.human import Human
 from zamm.utils import current_directory, read_documentation
 
@@ -256,7 +256,7 @@ def execute(
     if last_session:
         cassette_path = get_last_session()
 
-    llm = OpenAI(model_name=model, temperature=0, max_tokens=-1)
+    llm = new_openai(model_name=model, temperature=0, max_tokens=-1)
     if session_recording is not None:
         session_recording.close()
     if documentation is None:
@@ -283,9 +283,13 @@ def prompt(
         [],
         help="LLM stopping tokens",
     ),
+    model: str = typer.Option(
+        "text-davinci-003",
+        help="What OpenAI large language model to use for execution",
+    ),
 ):
     """Test a single verbatim prompt. Good for iterative prompt development."""
-    llm = OpenAI(temperature=0, max_tokens=-1)
+    llm = new_openai(model_name=model, temperature=0, max_tokens=-1)
     escaped_stops = [s.encode("utf-8").decode("unicode_escape") for s in stop]
 
     async def run():
