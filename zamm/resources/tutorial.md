@@ -2,27 +2,6 @@ Say you want to do the following task:
 
 > Create a new Python project named hello-world
 
-You can do so by following these steps:
-
-
-
-You proceed to use the terminal:
-
-You note that this is a success! `pytest` runs successfully. Let's now turn our attention towards Python linting practices that will keep our projects in consistently good shape. `black` is a Python code formatter that ensures a consistent coding style throughout the codebase.
-
-You proceed to use the terminal:
-
-```bash
-$ poetry add black --group dev
-Using version ^23.1.0 for black
-
-Updating dependencies
-Resolving dependencies... (0.1s)
-
-Writing lock file
-
-No dependencies to install or update
-```
 
 You note that next, we should use `isort` to keep our imports sorted and minimized (as in, all unused imports removed from files).
 
