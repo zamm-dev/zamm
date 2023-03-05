@@ -2,10 +2,10 @@ from typing import Any, Dict, List
 
 from langchain.chains.base import Chain
 from langchain.chains.llm import LLMChain
-from langchain.chains.sequential import SequentialChain
 from langchain.llms.base import BaseLLM
 from pydantic import BaseModel
 
+from zamm.chains.general import LaxSequentialChain
 from zamm.chains.general.boolean_switch import BooleanSwitchChain
 from zamm.prompts.chained import ChainedPromptTemplate
 from zamm.prompts.prefixed import Prefix
@@ -79,12 +79,17 @@ class EditFileChain(BooleanSwitchChain):
         ask_file = AskFileChain(
             llm=llm, prompt=ChainedPromptTemplate("", prefix, WHICH_FILE_PROMPT)
         )
-        read_file = ReadFileChain()
-        pick_and_read_file = SequentialChain(
-            chains=[ask_file, read_file],
+        file_edit_chain = cls.for_file(llm, prefix)
+        return LaxSequentialChain(
+            chains=[ask_file, file_edit_chain],
             input_variables=ask_file.input_keys,
+            output_variables=file_edit_chain.output_keys,
             return_all=True,
         )
+
+    @classmethod
+    def for_file(cls, llm: BaseLLM, prefix: Prefix):
+        read_file = ReadFileChain()
         edit_file = FileOutputChain(
             llm=llm, prompt=ChainedPromptTemplate("", prefix, REPLACE_CONTENTS_PROMPT)
         )
@@ -92,7 +97,7 @@ class EditFileChain(BooleanSwitchChain):
             llm=llm, prompt=ChainedPromptTemplate("", prefix, NEW_CONTENTS_PROMPT)
         )
         return cls(
-            option_picker=pick_and_read_file,
+            option_picker=read_file,
             true_chain=edit_file,
             false_chain=new_file,
         )
