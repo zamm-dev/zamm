@@ -27,6 +27,7 @@ class ActionChain(OptionsChain, BaseModel):
     option_picker: ChoiceChain
     actions: List[Action]
     step_output_key: str = "step_output"
+    _should_trace: bool = False
 
     def __init__(self, actions: List[Action], **kwargs):
         options = [action.chain for action in actions]
