@@ -31,9 +31,9 @@ def default_action_chain(
         PromptTemplate(
             input_variables=[],
             template="""
-Now, the next step or command in the employee training manual is (quoted below as a single line):
+Write down the next step or command in the employee training manual as a single line, along with your reasoning:
 
-> """.lstrip(),
+> """.lstrip(),  # noqa
         ),
     )
     thought_chain = ZLLMChain(
