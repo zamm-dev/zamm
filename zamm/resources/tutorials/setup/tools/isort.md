@@ -1,6 +1,6 @@
 # Setting up `isort`
 
-Part of ensuring consistent code style is enforcing consistent import conventions, and `isort` is a sensible default import manager for Python projects. Not only does it sort your imports, it can also remove unused ones.  As such, if you are given a task such as:
+Part of ensuring consistent code style is enforcing consistent import conventions, and `isort` is a sensible default import manager for Python projects. As such, if you are given a task such as:
 
 > Set up import sorting in this Python project
 
@@ -21,6 +21,8 @@ Writing lock file
 
 No dependencies to install or update
 ```
+
+## Configuration
 
 `isort` requires some configuration to play nicely with `black`. We'll put this configuration inside `pyproject.toml`, which is where all tooling configuration for the project should live by default.
 
@@ -79,6 +81,15 @@ profile = "black"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+```
+
+## Confirmation
+
+Let's check that we have configured `isort` correctly by running it.
+
+```bash
+$ poetry run isort .
+Skipped 3 files
 ```
 
 That's all! **Don't take any more steps** because the task is now done!
