@@ -5,6 +5,7 @@ from langchain.prompts.prompt import PromptTemplate
 from langchain.schema import AgentAction
 
 from zamm.actions.base import Action
+from zamm.actions.edit_file import EditFileOutput
 from zamm.agents.step import StepOutput
 from zamm.agents.z_step import ZStepOutput
 from zamm.prompts.chained import ChainedPromptTemplate
@@ -24,6 +25,8 @@ from .terminal import ZTerminal
 class TerminalOutput(ZStepOutput):
     @classmethod
     def from_chain_output(cls, output: Dict[str, Any]):
+        if "file_path" in output:
+            return EditFileOutput.from_chain_output(output)
         return cls(
             decision=AgentAction(
                 tool=output["action"],
