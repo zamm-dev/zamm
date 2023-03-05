@@ -8,7 +8,7 @@ You can do so by following these steps:
 
 ## Project initialization
 
-Use `poetry` to create a new project and enter it.
+The very first command we run is to use `poetry` to create a new project. After project creation, we enter the newly created project directory.
 
 ```bash
 $ poetry new hello-world
