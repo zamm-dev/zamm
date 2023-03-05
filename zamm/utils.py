@@ -163,3 +163,17 @@ def current_directory(path: str):
         yield
     finally:
         os.chdir(og_cwd)
+
+
+@contextmanager
+def temporary_file(path: str):
+    if os.path.isfile(path):
+        os.remove(path)
+    assert not os.path.isfile(path)
+
+    try:
+        yield
+        assert os.path.isfile(path)
+    finally:
+        # remove it for future testing
+        os.remove(path)
