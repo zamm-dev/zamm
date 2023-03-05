@@ -3,12 +3,12 @@
 all: format lint test
 
 format:
-	poetry run autoflake -r -i --remove-all-unused-imports .
+	poetry run autoflake .
 	poetry run black .
 	poetry run isort .
 
 lint:
-	poetry run mypy . --exclude scratch
+	poetry run mypy .
 	poetry run black . --check
 	poetry run isort . --check
 	poetry run flake8 .
