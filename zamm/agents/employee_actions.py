@@ -1,10 +1,8 @@
-from typing import Callable, Dict, List
+from typing import Callable, List
 
 from langchain.agents.agent import AgentExecutor
-from langchain.chains.sequential import SequentialChain
 from langchain.llms.base import BaseLLM
 from langchain.prompts import PromptTemplate
-from pydantic import root_validator
 
 from zamm.actions.base import Action
 from zamm.actions.edit_file import EditFile
@@ -12,28 +10,12 @@ from zamm.actions.finish import Finish
 from zamm.actions.follow_tutorial import FollowTutorial
 from zamm.actions.note import MakeNote
 from zamm.actions.use_terminal import UseTerminal, ZTerminal
-from zamm.chains.general import ActionChain
+from zamm.chains.general import ActionChain, LaxSequentialChain
 from zamm.chains.general.choice.base import ChoiceChain
 from zamm.chains.general.choice.prompt import ChoicePromptTemplate
 from zamm.chains.general.llm import ZLLMChain
 from zamm.prompts.chained import ChainedPromptTemplate
 from zamm.prompts.prefixed import Prefix
-
-
-class LaxSequentialChain(SequentialChain):
-    @root_validator(pre=True)
-    def validate_chains(cls, values: Dict) -> Dict:
-        return values
-
-    def _validate_outputs(self, outputs: Dict[str, str]) -> None:
-        pass
-
-    def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
-        known_values = inputs.copy()
-        for i, chain in enumerate(self.chains):
-            outputs = chain(known_values, return_only_outputs=True)
-            known_values.update(outputs)
-        return known_values
 
 
 def default_action_chain(
