@@ -244,7 +244,7 @@ interactions:
     body: '{"file_path": "goodbye.sh"}'
     headers: {}
     method: POST
-    uri: tool://FileSystemTool
+    uri: tool://FileSystemTool/read_file
   response: !!python/object:zamm.actions.edit_file.filesystem.FileRead
     contents: null
     file_exists: false
@@ -324,7 +324,7 @@ interactions:
     body: '{"contents": "#!/bin/bash\necho \"Goodbye world\"", "file_path": "goodbye.sh"}'
     headers: {}
     method: POST
-    uri: tool://FileSystemTool
+    uri: tool://FileSystemTool/write_file
   response: true
 - request:
     body: '{"prompt": ["You are a simple button presser who simply follows instructions
@@ -547,13 +547,13 @@ interactions:
       Proceed\n2. Edit command\n3. Stop (or Ctrl-C)\n\n", "stop": [" "]}'
     headers: {}
     method: POST
-    uri: tool://Human
+    uri: tool://Human/_call
   response: '1'
 - request:
     body: '{"cmd": "./goodbye.sh"}'
     headers: {}
     method: POST
-    uri: tool://ZTerminal
+    uri: tool://ZTerminal/_get_raw_shell_update
   response: "./goodbye.sh\r\nbash: ./goodbye.sh: Permission denied\r\n$ "
 - request:
     body: '{"prompt": ["You are a simple button presser who simply follows instructions
@@ -780,13 +780,13 @@ interactions:
       Proceed\n2. Edit command\n3. Stop (or Ctrl-C)\n\n", "stop": [" "]}'
     headers: {}
     method: POST
-    uri: tool://Human
+    uri: tool://Human/_call
   response: '1'
 - request:
     body: '{"cmd": "chmod +x goodbye.sh"}'
     headers: {}
     method: POST
-    uri: tool://ZTerminal
+    uri: tool://ZTerminal/_get_raw_shell_update
   response: "chmod +x goodbye.sh\r\n$ "
 - request:
     body: '{"prompt": ["You are a simple button presser who simply follows instructions
@@ -1013,13 +1013,13 @@ interactions:
       Proceed\n2. Edit command\n3. Stop (or Ctrl-C)\n\n", "stop": [" "]}'
     headers: {}
     method: POST
-    uri: tool://Human
+    uri: tool://Human/_call
   response: '1'
 - request:
     body: '{"cmd": "./goodbye.sh"}'
     headers: {}
     method: POST
-    uri: tool://ZTerminal
+    uri: tool://ZTerminal/_get_raw_shell_update
   response: "./goodbye.sh\r\nGoodbye world\r\n$ "
 - request:
     body: '{"prompt": ["You are a simple button presser who simply follows instructions
