@@ -10,6 +10,8 @@ You proceed to use the terminal:
 ```bash
 $ git init
 Initialized empty Git repository in /tmp/zamm/scratch/hello-world/.git/
+$ git checkout -b main
+Switched to a new branch 'main'
 $ wget https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore -O .gitignore
 --2023-02-19 13:57:53--  https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore
 Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
