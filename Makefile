@@ -21,8 +21,6 @@ clean:
 # from https://stackoverflow.com/a/41386937
 	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 	rm -rf /tmp/zamm/scratch/
-	rm -rf scratch/
-	git checkout scratch/
 
 clean-tests:
 	find . -name "*.yaml" -type f | xargs rm -f
