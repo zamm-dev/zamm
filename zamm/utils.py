@@ -60,10 +60,21 @@ def f_join(joiner: str, substrings: List[Union[str, F]]) -> F:
 
 
 def ansi_escape_regex():
-    escape_command = r"\[([\d;]*m|\d*[A-K])"
+    # not really ANSI escape sequence, but similar vibe
     rs = r"\r|\\r"
-    escape_prefixes = "|".join([r"\\033", r"\\e", r"\x1b"])
-    escapes = f"({escape_prefixes}){escape_command}"
+
+    # how we know we're in an ANSI escape sequence
+    escape_prefixes = [r"\\033", r"\\e", r"\x1b"]
+    brackets = [r"\[", r"\("]
+    all_ansi_escapes = [
+        prefix + bracket for prefix in escape_prefixes for bracket in brackets
+    ]
+    all_escapes_regex = "|".join(all_ansi_escapes)
+
+    # the actual command once we know there's an escape
+    escape_command = r"[\d;]*m|\d*[A-K]"
+
+    escapes = f"({all_escapes_regex})({escape_command})"
     return re.compile("|".join([rs, escapes]))
 
 
