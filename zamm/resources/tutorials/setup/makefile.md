@@ -56,33 +56,19 @@ $ make
 poetry run autoflake .
 poetry run black .
 reformatted /tmp/zamm/scratch/hello-world/hello_world/__init__.py
-reformatted /tmp/zamm/scratch/hello-world/tests/__init__.py
-reformatted /tmp/zamm/scratch/hello-world/tests/test_pytest_works.py
 
-All done! ✨ 🍰 ✨
-3 files reformatted.
-poetry run isort .
-Skipped 2 files
-poetry run mypy . --exclude scratch
-Success: no issues found in 3 source files
-poetry run flake8 .
-poetry run black . --check
-All done! ✨ 🍰 ✨
-3 files would be left unchanged.
-poetry run isort . --check
-Skipped 2 files
-poetry run pytest -v
-============================= test session starts ==============================
-platform linux -- Python 3.10.9, pytest-7.2.1, pluggy-1.0.0 -- /home/amos/.cache/pypoetry/virtualenvs/zamm-gmabLGlH-py3.10/bin/python
-cachedir: .pytest_cache
-rootdir: /tmp/zamm/scratch/hello-world
-plugins: anyio-3.6.2, Faker-17.0.0, asyncio-0.20.3
-asyncio: mode=strict
-collected 1 item                                                               
+...
 
 tests/test_pytest_works.py::test_pytest_works PASSED                     [100%]
 
 ============================== 1 passed in 0.05s ===============================
 ```
 
-That's all! **Don't take any more steps** because the task is now done!
+Note that **it's okay if some of the steps fail**. The only goal here is to make sure that we've set up `make` successfully, not whether or not the make commands actually work. This would be an example of an incorrect Makefile setup which necessitates further probing:
+
+```bash
+$ make
+make: *** No targets specified and no makefile found.  Stop.
+```
+
+Otherwise, **DECLARE THE TASK DONE**. That's all! **Don't take any more steps** because the task is now done!
