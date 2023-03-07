@@ -22,22 +22,25 @@ def test_escape_extraction():
     assert re.search(regex, "Detect\\rthis").groups() == (None, None)
 
     assert re.search(regex, "Detect\033[31;1;4mthis").group() == "\033[31;1;4m"
-    assert re.search(regex, "Detect\033[31;1;4mthis").groups() == ("\033", "31;1;4m")
+    assert re.search(regex, "Detect\033[31;1;4mthis").groups() == ("\033[", "31;1;4m")
 
     assert re.search(regex, "Detect\\e[31;1;4mthis").group() == "\\e[31;1;4m"
-    assert re.search(regex, "Detect\\e[31;1;4mthis").groups() == ("\\e", "31;1;4m")
+    assert re.search(regex, "Detect\\e[31;1;4mthis").groups() == ("\\e[", "31;1;4m")
 
     assert re.search(regex, "Detect\x1b[31;1;4mthis").group() == "\x1b[31;1;4m"
-    assert re.search(regex, "Detect\x1b[31;1;4mthis").groups() == ("\x1b", "31;1;4m")
+    assert re.search(regex, "Detect\x1b[31;1;4mthis").groups() == ("\x1b[", "31;1;4m")
 
     assert re.search(regex, "Detect\u001b[31;1;4mthis").group() == "\u001b[31;1;4m"
     assert re.search(regex, "Detect\u001b[31;1;4mthis").groups() == (
-        "\u001b",
+        "\u001b[",
         "31;1;4m",
     )
 
     assert re.search(regex, "Detect\x1b[2Kthis").group() == "\x1b[2K"
-    assert re.search(regex, "Detect\x1b[2Kthis").groups() == ("\x1b", "2K")
+    assert re.search(regex, "Detect\x1b[2Kthis").groups() == ("\x1b[", "2K")
+
+    assert re.search(regex, "Detect\x1b(2Kthis").group() == "\x1b(2K"
+    assert re.search(regex, "Detect\x1b(2Kthis").groups() == ("\x1b(", "2K")
 
 
 def test_remove_double_digit_lines():
@@ -47,6 +50,15 @@ def test_remove_double_digit_lines():
     assert (
         remove_ansi_escapes(input.replace("\r\n", "\n"))
         == "  • Installing flake8 (6.0.0)\n"
+    )
+
+
+def test_remove_b():
+    # Pyhon REPL doesn't remove all B's -- try with `echo` instead to test
+    input = "\\e[1m\\e[32mSuccess: no issues found in 3 source files\\e(B\\e[m"
+    assert (
+        remove_ansi_escapes(input.replace("\r\n", "\n"))
+        == "Success: no issues found in 3 source files"
     )
 
 
