@@ -30,6 +30,7 @@ env:
 
 jobs:
   build:
+    name: Lint
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -70,6 +71,7 @@ env:
 
 jobs:
   build:
+    name: Test
     runs-on: ubuntu-latest
     strategy:
       matrix:
