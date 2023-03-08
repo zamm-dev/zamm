@@ -32,7 +32,9 @@ class FileSystemTool(BaseModel):
 
     def interpret_path(self, file_path: str) -> str:
         """Makes sure that ~ gets interpreted as home directory instead of filename."""
-        return os.path.expanduser(file_path)
+        expanded = os.path.expanduser(file_path)
+        absolute = os.path.abspath(expanded)
+        return absolute
 
     @property
     def tab_regex(self):

@@ -6,7 +6,7 @@ Say you want to do the following task:
 
 You can do so by following these steps:
 
-First check if the Github API token is available. Since this file may be read and executed by an LLM, we avoid executing a command that actually prints the token out to screen.
+The very first command we run is to check if the Github API token is available. Since this file may be read and executed by an LLM, we avoid executing a command that actually prints the token out to screen.
 
 ```bash
 $ [[ "$GITHUB_TOKEN" =~ ^github_pat_ ]] && echo "Github API token exists"

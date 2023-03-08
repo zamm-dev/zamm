@@ -3,12 +3,12 @@
 all: format lint test
 
 format:
-	poetry run autoflake -r -i --remove-all-unused-imports .
+	poetry run autoflake .
 	poetry run black .
 	poetry run isort .
 
 lint:
-	poetry run mypy . --exclude scratch
+	poetry run mypy .
 	poetry run black . --check
 	poetry run isort . --check
 	poetry run flake8 .
@@ -21,8 +21,6 @@ clean:
 # from https://stackoverflow.com/a/41386937
 	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
 	rm -rf /tmp/zamm/scratch/
-	rm -rf scratch/
-	git checkout scratch/
 
 clean-tests:
 	find . -name "*.yaml" -type f | xargs rm -f

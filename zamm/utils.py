@@ -131,7 +131,13 @@ def read_documentation(documentation: str) -> str:
         internal_path = documentation[len(INTERNAL_TUTORIAL_PREFIX) + 1 :]
         if not internal_path.endswith(".md"):
             internal_path += ".md"
-        return resources.read_text(INTERNAL_TUTORIAL_PACKAGE, internal_path)
+        package_dirs = internal_path.split("/")
+        internal_package_cont = ".".join(package_dirs[:-1])
+        if internal_package_cont == "":
+            full_package = INTERNAL_TUTORIAL_PACKAGE
+        else:
+            full_package = f"{INTERNAL_TUTORIAL_PACKAGE}.{internal_package_cont}"
+        return resources.read_text(full_package, package_dirs[-1])
 
     with open(documentation) as f:
         return f.read()
