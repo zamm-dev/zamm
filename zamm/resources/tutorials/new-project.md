@@ -23,9 +23,15 @@ $ poetry version 0.0.0
 Bumping version from 0.1.0 to 0.0.0
 ```
 
-## Development infrastructure
+## Development tooling
 
 - Follow [these instructions](/zamm/resources/tutorials/setup/tools/default.md) to set up default Python dev tooling
-- Follow [these instructions](/zamm/resources/tutorials/setup/makefile.md) to set up a Makefile
+- Follow the instructions at [`makefile.md`](/zamm/resources/tutorials/setup/makefile.md) to set up a Makefile. This Makefile will make use of all the dev tooling set up in the previous step.
+
+## Repository setup
+
+We are going to create a Git repository to facilitate version control and collaboration.
+
+- Follow the instructions at [`license.md`](/zamm/resources/tutorials/setup/license.md) to set up a license for the project. Licensing will need to be explicit if we want anyone else to use the code.
 
 That's all! **Don't take any more steps** because the task is now done!

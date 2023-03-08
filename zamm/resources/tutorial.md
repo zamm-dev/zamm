@@ -25,45 +25,6 @@ Saving to: ‘.gitignore’
 2023-02-19 13:57:53 (81.4 MB/s) - ‘.gitignore’ saved [3078/3078]
 ```
 
-You note that we need to set up licensing for this repo. We can start with the MIT license by default. However, the license includes a copyright message at the top bearing the copyright-holder's name. If you're an LLM, one trick you can do is to get the user's name from their Git config using the terminal:
-
-You proceed to use the terminal:
-
-```bash
-$ git config --global user.name
-Amos Jun-yeung Ng
-```
-
-You note that the name being output here. For me, it is "Amos Jun-yeung Ng" because that is my name. Whatever the output of this command is, put it into the `LICENSE` file when writing the MIT license.
-
-You decide to edit the file `LICENSE`. It doesn't yet exist.
-
-You write out to the file the contents
-
-```
-MIT License
-
-Copyright (c) 2023 Amos Jun-yeung Ng
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
 You proceed to use the terminal:
 
 ```bash
