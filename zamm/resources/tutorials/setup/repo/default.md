@@ -11,5 +11,6 @@ You can do so by following these steps:
 - Follow the instructions at [`pre-commit.md`](/zamm/resources/tutorials/setup/repo/pre-commit.md) to setup Git pre-commit hooks.
 - Follow the instructions at [`github-workflows.md`](/zamm/resources/tutorials/setup/repo/github-workflows.md) to setup Github workflows. We haven't uploaded the project to Github yet, but that's okay because these workflows will run once the upload happens.
 - Follow the instructions at [`github.md`](/zamm/resources/tutorials/setup/repo/github.md) to upload this new repo to Github.
+- Follow the instructions at [`branch-protection.md`](/zamm/resources/tutorials/setup/repo/branch-protection.md) to protect the `main` branch on Github. This makes it so that any pull requests will have to pass all status checks before they get merged.
 
 That's all! **Don't take any more steps** because the task is now done!
