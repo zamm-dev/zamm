@@ -2,11 +2,11 @@
 
 Say you want to do the following task:
 
-> Set up Github workflows to lint and test project code
+> Set up Github workflows to lint and test project code for Python versions 3.9 to 3.11
 
 You can do so by following these steps:
 
-First we make note of the poetry version.
+The very first command we run is to make note of the poetry version.
 
 ```bash
 $ poetry --version
@@ -15,7 +15,7 @@ Poetry (version 1.3.1)
 
 Note that the poetry version here is 1.3.1, so that's what we'll use when creating our Github workflows. Adjust accordingly if your output differs.
 
-Now, create the lint workflow file `.github/workflows/lint.yml` with the following contents:
+Now, create the lint workflow file `.github/workflows/lint.yml`. Note that the tasks asks for Python versions from 3.9 to 3.11, so the `python-version` list will therefore contain entries for Python versions 3.9, 3.10, and 3.11.
 
 ```
 name: lint
@@ -55,7 +55,7 @@ jobs:
           make lint
 ```
 
-Next, create the test workflow file `.github/workflows/test.yml` with the following contents:
+Next, create the test workflow file `.github/workflows/test.yml`. Note again that the tasks asks for Python versions from 3.9 to 3.11, so the `python-version` list will therefore contain entries for Python versions 3.9, 3.10, and 3.11.
 
 ```
 name: test
