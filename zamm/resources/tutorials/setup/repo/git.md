@@ -1,17 +1,28 @@
-Say you want to do the following task:
+# Initializing a Git repo
 
-> Create a new Python project named hello-world
+Every non-trivial project requires version control. The most popular version control system, `git`, ,is a sensible default to use for this purpose. So, if you are given a task such as:
 
+> Initialize a Git repo
 
-You note that any good project requires version control. We'll go with the most popular, `git`.
+then you can do so by following these steps:
 
-You proceed to use the terminal:
+The very first command we run is to initialize the repo in the current directory.
 
 ```bash
 $ git init
 Initialized empty Git repository in /tmp/zamm/scratch/hello-world/.git/
+```
+
+Then, we change the primary branch to `main` because it requires fewer keystrokes than `master`.
+
+```bash
 $ git checkout -b main
 Switched to a new branch 'main'
+```
+
+Next, because we're creating a Python project, we download the Python `.gitignore` file from Github:
+
+```bash
 $ wget https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore -O .gitignore
 --2023-02-19 13:57:53--  https://raw.githubusercontent.com/github/gitignore/main/Python.gitignore
 Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
@@ -25,12 +36,12 @@ Saving to: ‘.gitignore’
 2023-02-19 13:57:53 (81.4 MB/s) - ‘.gitignore’ saved [3078/3078]
 ```
 
-You proceed to use the terminal:
+Finally, let's create our first commit.
 
 ```bash
 $ git add .
 $ git commit -m "Initial commit with ZAMM"
-[master (root-commit) 7a31990] Initial commit with ZAMM
+[main (root-commit) 7a31990] Initial commit with ZAMM
  12 files changed, 751 insertions(+)
  create mode 100644 .flake8
  create mode 100644 .github/workflows/lint.yml
@@ -46,13 +57,14 @@ $ git commit -m "Initial commit with ZAMM"
  create mode 100644 tests/test_pytest_works.py
 ```
 
-You note that make sure no files are left behind
+## Confirmation
 
-You proceed to use the terminal:
+Let's make sure that we've committed everything by making sure that the working tree is clean:
 
 ```bash
 $ git status
-On branch master
+On branch main
 nothing to commit, working tree clean
 ```
+
 That's all! **Don't take any more steps** because the task is now done!
