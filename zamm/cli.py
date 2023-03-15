@@ -18,6 +18,7 @@ from zamm.agents.employee import ZammEmployee
 from zamm.chains.ask_task import AskForTaskChain
 from zamm.llms.chat import new_openai
 from zamm.llms.human import Human
+from zamm.tasks import ADD_TYPES_AND_DOCUMENT_TEMPLATE
 from zamm.utils import current_directory, read_documentation
 
 DOCUMENTATION_PATH = "documentation.zamm.md"
@@ -295,5 +296,32 @@ def prompt(
     async def run():
         result = llm(prompt=raw.read(), stop=escaped_stops)
         print(result)
+
+    visualize_or_run(run)
+
+
+@app.command()
+def deflake(
+    code: Optional[typer.FileText] = typer.Option(
+        ...,
+        help="Code file for the LLM to type",
+    ),
+    model: str = typer.Option(
+        "code-davinci-002",
+        help="What OpenAI large language model to use for execution",
+    ),
+):
+    """Add types and documentation to the given file."""
+    llm = new_openai(model_name=model, temperature=0, max_tokens=-1)
+
+    async def run():
+        code_content = code.read()
+        code.close()
+        result = llm(
+            prompt=ADD_TYPES_AND_DOCUMENT_TEMPLATE.format(code=code_content), stop="```"
+        )
+        with open(code.name, "w") as f:
+            f.write(result)
+        return result
 
     visualize_or_run(run)
