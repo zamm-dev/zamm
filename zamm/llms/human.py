@@ -49,9 +49,8 @@ class Human(LLM):
 
         stop_hit = get_stop_hit(user_input, stop)
         while stop_hit is None:
-            new_input = input()
-            stop_hit = get_stop_hit(new_input, stop)
-            user_input += "\n" + new_input
+            user_input += "\n" + input()
+            stop_hit = get_stop_hit(user_input, stop)
 
         return artificial_stop(user_input, stop, stop_hit)
 
