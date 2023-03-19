@@ -13,7 +13,7 @@ from zamm.chains.bash_action_prompt import (
 from zamm.utils import f_join
 
 from .base import CustomAgent
-from .employee_actions import default_action_chain
+from .employee_actions import action_with_thought_chain, default_action_chain
 from .memory import AgentMemory, BaseAgentMemory
 from .step import StepOutput
 
@@ -54,6 +54,7 @@ class ZammEmployee(AgentExecutor):
     agent: ZammEmployeeBrain
     terminal: ZTerminal
     max_iterations: Optional[int] = 100
+    think_before_acting: bool = False
 
     def __init__(
         self,
@@ -90,19 +91,29 @@ class ZammEmployee(AgentExecutor):
                 terminal_safe_mode=self.terminal.safe_mode,
             )
 
-        action_chain = default_action_chain(
-            llm=self.agent.llm_chain.llm,
-            prefix=prefix,
-            terminal=self.terminal,
-            agent_creator=create_new_employee,
-        )
+        if self.think_before_acting:
+            action_chain = action_with_thought_chain(
+                llm=self.agent.llm_chain.llm,
+                prefix=prefix,
+                terminal=self.terminal,
+                agent_creator=create_new_employee,
+            )
+            output_key = action_chain.chains[-1].step_output_key
+        else:
+            action_chain = default_action_chain(
+                llm=self.agent.llm_chain.llm,
+                prefix=prefix,
+                terminal=self.terminal,
+                agent_creator=create_new_employee,
+            )
+            output_key = action_chain.step_output_key
         results = action_chain(
             {
                 **memory.inputs,
                 "agent_scratchpad": self.agent._construct_scratchpad_structured(memory),
             }
         )
-        return results[action_chain.chains[-1].step_output_key]
+        return results[output_key]
 
     def _return_structured(
         self, output: StepOutput, memory: AgentMemory

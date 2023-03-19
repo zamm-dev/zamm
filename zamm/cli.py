@@ -239,6 +239,10 @@ def execute(
             "may result in decreased performance."
         ),
     ),
+    think_before_acting: bool = typer.Option(
+        True,
+        help="Asks LLM to think before acting. Increases performance but is costly.",
+    ),
     model: str = typer.Option(
         "text-davinci-003",
         help="What OpenAI large language model to use for execution",
@@ -268,6 +272,7 @@ def execute(
         llm=llm,
         condense_memory=condense_memory,
         terminal_safe_mode=safety.value == "on",
+        think_before_acting=think_before_acting,
     )
     execute_llm_task(
         employee=employee, task=task, tutorial=tutorial, cassette_path=cassette_path
