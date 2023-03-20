@@ -1,7 +1,7 @@
 from langchain.prompts.prompt import PromptTemplate
+from langchain_contrib.llms.fake import FakeLLM
 
 from zamm.actions.edit_file import FileOutputChain
-from zamm.llms.fake import FakeLLM
 from zamm.utils import temporary_file
 
 
