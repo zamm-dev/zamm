@@ -1,7 +1,6 @@
 from typing import Any, Dict
 
-from langchain.llms.base import BaseLLM
-from langchain.schema import AgentAction
+from langchain.schema import AgentAction, BaseLanguageModel
 
 from zamm.actions.base import Action
 from zamm.agents.z_step import ZStepOutput
@@ -37,7 +36,7 @@ class NoteOutput(ZStepOutput):
 
 class MakeNote(Action):
     @classmethod
-    def default(cls, llm: BaseLLM, prefix: Prefix):
+    def default(cls, llm: BaseLanguageModel, prefix: Prefix):
         return cls(
             name="Make a mental note to yourself",
             output_type=NoteOutput,

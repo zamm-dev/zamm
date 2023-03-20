@@ -2,8 +2,7 @@ from typing import Any, Dict, List, Optional
 
 from langchain.agents.agent import AgentExecutor
 from langchain.agents.tools import Tool
-from langchain.llms.base import BaseLLM
-from langchain.schema import AgentAction, AgentFinish
+from langchain.schema import AgentAction, AgentFinish, BaseLanguageModel
 
 from zamm.actions.use_terminal import ZTerminal
 from zamm.chains.bash_action_prompt import (
@@ -58,7 +57,7 @@ class ZammEmployee(AgentExecutor):
 
     def __init__(
         self,
-        llm: BaseLLM,
+        llm: BaseLanguageModel,
         condense_memory: bool = False,
         tools: Optional[List[Tool]] = None,
         terminal_safe_mode: bool = True,

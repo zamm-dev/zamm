@@ -1,8 +1,8 @@
 from typing import Callable, List
 
 from langchain.agents.agent import AgentExecutor
-from langchain.llms.base import BaseLLM
 from langchain.prompts import PromptTemplate
+from langchain.schema import BaseLanguageModel
 
 from zamm.actions.base import Action
 from zamm.actions.edit_file import EditFile
@@ -19,7 +19,7 @@ from zamm.prompts.prefixed import Prefix
 
 
 def default_action_chain(
-    llm: BaseLLM,
+    llm: BaseLanguageModel,
     prefix: Prefix,
     terminal: ZTerminal,
     agent_creator: Callable[[], AgentExecutor],
@@ -47,7 +47,7 @@ def default_action_chain(
 
 
 def action_with_thought_chain(
-    llm: BaseLLM,
+    llm: BaseLanguageModel,
     prefix: Prefix,
     terminal: ZTerminal,
     agent_creator: Callable[[], AgentExecutor],

@@ -1,8 +1,7 @@
 from typing import Any, Dict, Optional
 
-from langchain.llms.base import BaseLLM
 from langchain.prompts.prompt import PromptTemplate
-from langchain.schema import AgentAction
+from langchain.schema import AgentAction, BaseLanguageModel
 
 from zamm.actions.base import Action
 from zamm.actions.edit_file import EditFileOutput
@@ -70,7 +69,7 @@ class TerminalOutput(ZStepOutput):
 
 class UseTerminal(Action):
     @classmethod
-    def default(cls, llm: BaseLLM, prefix: Prefix, terminal: ZTerminal):
+    def default(cls, llm: BaseLanguageModel, prefix: Prefix, terminal: ZTerminal):
         return cls(
             name="Use the terminal (to run a command, not to edit a file)",
             output_type=TerminalOutput,

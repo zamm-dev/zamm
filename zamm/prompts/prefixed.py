@@ -1,12 +1,13 @@
 from typing import Any, List, Optional, Union
 
-from langchain.prompts import BasePromptTemplate, PromptTemplate
+from langchain.prompts import PromptTemplate
+from langchain.prompts.base import StringPromptTemplate
 
-Prefix = Union[str, BasePromptTemplate]
+Prefix = Union[str, StringPromptTemplate]
 
 
-class PrefixedPromptTemplate(BasePromptTemplate):
-    prefix: BasePromptTemplate
+class PrefixedPromptTemplate(StringPromptTemplate):
+    prefix: StringPromptTemplate
 
     def __init__(
         self,

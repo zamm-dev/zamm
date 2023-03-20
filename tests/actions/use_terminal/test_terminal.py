@@ -1,5 +1,6 @@
+from langchain_contrib.utils.tests import current_directory
+
 from zamm.actions.use_terminal import ZTerminal
-from zamm.utils import current_directory
 
 
 def get_terminal() -> ZTerminal:
@@ -12,7 +13,7 @@ def test_terminal_simple_bash():
 
 
 def test_directory_change():
-    with current_directory("."):  # reset to present cwd after test
+    with current_directory():  # reset to present cwd after test
         t = get_terminal()
         assert t.run_bash_command("pwd").strip().endswith("zamm")
         t.run_bash_command("cd tests")

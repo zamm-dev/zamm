@@ -1,8 +1,8 @@
 from typing import Dict, Optional, Sequence, Tuple
 
 from langchain.agents.agent import Agent
-from langchain.llms.base import BaseLLM
 from langchain.prompts.base import BasePromptTemplate
+from langchain.schema import BaseLanguageModel
 from langchain.tools import BaseTool
 from pydantic import root_validator
 
@@ -38,7 +38,7 @@ class CustomAgent(Agent):
         return values
 
     @classmethod
-    def from_llm(cls, llm: BaseLLM):
+    def from_llm(cls, llm: BaseLanguageModel):
         return cls(llm_chain=DummyLLMChain(llm=llm))
 
 

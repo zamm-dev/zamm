@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 from langchain.chains.base import Chain
 from langchain.chains.llm import LLMChain
-from langchain.llms.base import BaseLLM
+from langchain.schema import BaseLanguageModel
 from pydantic import BaseModel
 
 from zamm.chains.general import LaxSequentialChain
@@ -75,7 +75,7 @@ class EditFileChain(BooleanSwitchChain):
         return outputs["file_exists"]
 
     @classmethod
-    def default(cls, llm: BaseLLM, prefix: Prefix):
+    def default(cls, llm: BaseLanguageModel, prefix: Prefix):
         ask_file = AskFileChain(
             llm=llm, prompt=ChainedPromptTemplate("", prefix, WHICH_FILE_PROMPT)
         )
@@ -88,7 +88,7 @@ class EditFileChain(BooleanSwitchChain):
         )
 
     @classmethod
-    def for_file(cls, llm: BaseLLM, prefix: Prefix):
+    def for_file(cls, llm: BaseLanguageModel, prefix: Prefix):
         read_file = ReadFileChain()
         edit_file = FileOutputChain(
             llm=llm, prompt=ChainedPromptTemplate("", prefix, REPLACE_CONTENTS_PROMPT)

@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
 from langchain.chains.base import Chain
-from langchain.prompts.base import BasePromptTemplate
+from langchain.prompts.base import StringPromptTemplate
 from langchain.schema import AgentFinish
 
 from zamm.actions.base import Action
@@ -27,7 +27,7 @@ class FinishChain(Chain):
 
 
 class FinishOutput(ZStepOutput):
-    logger_template: BasePromptTemplate = DummyPromptTemplate()
+    logger_template: StringPromptTemplate = DummyPromptTemplate()
 
     def log(self, **kwargs) -> str:
         return self.decision.log

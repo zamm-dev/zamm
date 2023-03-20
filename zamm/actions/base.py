@@ -1,7 +1,7 @@
 from typing import Any, Dict, Type
 
 from langchain.chains.base import Chain
-from langchain.llms.base import BaseLLM
+from langchain.schema import BaseLanguageModel
 from langchain.tools.base import BaseTool
 
 from zamm.agents.z_step import DummyStepOutput, ZStepOutput
@@ -38,7 +38,10 @@ class Action(BaseTool):
 
 class DummyAction(Action):
     def __init__(
-        self, llm: BaseLLM, output_type: Type[ZStepOutput] = DummyStepOutput, **kwargs
+        self,
+        llm: BaseLanguageModel,
+        output_type: Type[ZStepOutput] = DummyStepOutput,
+        **kwargs
     ):
         super().__init__(
             chain=DummyLLMChain(llm=llm), output_type=output_type, **kwargs
