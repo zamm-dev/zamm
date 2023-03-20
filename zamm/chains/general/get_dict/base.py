@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from langchain.chains import SequentialChain
 from langchain.chains.base import Chain
-from langchain.schema import BaseLanguageModel
+from langchain.llms.base import BaseLLM
 from pydantic import BaseModel, Extra
 
 from zamm.chains.general.llm import ZLLMChain
@@ -39,7 +39,7 @@ class GetDictChain(Chain, BaseModel):
 
     def __init__(
         self,
-        llm: BaseLanguageModel,
+        llm: BaseLLM,
         prefix: str,
         variables: Optional[Dict[str, str]] = None,
         variable_configs: Optional[List[VariableConfig]] = None,

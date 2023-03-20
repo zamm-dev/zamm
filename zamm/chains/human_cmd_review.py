@@ -1,8 +1,8 @@
 from typing import Any, Dict
 
 from langchain.chains.llm import LLMChain
+from langchain.llms.base import BaseLLM
 from langchain.prompts.prompt import PromptTemplate
-from langchain.schema import BaseLanguageModel
 
 from zamm.chains.general import ChoiceChain, ChoicePromptTemplate, ErrorChain, NoOpChain
 from zamm.chains.general.options_chain import OptionsChain
@@ -36,7 +36,7 @@ class HumanCommandReviewChain(OptionsChain):
         """The index of the option chosen."""
         return int(picker_output[self.choice_num_key]) - 1
 
-    def __init__(self, llm: BaseLanguageModel, **kwargs):
+    def __init__(self, llm: BaseLLM, **kwargs):
         option_picker = ChoiceChain(
             llm=llm,
             prompt=COMMAND_REVIEW_TEMPLATE,

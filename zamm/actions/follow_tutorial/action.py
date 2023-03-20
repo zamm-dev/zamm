@@ -1,7 +1,8 @@
 from typing import Any, Callable, Dict
 
 from langchain.agents.agent import AgentExecutor
-from langchain.schema import AgentAction, BaseLanguageModel
+from langchain.llms.base import BaseLLM
+from langchain.schema import AgentAction
 
 from zamm.actions.base import Action
 from zamm.agents.z_step import ZStepOutput
@@ -44,7 +45,7 @@ class FollowTutorial(Action):
     @classmethod
     def default(
         cls,
-        llm: BaseLanguageModel,
+        llm: BaseLLM,
         prefix: Prefix,
         agent_creator: Callable[[], AgentExecutor],
     ):

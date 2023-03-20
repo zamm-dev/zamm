@@ -10,7 +10,7 @@ import typer
 import vcr_langchain as vcr
 import yaml
 from appdirs import AppDirs
-from langchain.schema import BaseLanguageModel
+from langchain.llms.base import BaseLLM
 from langchain_contrib.utils.tests import current_directory
 from ulid import ULID
 from vcr.record_mode import RecordMode
@@ -56,7 +56,7 @@ def run_chain(cassette_path: str, run: Callable):
 
 
 def play_interactions(
-    llm: BaseLanguageModel,
+    llm: BaseLLM,
     cassette_path: str,
     tutorial_output_path: str,
 ):

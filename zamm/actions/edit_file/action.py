@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 
-from langchain.schema import AgentAction, BaseLanguageModel
+from langchain.llms.base import BaseLLM
+from langchain.schema import AgentAction
 
 from zamm.actions.base import Action
 from zamm.agents.z_step import StepOutput, ZStepOutput
@@ -67,7 +68,7 @@ class EditFileOutput(ZStepOutput):
 
 class EditFile(Action):
     @classmethod
-    def default(cls, llm: BaseLanguageModel, prefix: Prefix):
+    def default(cls, llm: BaseLLM, prefix: Prefix):
         return cls(
             name="Edit a file",
             output_type=EditFileOutput,

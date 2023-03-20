@@ -2,7 +2,7 @@ from typing import Any, Dict, List
 
 from langchain.chains.base import Chain
 from langchain.chains.llm import LLMChain
-from langchain.schema import BaseLanguageModel
+from langchain.llms.base import BaseLLM
 from pydantic import BaseModel
 
 from zamm.chains.general import LaxSequentialChain
@@ -27,6 +27,7 @@ class AskFileChain(LLMChain, BaseModel):
         return ["file_path"]
 
     def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
+        assert isinstance(self.llm, BaseLLM)
         file_path = (
             self.llm(self.prompt.format(**inputs), stop=["`", "\n"]).strip().strip("`")
         )
@@ -46,6 +47,7 @@ class FileOutputChain(LLMChain, BaseModel):
         return self.prompt.input_variables + ["new_contents"]
 
     def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
+        assert isinstance(self.llm, BaseLLM)
         new_contents = self.llm(self.prompt.format(**inputs), stop=["\n```"])
         FileSystemTool().write_file(inputs["file_path"], new_contents)
         return {**inputs, "new_contents": new_contents}
@@ -75,7 +77,7 @@ class EditFileChain(BooleanSwitchChain):
         return outputs["file_exists"]
 
     @classmethod
-    def default(cls, llm: BaseLanguageModel, prefix: Prefix):
+    def default(cls, llm: BaseLLM, prefix: Prefix):
         ask_file = AskFileChain(
             llm=llm, prompt=ChainedPromptTemplate("", prefix, WHICH_FILE_PROMPT)
         )
@@ -88,7 +90,7 @@ class EditFileChain(BooleanSwitchChain):
         )
 
     @classmethod
-    def for_file(cls, llm: BaseLanguageModel, prefix: Prefix):
+    def for_file(cls, llm: BaseLLM, prefix: Prefix):
         read_file = ReadFileChain()
         edit_file = FileOutputChain(
             llm=llm, prompt=ChainedPromptTemplate("", prefix, REPLACE_CONTENTS_PROMPT)
