@@ -11,6 +11,7 @@ import vcr_langchain as vcr
 import yaml
 from appdirs import AppDirs
 from langchain.llms.base import BaseLLM
+from langchain_contrib.utils.tests import current_directory
 from ulid import ULID
 from vcr.record_mode import RecordMode
 
@@ -19,7 +20,7 @@ from zamm.chains.ask_task import AskForTaskChain
 from zamm.llms.chat import new_openai
 from zamm.llms.human import Human
 from zamm.tasks import ADD_TYPES_AND_DOCUMENT_TEMPLATE
-from zamm.utils import current_directory, read_documentation
+from zamm.utils import read_documentation
 
 DOCUMENTATION_PATH = "documentation.zamm.md"
 VISUALIZE = True
@@ -47,7 +48,7 @@ def run_chain(cassette_path: str, run: Callable):
         path=cassette_path,
         record_mode=RecordMode.NEW_EPISODES,
     ):
-        with current_directory(os.getcwd()):
+        with current_directory():
             try:
                 visualize_or_run(run)
             except RuntimeError:

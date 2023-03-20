@@ -172,17 +172,6 @@ def artificial_stop(
 
 
 @contextmanager
-def current_directory(path: str):
-    og_cwd = os.getcwd()
-    os.makedirs(path, exist_ok=True)
-    try:
-        os.chdir(path)
-        yield
-    finally:
-        os.chdir(og_cwd)
-
-
-@contextmanager
 def temporary_file(path: str):
     if os.path.isfile(path):
         os.remove(path)

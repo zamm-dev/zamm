@@ -1,5 +1,6 @@
+from langchain_contrib.llms.fake import FakeLLM
+
 from zamm.actions.use_terminal import UseTerminal, ZTerminal
-from zamm.llms.fake import FakeLLM
 from zamm.utils import temporary_file
 
 

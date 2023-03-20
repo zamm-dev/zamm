@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Any, Dict, Optional
 
-from langchain.prompts.base import BasePromptTemplate
+from langchain.prompts.base import StringPromptTemplate
 
 from zamm.prompts.dummy import DummyPromptTemplate
 
@@ -9,7 +9,7 @@ from .step import StepOutput
 
 
 class ZStepOutput(StepOutput):
-    logger_template: BasePromptTemplate
+    logger_template: StringPromptTemplate
 
     def log(self, **kwargs) -> str:
         return self._log(
@@ -38,7 +38,7 @@ class ZStepOutput(StepOutput):
 
 
 class DummyStepOutput(ZStepOutput):
-    logger_template: BasePromptTemplate = DummyPromptTemplate()
+    logger_template: StringPromptTemplate = DummyPromptTemplate()
 
     @classmethod
     def from_chain_output(cls, output: Dict[str, Any]):

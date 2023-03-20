@@ -2,6 +2,7 @@ from typing import Callable, Dict, List
 
 from langchain.agents.agent import AgentExecutor
 from langchain.chains.llm import LLMChain
+from langchain.llms.base import BaseLLM
 from langchain.prompts.base import BasePromptTemplate
 from pydantic import BaseModel
 
@@ -28,6 +29,7 @@ class FollowTutorialChain(LLMChain, BaseModel):
 
     def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
         prefix = self.prompt.format(**inputs)
+        assert isinstance(self.llm, BaseLLM)
         tutorial_dict = GetDictChain(
             llm=self.llm,
             prefix=prefix,

@@ -1,25 +1,26 @@
 from typing import Any, List
 
-from langchain.prompts import BasePromptTemplate, PromptTemplate
+from langchain.prompts import PromptTemplate
+from langchain.prompts.base import StringPromptTemplate
 
 from zamm.prompts.prefixed import Prefix
 
 from ..utils import f_join, safe_format
 
 
-class ChainedPromptTemplate(BasePromptTemplate):
+class ChainedPromptTemplate(StringPromptTemplate):
     joiner: str = ""
-    subprompts: List[BasePromptTemplate]
+    subprompts: List[StringPromptTemplate]
 
     def __init__(self, joiner: str, *subprompts: Prefix):
-        prompts: List[BasePromptTemplate] = []
+        prompts: List[StringPromptTemplate] = []
         for subprompt in subprompts:
             if isinstance(subprompt, str):
                 if subprompt != "":  # ignore empty strings
                     prompts.append(
                         PromptTemplate(input_variables=[], template=subprompt)
                     )
-            elif isinstance(subprompt, BasePromptTemplate):
+            elif isinstance(subprompt, StringPromptTemplate):
                 prompts.append(subprompt)
             else:
                 raise ValueError(f"Subprompt {subprompt} has unknown type")

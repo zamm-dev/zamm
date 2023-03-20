@@ -84,16 +84,19 @@ class ZammEmployee(AgentExecutor):
         else:
             prefix = EMPLOYEE_TEACHING_INTRO_TEMPLATE
 
+        assert isinstance(self.agent.llm_chain.llm, BaseLLM)
+        llm: BaseLLM = self.agent.llm_chain.llm
+
         def create_new_employee() -> AgentExecutor:
             return self.__class__(
-                llm=self.agent.llm_chain.llm,
+                llm=llm,
                 condense_memory=self.agent.condense_memory,
                 terminal_safe_mode=self.terminal.safe_mode,
             )
 
         if self.think_before_acting:
             action_chain = action_with_thought_chain(
-                llm=self.agent.llm_chain.llm,
+                llm=llm,
                 prefix=prefix,
                 terminal=self.terminal,
                 agent_creator=create_new_employee,
@@ -101,7 +104,7 @@ class ZammEmployee(AgentExecutor):
             output_key = action_chain.chains[-1].step_output_key
         else:
             action_chain = default_action_chain(
-                llm=self.agent.llm_chain.llm,
+                llm=llm,
                 prefix=prefix,
                 terminal=self.terminal,
                 agent_creator=create_new_employee,

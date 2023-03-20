@@ -2,6 +2,7 @@ import re
 from typing import Dict, List
 
 from langchain.chains.llm import LLMChain
+from langchain.llms.base import BaseLLM
 from pydantic import BaseModel
 
 from .prompt import ChoicePromptTemplate
@@ -28,6 +29,7 @@ class ChoiceChain(LLMChain, BaseModel):
 
     def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
         prompt = self.prompt.format(**inputs)
+        assert isinstance(self.llm, BaseLLM)
         result = self.llm(prompt, stop=[" "])
 
         regex_search = re.search(r"\d+", result)

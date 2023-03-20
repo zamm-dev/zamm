@@ -27,6 +27,7 @@ class AskFileChain(LLMChain, BaseModel):
         return ["file_path"]
 
     def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
+        assert isinstance(self.llm, BaseLLM)
         file_path = (
             self.llm(self.prompt.format(**inputs), stop=["`", "\n"]).strip().strip("`")
         )
@@ -46,6 +47,7 @@ class FileOutputChain(LLMChain, BaseModel):
         return self.prompt.input_variables + ["new_contents"]
 
     def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
+        assert isinstance(self.llm, BaseLLM)
         new_contents = self.llm(self.prompt.format(**inputs), stop=["\n```"])
         FileSystemTool().write_file(inputs["file_path"], new_contents)
         return {**inputs, "new_contents": new_contents}

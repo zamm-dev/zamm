@@ -44,7 +44,10 @@ class FollowTutorialOutput(ZStepOutput):
 class FollowTutorial(Action):
     @classmethod
     def default(
-        cls, llm: BaseLLM, prefix: Prefix, agent_creator: Callable[[], AgentExecutor]
+        cls,
+        llm: BaseLLM,
+        prefix: Prefix,
+        agent_creator: Callable[[], AgentExecutor],
     ):
         return cls(
             name="Follow instructions from a file",
