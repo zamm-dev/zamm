@@ -321,6 +321,84 @@ Then create `docs/requirements.txt` with the version of nbsphinx installed above
 nbsphinx==0.9.1
 ```
 
+## autodoc import on `readthedocs`
+
+If the `readthedocs` build is failing with messages like:
+
+```
+WARNING: autodoc: failed to import module 'langchain_contrib'; the following exception was raised:
+No module named 'langchain_contrib'
+```
+
+then follow the instructions [here](https://stackoverflow.com/a/60159862) as such:
+
+Edit `docs/conf.py` to add the folder containing your module source to the path. If it currently looks like this:
+
+```python
+"""Configuration file for the Sphinx documentation builder."""
+
+import toml
+
+
+project = "langchain-contrib"
+copyright = "2023, Amos Ng"
+author = "Amos Ng"
+
+
+with open("../pyproject.toml") as f:
+    data = toml.load(f)
+...
+```
+
+then add the module folder to the path:
+
+```python
+"""Configuration file for the Sphinx documentation builder."""
+
+import os
+import sys
+
+import toml
+
+
+project = "langchain-contrib"
+copyright = "2023, Amos Ng"
+author = "Amos Ng"
+
+
+sys.path.insert(0, os.path.abspath(".."))
+
+with open("../pyproject.toml") as f:
+    data = toml.load(f)
+...
+```
+
+If you encounter further errors for dependencies, such as
+
+```
+WARNING: autodoc: failed to import module 'tools.terminal.patchers' from module 'langchain_contrib'; the following exception was raised:
+No module named 'langchain'
+```
+
+then edit `docs/requirements.txt` to include those dependencies. If the file is currently like this:
+
+```
+nbsphinx==0.9.1
+sphinx_book_theme==1.0.0
+toml==0.10.2
+```
+
+then add in the new dependency:
+
+```
+nbsphinx==0.9.1
+sphinx_book_theme==1.0.0
+toml==0.10.2
+langchain==0.0.112
+```
+
+Make sure to keep these synced with `pyproject.toml`.
+
 ## Theme
 
 To use the same theme as langchain, install `sphinx-book-theme`:
