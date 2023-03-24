@@ -4,12 +4,12 @@ from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
 from langchain.prompts.prompt import PromptTemplate
 from langchain.schema import AgentAction
+from langchain_contrib.prompts import ChainedPromptTemplate
 
 from zamm.actions.base import Action
 from zamm.actions.edit_file import EditFileOutput
 from zamm.agents.step import StepOutput
 from zamm.agents.z_step import ZStepOutput
-from zamm.prompts.chained import ChainedPromptTemplate
 from zamm.prompts.prefixed import Prefix
 from zamm.utils import safe_format
 
@@ -49,9 +49,13 @@ class TerminalOutput(ZStepOutput):
                 input_variables=["command"], template="$ {command}"
             )
         if previous is None or not isinstance(previous, TerminalOutput):
-            template = ChainedPromptTemplate("\n", TERMINAL_USAGE_PREFIX, template)
+            template = ChainedPromptTemplate(
+                joiner="\n", subprompts=[TERMINAL_USAGE_PREFIX, template]
+            )
         if next is None or not isinstance(next, TerminalOutput):
-            template = ChainedPromptTemplate("\n", template, TERMINAL_USAGE_SUFFIX)
+            template = ChainedPromptTemplate(
+                joiner="\n", subprompts=[template, TERMINAL_USAGE_SUFFIX]
+            )
         return safe_format(template, self.template_args)
 
     @property

@@ -3,9 +3,9 @@ from typing import Dict, List
 
 from langchain.llms.base import BaseLLM
 from langchain.prompts import PromptTemplate
+from langchain_contrib.prompts import ChainedPromptTemplate
 from pydantic import BaseModel, Extra
 
-from ..prompts.chained import ChainedPromptTemplate
 from .bash_action_prompt import BASH_COMMAND_TEMPLATE
 from .general import ChoiceChain, ChoicePromptTemplate
 

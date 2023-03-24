@@ -4,6 +4,7 @@ from langchain.agents.agent import AgentExecutor
 from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
 from langchain.prompts import PromptTemplate
+from langchain_contrib.prompts import ChainedPromptTemplate
 
 from zamm.actions.base import Action
 from zamm.actions.edit_file import EditFile
@@ -15,7 +16,6 @@ from zamm.chains.general import ActionChain, LaxSequentialChain
 from zamm.chains.general.choice.base import ChoiceChain
 from zamm.chains.general.choice.prompt import ChoicePromptTemplate
 from zamm.chains.general.llm import ZLLMChain
-from zamm.prompts.chained import ChainedPromptTemplate
 from zamm.prompts.prefixed import Prefix
 
 
@@ -35,7 +35,7 @@ def default_action_chain(
     ]
 
     action_choice_template = ChoicePromptTemplate(
-        prefix=ChainedPromptTemplate("", prefix, choice_prompt),
+        prefix=ChainedPromptTemplate([prefix, choice_prompt]),
         choices=[action.choice_text for action in actions],
     )
     action_choice = ChoiceChain(
@@ -55,15 +55,16 @@ def action_with_thought_chain(
     choice_prompt: str = "You have a few actions available to accomplish this: ",
 ):
     thought_chain_prompt = ChainedPromptTemplate(
-        "",
-        prefix,
-        PromptTemplate(
-            input_variables=[],
-            template="""
+        [
+            prefix,
+            PromptTemplate(
+                input_variables=[],
+                template="""
 Write down the next step or command in the employee training manual as a single line, along with your reasoning:
 
 > """.lstrip(),  # noqa
-        ),
+            ),
+        ],
     )
     thought_chain = ZLLMChain(
         llm=llm,
@@ -73,17 +74,18 @@ Write down the next step or command in the employee training manual as a single 
     )
 
     final_prefix = ChainedPromptTemplate(
-        "",
-        prefix,
-        PromptTemplate(
-            input_variables=["next_step"],
-            template="""
+        [
+            prefix,
+            PromptTemplate(
+                input_variables=["next_step"],
+                template="""
 Now, the next step in the employee training manual is (quoted below as a single line):
 
 > {next_step}
 
 """.lstrip(),
-        ),
+            ),
+        ],
     )
 
     action_chain = default_action_chain(

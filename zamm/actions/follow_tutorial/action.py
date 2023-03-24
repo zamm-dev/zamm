@@ -3,10 +3,10 @@ from typing import Any, Callable, Dict
 from langchain.agents.agent import AgentExecutor
 from langchain.llms.base import BaseLLM
 from langchain.schema import AgentAction
+from langchain_contrib.prompts import ChainedPromptTemplate
 
 from zamm.actions.base import Action
 from zamm.agents.z_step import ZStepOutput
-from zamm.prompts.chained import ChainedPromptTemplate
 from zamm.prompts.prefixed import Prefix
 
 from .chain import FollowTutorialChain
@@ -54,7 +54,7 @@ class FollowTutorial(Action):
             output_type=FollowTutorialOutput,
             chain=FollowTutorialChain(
                 llm=llm,
-                prompt=ChainedPromptTemplate("", prefix, FOLLOW_TUTORIAL_PROMPT),
+                prompt=ChainedPromptTemplate([prefix, FOLLOW_TUTORIAL_PROMPT]),
                 agent_creator=agent_creator,
             ),
         )

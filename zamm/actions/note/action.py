@@ -2,10 +2,10 @@ from typing import Any, Dict
 
 from langchain.llms.base import BaseLLM
 from langchain.schema import AgentAction
+from langchain_contrib.prompts import ChainedPromptTemplate
 
 from zamm.actions.base import Action
 from zamm.agents.z_step import ZStepOutput
-from zamm.prompts.chained import ChainedPromptTemplate
 from zamm.prompts.prefixed import Prefix
 
 from .chain import NoteChain
@@ -43,6 +43,6 @@ class MakeNote(Action):
             output_type=NoteOutput,
             chain=NoteChain(
                 llm=llm,
-                prompt=ChainedPromptTemplate("", prefix, NOTE_PROMPT),
+                prompt=ChainedPromptTemplate([prefix, NOTE_PROMPT]),
             ),
         )
