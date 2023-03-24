@@ -1,6 +1,7 @@
 import shlex
 from typing import Dict, List
 
+from langchain.chains.base import Chain
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
 from pydantic import BaseModel
@@ -8,13 +9,11 @@ from pydantic import BaseModel
 from zamm.actions.edit_file import EditFileChain
 from zamm.prompts.prefixed import PrefixedPromptTemplate
 
-from .terminal import ZTerminal
-
 
 class TerminalChain(LLMChain, BaseModel):
     """Asks LLM for terminal input, and executes it"""
 
-    terminal: ZTerminal
+    terminal_chain: Chain
 
     @property
     def input_keys(self) -> List[str]:
@@ -48,5 +47,6 @@ class TerminalChain(LLMChain, BaseModel):
             )
             return edit_result
 
-        output = self.terminal.run_bash_command(command).rstrip()
-        return {"command": command, "output": output}
+        results = self.terminal_chain(command)
+        results.pop("choice")
+        return results

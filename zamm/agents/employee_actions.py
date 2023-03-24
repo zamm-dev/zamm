@@ -1,6 +1,7 @@
 from typing import Callable, List
 
 from langchain.agents.agent import AgentExecutor
+from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
 from langchain.prompts import PromptTemplate
 
@@ -9,7 +10,7 @@ from zamm.actions.edit_file import EditFile
 from zamm.actions.finish import Finish
 from zamm.actions.follow_tutorial import FollowTutorial
 from zamm.actions.note import MakeNote
-from zamm.actions.use_terminal import UseTerminal, ZTerminal
+from zamm.actions.use_terminal import UseTerminal
 from zamm.chains.general import ActionChain, LaxSequentialChain
 from zamm.chains.general.choice.base import ChoiceChain
 from zamm.chains.general.choice.prompt import ChoicePromptTemplate
@@ -21,13 +22,13 @@ from zamm.prompts.prefixed import Prefix
 def default_action_chain(
     llm: BaseLLM,
     prefix: Prefix,
-    terminal: ZTerminal,
+    terminal_chain: Chain,
     agent_creator: Callable[[], AgentExecutor],
     choice_prompt: str = "You have a few actions available to accomplish this: ",
 ):
     actions: List[Action] = [
         MakeNote.default(llm=llm, prefix=prefix),
-        UseTerminal.default(llm=llm, prefix=prefix, terminal=terminal),
+        UseTerminal.default(llm=llm, prefix=prefix, terminal_chain=terminal_chain),
         EditFile.default(llm=llm, prefix=prefix),
         FollowTutorial.default(llm=llm, prefix=prefix, agent_creator=agent_creator),
         Finish.default(),
@@ -49,7 +50,7 @@ def default_action_chain(
 def action_with_thought_chain(
     llm: BaseLLM,
     prefix: Prefix,
-    terminal: ZTerminal,
+    terminal_chain: Chain,
     agent_creator: Callable[[], AgentExecutor],
     choice_prompt: str = "You have a few actions available to accomplish this: ",
 ):
@@ -88,7 +89,7 @@ Now, the next step in the employee training manual is (quoted below as a single 
     action_chain = default_action_chain(
         llm=llm,
         prefix=final_prefix,
-        terminal=terminal,
+        terminal_chain=terminal_chain,
         agent_creator=agent_creator,
         choice_prompt=choice_prompt,
     )

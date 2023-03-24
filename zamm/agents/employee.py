@@ -2,10 +2,11 @@ from typing import Any, Dict, List, Optional
 
 from langchain.agents.agent import AgentExecutor
 from langchain.agents.tools import Tool
+from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
 from langchain.schema import AgentAction, AgentFinish
+from langchain_contrib.tools.terminal import SafeTerminalChain, TerminalToolChain
 
-from zamm.actions.use_terminal import ZTerminal
 from zamm.chains.bash_action_prompt import (
     EMPLOYEE_TEACHING_INTRO_TEMPLATE,
     FOLLOW_INSTRUCTIONS_TEMPLATE,
@@ -52,7 +53,7 @@ class ZammEmployeeBrain(CustomAgent):
 
 class ZammEmployee(AgentExecutor):
     agent: ZammEmployeeBrain
-    terminal: ZTerminal
+    terminal_chain: Chain
     max_iterations: Optional[int] = 100
     think_before_acting: bool = False
 
@@ -70,7 +71,9 @@ class ZammEmployee(AgentExecutor):
         super().__init__(
             agent=brain,
             tools=tools,
-            terminal=ZTerminal(safe_mode=terminal_safe_mode),
+            terminal_chain=SafeTerminalChain()
+            if terminal_safe_mode
+            else TerminalToolChain(),
             **kwargs,
         )
 
@@ -91,14 +94,14 @@ class ZammEmployee(AgentExecutor):
             return self.__class__(
                 llm=llm,
                 condense_memory=self.agent.condense_memory,
-                terminal_safe_mode=self.terminal.safe_mode,
+                terminal_safe_mode=isinstance(self.terminal_chain, SafeTerminalChain),
             )
 
         if self.think_before_acting:
             action_chain = action_with_thought_chain(
                 llm=llm,
                 prefix=prefix,
-                terminal=self.terminal,
+                terminal_chain=self.terminal_chain,
                 agent_creator=create_new_employee,
             )
             output_key = action_chain.chains[-1].step_output_key
@@ -106,7 +109,7 @@ class ZammEmployee(AgentExecutor):
             action_chain = default_action_chain(
                 llm=llm,
                 prefix=prefix,
-                terminal=self.terminal,
+                terminal_chain=self.terminal_chain,
                 agent_creator=create_new_employee,
             )
             output_key = action_chain.step_output_key

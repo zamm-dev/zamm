@@ -1,5 +1,6 @@
 from typing import Any, Dict, Optional
 
+from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
 from langchain.prompts.prompt import PromptTemplate
 from langchain.schema import AgentAction
@@ -19,7 +20,6 @@ from .prompt import (
     TerminalPromptTemplate,
     TerminalUsageLogger,
 )
-from .terminal import ZTerminal
 
 
 class TerminalOutput(ZStepOutput):
@@ -70,13 +70,13 @@ class TerminalOutput(ZStepOutput):
 
 class UseTerminal(Action):
     @classmethod
-    def default(cls, llm: BaseLLM, prefix: Prefix, terminal: ZTerminal):
+    def default(cls, llm: BaseLLM, prefix: Prefix, terminal_chain: Chain):
         return cls(
             name="Use the terminal (to run a command, not to edit a file)",
             output_type=TerminalOutput,
             chain=TerminalChain(
                 llm=llm,
                 prompt=TerminalPromptTemplate(prefix=prefix),
-                terminal=terminal,
+                terminal_chain=terminal_chain,
             ),
         )
