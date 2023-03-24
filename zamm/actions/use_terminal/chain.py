@@ -48,5 +48,5 @@ class TerminalChain(LLMChain, BaseModel):
             return edit_result
 
         results = self.terminal_chain(command)
-        results.pop("choice")
+        results.pop("choice", None)
         return results

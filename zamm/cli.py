@@ -11,14 +11,14 @@ import vcr_langchain as vcr
 import yaml
 from appdirs import AppDirs
 from langchain.llms.base import BaseLLM
-from langchain_contrib.utils.tests import current_directory
+from langchain_contrib.utils import current_directory
 from ulid import ULID
 from vcr.record_mode import RecordMode
 
 from zamm.agents.employee import ZammEmployee
 from zamm.chains.ask_task import AskForTaskChain
 from zamm.llms.chat import new_openai
-from zamm.llms.human import Human
+from zamm.llms.human import ZHuman
 from zamm.tasks import ADD_TYPES_AND_DOCUMENT_TEMPLATE
 from zamm.utils import read_documentation
 
@@ -160,7 +160,7 @@ def teach(
     if last_session:
         cassette_path = get_last_session()
 
-    llm = Human()
+    llm = ZHuman()
     play_interactions(
         llm=llm, cassette_path=cassette_path, tutorial_output_path=output_path
     )
@@ -200,9 +200,9 @@ def re_record(
         inputs = [
             i["response"]
             for i in interactions
-            if i["request"]["uri"].startswith("tool://Human")
+            if i["request"]["uri"].startswith("tool://ZHuman")
         ]
-        llm = Human(prerecorded_responses=inputs)
+        llm = ZHuman(sequenced_responses=inputs)
         os.remove(cassette_path)
         play_interactions(llm, cassette_path, tutorial_output_path=output_path)
     except yaml.YAMLError as exc:
