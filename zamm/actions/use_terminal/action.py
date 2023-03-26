@@ -4,13 +4,12 @@ from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
 from langchain.prompts.prompt import PromptTemplate
 from langchain.schema import AgentAction
-from langchain_contrib.prompts import ChainedPromptTemplate
+from langchain_contrib.prompts import ChainedPromptTemplate, Templatable
 
 from zamm.actions.base import Action
 from zamm.actions.edit_file import EditFileOutput
 from zamm.agents.step import StepOutput
 from zamm.agents.z_step import ZStepOutput
-from zamm.prompts.prefixed import Prefix
 from zamm.utils import safe_format
 
 from .chain import TerminalChain
@@ -74,7 +73,7 @@ class TerminalOutput(ZStepOutput):
 
 class UseTerminal(Action):
     @classmethod
-    def default(cls, llm: BaseLLM, prefix: Prefix, terminal_chain: Chain):
+    def default(cls, llm: BaseLLM, prefix: Templatable, terminal_chain: Chain):
         return cls(
             name="Use the terminal (to run a command, not to edit a file)",
             output_type=TerminalOutput,

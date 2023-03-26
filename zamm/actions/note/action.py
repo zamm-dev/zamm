@@ -2,11 +2,10 @@ from typing import Any, Dict
 
 from langchain.llms.base import BaseLLM
 from langchain.schema import AgentAction
-from langchain_contrib.prompts import ChainedPromptTemplate
+from langchain_contrib.prompts import ChainedPromptTemplate, Templatable
 
 from zamm.actions.base import Action
 from zamm.agents.z_step import ZStepOutput
-from zamm.prompts.prefixed import Prefix
 
 from .chain import NoteChain
 from .prompt import NOTE_LOGGER, NOTE_PROMPT
@@ -37,7 +36,7 @@ class NoteOutput(ZStepOutput):
 
 class MakeNote(Action):
     @classmethod
-    def default(cls, llm: BaseLLM, prefix: Prefix):
+    def default(cls, llm: BaseLLM, prefix: Templatable):
         return cls(
             name="Make a mental note to yourself",
             output_type=NoteOutput,

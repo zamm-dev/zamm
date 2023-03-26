@@ -4,7 +4,7 @@ from langchain.agents.agent import AgentExecutor
 from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
 from langchain.prompts import PromptTemplate
-from langchain_contrib.prompts import ChainedPromptTemplate
+from langchain_contrib.prompts import ChainedPromptTemplate, Templatable
 
 from zamm.actions.base import Action
 from zamm.actions.edit_file import EditFile
@@ -16,12 +16,11 @@ from zamm.chains.general import ActionChain, LaxSequentialChain
 from zamm.chains.general.choice.base import ChoiceChain
 from zamm.chains.general.choice.prompt import ChoicePromptTemplate
 from zamm.chains.general.llm import ZLLMChain
-from zamm.prompts.prefixed import Prefix
 
 
 def default_action_chain(
     llm: BaseLLM,
-    prefix: Prefix,
+    prefix: Templatable,
     terminal_chain: Chain,
     agent_creator: Callable[[], AgentExecutor],
     choice_prompt: str = "You have a few actions available to accomplish this: ",
@@ -49,7 +48,7 @@ def default_action_chain(
 
 def action_with_thought_chain(
     llm: BaseLLM,
-    prefix: Prefix,
+    prefix: Templatable,
     terminal_chain: Chain,
     agent_creator: Callable[[], AgentExecutor],
     choice_prompt: str = "You have a few actions available to accomplish this: ",

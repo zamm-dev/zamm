@@ -3,9 +3,8 @@ from typing import Dict, List
 
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
+from langchain_contrib.prompts import ChoicePromptTemplate
 from pydantic import BaseModel
-
-from .prompt import ChoicePromptTemplate
 
 
 class ChoiceChain(LLMChain, BaseModel):
@@ -33,10 +32,13 @@ class ChoiceChain(LLMChain, BaseModel):
         result = self.llm(prompt, stop=[" "])
 
         regex_search = re.search(r"\d+", result)
-        assert regex_search is not None, f"No number in response '{result}'"
-        choice_num = int(regex_search.group())
-        if not 1 <= choice_num <= len(self.prompt.choices):
-            raise Exception(f"Unknown choice: '{result}'")
-        choice = self.prompt.choices[choice_num - 1]
+        if regex_search is None:  # likely human LLM
+            choice = result
+            choice_num = self.prompt.choices.index(choice) + 1
+        else:
+            choice_num = int(regex_search.group())
+            if not 1 <= choice_num <= len(self.prompt.choices):
+                raise Exception(f"Unknown choice: '{result}'")
+            choice = self.prompt.choices[choice_num - 1]
 
         return self._return_dict(choice_num, choice)
