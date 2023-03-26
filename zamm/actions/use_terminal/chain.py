@@ -4,10 +4,10 @@ from typing import Dict, List
 from langchain.chains.base import Chain
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
+from langchain_contrib.prompts import ChainedPromptTemplate
 from pydantic import BaseModel
 
 from zamm.actions.edit_file import EditFileChain
-from zamm.prompts.prefixed import PrefixedPromptTemplate
 
 
 class TerminalChain(LLMChain, BaseModel):
@@ -36,10 +36,9 @@ class TerminalChain(LLMChain, BaseModel):
         command = self.llm(self.prompt.format(**inputs), stop=["\n"]).strip()
         parsed_cmd = shlex.split(command)
         if len(parsed_cmd) == 2 and parsed_cmd[0] == "nano":
-            assert isinstance(self.prompt, PrefixedPromptTemplate)
-            edit_result = EditFileChain.for_file(
-                llm=self.llm, prefix=self.prompt.prefix
-            )(
+            assert isinstance(self.prompt, ChainedPromptTemplate)
+            prefix = self.prompt.subprompts[0]
+            edit_result = EditFileChain.for_file(llm=self.llm, prefix=prefix)(
                 {
                     **inputs,
                     "file_path": parsed_cmd[1],
