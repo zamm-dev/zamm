@@ -1,26 +1,11 @@
 """Chain that chooses and performs the next action."""
 from typing import Any, Dict, List, Union
 
-from langchain.chains.base import Chain
 from langchain_contrib.chains import ChoiceChain
-from pydantic import BaseModel
 
 from zamm.actions.base import Action
 
 from .choice.base import ChoicePickerChain
-
-
-class DummyChain(Chain, BaseModel):
-    @property
-    def input_keys(self) -> List[str]:
-        raise NotImplementedError()
-
-    @property
-    def output_keys(self) -> List[str]:
-        return []
-
-    def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
-        raise NotImplementedError()
 
 
 class ActionChain(ChoiceChain):
