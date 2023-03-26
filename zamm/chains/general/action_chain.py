@@ -2,12 +2,12 @@
 from typing import Any, Dict, List, Union
 
 from langchain.chains.base import Chain
+from langchain_contrib.chains import ChoiceChain
 from pydantic import BaseModel
 
 from zamm.actions.base import Action
 
 from .choice.base import ChoicePickerChain
-from .options_chain import OptionsChain
 
 
 class DummyChain(Chain, BaseModel):
@@ -23,28 +23,21 @@ class DummyChain(Chain, BaseModel):
         raise NotImplementedError()
 
 
-class ActionChain(OptionsChain, BaseModel):
-    option_picker: ChoicePickerChain
-    actions: List[Action]
+class ActionChain(ChoiceChain):
+    choice_picker: ChoicePickerChain
+    actions: Dict[str, Action]
     step_output_key: str = "step_output"
     _should_trace: bool = False
 
     def __init__(self, actions: List[Action], **kwargs):
-        options = [action.chain for action in actions]
-        super().__init__(actions=actions, options=options, **kwargs)
+        actions_dict = {action.name: action for action in actions}
+        choices = {action.name: action.chain for action in actions}
+        super().__init__(actions=actions_dict, choices=choices, **kwargs)
 
     @property
     def output_keys(self) -> List[str]:
         """Possible output keys produced by this chain."""
         return super().output_keys + [self.step_output_key]
-
-    @property
-    def choice_num_key(self) -> str:
-        return self.option_picker.choice_num_key
-
-    def option_index(self, picker_output: Dict[str, Any]) -> int:
-        """The index of the option chosen."""
-        return int(picker_output[self.choice_num_key]) - 1
 
     def __call__(
         self,
@@ -52,6 +45,6 @@ class ActionChain(OptionsChain, BaseModel):
         return_only_outputs: bool = False,
     ) -> Dict[str, Any]:
         output = super().__call__(inputs, return_only_outputs)
-        action = self.actions[self.option_index(output)]
+        action = self.actions[output["choice"]]
         output[self.step_output_key] = action.output_type.from_chain_output(output)
         return output

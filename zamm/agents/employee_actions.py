@@ -40,10 +40,8 @@ def default_action_chain(
     action_choice = ChoicePickerChain(
         llm=llm,
         prompt=action_choice_template,
-        choice_num_key="action_num",
-        choice_key="action",
     )
-    return ActionChain(option_picker=action_choice, actions=actions)
+    return ActionChain(choice_picker=action_choice, actions=actions)
 
 
 def action_with_thought_chain(

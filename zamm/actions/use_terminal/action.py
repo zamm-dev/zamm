@@ -28,7 +28,7 @@ class TerminalOutput(ZStepOutput):
             return EditFileOutput.from_chain_output(output)
         return cls(
             decision=AgentAction(
-                tool=output["action"],
+                tool=output["choice"],
                 tool_input=output["command"],
                 log="dummy log",
             ),

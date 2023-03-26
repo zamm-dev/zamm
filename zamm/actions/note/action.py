@@ -16,7 +16,7 @@ class NoteOutput(ZStepOutput):
     def from_chain_output(cls, output: Dict[str, Any]):
         return cls(
             decision=AgentAction(
-                tool=output["action"],
+                tool=output["choice"],
                 tool_input=output["note"],
                 log="dummy log",
             ),

@@ -25,7 +25,7 @@ class EditFileOutput(ZStepOutput):
             old_contents = None
         return cls(
             decision=AgentAction(
-                tool=output["action"],
+                tool=output["choice"],
                 tool_input=output["file_path"],
                 log="dummy log",
             ),

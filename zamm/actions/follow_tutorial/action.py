@@ -22,7 +22,7 @@ class FollowTutorialOutput(ZStepOutput):
     def from_chain_output(cls, output: Dict[str, Any]):
         return cls(
             decision=AgentAction(
-                tool=output["action"],
+                tool=output["choice"],
                 tool_input="dummy input",
                 log="dummy log",
             ),
