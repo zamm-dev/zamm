@@ -13,7 +13,7 @@ from zamm.actions.follow_tutorial import FollowTutorial
 from zamm.actions.note import MakeNote
 from zamm.actions.use_terminal import UseTerminal
 from zamm.chains.general import ActionChain, LaxSequentialChain
-from zamm.chains.general.choice.base import ChoiceChain
+from zamm.chains.general.choice.base import ChoicePickerChain
 from zamm.chains.general.choice.prompt import ChoicePromptTemplate
 from zamm.chains.general.llm import ZLLMChain
 
@@ -37,7 +37,7 @@ def default_action_chain(
         prefix=ChainedPromptTemplate([prefix, choice_prompt]),
         choices=[action.choice_text for action in actions],
     )
-    action_choice = ChoiceChain(
+    action_choice = ChoicePickerChain(
         llm=llm,
         prompt=action_choice_template,
         choice_num_key="action_num",

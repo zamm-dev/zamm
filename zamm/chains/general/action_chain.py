@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 from zamm.actions.base import Action
 
-from .choice.base import ChoiceChain
+from .choice.base import ChoicePickerChain
 from .options_chain import OptionsChain
 
 
@@ -24,7 +24,7 @@ class DummyChain(Chain, BaseModel):
 
 
 class ActionChain(OptionsChain, BaseModel):
-    option_picker: ChoiceChain
+    option_picker: ChoicePickerChain
     actions: List[Action]
     step_output_key: str = "step_output"
     _should_trace: bool = False

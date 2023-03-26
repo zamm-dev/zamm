@@ -7,7 +7,7 @@ from langchain_contrib.prompts import ChoicePromptTemplate
 from pydantic import BaseModel
 
 
-class ChoiceChain(LLMChain, BaseModel):
+class ChoicePickerChain(LLMChain, BaseModel):
     """Returns LLM selection of a variety of options"""
 
     prompt: ChoicePromptTemplate
