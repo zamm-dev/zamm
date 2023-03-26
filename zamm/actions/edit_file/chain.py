@@ -1,13 +1,13 @@
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from langchain.chains.base import Chain
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
+from langchain_contrib.chains import ChoiceChain
 from langchain_contrib.prompts import ChainedPromptTemplate, Templatable
 from pydantic import BaseModel
 
 from zamm.chains.general import LaxSequentialChain
-from zamm.chains.general.boolean_switch import BooleanSwitchChain
 
 from .filesystem import FileSystemTool
 from .prompt import NEW_CONTENTS_PROMPT, REPLACE_CONTENTS_PROMPT, WHICH_FILE_PROMPT
@@ -63,6 +63,9 @@ class ReadFileChain(Chain):
         """Output keys this chain expects."""
         return ["file_exists", "old_contents"]
 
+    def _validate_outputs(self, outputs: Dict[str, str]) -> None:
+        assert "file_exists" in outputs, "Outputs doesn't say if file exists"
+
     def _call(self, inputs: Dict[str, str]) -> Dict[str, str]:
         fs = FileSystemTool()
         return fs.read_file(file_path=inputs["file_path"]).as_llm_output(
@@ -70,13 +73,9 @@ class ReadFileChain(Chain):
         )
 
 
-class EditFileChain(BooleanSwitchChain):
-    def condition_was_met(self, outputs: Dict[str, Any]) -> bool:
-        """Condition is whether or not the specified file exists."""
-        return outputs["file_exists"]
-
+class EditFileChain:
     @classmethod
-    def default(cls, llm: BaseLLM, prefix: Templatable):
+    def default(cls, llm: BaseLLM, prefix: Templatable) -> LaxSequentialChain:
         ask_file = AskFileChain(
             llm=llm, prompt=ChainedPromptTemplate([prefix, WHICH_FILE_PROMPT])
         )
@@ -89,7 +88,7 @@ class EditFileChain(BooleanSwitchChain):
         )
 
     @classmethod
-    def for_file(cls, llm: BaseLLM, prefix: Templatable):
+    def for_file(cls, llm: BaseLLM, prefix: Templatable) -> ChoiceChain:
         read_file = ReadFileChain()
         edit_file = FileOutputChain(
             llm=llm, prompt=ChainedPromptTemplate([prefix, REPLACE_CONTENTS_PROMPT])
@@ -97,8 +96,11 @@ class EditFileChain(BooleanSwitchChain):
         new_file = FileOutputChain(
             llm=llm, prompt=ChainedPromptTemplate([prefix, NEW_CONTENTS_PROMPT])
         )
-        return cls(
-            option_picker=read_file,
-            true_chain=edit_file,
-            false_chain=new_file,
+        return ChoiceChain(
+            choice_picker=read_file,
+            choice_key="file_exists",
+            choices={
+                "True": edit_file,
+                "False": new_file,
+            },
         )

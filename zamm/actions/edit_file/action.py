@@ -18,7 +18,11 @@ class EditFileOutput(ZStepOutput):
 
     @classmethod
     def from_chain_output(cls, output: Dict[str, Any]):
-        file_exists = output["file_exists"]
+        file_exists = output["file_exists"] == "True"
+        if file_exists:
+            old_contents = output["old_contents"]
+        else:
+            old_contents = None
         return cls(
             decision=AgentAction(
                 tool=output["action"],
@@ -26,7 +30,7 @@ class EditFileOutput(ZStepOutput):
                 log="dummy log",
             ),
             observation=output["new_contents"],
-            old_contents=output["old_contents"] if file_exists else None,
+            old_contents=old_contents,
             file_exists=file_exists,
             logger_template=EDIT_LOGGER,
         )

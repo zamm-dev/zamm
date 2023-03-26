@@ -13,7 +13,6 @@ def test_edit_file_redirect():
         )
         assert terminal_action.use({}) == {
             "file_path": "tests/resources/redirect.txt",
-            "file_exists": False,
-            "old_contents": None,
+            "file_exists": "False",
             "new_contents": "Blah",
         }
