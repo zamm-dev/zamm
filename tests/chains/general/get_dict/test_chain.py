@@ -1,6 +1,6 @@
 """Test that GetMultipleOutputsChain can run successfully."""
 
-from langchain_contrib.llms.fake import FakeLLM
+from langchain_contrib.llms.testing import FakeLLM
 
 from zamm.chains.general.get_dict import GetDictChain
 from zamm.prompts.fake_parser import FakeDictParser

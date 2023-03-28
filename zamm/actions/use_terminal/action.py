@@ -1,15 +1,15 @@
 from typing import Any, Dict, Optional
 
+from langchain.chains.base import Chain
 from langchain.llms.base import BaseLLM
 from langchain.prompts.prompt import PromptTemplate
 from langchain.schema import AgentAction
+from langchain_contrib.prompts import ChainedPromptTemplate, Templatable
 
 from zamm.actions.base import Action
 from zamm.actions.edit_file import EditFileOutput
 from zamm.agents.step import StepOutput
 from zamm.agents.z_step import ZStepOutput
-from zamm.prompts.chained import ChainedPromptTemplate
-from zamm.prompts.prefixed import Prefix
 from zamm.utils import safe_format
 
 from .chain import TerminalChain
@@ -19,7 +19,6 @@ from .prompt import (
     TerminalPromptTemplate,
     TerminalUsageLogger,
 )
-from .terminal import ZTerminal
 
 
 class TerminalOutput(ZStepOutput):
@@ -29,7 +28,7 @@ class TerminalOutput(ZStepOutput):
             return EditFileOutput.from_chain_output(output)
         return cls(
             decision=AgentAction(
-                tool=output["action"],
+                tool=output["choice"],
                 tool_input=output["command"],
                 log="dummy log",
             ),
@@ -49,9 +48,13 @@ class TerminalOutput(ZStepOutput):
                 input_variables=["command"], template="$ {command}"
             )
         if previous is None or not isinstance(previous, TerminalOutput):
-            template = ChainedPromptTemplate("\n", TERMINAL_USAGE_PREFIX, template)
+            template = ChainedPromptTemplate(
+                joiner="\n", subprompts=[TERMINAL_USAGE_PREFIX, template]
+            )
         if next is None or not isinstance(next, TerminalOutput):
-            template = ChainedPromptTemplate("\n", template, TERMINAL_USAGE_SUFFIX)
+            template = ChainedPromptTemplate(
+                joiner="\n", subprompts=[template, TERMINAL_USAGE_SUFFIX]
+            )
         return safe_format(template, self.template_args)
 
     @property
@@ -70,13 +73,13 @@ class TerminalOutput(ZStepOutput):
 
 class UseTerminal(Action):
     @classmethod
-    def default(cls, llm: BaseLLM, prefix: Prefix, terminal: ZTerminal):
+    def default(cls, llm: BaseLLM, prefix: Templatable, terminal_chain: Chain):
         return cls(
             name="Use the terminal (to run a command, not to edit a file)",
             output_type=TerminalOutput,
             chain=TerminalChain(
                 llm=llm,
                 prompt=TerminalPromptTemplate(prefix=prefix),
-                terminal=terminal,
+                terminal_chain=terminal_chain,
             ),
         )

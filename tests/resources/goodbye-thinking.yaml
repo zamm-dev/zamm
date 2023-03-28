@@ -24,7 +24,7 @@ interactions:
       content-type:
       - text/plain; charset=utf-8
       date:
-      - Wed, 08 Mar 2023 05:10:32 GMT
+      - Fri, 24 Mar 2023 06:20:43 GMT
       server:
       - uvicorn
     http_version: HTTP/1.1
@@ -62,12 +62,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.27.0
+      - OpenAI/v1 PythonBindings/0.27.2
     method: POST
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6rgMHnWSp131ywK6YFGQROk7d8qok","object":"text_completion","created":1678252229,"model":"text-davinci-003","choices":[{"text":"
+      string: '{"id":"cmpl-6xV4tisIW5wNRWJuq1yKGvCgn9YCK","object":"text_completion","created":1679638835,"model":"text-davinci-003","choices":[{"text":"
         Edit the file `goodbye.sh`. It probably doesn''t yet exist. Put code in it
         that accomplishes the task: `echo \"Goodbye world\"`, because this is the
         command that will print out \"Goodbye world\" when executed.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":336,"completion_tokens":51,"total_tokens":387}}
@@ -85,18 +85,30 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Mar 2023 05:10:30 GMT
+      - Fri, 24 Mar 2023 06:20:37 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '1415'
+      - '1634'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
+      X-Ratelimit-Limit-Requests:
+      - '3000'
+      X-Ratelimit-Limit-Tokens:
+      - '250000'
+      X-Ratelimit-Remaining-Requests:
+      - '2999'
+      X-Ratelimit-Remaining-Tokens:
+      - '242477'
+      X-Ratelimit-Reset-Requests:
+      - 20ms
+      X-Ratelimit-Reset-Tokens:
+      - 1.805s
       X-Request-Id:
-      - ed0d74baa6128583bd7c45c392aee2a6
+      - 80ea5cae1990de265e8f44da5cd351de
     status:
       code: 200
       message: OK
@@ -139,12 +151,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.27.0
+      - OpenAI/v1 PythonBindings/0.27.2
     method: POST
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6rgMIHlFT5rreIao3nztGt81kLsG2","object":"text_completion","created":1678252230,"model":"text-davinci-003","choices":[{"text":"3:","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":455,"completion_tokens":2,"total_tokens":457}}
+      string: '{"id":"cmpl-6xV4vrO9UqwRIkdeE4M7VJmruKWNj","object":"text_completion","created":1679638837,"model":"text-davinci-003","choices":[{"text":"3","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":455,"completion_tokens":1,"total_tokens":456}}
 
         '
     headers:
@@ -155,22 +167,34 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '265'
+      - '264'
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Mar 2023 05:10:31 GMT
+      - Fri, 24 Mar 2023 06:20:37 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '306'
+      - '277'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
+      X-Ratelimit-Limit-Requests:
+      - '3000'
+      X-Ratelimit-Limit-Tokens:
+      - '250000'
+      X-Ratelimit-Remaining-Requests:
+      - '2999'
+      X-Ratelimit-Remaining-Tokens:
+      - '242716'
+      X-Ratelimit-Reset-Requests:
+      - 20ms
+      X-Ratelimit-Reset-Tokens:
+      - 1.748s
       X-Request-Id:
-      - 1ef198ca01b78ea462f58310a4721742
+      - 1c8bf9bdb3e34ad5c17445738b7d2a98
     status:
       code: 200
       message: OK
@@ -210,12 +234,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.27.0
+      - OpenAI/v1 PythonBindings/0.27.2
     method: POST
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6rgMJEjcVMmHWDxbzoxJ1uQXCroZH","object":"text_completion","created":1678252231,"model":"text-davinci-003","choices":[{"text":"goodbye.sh","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":397,"completion_tokens":4,"total_tokens":401}}
+      string: '{"id":"cmpl-6xV4vtWYpddKGFcfljJy2fOiI8Pzo","object":"text_completion","created":1679638837,"model":"text-davinci-003","choices":[{"text":"goodbye.sh","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":397,"completion_tokens":4,"total_tokens":401}}
 
         '
     headers:
@@ -230,18 +254,30 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Mar 2023 05:10:31 GMT
+      - Fri, 24 Mar 2023 06:20:38 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '434'
+      - '352'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
+      X-Ratelimit-Limit-Requests:
+      - '3000'
+      X-Ratelimit-Limit-Tokens:
+      - '250000'
+      X-Ratelimit-Remaining-Requests:
+      - '2999'
+      X-Ratelimit-Remaining-Tokens:
+      - '237393'
+      X-Ratelimit-Reset-Requests:
+      - 20ms
+      X-Ratelimit-Reset-Tokens:
+      - 3.025s
       X-Request-Id:
-      - 995da6c0dc7e9c77c48928c3e23b7d2a
+      - 6a0f72cdda5cb0b7e906b4819e97c770
     status:
       code: 200
       message: OK
@@ -290,12 +326,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.27.0
+      - OpenAI/v1 PythonBindings/0.27.2
     method: POST
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6rgMJooRtu20m5Xlm1ky0n4CFAsSP","object":"text_completion","created":1678252231,"model":"text-davinci-003","choices":[{"text":"echo
+      string: '{"id":"cmpl-6xV4wG8oKAsSkZ6VkGBvZ2seeoFkw","object":"text_completion","created":1679638838,"model":"text-davinci-003","choices":[{"text":"echo
         \"Goodbye world\"","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":421,"completion_tokens":6,"total_tokens":427}}
 
         '
@@ -311,18 +347,30 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Mar 2023 05:10:32 GMT
+      - Fri, 24 Mar 2023 06:20:39 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '473'
+      - '540'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
+      X-Ratelimit-Limit-Requests:
+      - '3000'
+      X-Ratelimit-Limit-Tokens:
+      - '250000'
+      X-Ratelimit-Remaining-Requests:
+      - '2999'
+      X-Ratelimit-Remaining-Tokens:
+      - '232449'
+      X-Ratelimit-Reset-Requests:
+      - 20ms
+      X-Ratelimit-Reset-Tokens:
+      - 4.212s
       X-Request-Id:
-      - 67678c9ce0f6d52ab1fb58faf675e48f
+      - 72e4707185df804d7f072fa617f06449
     status:
       code: 200
       message: OK
@@ -367,12 +415,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.27.0
+      - OpenAI/v1 PythonBindings/0.27.2
     method: POST
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6rgMKPC9fe46OYd79pwDzkbKx0kkz","object":"text_completion","created":1678252232,"model":"text-davinci-003","choices":[{"text":"
+      string: '{"id":"cmpl-6xV4xYdk4rVMRbz3laPl5VxmS2p3D","object":"text_completion","created":1679638839,"model":"text-davinci-003","choices":[{"text":"
         `$ bash goodbye.sh` to execute the script. This is the next step in the employee
         training manual, as it instructs us to execute the script from the terminal.","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":381,"completion_tokens":36,"total_tokens":417}}
 
@@ -389,18 +437,30 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Mar 2023 05:10:34 GMT
+      - Fri, 24 Mar 2023 06:20:40 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '1487'
+      - '1097'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
+      X-Ratelimit-Limit-Requests:
+      - '3000'
+      X-Ratelimit-Limit-Tokens:
+      - '250000'
+      X-Ratelimit-Remaining-Requests:
+      - '2999'
+      X-Ratelimit-Remaining-Tokens:
+      - '228240'
+      X-Ratelimit-Reset-Requests:
+      - 20ms
+      X-Ratelimit-Reset-Tokens:
+      - 5.222s
       X-Request-Id:
-      - bd7cfd5dbc3339cb9955a8cfbeb5c632
+      - 39540d98e8d24a122d1b70f047ac2d25
     status:
       code: 200
       message: OK
@@ -444,12 +504,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.27.0
+      - OpenAI/v1 PythonBindings/0.27.2
     method: POST
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6rgMMja88IPU4p96e0Rt87GoDMuIg","object":"text_completion","created":1678252234,"model":"text-davinci-003","choices":[{"text":"2","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":485,"completion_tokens":1,"total_tokens":486}}
+      string: '{"id":"cmpl-6xV4yhcrAoVnDbbZGovbTmOGBK9lg","object":"text_completion","created":1679638840,"model":"text-davinci-003","choices":[{"text":"2","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":485,"completion_tokens":1,"total_tokens":486}}
 
         '
     headers:
@@ -464,18 +524,30 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Mar 2023 05:10:34 GMT
+      - Fri, 24 Mar 2023 06:20:40 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '325'
+      - '338'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
+      X-Ratelimit-Limit-Requests:
+      - '3000'
+      X-Ratelimit-Limit-Tokens:
+      - '250000'
+      X-Ratelimit-Remaining-Requests:
+      - '2999'
+      X-Ratelimit-Remaining-Tokens:
+      - '226714'
+      X-Ratelimit-Reset-Requests:
+      - 20ms
+      X-Ratelimit-Reset-Tokens:
+      - 5.588s
       X-Request-Id:
-      - 811e65bfa3259de03ec242238dc94d3c
+      - 24d8ada229b20db989d9a8d0c9dd56f3
     status:
       code: 200
       message: OK
@@ -516,12 +588,12 @@ interactions:
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.27.0
+      - OpenAI/v1 PythonBindings/0.27.2
     method: POST
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6rgMMDbVzZJ8gLFFzUejlHyTbYpV0","object":"text_completion","created":1678252234,"model":"text-davinci-003","choices":[{"text":"
+      string: '{"id":"cmpl-6xV4znRIDopZFFudBXWfPqCxnm9VP","object":"text_completion","created":1679638841,"model":"text-davinci-003","choices":[{"text":"
         bash goodbye.sh","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":432,"completion_tokens":4,"total_tokens":436}}
 
         '
@@ -537,34 +609,46 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Mar 2023 05:10:35 GMT
+      - Fri, 24 Mar 2023 06:20:41 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '267'
+      - '271'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
+      X-Ratelimit-Limit-Requests:
+      - '3000'
+      X-Ratelimit-Limit-Tokens:
+      - '250000'
+      X-Ratelimit-Remaining-Requests:
+      - '2999'
+      X-Ratelimit-Remaining-Tokens:
+      - '221738'
+      X-Ratelimit-Reset-Requests:
+      - 20ms
+      X-Ratelimit-Reset-Tokens:
+      - 6.782s
       X-Request-Id:
-      - f99b6ba9b16e408bffcad2ddc5cde854
+      - 91efd8cf61cdc01f060ec234c19c79d6
     status:
       code: 200
       message: OK
 - request:
-    body: '{"prompt": "The LLM would like to run the command `bash goodbye.sh`\n\n1.
-      Proceed\n2. Edit command\n3. Stop (or Ctrl-C)\n\n", "stop": [" "]}'
+    body: '{"prompt": "The LLM would like to run the command `bash goodbye.sh`. You
+      can choose to Proceed or Edit command.\n\nYour choice: ", "stop": null}'
     headers: {}
     method: POST
     uri: tool://Human/_call
-  response: '1'
+  response: Proceed
 - request:
     body: '{"cmd": "bash goodbye.sh"}'
     headers: {}
     method: POST
-    uri: tool://ZTerminal/_get_raw_shell_update
-  response: "bash goodbye.sh\r\nGoodbye world\r\n$ "
+    uri: tool://Terminal/_get_raw_shell_update
+  response: "bash goodbye.sh\r\nGoodbye world\r\nzamm$ "
 - request:
     body: '{"prompt": ["You are a simple button presser who simply follows instructions
       without doing things very creatively. You always follow every instruction, in
@@ -584,10 +668,10 @@ interactions:
       the task that the training manual has prepared you for! You follow its instructions
       closely.\n\n\n\nYou decide to edit the file `goodbye.sh`. It doesn''t yet exist.\n\nYou
       write out to the file the contents\n\n```\necho \"Goodbye world\"\n```\n\nYou
-      proceed to use the terminal:\n\n```bash\n$ bash goodbye.sh\nGoodbye world\n```\n\nWrite
+      proceed to use the terminal:\n\n```bash\n$ bash goodbye.sh\nGoodbye world\n\n```\n\nWrite
       down the next step or command in the employee training manual as a single line,
       along with your reasoning:\n\n> "], "model": "text-davinci-003", "temperature":
-      0.0, "max_tokens": 3689, "top_p": 1, "frequency_penalty": 0, "presence_penalty":
+      0.0, "max_tokens": 3688, "top_p": 1, "frequency_penalty": 0, "presence_penalty":
       0, "n": 1, "best_of": 1, "logit_bias": {}, "stop": ["\n"]}'
     headers:
       Accept:
@@ -597,17 +681,17 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '1848'
+      - '1850'
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.27.0
+      - OpenAI/v1 PythonBindings/0.27.2
     method: POST
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6rgMb26maMqCrfTPm4Jde2X8uXWXq","object":"text_completion","created":1678252249,"model":"text-davinci-003","choices":[{"text":"
-        **Don''t take any more steps** because the task is now done!","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":408,"completion_tokens":15,"total_tokens":423}}
+      string: '{"id":"cmpl-6xV8vNDq5O1QlZhGMkFM5Lu76vZzg","object":"text_completion","created":1679639085,"model":"text-davinci-003","choices":[{"text":"
+        **Don''t take any more steps** because the task is now done!","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":409,"completion_tokens":15,"total_tokens":424}}
 
         '
     headers:
@@ -622,18 +706,30 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Mar 2023 05:10:50 GMT
+      - Fri, 24 Mar 2023 06:24:46 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '711'
+      - '665'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
+      X-Ratelimit-Limit-Requests:
+      - '3000'
+      X-Ratelimit-Limit-Tokens:
+      - '250000'
+      X-Ratelimit-Remaining-Requests:
+      - '2999'
+      X-Ratelimit-Remaining-Tokens:
+      - '242624'
+      X-Ratelimit-Reset-Requests:
+      - 20ms
+      X-Ratelimit-Reset-Tokens:
+      - 1.77s
       X-Request-Id:
-      - 99b76318cabe0d87a5c9d7bcfcc5863d
+      - a9f21398a97ea550b15adf26ea0c1b14
     status:
       code: 200
       message: OK
@@ -656,13 +752,13 @@ interactions:
       the task that the training manual has prepared you for! You follow its instructions
       closely.\n\n\n\nYou decide to edit the file `goodbye.sh`. It doesn''t yet exist.\n\nYou
       write out to the file the contents\n\n```\necho \"Goodbye world\"\n```\n\nYou
-      proceed to use the terminal:\n\n```bash\n$ bash goodbye.sh\nGoodbye world\n```\n\nNow,
+      proceed to use the terminal:\n\n```bash\n$ bash goodbye.sh\nGoodbye world\n\n```\n\nNow,
       the next step in the employee training manual is (quoted below as a single line):\n\n>  **Don''t
       take any more steps** because the task is now done!\n\nYou have a few actions
       available to accomplish this: \n\n1. Make a mental note to yourself\n2. Use
       the terminal (to run a command, not to edit a file)\n3. Edit a file\n4. Follow
       instructions from a file\n5. Declare the task done\n\nYou decide it''s #"],
-      "model": "text-davinci-003", "temperature": 0.0, "max_tokens": 3606, "top_p":
+      "model": "text-davinci-003", "temperature": 0.0, "max_tokens": 3605, "top_p":
       1, "frequency_penalty": 0, "presence_penalty": 0, "n": 1, "best_of": 1, "logit_bias":
       {}, "stop": [" "]}'
     headers:
@@ -673,16 +769,16 @@ interactions:
       Connection:
       - keep-alive
       Content-Length:
-      - '2134'
+      - '2136'
       Content-Type:
       - application/json
       User-Agent:
-      - OpenAI/v1 PythonBindings/0.27.0
+      - OpenAI/v1 PythonBindings/0.27.2
     method: POST
     uri: https://api.openai.com/v1/completions
   response:
     body:
-      string: '{"id":"cmpl-6rgMcflQAVZty86APotUKYBQU9N1X","object":"text_completion","created":1678252250,"model":"text-davinci-003","choices":[{"text":"5","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":491,"completion_tokens":1,"total_tokens":492}}
+      string: '{"id":"cmpl-6xV8wIy1mDx2XmoVlTTtDUPjoUT4r","object":"text_completion","created":1679639086,"model":"text-davinci-003","choices":[{"text":"5","index":0,"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":492,"completion_tokens":1,"total_tokens":493}}
 
         '
     headers:
@@ -697,18 +793,30 @@ interactions:
       Content-Type:
       - application/json
       Date:
-      - Wed, 08 Mar 2023 05:10:50 GMT
+      - Fri, 24 Mar 2023 06:24:47 GMT
       Openai-Model:
       - text-davinci-003
       Openai-Organization: user-dummy
       Openai-Processing-Ms:
-      - '258'
+      - '713'
       Openai-Version:
       - '2020-10-01'
       Strict-Transport-Security:
       - max-age=15724800; includeSubDomains
+      X-Ratelimit-Limit-Requests:
+      - '3000'
+      X-Ratelimit-Limit-Tokens:
+      - '250000'
+      X-Ratelimit-Remaining-Requests:
+      - '2999'
+      X-Ratelimit-Remaining-Tokens:
+      - '239402'
+      X-Ratelimit-Reset-Requests:
+      - 20ms
+      X-Ratelimit-Reset-Tokens:
+      - 2.543s
       X-Request-Id:
-      - 24a6ded71eb16c1e04ec8814e4862f87
+      - 5700423e753979375119eddff8289301
     status:
       code: 200
       message: OK

@@ -1,20 +1,19 @@
 import shlex
 from typing import Dict, List
 
+from langchain.chains.base import Chain
 from langchain.chains.llm import LLMChain
 from langchain.llms.base import BaseLLM
+from langchain_contrib.prompts import ChainedPromptTemplate
 from pydantic import BaseModel
 
 from zamm.actions.edit_file import EditFileChain
-from zamm.prompts.prefixed import PrefixedPromptTemplate
-
-from .terminal import ZTerminal
 
 
 class TerminalChain(LLMChain, BaseModel):
     """Asks LLM for terminal input, and executes it"""
 
-    terminal: ZTerminal
+    terminal_chain: Chain
 
     @property
     def input_keys(self) -> List[str]:
@@ -37,10 +36,9 @@ class TerminalChain(LLMChain, BaseModel):
         command = self.llm(self.prompt.format(**inputs), stop=["\n"]).strip()
         parsed_cmd = shlex.split(command)
         if len(parsed_cmd) == 2 and parsed_cmd[0] == "nano":
-            assert isinstance(self.prompt, PrefixedPromptTemplate)
-            edit_result = EditFileChain.for_file(
-                llm=self.llm, prefix=self.prompt.prefix
-            )(
+            assert isinstance(self.prompt, ChainedPromptTemplate)
+            prefix = self.prompt.subprompts[0]
+            edit_result = EditFileChain.for_file(llm=self.llm, prefix=prefix)(
                 {
                     **inputs,
                     "file_path": parsed_cmd[1],
@@ -48,5 +46,6 @@ class TerminalChain(LLMChain, BaseModel):
             )
             return edit_result
 
-        output = self.terminal.run_bash_command(command).rstrip()
-        return {"command": command, "output": output}
+        results = self.terminal_chain(command)
+        results.pop("choice", None)
+        return results

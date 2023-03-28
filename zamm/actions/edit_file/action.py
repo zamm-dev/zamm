@@ -2,10 +2,10 @@ from typing import Any, Dict, Optional
 
 from langchain.llms.base import BaseLLM
 from langchain.schema import AgentAction
+from langchain_contrib.prompts import Templatable
 
 from zamm.actions.base import Action
 from zamm.agents.z_step import StepOutput, ZStepOutput
-from zamm.prompts.prefixed import Prefix
 from zamm.utils import safe_format
 
 from .chain import EditFileChain
@@ -18,15 +18,19 @@ class EditFileOutput(ZStepOutput):
 
     @classmethod
     def from_chain_output(cls, output: Dict[str, Any]):
-        file_exists = output["file_exists"]
+        file_exists = output["file_exists"] == "True"
+        if file_exists:
+            old_contents = output["old_contents"]
+        else:
+            old_contents = None
         return cls(
             decision=AgentAction(
-                tool=output["action"],
+                tool=output["choice"],
                 tool_input=output["file_path"],
                 log="dummy log",
             ),
             observation=output["new_contents"],
-            old_contents=output["old_contents"] if file_exists else None,
+            old_contents=old_contents,
             file_exists=file_exists,
             logger_template=EDIT_LOGGER,
         )
@@ -68,7 +72,7 @@ class EditFileOutput(ZStepOutput):
 
 class EditFile(Action):
     @classmethod
-    def default(cls, llm: BaseLLM, prefix: Prefix):
+    def default(cls, llm: BaseLLM, prefix: Templatable):
         return cls(
             name="Edit a file",
             output_type=EditFileOutput,

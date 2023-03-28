@@ -14,11 +14,9 @@ class FileRead:
     contents: Optional[str] = None
 
     def as_llm_output(self, contents_key: str = "contents") -> Dict[str, Any]:
-        output: Dict[str, Any] = {"file_exists": self.file_exists}
+        output: Dict[str, Any] = {"file_exists": str(self.file_exists)}
         if self.file_exists:
             output[contents_key] = self.contents
-        else:
-            output[contents_key] = None
         return output
 
 

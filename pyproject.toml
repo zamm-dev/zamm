@@ -10,8 +10,8 @@ zamm = "zamm.cli:app"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-vcr-langchain = "^0.0.19"
-langchain-visualizer = "^0.0.16"
+vcr-langchain = "^0.0.20"
+langchain-visualizer = "^0.0.17"
 openai = "^0.27.0"
 simple-term-menu = "^1.6.1"
 pexpect = "^4.8.0"
@@ -20,7 +20,7 @@ pyyaml = "^6.0"
 ulid = "^1.1"
 appdirs = "^1.4.4"
 tiktoken = "^0.2.0"
-langchain-contrib = "0.0.3"
+langchain-contrib = "0.0.4"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^0.991"
