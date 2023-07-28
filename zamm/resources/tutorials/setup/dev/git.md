@@ -1,4 +1,4 @@
-# Settign up Git
+# Setting up Git
 
 Git probably exists but is not yet configured. To do so, ask the user for their name and email, and run the commands accordingly:
 
