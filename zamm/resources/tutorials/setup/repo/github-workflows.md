@@ -17,6 +17,8 @@ Note that the poetry version here is 1.3.1, so that's what we'll use when creati
 
 Now, create the lint workflow file `.github/workflows/lint.yml`. Note that the tasks asks for Python versions from 3.9 to 3.11, so the `python-version` list will therefore contain entries for Python versions 3.9, 3.10, and 3.11.
 
+Also note that if you're using pre-commit, there's [a separate way](https://pre-commit.com/#github-actions-example) to configure it to run, so as to avoid having to install all the pre-commit dependencies as part of the project's own dev dependencies.
+
 ```
 name: lint
 

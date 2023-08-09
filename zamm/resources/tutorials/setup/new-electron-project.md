@@ -175,10 +175,4 @@ then add those fields in:
 }
 ```
 
-## electron-builder
-
-Alternatively
-
-```bash
-$ yarn add electron-builder --dev
-```
+Unfortunately, at this point, these existing instructions do not suffice for getting Electron Forge working for the way the project has been set up, as EF produces *two* app windows when starting the app.

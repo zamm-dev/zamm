@@ -8,7 +8,7 @@ then you can do so by following the below steps. Note that this tutorial assumes
 
 The very first thing we do is to create a `Makefile` **in the current directory** (so edit `./Makefile`) that looks like this:
 
-```
+```Makefile
 .PHONY: format lint test tests clean release
 
 all: format lint test
@@ -31,7 +31,24 @@ tests:
 clean:
 # https://stackoverflow.com/a/41386937/257583
 	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
+```
 
+Make sure to put in the tools you actually use for formatting and linting. That is, if you're using ruff, then `format` and `lint` should look like this instead:
+
+```
+format:
+	poetry run ruff check --fix .
+	poetry run black .
+
+lint:
+	poetry run mypy .
+	poetry run ruff check .
+	poetry run black . --check
+```
+
+If you intend to release this project as a library or tool on PyPI, you may want to add a `release` target as well:
+
+```Makeefile
 release:
 	test -z "$$(git status --porcelain)"
 	git checkout main

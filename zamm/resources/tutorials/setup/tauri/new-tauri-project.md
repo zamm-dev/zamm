@@ -1,16 +1,15 @@
 # Starting a new Tauri project
 
+## Prerequisites
+
+Set up NodeJS and Rust as described in:
+
+- [`nodejs.md`](/zamm/resources/tutorials/setup/dev/nodejs.md)
+- [`rust.md`](/zamm/resources/tutorials/setup/dev/rust.md)
+
 Install Tauri dependencies:
 ```bash
-$ sudo apt install libwebkit2gtk-4.0-dev \
-    build-essential \
-    curl \
-    wget \
-    file \
-    libssl-dev \
-    libgtk-3-dev \
-    libayatana-appindicator3-dev \
-    librsvg2-dev
+$ sudo apt install libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
 ```
 
 Then set up Tauri app creation:
@@ -120,7 +119,7 @@ to something else:
 Now run
 
 ```bash
-$ tauri build
+$ cargo tauri build
 ...
     Finished 2 bundles at:
         /home/amos/projects/zamm/ui/zamm/src-tauri/target/release/bundle/deb/zamm_0.0.0_amd64.deb
@@ -149,3 +148,19 @@ Processing triggers for man-db (2.10.2-1) ...
 Processing triggers for libc-bin (2.35-0ubuntu3.1) ...
 /sbin/ldconfig.real: /usr/lib/wsl/lib/libcuda.so.1 is not a symbolic link
 ```
+
+## Project dev tooling setup
+
+Svelte setup:
+
+Follow the instructions at:
+
+- [`eslint.md`](/zamm/resources/tutorials/setup/tools/svelte/eslint.md)
+- [`prettier.md`](/zamm/resources/tutorials/setup/tools/svelte/prettier.md)
+
+Then for pre-commit, follow the instructions at
+
+- [`pre-commit.md`](/zamm/resources/tutorials/setup/repo/pre-commit/pre-commit.md)
+- [`cargo.md`](/zamm/resources/tutorials/setup/repo/pre-commit/cargo.md)
+- [`svelte.md`](/zamm/resources/tutorials/setup/repo/pre-commit/svelte.md)
+

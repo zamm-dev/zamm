@@ -30,3 +30,17 @@ Mark the version we just installed as the global version of NodeJS:
 ```bash
 $ asdf global nodejs 20.5.0
 ```
+
+To add support for yarn as well, install it via npm:
+
+```bash
+$ npm install --global yarn
+
+added 1 package in 4s
+npm notice 
+npm notice New patch version of npm available! 9.8.0 -> 9.8.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v9.8.1
+npm notice Run npm install -g npm@9.8.1 to update!
+npm notice 
+Reshimming asdf nodejs...
+```

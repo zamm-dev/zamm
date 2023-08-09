@@ -26,7 +26,7 @@ Bumping version from 0.1.0 to 0.0.0
 ## Development tooling
 
 - Follow [these instructions](/zamm/resources/tutorials/setup/tools/default.md) to set up default Python dev tooling
-- Follow the instructions at [`makefile.md`](/zamm/resources/tutorials/setup/makefile.md) to set up a Makefile. This Makefile will make use of all the dev tooling set up in the previous step.
+- Follow the instructions at [`makefile/python.md`](/zamm/resources/tutorials/setup/makefile/python.md) to set up a Makefile. This Makefile will make use of all the dev tooling set up in the previous step.
 
 ## Repository setup
 

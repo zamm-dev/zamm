@@ -52,8 +52,41 @@ To configure your current shell, run:
 source "/home/amos/.asdf/installs/rust/1.71.0/env"
 ```
 
-We ignore the Rust installer's instructions because asdf does that for us already. Instead, we mark the version we just installed as the global version of NodeJS:
+We ignore the Rust installer's instructions because asdf does that for us already. Instead, we mark the version we just installed as the global version of Rust:
 
 ```bash
 $ asdf global rust 1.71.0
+```
+
+If `which rustc` is not showing a path under `~/.asdf/shims`, then close this shell session and start a new one:
+
+```bash
+$ which rustc
+/home/amos/.asdf/shims/rustc
+```
+
+## VS Code integration
+
+If you are using VS Code with the rust-analyzer extension, then edit your user `settings.json` with an overridden path to asdf's rust install. For example, if you find that your `rust-analyzer` is now at this location:
+
+```bash
+$ which rust-analyzer
+/home/amos/.asdf/shims/rust-analyzer
+```
+
+then link to it in `settings.json` like so:
+
+```json
+{
+  ...
+  "rust-analyzer.server.path": "/home/amos/.asdf/shims/rust-analyzer",
+  ...
+}
+```
+
+If `rust-analyzer` doesn't yet exist, add that and `rust-src` as components to your Rust install:
+
+```bash
+$ rustup component add rust-src
+$ rustup component add rust-analyzer
 ```
