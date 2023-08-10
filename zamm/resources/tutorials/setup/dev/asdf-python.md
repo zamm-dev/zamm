@@ -44,7 +44,7 @@ Then reload the conrfig file:
 Add the plugin to asdf:
 
 ```bash
-$ asdf plugin-add python
+$ asdf plugin add python
 initializing plugin repository...Cloning into '/home/amos/.asdf/repository'...
 remote: Enumerating objects: 5301, done.
 remote: Counting objects: 100% (507/507), done.

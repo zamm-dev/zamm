@@ -2,15 +2,12 @@
 
 ## Prerequisites
 
-Set up NodeJS and Rust as described in:
+Set up NodeJS, Rust, and Tauri as described in:
 
 - [`nodejs.md`](/zamm/resources/tutorials/setup/dev/nodejs.md)
 - [`rust.md`](/zamm/resources/tutorials/setup/dev/rust.md)
+- [`tauri.md`](/zamm/resources/tutorials/setup/dev/tauri.md)
 
-Install Tauri dependencies:
-```bash
-$ sudo apt install libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
-```
 
 Then set up Tauri app creation:
 
@@ -52,20 +49,6 @@ $ yarn
 yarn install v1.22.15
 info No lockfile found.
 [1/4] Resolving packages...
-[2/4] Fetching packages...
-info fsevents@2.3.2: The platform "linux" is incompatible with this module.
-...
-success Saved lockfile.
-warning Your current version of Yarn is out of date. The latest version is "1.22.19", while you're on "1.22.15".
-info To upgrade, run the following command:
-$ curl --compressed -o- -L https://yarnpkg.com/install.sh | bash
-Done in 78.81s.
-$ yarn tauri dev
-yarn run v1.22.19
-$ tauri dev
-     Running BeforeDevCommand (`yarn dev`)
-$ vite
-Forced re-optimization of dependencies
 
 ...
 
@@ -76,17 +59,7 @@ Could not determine the accessibility bus address
 
 Note that the command does not exit.
 
-Now run this in a new terminal window:
-
-```bash
-$ cargo install tauri-cli
-...
-    Finished release [optimized] target(s) in 4m 25s
-  Installing /home/amos/.asdf/installs/rust/1.71.0/bin/cargo-tauri
-   Installed package `tauri-cli v1.4.0` (executable `cargo-tauri`)
-```
-
-Now, edit `src-tauri/tauri.conf.json` to change the identifier from the default:
+Now edit `src-tauri/tauri.conf.json` to change the identifier from the default:
 
 ```json
 {
@@ -116,7 +89,7 @@ to something else:
 }
 ```
 
-Now run
+Now run this in a new window:
 
 ```bash
 $ cargo tauri build

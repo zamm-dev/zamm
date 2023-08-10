@@ -3,7 +3,7 @@
 Assuming that you already have `asdf` set up, next install the NodeJS plugin:
 
 ```bash
-$ asdf plugin-add nodejs
+$ asdf plugin add nodejs
 updating plugin repository...remote: Enumerating objects: 50, done.
 remote: Counting objects: 100% (50/50), done.
 remote: Compressing objects: 100% (28/28), done.
