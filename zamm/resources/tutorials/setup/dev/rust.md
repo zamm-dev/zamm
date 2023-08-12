@@ -53,7 +53,7 @@ $ which rust-analyzer
 /home/amos/.asdf/shims/rust-analyzer
 ```
 
-then link to it in `settings.json` like so:
+then link to it in the user's `settings.json` like so:
 
 ```json
 {
@@ -68,4 +68,42 @@ If `rust-analyzer` doesn't yet exist, add that and `rust-src` as components to y
 ```bash
 $ rustup component add rust-src
 $ rustup component add rust-analyzer
+```
+
+If you see an error such as
+
+```bash
+[ERROR rust_analyzer::main_loop] FetchWorkspaceError:
+rust-analyzer failed to load workspace: Failed to load the project at /root/zamm/src-tauri/Cargo.toml: cd "/root/zamm/src-tauri" && "cargo" "--version" failed: No such file or directory (os error 2)
+```
+
+It is because you missed this step. If you are developing remotely, edit `.vscode/settings.json` to be:
+
+```json
+{
+    "rust-analyzer.server.path": "/root/.asdf/shims/rust-analyzer"
+}
+```
+
+and add this file to `.git/info/exclude`, from:
+
+```
+# git ls-files --others --exclude-from=.git/info/exclude
+# Lines that start with '#' are comments.
+# For a project mostly in C, the following would be a good set of
+# exclude patterns (uncomment them if you want to use them):
+# *.[oa]
+# *~
+```
+
+to
+
+```
+# git ls-files --others --exclude-from=.git/info/exclude
+# Lines that start with '#' are comments.
+# For a project mostly in C, the following would be a good set of
+# exclude patterns (uncomment them if you want to use them):
+# *.[oa]
+# *~
+.vscode/settings.json
 ```

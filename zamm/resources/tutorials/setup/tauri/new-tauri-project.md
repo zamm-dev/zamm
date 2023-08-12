@@ -137,3 +137,8 @@ Then for pre-commit, follow the instructions at
 - [`cargo.md`](/zamm/resources/tutorials/setup/repo/pre-commit/cargo.md)
 - [`svelte.md`](/zamm/resources/tutorials/setup/repo/pre-commit/svelte.md)
 
+## Testing setup
+
+Follow the instructions at
+
+- [`e2e-testing.md`](./e2e-testing.md)

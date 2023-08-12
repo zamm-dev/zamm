@@ -76,6 +76,17 @@ Before you scream Oh My Zsh! look over the `.zshrc` file to select plugins, them
 • Get stickers, t-shirts, coffee mugs and more: https://shop.planetargon.com/collections/oh-my-zsh
 ```
 
+If the default shell prompt doesn't pop up, or you say no to it, you can change it manually later:
+
+```bash
+$ which zsh
+/usr/bin/zsh
+$ chsh
+Changing the login shell for root
+Enter the new value, or press ENTER for the default
+        Login Shell [/usr/bin/zsh]: /usr/bin/zsh
+```
+
 Then, install the autocomplete plugin:
 
 ```bash

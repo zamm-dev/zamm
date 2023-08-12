@@ -39,3 +39,13 @@ $ ssh-keygen
 ```
 
 Then, we add it to GitHub by going to [https://github.com/settings/keys](https://github.com/settings/keys) and clicking on "New SSH key". If you see a login page, then you should login first.
+
+## Transferring a Git project without SSH
+
+Do this to create a zip archive of your project:
+
+```bash
+$ git archive -o ~/latest.zip HEAD
+```
+
+Then transfer it to another computer.

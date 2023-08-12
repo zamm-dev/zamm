@@ -178,4 +178,9 @@ $ identify-cli src-tauri/src/main.rs
 ["file", "non-executable", "rust", "text"]
 ```
 
+In addition, we should check that, for each type of file edited:
+
+- the relevant checks run
+- the irrelevant checks *don't* run 
+
 That's all! **Don't take any more steps** because the task is now done!

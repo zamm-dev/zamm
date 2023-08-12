@@ -106,6 +106,7 @@ repos:
     hooks:
       - id: prettier
         args: [--write, --plugin, prettier-plugin-svelte]
+        files: \.(json|yaml|html|js|ts|svelte)$
         additional_dependencies:
           - prettier
           - prettier-plugin-svelte

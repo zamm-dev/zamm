@@ -465,4 +465,35 @@ Now if you run `yarn tauri dev`, you should be able to enter in your name and se
 
 > Hello, Amos! You have been greeted from Python via JavaScript!
 
+## VS Code integration
+
+After adding a Python sidecar, we should also recommend the Python extension in VS Code. Edit `.vscode/extensions.json` from
+
+```json
+{
+  "recommendations": [
+    "svelte.svelte-vscode",
+    "tauri-apps.tauri-vscode",
+    "rust-lang.rust-analyzer"
+  ]
+}
+```
+
+to
+
+```json
+{
+  "recommendations": [
+    "svelte.svelte-vscode",
+    "tauri-apps.tauri-vscode",
+    "rust-lang.rust-analyzer",
+    "ms-python.python"
+  ]
+}
+```
+
+The value to put inside `recommendations` is the extension's ID.
+
+## Miscellaneous
+
 The final AppImage binary built by `cargo tauri build` will be approximately 12 MB bigger.

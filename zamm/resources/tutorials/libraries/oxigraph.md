@@ -66,3 +66,15 @@ use oxigraph::sparql::QueryResults;
         }
     }
 ```
+
+Adding Oxigraph to a Tauri app results in an increase of about 8 MB.
+
+## Potential errors
+
+If you get the error
+
+```
+Error: Io(Custom { kind: Other, error: ErrorStatus { code: 5, subcode: 0, severity: 0, message: "IO error: While lock file: /root/.local/share/zamm/zamm.db/LOCK: Resource temporarily unavailable" } })
+```
+
+it might be because the previous database instance died in an app crash before the database could be unlocked.
