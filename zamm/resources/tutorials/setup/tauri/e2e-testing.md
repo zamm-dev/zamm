@@ -40,42 +40,7 @@ If it can't, you may need to reshim with asdf:
 $ asdf reshim rust
 ```
 
-Then set up a test framework. We'll use vitest since it has, of course, great support for Vite.
-
-```bash
-$ yarn add --dev vitest
-```
-
-Then add a `test` command by editing `package.json` from
-
-```json
-...
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json",
-    "tauri": "tauri"
-  },
-...
-```
-
-to
-
-```json
-...
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "check": "svelte-check --tsconfig ./tsconfig.json",
-    "tauri": "tauri",
-    "test": "vitest"
-  },
-...
-```
-
-Add `ZixuanChen.vitest-explorer` to `.vscode/extensions.json`
+Set up Vitest using the instructions from [`vitest.md`](./vitest.md).
 
 ## Selenium
 

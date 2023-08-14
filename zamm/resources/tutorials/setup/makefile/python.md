@@ -64,6 +64,12 @@ release:
 	git push --follow-tags
 ```
 
+If you're using VS Code, add to `.vscode/extensions.json`:
+
+```json
+  "ms-vscode.makefile-tools"
+```
+
 ## Confirmation
 
 As usual, we check that we've configured `make` successfully by running it:
