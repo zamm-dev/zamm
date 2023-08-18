@@ -44,6 +44,24 @@ $ which rustc
 /home/amos/.asdf/shims/rustc
 ```
 
+(Observed on GitHub CI) If you get error such as:
+
+```
+  --- stderr
+  `PKG_CONFIG_ALLOW_SYSTEM_CFLAGS="1" "pkg-config" "--libs" "--cflags" "gdk-3.0" "gdk-3.0 >= 3.22"` did not exit successfully: exit status: 1
+  error: could not find system library 'gdk-3.0' required by the 'gdk-sys' crate
+
+  --- stderr
+  Package gdk-3.0 was not found in the pkg-config search path.
+  Perhaps you should add the directory containing `gdk-3.0.pc'
+  to the PKG_CONFIG_PATH environment variable
+  No package 'gdk-3.0' found
+  Package gdk-3.0 was not found in the pkg-config search path.
+  Perhaps you should add the directory containing `gdk-3.0.pc'
+  to the PKG_CONFIG_PATH environment variable
+  No package 'gdk-3.0' found
+```
+
 ## VS Code integration
 
 If you are using VS Code with the rust-analyzer extension, then edit your user `settings.json` with an overridden path to asdf's rust install. For example, if you find that your `rust-analyzer` is now at this location:

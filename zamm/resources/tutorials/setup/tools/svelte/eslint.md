@@ -23,8 +23,11 @@ overrides:
   parserOptions:
     parser: '@typescript-eslint/parser'
 rules:
+  max-len:
+    - error
+    - code: 88
   no-inner-declarations: off
 ignorePatterns: [build/, dist/]
 ```
 
-The config is based on [the one at awesome-sveltekit](https://github.com/janosh/awesome-sveltekit/blob/ea85d85d/site/.eslintrc.yml). `no-inner-declarations` is turned off because it doesn't understand that Svelte functions are already not at root.
+The config is based on [the one at awesome-sveltekit](https://github.com/janosh/awesome-sveltekit/blob/ea85d85d/site/.eslintrc.yml). `no-inner-declarations` is turned off because it doesn't understand that Svelte functions are already not at root. `max-len` is for compatibility with Python black.

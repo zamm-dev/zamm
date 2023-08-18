@@ -122,6 +122,31 @@ Processing triggers for libc-bin (2.35-0ubuntu3.1) ...
 /sbin/ldconfig.real: /usr/lib/wsl/lib/libcuda.so.1 is not a symbolic link
 ```
 
+You may want to enter this into the Tauri Makefile:
+
+```Makefile
+target/release/zamm: ./Cargo.toml $(shell find . -type f \( -name "*.rs" \) -not -path "./target/*")
+	cargo build --release
+  touch target/release/zamm  # cargo build might not do anything
+```
+
+Alternatively, you can just build the target without specifying dependencies, because Cargo is pretty performant anyways when everything is up to date.
+
+Then in the main project Makefile:
+
+```Makefile
+build: svelte rust
+	cargo tauri build
+
+rust:
+	cd src-tauri && make
+
+svelte:
+	cd src-svelte && make
+```
+
+where `src-tauri` and `src-svelte` are your respective directories for Svelte and Tauri code.
+
 ## Project dev tooling setup
 
 Svelte setup:

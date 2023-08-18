@@ -6,7 +6,7 @@ If you are using Vite, then Vitest is a native test framework designed specifica
 $ yarn add --dev vitest
 ```
 
-Then add a `test` command by editing `package.json` from
+Then add `test` and `test-watch` commands by editing `package.json` from
 
 ```json
 ...
@@ -30,10 +30,13 @@ to
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
     "tauri": "tauri",
-    "test": "vitest"
+    "test": "vitest run",
+    "test-watch": "vitest",
   },
 ...
 ```
+
+`test` will run tests and exit. `test-watch` will watch for files to change and then automatically rerun tests.
 
 Add `ZixuanChen.vitest-explorer` to `.vscode/extensions.json`
 

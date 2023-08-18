@@ -167,11 +167,23 @@ Now create a minimal `package.json` in this directory:
 
 ```bash
 {
-  "name": "webdriverio",
+  "name": "webdriver",
   "private": true,
   "scripts": {
     "test": "wdio run ./wdio.conf.ts"
   }
+}
+```
+
+Make it a workspace of the main `package.json`:
+
+```bash
+{
+  "name": "zamm",
+  "private": true,
+  ...
+  "workspaces": ["webdriver"],
+  ...
 }
 ```
 
@@ -280,7 +292,7 @@ Back in the top-level `package.json`, we add this to `scripts`:
   ...
   "scripts": {
     ...
-    "e2e-test": "cd webdriver && yarn test"
+    "e2e-test": "yarn workspace webdriver test"
   },
   ...
 }
@@ -364,3 +376,112 @@ const { spawn, spawnSync } = require("child_process");
 ```
 
 in `webdriver/wdio.conf.ts` without causing wdio to fail to run. If this changes in the future, then this rule can be turned on again.
+
+## Execution in CI environments
+
+If the tests fail because the only thing rendered on the screen is `Could not connect: Connection refused`, check to see if you have the `custom-protocol` feature enabled. In particular, check if you haven't defined Tauri features twice in `Cargo.toml`.
+
+For example, this is **wrong**:
+
+```toml
+[dependencies]
+tauri = { version = "1.4", features = [ "shell-sidecar", "shell-open", "process-command-api"] }
+...
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
+...
+```
+
+If you have that, make sure the Tauri "custom-protocol" feature is always enabled for end-to-end testing, and edit the Tauri dependency to this:
+
+```toml
+[dependencies]
+tauri = { version = "1.4", features = [ "shell-sidecar", "shell-open", "process-command-api", "custom-protocol"] }
+...
+
+[features]
+# this is necessary to prevent the Tauri CLI from complaining about the lack of a
+# custom-protocol feature during compilation
+custom-protocol = []
+```
+
+Make sure to put in a comment explaining why the `custom-protocol` feature is defined for the local project even though it doesn't do anything. This is to prevent an error message from `cargo tauri build` such as:
+
+```
+error: none of the selected packages contains these features: custom-protocol
+       Error failed to build app: failed to build app
+```
+
+Note also that the `custom-protocol` defined in `[features]` refers to the `custom-protocol` feature of the app we're building (which we are likely never going to refer to), whereas the `custom-protocol` in the `features` array of the `tauri` dependency refers to the `custom-protocol` feature of the Tauri library itself.
+
+In addition to all the setup required for pre-commit hooks as described in [`pre-commit.md`](/zamm/resources/tutorials/setup/repo/workflows/pre-commit.md), you will likely need these additional setup steps as well:
+
+```yaml
+      - name: Install webdriver dependencies
+        run: sudo apt-get install -y webkit2gtk-driver xvfb
+      - name: Install tauri-driver
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: tauri-driver
+      - name: Try creating directories
+        run: |
+          mkdir -p /home/runner/.local/share/zamm/
+          chmod -R 777 /home/runner/.local/share/zamm/
+          chmod +x src-tauri/target/release/zamm
+          chmod +x src-tauri/target/release/zamm-python
+      - name: Run headless WebdriverIO tests
+        run: xvfb-run yarn e2e-test
+      - name: Upload test screenshots as artifacts
+        if: always() # run even if tests fail
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-screenshots
+          path: webdriver/screenshots/*.png
+```
+
+## Using local user directories
+
+If you're doing something with local user data directories, you may have to create them first before the CI run:
+
+```yaml
+      - name: Try creating directories
+        run: |
+          mkdir -p /home/runner/.local/share/zamm/
+          chmod -R 777 /home/runner/.local/share/zamm/
+```
+
+This is because the CI environment might not give the running process the permissions to create directories in the user's home directory. If that is the case, the best option is of course to handle such an edge case within the program itself.
+
+## Supporting screenshots
+
+Add this code to the beginning of the test:
+
+```bash
+  afterEach(async function () {
+    const screenshotPath = `./screenshots/${this.currentTest.title.replace(/\s+/g, '_')}.png`;
+    await browser.saveScreenshot(screenshotPath);
+    console.log(`Screenshot saved to ${screenshotPath}`);
+  });
+```
+
+Then create the file `webdriver/screenshots/.gitignore` with the following contents to avoid commiting any screenshots while still ensuring the directory exists:
+
+```gitignore
+*
+!.gitignore
+```
+
+If you are running this in CI, then add this to the end of the workflow:
+
+```yaml
+      - name: Upload test screenshots as artifacts
+        if: always() # run even if (especially if) tests fail
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-screenshots
+          path: webdriver/screenshots/*.png
+```

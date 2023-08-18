@@ -7,13 +7,16 @@ The very first thing we do is to create a `Makefile` **in the current directory*
 ```Makefile
 .PHONY: format lint test tests clean release
 
-all: format lint test
+all: format lint test build
 
 format:
 	cargo fmt
 
 lint:
 	cargo clippy -- -Dwarnings
+
+build:
+	cargo build --release
 
 test: tests
 tests:

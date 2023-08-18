@@ -1,4 +1,4 @@
-# Setting up Github workflows
+# Setting up Github workflows for Poetry
 
 Say you want to do the following task:
 

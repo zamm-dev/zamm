@@ -44,98 +44,89 @@ $ pre-commit install
 
 ### Singleton Graph DB
 
-First we set up a singleton graph database using Tauri's state management system. Import Mutex:
+We define it as such
 
 ```rust
-use std::sync::Mutex;
-use oxigraph::store::StorageError;
-```
+const DB_NAME: &str = "zamm.sqlite3";
 
-Then define a GraphDB struct to store the new store in. Connect to "zamm.db" by default, but put it in a constant.
+struct ZammDatabase(Mutex<Option<SqliteConnection>>);
 
-```rust
-const DB_NAME: &str = "zamm.db";
+...
 
-struct GraphDB(Mutex<Store>);
-```
+fn main() {
+    let possible_db = get_db();
 
-Now add this new store to the state, from:
-
-```rust
-fn main() -> Result<(), Box<dyn Error>> {
     tauri::Builder::default()
+        .manage(ZammDatabase(Mutex::new(possible_db)))
         .invoke_handler(tauri::generate_handler![greet])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-
-    Ok(())
 }
 ```
 
-to
-
-```rust
-fn main() -> Result<(), StorageError> {
-    let store = Store::open(DB_NAME)?;
-
-    tauri::Builder::default()
-        .manage(GraphDB(Mutex::new(store)))
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-
-    Ok(())
-}
-```
+where `get_db` is defined below.
 
 Check that you have gotten this to compile.
 
-### Saving the graph DB to the user's data dir
+### Saving the DB to the user's data dir
 
 Instead of leaving a mess in the arbitrary current directory where the command is run, or preventing the user from accessing the same database again, use [`directories`](/zamm/resources/tutorials/libraries/directories.md) to pick the user's data folder for app data storage.
 
-- Make sure to use a constant for the database name.
-- If there is no user home directory found, default to the current directory, and print out an error message to that effect.
+Requirements:
+
+- Try to create the database in the user's data directory.
+- If that fails for any reason, print out an error message to that effect, and default to creating the database in the current directory instead.
 - Make sure to print out the eventual graph database path
+
+Implementation details:
+
+- Make sure to use a constant for the database name.
 
 TODO: make database path a configurable commandline argument instead
 
-Change
+This is a sample implementation of these requirements:
 
 ```rust
-fn main() -> Result<(), StorageError> {
-    let store = Store::open(DB_NAME)?;
-
-    tauri::Builder::default()
-        .manage(GraphDB(Mutex::new(store)))
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-
-    Ok(())
+fn connect_to(db_path: PathBuf) -> Option<SqliteConnection> {
+    let db_path_str = db_path.to_str().expect("Cannot convert DB path to str");
+    match SqliteConnection::establish(db_path_str) {
+        Ok(conn) => {
+            println!("Connected to DB at {}", db_path_str);
+            Some(conn)
+        },
+        Err(e) => {
+            eprintln!("Failed to connect to DB: {}", e);
+            None
+        }
+    }
 }
-```
 
-to
+/** Try to start SQLite database in user data dir. */
+fn get_data_dir_db() -> Option<SqliteConnection> {
+    if let Some(user_dirs) = ProjectDirs::from("dev", "zamm", "ZAMM") {
+        let data_dir = user_dirs.data_dir();
 
-```rust
-fn main() -> Result<(), StorageError> {
-    let db_path = if let Some(zamm_dirs) = ProjectDirs::from("dev", "zamm", "ZAMM") {
-        zamm_dirs.data_dir().join(DB_NAME)
+        if !data_dir.exists() {
+            match fs::create_dir_all(&data_dir) {
+                Ok(()) => (),
+                Err(e) => {
+                    eprintln!("Failed to create data directory: {}", e);
+                    return None;
+                }
+            }
+        }
+
+        connect_to(data_dir.join(DB_NAME))
     } else {
-        eprintln!("Cannot find user home directory, defaulting to current dir.");
-        env::current_dir()?.as_path().join(DB_NAME)
-    };
-    let store = Store::open(db_path.as_path())?;
-    let db_path_display = db_path.display();
-    println!("Graph database opened at {db_path_display}");
+        eprintln!("Cannot find user home directory.");
+        None
+    }
+}
 
-    tauri::Builder::default()
-        .manage(GraphDB(Mutex::new(store)))
-        .invoke_handler(tauri::generate_handler![greet])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
-
-    Ok(())
+fn get_db() -> Option<SqliteConnection> {
+    get_data_dir_db().or_else(|| {
+        eprintln!("Unable to create DB in user data dir, defaulting to current dir instead.");
+        connect_to(env::current_dir().expect("Failed to get current directory").join(DB_NAME))
+    })
 }
 ```
