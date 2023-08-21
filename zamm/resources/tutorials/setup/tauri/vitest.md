@@ -353,3 +353,7 @@ interface Window {
   __TAURI_IPC__?: () => void;
 }
 ```
+
+### Specta
+
+If instead you [set up Specta](/zamm/resources/tutorials/libraries/specta.md), you should follow the mocking instructions in that file.

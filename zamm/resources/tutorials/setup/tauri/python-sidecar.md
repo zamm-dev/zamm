@@ -164,6 +164,7 @@ clean:
 	rm -rf build
 
 dist/main: $(shell find zamm -type f \( -name "*.py" \))
+	poetry install
 	poetry run pyinstaller -F zamm/main.py
 	cp dist/main ../src-tauri/binaries/zamm-python-x86_64-unknown-linux-gnu
 ```
@@ -279,6 +280,8 @@ then edit it to look like this:
 
 ## Invoking the sidecar from Rust
 
+We'll be following the instructions [here](https://tauri.app/v1/guides/building/sidecar/).
+
 Edit `src-tauri/Cargo.toml` to enable the `process-command-api` feature:
 
 ```toml
@@ -350,6 +353,9 @@ fn main() {
 and modify the existing function to call this sidecar instead:
 
 ```rust
+use tauri::api::process::{Command, CommandEvent};
+use futures::executor;
+
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -385,9 +391,130 @@ fn main() {
 }
 ```
 
+We use `executor::block_on` here to turn the asynchronous call into a synchronous one. Make sure to
+
+```bash
+$ cargo add futures
+```
+
+if it's not yet installed.
+
 Now if you run `yarn tauri dev`, you should be able to enter in your name and see it say:
 
 > Hello, Amos! You have been greeted from Python via Rust!
+
+### Testing
+
+Your unit test from before:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::greet;
+
+    #[test]
+    fn test_greet_name() {
+        let result = greet("Test");
+        assert_eq!(result, "Hello, Test! You have been greeted from Python via Rust!");
+    }
+}
+```
+
+may fail now with the message:
+
+```rust
+failures:
+
+---- tests::test_greet_name stdout ----
+thread 'tests::test_greet_name' panicked at 'asfd: Io(Os { code: 2, kind: NotFound, message: "No such file or directory" })', src/main.rs:27:10
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::test_greet_name
+
+test result: FAILED. 1 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+error: test failed, to rerun pass `--bin zamm`
+```
+
+If that is the case, you may want to
+
+```bash
+$ cargo add tauri_utils
+```
+
+so that you can copy this code from `Command::new_sidecar`:
+
+```rust
+use tauri_utils::platform;
+
+fn relative_command_path(command: String) -> crate::Result<String> {
+  match platform::current_exe()?.parent() {
+    #[cfg(windows)]
+    Some(exe_dir) => Ok(format!("{}\\{command}.exe", exe_dir.display())),
+    #[cfg(not(windows))]
+    Some(exe_dir) => Ok(format!("{}/{command}", exe_dir.display())),
+    None => Err(crate::api::Error::Command("Could not evaluate executable dir".to_string()).into()),
+  }
+}
+```
+
+Except, of course, you're copying this inside your own code, so you can do:
+
+```rust
+fn relative_command_path(command: String) -> tauri::Result<String> {
+    match platform::current_exe()?.parent() {
+      #[cfg(windows)]
+      Some(exe_dir) => Ok(format!("{}\\{command}.exe", exe_dir.display())),
+      #[cfg(not(windows))]
+      Some(exe_dir) => Ok(format!("{}/{command}", exe_dir.display())),
+      None => Err(tauri::api::Error::Command("Could not evaluate executable dir".to_string()).into()),
+    }
+  }
+```
+
+and then in the function:
+
+```rust
+#[tauri::command]
+fn greet(name: &str) -> String {
+    let expected_binary_path = relative_command_path("zamm-python".to_string()).expect("Failed to get expected binary path");
+    let (mut rx, mut _child) = Command::new_sidecar("zamm-python")
+        .expect("failed to create `zamm-python` binary command")
+        .args(vec![name])
+        .spawn()
+        .unwrap_or_else(|err| panic!("Failed to spawn sidecar at {}: {}", expected_binary_path, err));
+    ...
+```
+
+This way, when it fails, you can at least get a more understandable error:
+
+> thread 'tests::test_greet_name' panicked at 'Failed to spawn sidecar at /root/zamm/src-tauri/target/debug/deps/zamm-python: No such file or directory (os error 2)', src/main.rs:39:31
+
+Now that you know this is the reason, you can at least copy it before testing:
+
+```bash
+$ cp ../src-python/dist/main target/debug/deps/zamm-python
+```
+
+Errors now should be actual errors:
+
+```
+failures:
+
+---- tests::test_greet_name stdout ----
+thread 'tests::test_greet_name' panicked at 'assertion failed: `(left == right)`
+  left: `"Hello, Test! You have been greeted from Python via Rust"`,
+ right: `"Hello, Test! You've been greeted from Rust!"`', src/main.rs:75:9
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    tests::test_greet_name
+```
+
+Alternatively, to keep it as a unit-test rather than an integration test, you can mock the sidecar call as shown [here](/zamm/resources/tutorials/libraries/mockall.md)
 
 ## Invoking the sidecar from JS
 
@@ -512,6 +639,10 @@ Now if you run `yarn tauri dev`, you should be able to enter in your name and se
 > Hello, Amos! You have been greeted from Python via JavaScript!
 
 Note that if you invoke it from the frontend, the binary will be located at `src-tauri/target/release/zamm-python`. Be sure to upload that binary too if you're running an end-to-end test on a CI environment.
+
+### Testing
+
+Follow the instructinos at [`vitest.md`](/zamm/resources/tutorials/setup/tauri/vitest.md).
 
 ## VS Code integration
 
