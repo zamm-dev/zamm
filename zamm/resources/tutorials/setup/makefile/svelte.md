@@ -1,4 +1,4 @@
-# Setting up `make` for Rust projects
+# Setting up `make` for Svelte projects
 
 `make` can help serve as a unified format/lint/test entry point.
 

@@ -311,3 +311,13 @@ test("invoke simple", async () => {
   );
 });
 ```
+
+## Avoiding continual reformats
+
+To avoid constantly overwriting `src-svelte/src/lib/bindings.ts` with `yarn tauri dev`, we can create a `.prettierignore` file at the project root:
+
+```
+src-svelte/src/lib/bindings.ts
+```
+
+Alternatively, you could also hide the reformatting line behind commandline args for your Tauri app, but that requires more setup and manually managing the sync.

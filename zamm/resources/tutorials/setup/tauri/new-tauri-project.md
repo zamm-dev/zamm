@@ -147,6 +147,8 @@ svelte:
 
 where `src-tauri` and `src-svelte` are your respective directories for Svelte and Tauri code.
 
+If you have followed the instructions for a [Svelte Makefile](zamm/resources/tutorials/setup/makefile/svelte.md), which would enable the above, you should get rid of the redundant `beforeBuildCommand` in `src-tauri/tauri.conf.json`.
+
 ## Project dev tooling setup
 
 Svelte setup:

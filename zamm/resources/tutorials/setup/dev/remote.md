@@ -82,3 +82,18 @@ ssh -L 59000:localhost:5901 -C -N -l root hetzner
 ```
 
 and connect to `localhost:59000` with your local VNC client. On Ubuntu, this would be Vinagre.
+
+If you get an error such as this when starting Firefox:
+
+```bash
+$ firefox
+Client is not authorized to connect to ServerError: cannot open display: :1.0
+```
+
+then follow the advice of [this answer](https://askubuntu.com/a/1462654) and run
+
+```bash
+$ export XAUTHORITY=~/.Xauthority
+```
+
+and try starting Firefox again.
