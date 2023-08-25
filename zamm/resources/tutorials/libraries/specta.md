@@ -312,6 +312,30 @@ test("invoke simple", async () => {
 });
 ```
 
+## Errors
+
+If you get the error
+
+```
+   Compiling zamm v0.0.0 (/root/zamm/src-tauri)
+error[E0277]: the trait bound `ApiKeys: SpectaFunctionResult<_>` is not satisfied
+   --> src/main.rs:30:16
+    |
+30  |     ts::export(collect_types![greet, get_api_keys], "../src-svelte/src/lib/...
+    |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `SpectaFunctionResult<_>` is not implemented for `ApiKeys`
+    |
+    = help: the trait `SpectaFunctionResult<SpectaFunctionResultResult<TMarker>>` is implemented for `Result<T, E>`
+    = note: required for `fn(tauri::State<'_, ZammApiKeys>) -> ApiKeys` to implement `SpectaFunction<(_, TauriMarker)>`
+note: required by a bound in `get_datatype_internal`
+   --> /root/.asdf/installs/rust/1.71.1/registry/src/index.crates.io-6f17d22bba15001f/specta-1.0.5/src/functions/mod.rs:103:42
+    |
+103 | pub fn get_datatype_internal<TMarker, T: SpectaFunction<TMarker>>(
+    |                                          ^^^^^^^^^^^^^^^^^^^^^^^ required by this bound in `get_datatype_internal`
+    = note: this error originates in the macro `$crate::internal::fn_datatype` which comes from the expansion of the macro `collect_types` (in Nightly builds, run with -Z macro-backtrace for more info)
+```
+
+that means you haven't derived `specta::Type` on one of the custom types you've defined in your function signature.
+
 ## Avoiding continual reformats
 
 To avoid constantly overwriting `src-svelte/src/lib/bindings.ts` with `yarn tauri dev`, we can create a `.prettierignore` file at the project root:

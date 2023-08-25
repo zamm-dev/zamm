@@ -130,3 +130,265 @@ fn get_db() -> Option<SqliteConnection> {
     })
 }
 ```
+
+### Frontend styling
+
+Install fonts as described [here](/zamm/resources/tutorials/coding/frameworks/sveltekit.md). Then add CSS for the fonts, editing `src-svelte/src/routes/styles.css`:
+
+```css
+:root {
+  --font-body: Saira, Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  ...
+}
+
+...
+
+h1,
+h2,
+p {
+  font-weight: 400;
+  font-size: 18px;
+}
+
+...
+```
+
+"Saira" is the preferred font choice, althoguh "Changa" is a good option too.
+
+If you do this, make sure to edit the font-family for `src-svelte/src/routes/Header.svelte` as well:
+
+```css
+  header {
+    display: flex;
+    justify-content: space-between;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+```
+
+
+### Exposing API keys to the frontend
+
+First [refactor](/zamm/resources/tutorials/coding/refactoring_rust_module.md), then instructions at [`environment_variables.md`](/zamm/resources/tutorials/systems/environment_variables.md) to read them from the environment.
+
+Then add a command for exposing API keys, as described below. Pipe that data through to the frontend. The keys should be displayed in a table with a single header spanning all columns, named "API Keys". The service name should be displayed on the left column of the table, and the key should be displayed on the right. The key should be marked as "not set" if it's undefined.
+
+Entire page:
+
+```css
+<script lang="ts">
+  import { getApiKeys } from "$lib/bindings";
+
+  let api_keys = getApiKeys();
+</script>
+
+<section>
+  <table>
+    <tr>
+      <th colspan="2">API keys</th>
+    </tr>
+    <tr>
+      <td>OpenAI</td>
+      <td class="key">
+        {#await api_keys}
+          ...loading
+        {:then keys}
+          {#if keys.openai !== undefined && keys.openai !== null}
+            {keys.openai.value}
+          {:else}
+            <span class="unset">not set</span>
+          {/if}
+        {:catch error}
+          <span style="color: red">{error.message}</span>
+        {/await}
+      </td>
+    </tr>
+  </table>
+</section>
+
+<style>
+  section {
+    display: flex;
+    flex-direction: column;
+    flex: 0.6;
+  }
+
+  table {
+    width:0.1%;
+    white-space: nowrap;
+  }
+
+  th, td {
+    padding: 0 0.5rem;
+    text-align: left;
+  }
+
+  td {
+    color: #000;
+  }
+
+  .key {
+    font-weight: bold;
+    text-transform: lowercase;
+  }
+
+  .unset {
+    color: #888;
+  }
+</style>
+
+```
+
+## Actions
+
+### Adding a new command
+
+#### Example: command for exposing API keys
+
+Create `src-tauri/src/commands/keys.rs`:
+
+```rust
+use crate::setup::api_keys::ApiKeys;
+use crate::ZammApiKeys;
+use specta::specta;
+use std::clone::Clone;
+use tauri::State;
+
+#[tauri::command]
+#[specta]
+pub fn get_api_keys(api_keys: State<ZammApiKeys>) -> ApiKeys {
+    api_keys.0.lock().unwrap().clone()
+}
+
+```
+
+Then edit `src-tauri/src/commands/mod.rs` to include the new command:
+
+```rust
+mod api;
+mod errors;
+mod greet;
+mod keys;
+
+pub use greet::greet;
+pub use keys::get_api_keys;
+
+```
+
+Now, in `src-tauri/src/main.rs`, check if the name for the new command already exists for a different function or variable. If it does, choose to either:
+
+1. Rename the command to something else
+2. Rename the existing function to something else
+3. Qualify each use of the existing function or new command with the module name
+
+In this case, `get_api_keys` was already defined for initializing the API keys at app startup. We decide to rename it to `setup_api_keys` instead. Now:
+
+1. Add the new command to Specta types export
+
+```rust
+use commands::{get_api_keys, greet};
+
+fn main() {
+    #[cfg(debug_assertions)]
+    ts::export(
+        collect_types![greet, get_api_keys],
+        "../src-svelte/src/lib/bindings.ts",
+    )
+    .unwrap();
+```
+
+2. Add the new command to the Tauri invoke handler
+
+```rust
+    tauri::Builder::default()
+        ...
+        .invoke_handler(tauri::generate_handler![greet, get_api_keys])
+        ...
+```
+
+### Using the new command on the frontend
+
+#### Displaying the API keys
+
+Continuing the example from above, in the Svelte component you want to edit, get the promise:
+
+```ts
+  import { getApiKeys } from "$lib/bindings";
+
+  let api_keys = getApiKeys();
+```
+
+then edit the HTML for Svelte:
+
+```svelte
+<section>
+  <p>
+    Your OpenAI API key:
+    <span class="key">
+    {#await api_keys}
+      ...loading
+    {:then keys}
+      {#if keys.openai !== undefined && keys.openai !== null}
+        {keys.openai.value}
+      {:else}
+        <span class="unset">not set</span>
+      {/if}
+    {:catch error}
+      <span style="color: red">{error.message}</span>
+    {/await}
+    </span>
+  </p>
+</section>
+```
+
+A better way would be to wrap a larger part in "loading...":
+
+```svelte
+<section>
+  <table>
+    <tr>
+      <th class="header-text" colspan="2">API Keys</th>
+    </tr>
+    {#await api_keys}
+      <tr><td colspan="2">...loading</td></tr>
+    {:then keys}
+      <tr>
+        <td>OpenAI</td>
+        <td class="key">
+          {#if keys.openai !== undefined && keys.openai !== null}
+            {keys.openai.value}
+          {:else}
+            <span class="unset">not set</span>
+          {/if}
+        </td>
+      </tr>
+    {:catch error}
+      <tr><td colspan="2">{error.message}</td></tr>
+    {/await}
+  </table>
+</section>
+```
+
+Use [this trick](https://doc.rust-lang.org/std/thread/fn.sleep.html) to make the API call slower so that we can actually see the wait in action:
+
+```rust
+use crate::setup::api_keys::ApiKeys;
+use crate::ZammApiKeys;
+use specta::specta;
+use std::clone::Clone;
+use std::{thread, time};
+use tauri::State;
+
+#[tauri::command]
+#[specta]
+pub fn get_api_keys(api_keys: State<ZammApiKeys>) -> ApiKeys {
+    let ten_seconds = time::Duration::from_secs(10);
+    thread::sleep(ten_seconds);
+    api_keys.0.lock().unwrap().clone()
+}
+
+```
+
+From this we can observe that the screen is not rendering at all until the API call finishes, unlike what SvelteKit should be doing with `await`. At first it is unclear if this is not working as intended due to Tauri or SvelteKit behavior, but with more testing we realize it is definitely on the Tauri side, as not a single way to implement async function on Svelte works.
+
+From further searching, we find [this discussion](https://github.com/tauri-apps/tauri/discussions/4191) where we realize that we need to say `#[tauri::command(async)]`. After this change, the wait works as expected. Make sure to undo the wait before committing.

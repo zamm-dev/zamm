@@ -43,3 +43,42 @@ fn main() -> Result<(), StorageError> {
     Ok(())
 }
 ```
+
+To actually use the state -- for example, if you have
+
+```rust
+struct ZammApiKeys(Mutex<ApiKeys>);
+```
+
+then do something like
+
+```rust
+use crate::setup::api_keys::ApiKeys;
+use crate::ZammApiKeys;
+use specta::specta;
+use std::clone::Clone;
+use tauri::State;
+
+#[tauri::command]
+#[specta]
+pub fn get_api_keys(api_keys: State<ZammApiKeys>) -> ApiKeys {
+    api_keys.0.lock().unwrap().clone()
+}
+
+```
+
+If you get an error such as
+
+```
+error[E0599]: no method named `clone` found for struct `std::sync::MutexGuard<'_, ApiKeys>` in the current scope
+ --> src/commands/keys.rs:7:32
+  |
+7 |     api_keys.0.lock().unwrap().clone()
+  |                                ^^^^^ method not found in `MutexGuard<'_, ApiKeys>`
+  |
+  = help: items from traits can only be used if the trait is implemented and in scope
+  = note: the following trait defines an item `clone`, perhaps you need to implement it:
+          candidate #1: `Clone`
+```
+
+it actually means that `Clone` is not implemented for `ApiKeys`, because otherwise MutexGuard would pass the `.clone()` call down to its inner value. To fix this, add `#[derive(Clone)]` to the struct definition.

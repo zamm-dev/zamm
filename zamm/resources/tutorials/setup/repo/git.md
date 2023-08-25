@@ -67,4 +67,12 @@ On branch main
 nothing to commit, working tree clean
 ```
 
+## Removing merged branches
+
+As noted in [this answer](https://stackoverflow.com/a/6127884):
+
+```bash
+$ git branch --merged | egrep -v "(^\*|master|main|dev)" | xargs git branch -d
+```
+
 That's all! **Don't take any more steps** because the task is now done!
