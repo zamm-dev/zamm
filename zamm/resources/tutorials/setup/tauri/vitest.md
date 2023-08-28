@@ -178,6 +178,152 @@ test("invoke simple", async () => {
 });
 ```
 
+## Querying tables
+
+Various options are described [here](https://github.com/testing-library/dom-testing-library/issues/583).
+
+If you want to use [the first option](https://github.com/lexanth/testing-library-table-queries), you will have to first install it:
+
+```bash
+$ yarn add -D testing-library-table-queries
+```
+
+Then, if you have a table such as:
+
+```svelte
+<script lang="ts">
+  import { getApiKeys } from "$lib/bindings";
+
+  let api_keys = getApiKeys();
+</script>
+
+<section>
+  <table>
+    <tr>
+      <th class="header-text" colspan="2">API Keys</th>
+    </tr>
+    <tr>
+      <td>OpenAI</td>
+      <td class="key">
+        {#await api_keys}
+          ...loading
+        {:then keys}
+          {#if keys.openai !== undefined && keys.openai !== null}
+            {keys.openai.value}
+          {:else}
+            <span class="unset">not set</span>
+          {/if}
+        {:catch error}
+          error: {error}
+        {/await}
+      </td>
+    </tr>
+  </table>
+</section>
+```
+
+do something like
+
+```ts
+import { expect, test, vi } from "vitest";
+import "@testing-library/jest-dom";
+
+import { render, screen } from "@testing-library/svelte";
+import ApiKeysDisplay from "./+page.svelte";
+import type { ApiKeys } from "$lib/bindings";
+import {within, waitFor} from '@testing-library/dom'
+import {getRowByFirstCellText} from 'testing-library-table-queries'
+
+const tauriInvokeMock = vi.fn();
+
+vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+
+test("loading by default", async () => {
+  const spy = vi.spyOn(window, "__TAURI_INVOKE__");
+  expect(spy).not.toHaveBeenCalled();
+  const mockApiKeys: ApiKeys = {
+    openai: null,
+  }
+  tauriInvokeMock.mockResolvedValueOnce(
+    mockApiKeys
+  );
+
+  render(ApiKeysDisplay, {});
+  expect(spy).toHaveBeenLastCalledWith("get_api_keys");
+
+  const openAiRow = getRowByFirstCellText(screen.getByRole("table"), "OpenAI");
+  const openAiKeyCell = within(openAiRow).getAllByRole("cell")[1];
+  expect(openAiKeyCell).toHaveTextContent(/^...loading$/);
+});
+```
+
+Alternatively, if you just want to get a row with certain specified text, you can use the second option and avoid adding a new dependency:
+
+```ts
+test("loading by default", async () => {
+  const spy = vi.spyOn(window, "__TAURI_INVOKE__");
+  expect(spy).not.toHaveBeenCalled();
+  const mockApiKeys: ApiKeys = {
+    openai: null,
+  }
+  tauriInvokeMock.mockResolvedValueOnce(
+    mockApiKeys
+  );
+
+  render(ApiKeysDisplay, {});
+  expect(spy).toHaveBeenLastCalledWith("get_api_keys");
+
+  const openAiRow = screen.getByRole('row', { name: /OpenAI/ })
+  const openAiKeyCell = within(openAiRow).getAllByRole("cell")[1];
+  expect(openAiKeyCell).toHaveTextContent(/^...loading$/);
+});
+```
+
+Note that we define `const mockApiKeys: ApiKeys` first instead of passing it directly into `tauriInvokeMock.mockResolvedValueOnce`, because the direct call to `tauriInvokeMock.mockResolvedValueOnce` won't trigger any type-checks. You can easily test this yourself.
+
+## Waiting on promise re-renders
+
+Given the same above table, you'll want to see it render after the promise is resolved:
+
+```ts
+test("no API key set", async () => {
+  const spy = vi.spyOn(window, "__TAURI_INVOKE__");
+  expect(spy).not.toHaveBeenCalled();
+  const mockApiKeys: ApiKeys = {
+    openai: null,
+  }
+  tauriInvokeMock.mockResolvedValueOnce(
+    mockApiKeys
+  );
+
+  render(ApiKeysDisplay, {});
+  expect(spy).toHaveBeenLastCalledWith("get_api_keys");
+
+  const openAiRow = getRowByFirstCellText(screen.getByRole("table"), "OpenAI");
+  const openAiKeyCell = within(openAiRow).getAllByRole("cell")[1];
+  await waitFor(() => expect(openAiKeyCell).toHaveTextContent(/^not set$/));
+});
+```
+
+Alternatively, to test that it fails:
+
+```ts
+test("API key error", async () => {
+  const spy = vi.spyOn(window, "__TAURI_INVOKE__");
+  expect(spy).not.toHaveBeenCalled();
+  tauriInvokeMock.mockRejectedValueOnce("testing");
+
+  render(ApiKeysDisplay, {});
+  expect(spy).toHaveBeenLastCalledWith("get_api_keys");
+
+  const openAiRow = getRowByFirstCellText(screen.getByRole("table"), "OpenAI");
+  const openAiKeyCell = within(openAiRow).getAllByRole("cell")[1];
+  await waitFor(() => expect(openAiKeyCell).toHaveTextContent(/^error: testing$/));
+});
+```
+
+
+
 ## Mocking sidecar calls
 
 Suppose that the above was instead

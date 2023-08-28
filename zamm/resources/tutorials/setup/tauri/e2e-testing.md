@@ -485,3 +485,37 @@ If you are running this in CI, then add this to the end of the workflow:
           name: test-screenshots
           path: webdriver/screenshots/*.png
 ```
+
+## Other errors
+
+### Object returned instead of string
+
+If you do
+
+```ts
+  it("should show unset OpenAI API key", async function () {
+    const openAiCell = await $("tr*=OpenAI").$("td:nth-child(2)");
+    expect(openAiCell.getText()).toMatch(/^not set$/);
+  });
+```
+
+and get
+
+```
+[wry 0.24.3 linux #0-0] 1) Welcome screen should show unset OpenAI API key
+[wry 0.24.3 linux #0-0] expect(received).toMatch(expected)
+
+Matcher error: received value must be a string
+
+Received has type:  object
+Received has value: {}
+```
+
+it is because `getText` returns a promise. You should instead do
+
+```ts
+  it("should show unset OpenAI API key", async function () {
+    const openAiCell = await $("tr*=OpenAI").$("td:nth-child(2)");
+    expect(await openAiCell.getText()).toMatch(/^not set$/);
+  });
+```

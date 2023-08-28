@@ -312,6 +312,8 @@ test("invoke simple", async () => {
 });
 ```
 
+Note that instead of `tauriInvokeMock.mockReturnValueOnce(Promise.resolve(...))` you can also shorten it to `tauriInvokeMock.mockResolvedValueOnce(...)`.
+
 ## Errors
 
 If you get the error

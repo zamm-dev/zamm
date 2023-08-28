@@ -145,7 +145,15 @@ svelte:
 	cd src-svelte && make
 ```
 
-where `src-tauri` and `src-svelte` are your respective directories for Svelte and Tauri code.
+where `src-tauri` and `src-svelte` are your respective directories for Svelte and Tauri code. If you want a global test command as well, add this:
+
+```Makefile
+test:
+	cd src-python && make test
+	cd src-svelte && make test
+	cd src-tauri && make test
+	yarn e2e-test
+```
 
 If you have followed the instructions for a [Svelte Makefile](zamm/resources/tutorials/setup/makefile/svelte.md), which would enable the above, you should get rid of the redundant `beforeBuildCommand` in `src-tauri/tauri.conf.json`.
 

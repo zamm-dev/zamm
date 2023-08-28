@@ -4,6 +4,259 @@
 
 Follow the instructions at [`specta.md`](/zamm/resources/tutorials/libraries/specta.md).
 
+Note, however, that this does not ensure equivalent, synced API calls as the Rust-Python sample calls do. To implement those sample calls for TypeScript as well, add a TypeScript target for `quicktype` in the `Makefile`:
+
+```Makefile
+quicktype:
+    ...
+	yarn quicktype src-python/api/sample-calls/schema.json -s schema -o src-svelte/src/lib/sample-call.ts
+```
+
+Then add the generated file to `src-svelte/.eslintrc.yaml`:
+
+```yaml
+...
+ignorePatterns:
+  ...
+  - src/lib/sample-call.ts
+```
+
+Now if we try to commit, we get
+
+```
+/root/zamm/src-svelte/src/lib/sample-call.ts
+  0:0  warning  File ignored because of a matching ignore pattern. Use "--no-ignore" to override
+
+✖ 1 problem (0 errors, 1 warning)
+
+ESLint found too many warnings (maximum: 0).
+```
+
+We see that this is because [we're asking it to lint something we've told it to ignore](https://github.com/eslint/eslint/issues/5623#issuecomment-198962552), where "we" in this case is us telling `pre-commit` to tell `eslint` to lint this file. Therefore, we add this same exact ignore to `.pre-commit-config.yaml`:
+
+```yaml
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v8.46.0
+    hooks:
+      - id: eslint
+        ...
+        exclude: src-svelte/src/lib/sample-call.ts
+        ...
+```
+
+Looking at the generated file, we see that the `Convert` class takes in strings, so we avoid the YAML trick from before. Instead, we go with JSON and edit `src-tauri/api/sample-calls/get_api_keys-empty.json` to be:
+
+```json
+{
+  "request": [],
+  "response": "{}"
+}
+```
+
+Now say there's a function you'd like to test, such as:
+
+```rust
+#[tauri::command(async)]
+#[specta]
+pub fn get_api_keys(api_keys: State<ZammApiKeys>) -> ApiKeys {
+    api_keys.0.lock().unwrap().clone()
+}
+```
+
+Refactor it to
+
+```rust
+fn get_api_keys_helper(zamm_api_keys: &ZammApiKeys) -> ApiKeys {
+    zamm_api_keys.0.lock().unwrap().clone()
+}
+
+#[tauri::command(async)]
+#[specta]
+pub fn get_api_keys(api_keys: State<ZammApiKeys>) -> ApiKeys {
+    get_api_keys_helper(&*api_keys)
+}
+```
+
+so that we actually have a function we can test, because there appears to be no way to easily instantiate a `tauri::State` or `tauri::StateManager` for testing, at least not outside of the `tauri` crate.
+
+Then modify the test from before to now read in the new JSON file and assert that we're returning the same thing as expected:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sample_call::SampleCall;
+    use std::sync::Mutex;
+
+    use std::fs;
+
+    fn parse_api_keys(response_str: &str) -> ApiKeys {
+        serde_json::from_str(response_str).unwrap()
+    }
+
+    fn read_sample(filename: &str) -> SampleCall {
+        let sample_str = fs::read_to_string(filename)
+            .unwrap_or_else(|_| panic!("No file found at {filename}"));
+        serde_json::from_str(&sample_str).unwrap()
+    }
+
+    fn check_get_api_keys_sample(file_prefix: &str, rust_input: &ZammApiKeys) {
+        let greet_sample = read_sample(file_prefix);
+        // zero frontend arguments to get_api_keys
+        assert_eq!(greet_sample.request.len(), 0);
+
+        let actual_keys = get_api_keys_helper(rust_input);
+        let expected_keys = parse_api_keys(&greet_sample.response);
+        assert_eq!(actual_keys, expected_keys);
+    }
+
+    #[test]
+    fn test_greet_name() {
+        let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
+
+        check_get_api_keys_sample(
+            "./api/sample-calls/get_api_keys-empty.json",
+            &api_keys,
+        );
+    }
+}
+```
+
+Meanwhile, over in Svelte, edit `src-svelte/src/routes/homepage.test.ts` to change
+
+```ts
+test("no API key set", async () => {
+  const spy = vi.spyOn(window, "__TAURI_INVOKE__");
+  expect(spy).not.toHaveBeenCalled();
+  const mockApiKeys: ApiKeys = {
+    openai: null,
+  };
+  tauriInvokeMock.mockResolvedValueOnce(mockApiKeys);
+
+  render(ApiKeysDisplay, {});
+  expect(spy).toHaveBeenLastCalledWith("get_api_keys");
+
+  const openAiRow = screen.getByRole("row", { name: /OpenAI/ });
+  const openAiKeyCell = within(openAiRow).getAllByRole("cell")[1];
+  await waitFor(() => expect(openAiKeyCell).toHaveTextContent(/^not set$/));
+});
+```
+
+to
+
+```ts
+import fs from "fs";
+import { Convert } from "$lib/sample-call";
+
+test("no API key set", async () => {
+  const spy = vi.spyOn(window, "__TAURI_INVOKE__");
+  expect(spy).not.toHaveBeenCalled();
+  const sample_call_json = fs.readFileSync(
+    "../src-tauri/api/sample-calls/get_api_keys-empty.json",
+    "utf-8",
+  );
+  const sampleCall = Convert.toSampleCall(sample_call_json);
+  const apiKeys: ApiKeys = JSON.parse(sampleCall.response)
+  tauriInvokeMock.mockResolvedValueOnce(apiKeys);
+
+  render(ApiKeysDisplay, {});
+  expect(sampleCall.request.length).toEqual(0);
+  expect(spy).toHaveBeenLastCalledWith("get_api_keys");
+
+  const openAiRow = screen.getByRole("row", { name: /OpenAI/ });
+  const openAiKeyCell = within(openAiRow).getAllByRole("cell")[1];
+  await waitFor(() => expect(openAiKeyCell).toHaveTextContent(/^not set$/));
+});
+```
+
+You can refactor most of that into a separate function:
+
+```ts
+async function checkSampleCall(filename: string, expected_display: RegExp) {
+  const spy = vi.spyOn(window, "__TAURI_INVOKE__");
+  expect(spy).not.toHaveBeenCalled();
+  const sample_call_json = fs.readFileSync(filename, "utf-8");
+  const sampleCall = Convert.toSampleCall(sample_call_json);
+  const apiKeys: ApiKeys = JSON.parse(sampleCall.response);
+  tauriInvokeMock.mockResolvedValueOnce(apiKeys);
+
+  render(ApiKeysDisplay, {});
+  expect(sampleCall.request.length).toEqual(0);
+  expect(spy).toHaveBeenLastCalledWith("get_api_keys");
+
+  const openAiRow = screen.getByRole("row", { name: /OpenAI/ });
+  const openAiKeyCell = within(openAiRow).getAllByRole("cell")[1];
+  await waitFor(() =>
+    expect(openAiKeyCell).toHaveTextContent(expected_display),
+  );
+}
+```
+
+Now the individual tests can get shorter:
+
+```ts
+test("no API key set", async () => {
+  await checkSampleCall(
+    "../src-tauri/api/sample-calls/get_api_keys-empty.json",
+    /^not set$/,
+  );
+});
+
+test("some API key set", async () => {
+  await checkSampleCall(
+    "../src-tauri/api/sample-calls/get_api_keys-openai.json",
+    /^0p3n41-4p1-k3y$/,
+  );
+});
+```
+
+Note that this second test requries the ugly file `src-tauri/api/sample-calls/get_api_keys-openai.json` to look like this:
+
+```json
+{
+  "request": [],
+  "response": "{ \"openai\": { \"value\": \"0p3n41-4p1-k3y\", \"source\": \"Environment\" } }"
+}
+
+```
+
+If you want to use YAML here to avoid all the escapes:
+
+```bash
+$ yarn add -D js-yaml @types/js-yaml
+```
+
+then
+
+```ts
+import yaml from 'js-yaml';
+
+async function checkSampleCall(filename: string, expected_display: RegExp) {
+  const spy = vi.spyOn(window, "__TAURI_INVOKE__");
+  expect(spy).not.toHaveBeenCalled();
+  const sample_call_yaml = fs.readFileSync(filename, "utf-8");
+  const sample_call_json = JSON.stringify(yaml.load(sample_call_yaml));
+  const sampleCall = Convert.toSampleCall(sample_call_json);
+  ...
+}
+```
+
+We could also define a new `Convert` class that takes in a YAML string instead, and get rid of the need to go from YAML string -> dict -> JSON string -> dict -> desired data structure, but this involves slightly more manual work every time a new function is renamed, and slight inefficiencies during development is acceptable.
+
+Now we rename `src-tauri/api/sample-calls/get_api_keys-openai.json` to `src-tauri/api/sample-calls/get_api_keys-openai.yaml` and get pretty JSON once again:
+
+```yaml
+request: []
+response: >
+  {
+    "openai": {
+      "value": "0p3n41-4p1-k3y",
+      "source": "Environment"
+    }
+  }
+
+```
+
 ## Rust-Python
 
 First follow the instructions at [`quicktype.md`](/zamm/resources/tutorials/setup/dev/quicktype.md) to set up `quicktype`. Now refactor `src-python/zamm/main.py`:

@@ -180,3 +180,16 @@ Note that you still have to set up the base tool dependencies, but you no longer
 To debug, go to your project's actions page. For example, if your username is `amosjyng` and your project is `zamm`, then the page will be `https://github.com/amosjyng/zamm-ui/actions`. Any uploaded artifacts can be downloaded from the "Summary" page.
 
 Note that the uploads are separated into ones that are useful for each next stage, and ones that are useful to download but not actually used in the next job stage.
+
+Finally, note that if these uploads are big, storage space for them may fill up quickly. You may want to either edit the retention period for the entire repo as described [here](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository#configuring-the-retention-period-for-github-actions-artifacts-and-logs-in-your-repository) by going to a project settings page such as https://github.com/amosjyng/zamm/settings/actions, or by adding a custom artifact retention period as described [here](https://docs.github.com/en/actions/using-workflows/storing-workflow-data-as-artifacts#configuring-a-custom-artifact-retention-period). For example:
+
+```yaml
+      - name: Upload final app
+        uses: actions/upload-artifact@v3
+        with:
+          name: full-app
+          path: |
+            src-tauri/target/release/bundle/appimage/zamm_*.AppImage
+            src-tauri/target/release/bundle/deb/zamm_*.deb
+          retention-days: 1
+```
