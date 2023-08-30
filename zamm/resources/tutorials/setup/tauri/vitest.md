@@ -322,8 +322,6 @@ test("API key error", async () => {
 });
 ```
 
-
-
 ## Mocking sidecar calls
 
 Suppose that the above was instead

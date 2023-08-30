@@ -443,6 +443,392 @@ In addition to all the setup required for pre-commit hooks as described in [`pre
           path: webdriver/screenshots/*.png
 ```
 
+Alternatively, you can use [this](https://webdriver.io/docs/wdio-image-comparison-service/) and install
+
+```bash
+$ yarn add -D wdio-image-comparison-service
+```
+
+Then edit `webdriver/wdio.conf.ts` per instructions:
+
+```ts
+...
+const { join } = require("path");
+
+...
+
+exports.config = {
+  ...
+  services: [
+    [
+      "image-comparison",
+      {
+        baselineFolder: join(process.cwd(), "./screenshots/baseline/"),
+        formatImageName: "{tag}-{logName}-{width}x{height}",
+        screenshotPath: join(process.cwd(), "./screenshots/testing/"),
+        savePerInstance: true,
+        autoSaveBaseline: true,
+        blockOutStatusBar: true,
+        blockOutToolBar: true,
+        isHybridApp: true,
+      },
+    ],
+  ],
+  ...
+};
+```
+
+Be sure to change the uploads at `.github/workflows/tests.yaml` if you've set that up:
+
+```yaml
+      - name: Upload test screenshots as artifacts
+        if: always() # run even if tests fail
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-screenshots
+          path: webdriver/screenshots/*.png
+
+```
+
+Edit `webdriver/screenshots/.gitignore` accordingly:
+
+```gitignore
+testing/
+
+```
+
+Now edit `webdriver/test/specs/e2e.test.js` as well:
+
+```js
+describe("Welcome screen", function () {
+  it("should show unset OpenAI API key", async function () {
+    console.log(browser.capabilities);
+    await expect(
+      await browser.checkElement(await $("table"), "apiKeys", {}),
+    ).toEqual(0);
+    ...
+```
+
+If you see the error
+
+```
+[wry 0.24.3 linux #0-0]    ✖ should show unset OpenAI API key
+[wry 0.24.3 linux #0-0]
+[wry 0.24.3 linux #0-0] 1 failing (203ms)
+[wry 0.24.3 linux #0-0]
+[wry 0.24.3 linux #0-0] 1) Welcome screen should show unset OpenAI API key
+[wry 0.24.3 linux #0-0] browser.saveElement is not a function
+[wry 0.24.3 linux #0-0] TypeError: browser.saveElement is not a function
+[wry 0.24.3 linux #0-0]     at Context.<anonymous> (/root/zamm/webdriver/test/specs/e2e.test.js:4:21)
+[wry 0.24.3 linux #0-0]     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+```
+
+Then per [this issue](https://github.com/wswebcreation/wdio-image-comparison-service/issues/53), try
+
+```bash
+$ yarn test --logLevel=debug
+...
+[0-0] 2023-08-29T04:43:42.515Z INFO @wdio/local-runner: Run worker command: run
+[0-0] 2023-08-29T04:43:42.521Z DEBUG @wdio/config:ConfigParser: No compiler found, continue without compiling files
+[0-0] 2023-08-29T04:43:42.524Z DEBUG @wdio/local-runner:utils: init remote session
+[0-0] 2023-08-29T04:43:42.531Z DEBUG @wdio/utils:initialiseServices: initialise service "image-comparison" as NPM package
+[0-0] 2023-08-29T04:43:42.549Z ERROR @wdio/utils:initialiseServices: Error: Couldn't initialise "wdio-image-comparison-service".
+[0-0] Error: Cannot find module '../build/Release/canvas.node'
+[0-0] Require stack:
+[0-0] - /root/zamm/node_modules/canvas/lib/bindings.js
+[0-0] - /root/zamm/node_modules/canvas/lib/canvas.js
+[0-0] - /root/zamm/node_modules/canvas/index.js
+[0-0] - /root/zamm/node_modules/webdriver-image-comparison/build/methods/images.js
+[0-0] - /root/zamm/node_modules/webdriver-image-comparison/build/commands/saveScreen.js
+[0-0] - /root/zamm/node_modules/wdio-image-comparison-service/build/service.js
+[0-0] - /root/zamm/node_modules/wdio-image-comparison-service/build/index.js
+[0-0] - /root/zamm/node_modules/@wdio/utils/build/utils.js
+[0-0] - /root/zamm/node_modules/@wdio/utils/build/initialisePlugin.js
+[0-0] - /root/zamm/node_modules/@wdio/utils/build/index.js
+[0-0] - /root/zamm/node_modules/@wdio/runner/build/index.js
+[0-0] - /root/zamm/node_modules/@wdio/local-runner/build/run.js
+[0-0]     at Module._resolveFilename (node:internal/modules/cjs/loader:1048:15)
+[0-0]     at Module._load (node:internal/modules/cjs/loader:901:27)
+[0-0]     at Module.require (node:internal/modules/cjs/loader:1115:19)
+[0-0]     at require (node:internal/modules/helpers:130:18)
+[0-0]     at Object.<anonymous> (/root/zamm/node_modules/canvas/lib/bindings.js:3:18)
+[0-0]     at Module._compile (node:internal/modules/cjs/loader:1233:14)
+[0-0]     at Module._extensions..js (node:internal/modules/cjs/loader:1287:10)
+[0-0]     at Module.load (node:internal/modules/cjs/loader:1091:32)
+[0-0]     at Module._load (node:internal/modules/cjs/loader:938:12)
+[0-0]     at Module.require (node:internal/modules/cjs/loader:1115:19)
+[0-0]     at safeRequire (/root/zamm/node_modules/@wdio/utils/build/utils.js:192:15)
+[0-0]     at initialisePlugin (/root/zamm/node_modules/@wdio/utils/build/initialisePlugin.js:37:44)
+[0-0]     at initialiseServices (/root/zamm/node_modules/@wdio/utils/build/initialiseServices.js:59:56)
+[0-0]     at initialiseWorkerService (/root/zamm/node_modules/@wdio/utils/build/initialiseServices.js:140:26)
+[0-0]     at Runner.run (/root/zamm/node_modules/@wdio/runner/build/index.js:75:45)
+[0-0]     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+[0-0] 2023-08-29T04:43:42.553Z DEBUG @wdio/utils:shim: Finished to run "beforeSession" hook in 0ms
+```
+
+Now we see [here](https://stackoverflow.com/questions/14771781/nodejs-cannot-find-module-build-release-canvas) that we have to install `canvas`:
+
+```bash
+$ yarn add -D canvas
+```
+
+Next is the problem
+
+```
+[0-0] 2023-08-29T04:46:38.128Z INFO wdio-image-comparison-service: Adding commands to Multi Browser:  [ 'maxInstances', 'tauri:options' ]
+[0-0] 2023-08-29T04:46:38.129Z ERROR @wdio/utils:shim: TypeError: Cannot read properties of undefined (reading 'browserName')
+[0-0]     at getInstanceData (/root/zamm/node_modules/wdio-image-comparison-service/build/utils.js:43:37)
+[0-0]     at WdioImageComparisonService.addCommandsToBrowser (/root/zamm/node_modules/wdio-image-comparison-service/build/service.js:66:53)
+[0-0]     at WdioImageComparisonService.before (/root/zamm/node_modules/wdio-image-comparison-service/build/service.js:51:14)
+[0-0]     at /root/zamm/node_modules/@wdio/utils/build/shim.js:88:27
+[0-0]     at new Promise (<anonymous>)
+[0-0]     at /root/zamm/node_modules/@wdio/utils/build/shim.js:85:47
+[0-0]     at Array.map (<anonymous>)
+[0-0]     at executeHooksWithArgsShim (/root/zamm/node_modules/@wdio/utils/build/shim.js:85:33)
+[0-0]     at Runner.run (/root/zamm/node_modules/@wdio/runner/build/index.js:99:48)
+[0-0]     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+```
+
+We jump to `/root/zamm/node_modules/wdio-image-comparison-service/build/utils.js:44:37` and add a `console.log`:
+
+```js
+function getInstanceData(capabilities, currentBrowser) {
+  // Substract the needed data from the running instance
+  const currentCapabilities = currentBrowser && currentBrowser.capabilities || browser.capabilities;
+  console.log(capabilities);
+  const browserName = (capabilities.browserName || currentCapabilities.browserName || 'not-known').toLowerCase();
+  ...
+```
+
+We see that it is actually `undefined`. We go to `/root/zamm/node_modules/wdio-image-comparison-service/build/service.js:51:14`:
+
+```js
+  before(capabilities) {
+    if (typeof capabilities['browserName'] !== 'undefined') {
+      log.info('Adding commands to global browser');
+      this.addCommandsToBrowser(capabilities, browser);
+    } else {
+      const browserNames = Object.keys(capabilities);
+      log.info('Adding commands to Multi Browser: ', browserNames);
+      console.log(capabilities)
+      for (const browserName of browserNames) {
+        this.addCommandsToBrowser(capabilities[browserName].capabilities, global[browserName]);
+      }
+    ...
+```
+
+We see the log:
+
+```
+[0-0] 2023-08-29T05:01:53.547Z INFO wdio-image-comparison-service: Adding commands to Multi Browser:  [ 'maxInstances', 'tauri:options' ]
+[0-0] {
+[0-0]   maxInstances: 1,
+[0-0]   'tauri:options': { application: '../src-tauri/target/release/zamm' }
+[0-0] }
+```
+
+Try editing `/root/zamm/node_modules/wdio-image-comparison-service/build/service.js` to change
+
+```ts
+    if (typeof capabilities['browserName'] !== 'undefined') {
+      log.info('Adding commands to global browser');
+```
+
+to
+
+```ts
+    if (typeof capabilities['browserName'] === 'undefined') {
+      log.info('Adding commands to global browser');
+```
+
+After all, a command that is added to the global browser should work on our regular browser too. Now try again:
+
+```
+ "spec" Reporter:
+------------------------------------------------------------------
+[wry 0.24.3 linux #0-0] Running: wry (v0.24.3) on linux
+[wry 0.24.3 linux #0-0] Session ID: f6be3644-877f-4920-ab77-49bd9a7123ca
+[wry 0.24.3 linux #0-0]
+[wry 0.24.3 linux #0-0] » /test/specs/e2e.test.js
+[wry 0.24.3 linux #0-0] Welcome screen
+[wry 0.24.3 linux #0-0]    ✓ should show unset OpenAI API key
+[wry 0.24.3 linux #0-0]
+[wry 0.24.3 linux #0-0] 1 passing (1s)
+```
+
+Sure enough, this works! But could we fix it better?
+
+We edit `e2e.test.js` to log the browser capabilities, including what `browserName` we're using:
+
+```js
+describe("Welcome screen", function () {
+  it("should show unset OpenAI API key", async function () {
+    console.log(browser.capabilities);
+    ...
+```
+
+Then we see in the output:
+
+```
+[0-0] {
+[0-0]   browserName: 'wry',
+[0-0]   browserVersion: '0.24.3',
+[0-0]   platformName: 'linux',
+[0-0]   acceptInsecureCerts: false,
+[0-0]   strictFileInteractability: false,
+[0-0]   setWindowRect: true,
+[0-0]   unhandledPromptBehavior: 'dismiss and notify',
+[0-0]   pageLoadStrategy: 'normal',
+[0-0]   proxy: {},
+[0-0]   timeouts: { script: 30000, pageLoad: 300000, implicit: 0 }
+[0-0] }
+```
+
+We go back to edit this into `webdriver/wdio.conf.ts`:
+
+```ts
+exports.config = {
+  specs: ["./test/specs/**/*.js"],
+  maxInstances: 1,
+  capabilities: [
+    {
+      browserName: "wry",
+      maxInstances: 1,
+      "tauri:options": {
+        application: "../src-tauri/target/release/zamm",
+      },
+    },
+  ],
+  ...
+```
+
+We are still getting
+
+```
+[0-0] 2023-08-29T05:16:41.016Z ERROR @wdio/utils:shim: TypeError: Cannot read properties of undefined (reading 'browserName')
+[0-0]     at getInstanceData (/root/zamm/node_modules/wdio-image-comparison-service/build/utils.js:43:37)
+[0-0]     at WdioImageComparisonService.addCommandsToBrowser (/root/zamm/node_modules/wdio-image-comparison-service/build/service.js:67:53)
+[0-0]     at WdioImageComparisonService.before (/root/zamm/node_modules/wdio-image-comparison-service/build/service.js:52:14)
+```
+
+It appears it's expecting a dictionary of a different sort to be passed in. Let's check to see if it expects the latest version of wdio:
+
+```bash
+$ yarn add -D @wdio/cli @wdio/local-runner @wdio/mocha-framework @wdio/spec-reporter
+$ yarn test
+yarn run v1.22.19
+$ wdio run ./wdio.conf.ts
+
+node:internal/process/esm_loader:46
+      internalBinding('errors').triggerUncaughtException(
+                                ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package 'ts-node' imported from /root/zamm/webdriver/
+    at new NodeError (node:internal/errors:405:5)
+    at packageResolve (node:internal/modules/esm/resolve:782:9
+    ...
+```
+
+Okay, fine, let's add that too.
+
+```bash
+$ yarn add -D ts-node
+```
+
+We are back at the old issues that caused us to use wdio version 7:
+
+```
+[0-0] 2023-08-29T05:37:04.343Z ERROR @wdio/runner: Error: Unknown browser name "wry". Make sure to pick from one of the following chrome,googlechrome,chromium,chromium-browser,firefox,ff,mozilla,mozilla firefox,edge,microsoftedge,msedge,safari,safari technology preview
+[0-0]     at startWebDriver (file:///root/zamm/node_modules/@wdio/utils/build/driver/index.js:123:15)
+```
+
+and if we try leaving it out:
+
+```
+[0-0] 2023-08-11T04:33:32.841Z ERROR @wdio/runner: Error: No "browserName" defined in capabilities nor hostname or port found!
+[0-0] If you like to run a mobile session with Appium, make sure to set "hostname" and "port" in your WebdriverIO options. If you like to run a local browser session make sure to pick from one of the following browser names: chrome,googlechrome,chromium,chromium-browser,firefox,ff,mozilla,mozilla firefox,edge,microsoftedge,msedge,safari,safari technology preview
+```
+
+However, now that we understand things better, we can try adding the hostname and port:
+
+```ts
+...
+exports.config = {
+  ...
+  hostname: "localhost",
+  port: 4444,
+  capabilities: [
+    {
+      browserName: "wry",
+      ...
+    },
+  ],
+...
+```
+
+Now we have finally fixed https://github.com/chippers/hello_tauri/issues/3.
+
+You can also add a
+
+```js
+    await expect(
+      await browser.checkFullPageScreen("welcome-screen", {}),
+    ).toEqual(0);
+```
+
+to take screenshots of entire pages as well.
+
+You may want to separate the screenshot tests from the other assertions, so that in case of a massive UI change where you don't have time to update the screenshots, you can still run the other tests. Vice versa, failing paired non-screenshot tests could clue you in to why the screenshot tests are failing.
+
+If the tests fail on the CI server due to a completely black screen, you may want to `await` an element you know will appear for sure.
+
+If the tests fail due to slight pixel offsets on the CI server, you can update the baseline images to match the CI server's, and then edit the code to include a maximum offset:
+
+```js
+const maxMismatch = process.env.MISMATCH_TOLERANCE === undefined ? 0 : parseFloat(process.env.MISMATCH_TOLERANCE);
+
+describe("Welcome screen", function () {
+  it("should render the welcome screen correctly", async function () {
+    await $("table"); // ensure page loads before taking screenshot
+    await expect(
+      await browser.checkFullPageScreen("welcome-screen", {}),
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
+
+  it("should render the API keys table correctly", async function () {
+    await expect(
+      await browser.checkElement(await $("table"), "api-keys", {}),
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
+
+  ...
+});
+
+```
+
+Remember that WebdriverIO uses jest asserts.
+
+Now run with
+
+```bash
+$ MISMATCH_TOLERANCE=0.07 yarn test
+```
+
+and the tests from before should pass. To make this permanent on your local development machine, export it in your `.zshrc`:
+
+```sh
+...
+export MISMATCH_TOLERANCE=0.07
+```
+
+If tests still prove flaky on CI, you can try rerunning the suite a certain number of times:
+
+```js
+describe("Welcome screen", function () {
+  this.retries(2);
+
+  ...
+```
+
 ## Using local user directories
 
 If you're doing something with local user data directories, you may have to create them first before the CI run:
