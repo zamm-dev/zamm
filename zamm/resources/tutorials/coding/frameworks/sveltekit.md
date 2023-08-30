@@ -62,3 +62,36 @@ Then reference it in the CSS of whichever component you'd like to use it in.
     color: #000;
   }
 ```
+
+## SVGs
+
+Follow [this answer](https://stackoverflow.com/a/67341665). If you have an SVG file `zamm.svg` that starts with:
+
+```svg
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+              "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="0.306667in" height="0.0833333in"
+     viewBox="0 0 92 25">
+     ...
+</svg>
+```
+
+then copy it to `src-svelte/src/lib/zamm.svelte` while stripping out the first two lines.
+
+Then, in whichever file you want to include it:
+
+```svelte
+<script>
+  ...
+  import ZammSvg from "$lib/zamm.svelte";
+</script>
+
+...
+<svelte:component this={ZammSvg} />
+...
+```
+
+If you need the SVG to be larger, you can edit the `width` and leave out the `height`.

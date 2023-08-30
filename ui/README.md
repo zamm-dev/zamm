@@ -392,3 +392,16 @@ pub fn get_api_keys(api_keys: State<ZammApiKeys>) -> ApiKeys {
 From this we can observe that the screen is not rendering at all until the API call finishes, unlike what SvelteKit should be doing with `await`. At first it is unclear if this is not working as intended due to Tauri or SvelteKit behavior, but with more testing we realize it is definitely on the Tauri side, as not a single way to implement async function on Svelte works.
 
 From further searching, we find [this discussion](https://github.com/tauri-apps/tauri/discussions/4191) where we realize that we need to say `#[tauri::command(async)]`. After this change, the wait works as expected. Make sure to undo the wait before committing.
+
+## Logo
+
+### Creating the SVG
+
+To create the logo SVG, open Gimp up and type in "ZAMM" in 24 point Ropa Sans font. Then, follow [these instructions](https://www.techwalla.com/articles/text-to-path-in-gimp) to convert it to a path. Create a long line that runs parallel to the sloped middle edges of the Z. It may be easier if you press `Edit Mode > Edit (Ctrl)` in the `Paths` palette. Now use that line to extend the top and bottom of the Z to the line, so that the Z becomes a zig-zag. Delete the two intermediate points that are now redundant.
+
+Next, extend the horizontal top and bottom of the Z to cover the whole word. To select multiple points to move at once, select `Edit Mode > Design` and shift-click on each node of the path.
+
+If you see a dotted yellow border, that's the layer boundary. If it doesn't cover the whole word, you can [resize](https://docs.gimp.org/en/gimp-layer-resize.html) the layer as mentioned in the link, or resize it by first doing "Fill Path" in the Paths Tool palette, and then `Layer > Crop to Content` and `Image > Crop to Content` from the menu bar.
+
+You can export the path as an SVG by right-clicking the path on the Paths Tool palette and selecting "Export Path...".
+
