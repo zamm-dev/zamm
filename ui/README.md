@@ -137,24 +137,18 @@ Install fonts as described [here](/zamm/resources/tutorials/coding/frameworks/sv
 
 ```css
 :root {
-  --font-body: Saira, Arial, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  --font-body: "Good Timing", sans-serif;
+  --font-header: "Nasalization", sans-serif;
+  --font-mono: "Jetbrains Mono", monospace;
   ...
-}
-
-...
-
-h1,
-h2,
-p {
-  font-weight: 400;
+  font-family: var(--font-body);
+  color: var(--color-text);
   font-size: 18px;
+  font-weight: 400;
 }
 
 ...
 ```
-
-"Saira" is the preferred font choice, althoguh "Changa" is a good option too.
 
 If you do this, make sure to edit the font-family for `src-svelte/src/routes/Header.svelte` as well:
 
@@ -341,7 +335,7 @@ then edit the HTML for Svelte:
 </section>
 ```
 
-A better way would be to wrap a larger part in "loading...":
+An alternative would be to wrap a larger part in "loading...". However, note that this would result in layout changes when the promise resolves:
 
 ```svelte
 <section>
@@ -368,6 +362,8 @@ A better way would be to wrap a larger part in "loading...":
   </table>
 </section>
 ```
+
+Because the function signature of the Rust command indicates that it should always return successfully, we don't actually need the `catch` block because the main other failure mode for frontend API calls is a network error, which is not relevant here for a local app. However, it may be relevant again should we ever want to port this to the web.
 
 Use [this trick](https://doc.rust-lang.org/std/thread/fn.sleep.html) to make the API call slower so that we can actually see the wait in action:
 

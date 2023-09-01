@@ -95,3 +95,44 @@ Then, in whichever file you want to include it:
 ```
 
 If you need the SVG to be larger, you can edit the `width` and leave out the `height`.
+
+## Proprietary fonts
+
+If you want to use proprietary fonts in your app, but you wish to keep your app open source, you'll have to tell Git to ignore the proprietary fonts folder.
+
+Download the font into `src-svelte/static/fonts`.
+
+Then, follow the instructions [here](https://stackoverflow.com/a/70400854) to use the fonts inside the app. Remember that if you want to actually release this app, you will have to pay app licensing fees. See the different common licensing options [here](https://typodermicfonts.com/license/).
+
+So for example, if your font is located at `src-svelte/static/fonts/nasalization-rg.otf`, do this to use it:
+
+```css
+@font-face {
+  font-family: 'Nasalization';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/nasalization-rg.otf') format("opentype");
+}
+```
+
+If you want to activate certain font features for a given CSS element:
+
+```css
+.element {
+  font-family: 'Nasalization', sans-serif;
+  font-feature-settings: "salt" on;
+}
+```
+
+To see what features your font has, you can visit [wakamaifondue.com](https://wakamaifondue.com/).
+
+If your font has multiple weights, you can add them in multiple entries, like so:
+
+```css
+@font-face {
+  font-family: 'Nasalization';
+  font-style: normal;
+  font-weight: 300;
+  src: url('/fonts/nasalization-lt.otf') format("opentype");
+}
+```
