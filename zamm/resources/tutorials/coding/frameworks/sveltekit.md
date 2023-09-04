@@ -136,3 +136,47 @@ If your font has multiple weights, you can add them in multiple entries, like so
   src: url('/fonts/nasalization-lt.otf') format("opentype");
 }
 ```
+
+### Making proprietary fonts available to CI
+
+Create a separate private repo for storing fonts. Put your font files in this repo. Commit them and upload.
+
+Then in your main repo:
+
+```bash
+$ git rm -rf src-svelte/static/fonts
+$ git submodule add git@github.com:amosjyng/zamm-fonts.git src-svelte/static/fonts
+```
+
+Then in your workflows such as `.github/workflows/tests.yaml`, you have to change this:
+
+```yaml
+      - uses: actions/checkout@v3
+```
+
+to this:
+
+```yaml
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FONTS_PAT }}
+          submodules: 'recursive'
+```
+
+Note that this requires a personal access token (PAT) to grant one repo access to another private repo. Go [here](https://github.com/settings/tokens/new). Select "repo" permissions. Click "Generate".
+
+Now go [here](https://github.com/amosjyng/zamm-ui/settings/secrets/actions) and add that under `FONTS_PAT`.
+
+#### Fine-grained PAT
+
+Go [here](https://github.com/settings/personal-access-tokens/new). Select `Only select repositories` and pick the repo `amosjyng/zamm-fonts` "Contents" to "Access: Read-only". Click "Generate".
+
+Observe that you get the error
+
+```
+  remote: Write access to repository not granted.
+  Error: fatal: unable to access 'https://github.com/amosjyng/zamm-ui/': The requested URL returned error: 403
+  The process '/usr/bin/git' failed with exit code 128
+```
+
+on the CI run. It appeaers submodule cloning in CI environments is not yet supported for the beta feature of fine-grained PATs.
