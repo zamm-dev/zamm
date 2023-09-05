@@ -729,3 +729,53 @@ pub use greet::greet;
 ```
 
 Make sure all Rust tests still pass.
+
+### Testing one command per file
+
+You may want to edit the test files as well to support more than one command. For example, you may want to edit `src-tauri/api/sample-calls/get_api_keys-openai.yaml` to explicitly refer to the `get_api_keys` endpoint:
+
+```yaml
+request: ["get_api_keys"]
+response: >
+  {
+    "openai": {
+      "value": "0p3n41-4p1-k3y",
+      "source": "Environment"
+    }
+  }
+```
+
+Now in `src-tauri/src/commands/keys.rs`:
+
+```rust
+...
+
+#[cfg(test)]
+mod tests {
+    ...
+
+    fn check_get_api_keys_sample(file_prefix: &str, rust_input: &ZammApiKeys) {
+        let greet_sample = read_sample(file_prefix);
+        assert_eq!(greet_sample.request, vec!["get_api_keys"]);
+
+        ...
+    }
+```
+
+and equivalently on the frontend side at `src-svelte/src/routes/api_keys_display.test.ts`:
+
+```ts
+async function checkSampleCall(filename: string, expected_display: RegExp) {
+  const spy = vi.spyOn(window, "__TAURI_INVOKE__");
+  expect(spy).not.toHaveBeenCalled();
+  const sample_call_yaml = fs.readFileSync(filename, "utf-8");
+  const sample_call_json = JSON.stringify(yaml.load(sample_call_yaml));
+  const sampleCall = Convert.toSampleCall(sample_call_json);
+  ...
+
+  render(ApiKeysDisplay, {});
+  expect(spy).toHaveBeenLastCalledWith(...sampleCall.request);
+
+  ...
+}
+```
