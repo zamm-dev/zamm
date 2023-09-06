@@ -307,3 +307,52 @@ Make sure you now update `.github/workflows/tests.yaml` as well. Screenshots sho
             src-svelte/screenshots/testing/**/*.png
           retention-days: 1
 ```
+
+## Errors
+
+### Test timeout
+
+If you get an error such as
+
+```
+ FAIL  src/routes/storybook.test.ts > Storybook visual tests > navigation/sidebar > settings-selected should render the same
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/4]⎯
+```
+
+then you can increase the timeout like so:
+
+```ts
+...
+
+        test(`${testName} should render the same`, async () => {
+          ...
+        }, 40_000);
+
+...
+```
+
+### Element visibility timeout
+
+If instead you get a test like this:
+
+```
+ FAIL  src/routes/storybook.test.ts > Storybook visual tests > navigation/sidebar > settings-selected should render the same
+TimeoutError: locator.screenshot: Timeout 29859.952000000005ms exceeded.
+=========================== logs ===========================
+taking element screenshot
+  waiting for element to be visible and stable
+    element is not visible - waiting...
+============================================================
+```
+
+and you are in the specific context of trying to take a Storybook screenshot, this may be because the `#storybook-root` element itself has zero height despite having child elements that are visible -- for example, if its only child is a header element. In this case, you can try to take a screenshot of the child element instead.
+
+```ts
+          const screenshot = await frame
+            .locator("#storybook-root > :first-child")
+            .screenshot();
+```
+
+This has the added benefit of making the screenshot more compact, since it will only be the size of the child element and not the entire Storybook root element.

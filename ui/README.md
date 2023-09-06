@@ -389,6 +389,308 @@ From this we can observe that the screen is not rendering at all until the API c
 
 From further searching, we find [this discussion](https://github.com/tauri-apps/tauri/discussions/4191) where we realize that we need to say `#[tauri::command(async)]`. After this change, the wait works as expected. Make sure to undo the wait before committing.
 
+## Sidebar
+
+There shold be a sidebar next to the main content. `src-svelte/src/routes/+layout.svelte` should look like this:
+
+```svelte
+<div class="app">
+  <Sidebar />
+
+  <main class="p-4 h-screen">
+    <slot />
+  </main>
+</div>
+
+<style>
+  main {
+    margin-left: var(--sidebar-width);
+  }
+</style>
+```
+
+Now for the sidebar itself, add to `src-svelte/src/routes/styles.css`:
+
+```css
+...
+
+:root {
+  ...
+  --shadow-offset: 4px;
+  --shadow-blur: 8px;
+}
+```
+
+This will allow us to control the shadow intensity across multiple elements at the same time. Note that we are using pixels here instead of `em` or `rem` so that shadow intensity does not increase with font size. However, the case can be made that if font size needs to be increased as a proxy for zoom on a larger screen, then the shadow intensity should be made more obvious as a visual element as well.
+
+Then, add to `src-svelte/src/routes/Sidebar.svelte`:
+
+```svelte
+<script>
+  let icons = ["⚙️", "?"];
+  let selectedIcon = "⚙️";
+</script>
+
+<header>
+  <nav>
+    {#each icons as icon}
+      <div class="{icon === selectedIcon ? 'selected' : ''} icon rounded-l-md">
+        {icon}
+      </div>
+    {/each}
+  </nav>
+</header>
+```
+
+Now for the style section, the sidebar should always be on the left:
+
+```css
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+  }
+```
+
+It should always span the entire left of the page:
+
+```css
+  header {
+    height: 100vh;
+    width: var(--sidebar-width);
+  }
+```
+
+We'll want an empty pseudo-element casting a shadow on it from the right, as if it were the main content casting a shadow:
+
+```css
+  header::before {
+    content: "";
+    pointer-events: none;
+  }
+```
+
+This will be located just to the right of the header:
+
+```css
+  header::before {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+  }
+```
+
+It will run the entire left of the header. It needs a sizable width, or else its shadow will be diminished.
+
+```css
+  header::before {
+    width: 50px;
+    height: 100vh;
+  }
+```
+
+But it should only cast a shadow on the left, not to the right, or else it would be casting a shadow on the main content as well and making its presence absolutely clear. To do this, we use `clip-path` as mentioned [here](https://stackoverflow.com/a/62366856):
+
+```css
+  header::before {
+    box-shadow: calc(-1 * var(--shadow-offset)) 0 var(--shadow-blur) 0 #ccc;
+    clip-path: inset(0px 0 0px -15px);
+  }
+```
+
+As for the icons, they should be squares that take up the entire width of the sidebar:
+
+```css
+  .icon {
+    width: var(--sidebar-width);
+    height: var(--sidebar-width);
+  }
+```
+
+Their contents should be centered both vertically and horiontally:
+
+```css
+  .icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+```
+
+Now, we should make selected items stand out. We'll make them bright white while the sidebar is made slightly gray:
+
+```css
+  header {
+    background-color: #f4f4f4;
+  }
+
+  .selected {
+    background-color: white;
+  }
+```
+
+We will also raise the selected items up so that they look as if they're flush with the main content. To do this, first make sure no shadow is cast on them. We achieve this using `z-index`. Note that `position` has to be relative, or else the `z-index` [won't apply](https://stackoverflow.com/a/3259067).
+
+```css
+  header {
+    z-index: 1;
+  }
+
+  header::before {
+    z-index: 1;
+  }
+
+  .selected {
+    position: relative;
+    z-index: 2;
+  }
+```
+
+Next, let's make sure that this element also applies a shadow like the main content does. We'll reuse the same trick from before to make sure that the shadow is cast on every side except for the right, because the selected element is flush with the main content and therefore shouldn't cast a shadow on it:
+
+```css
+  .selected {
+    box-shadow: 0 var(--shadow-offset) var(--shadow-blur) 0 #ccc;
+    clip-path: inset(-15px 0 -15px -15px);
+  }
+```
+
+To be consistent with the rounded nature of the Nasalization fonts, let's smooth out the corners a bit by adding `rounded-l-md` as a Tailwind class to the div. We notice that it is slightly weird to have this flush at the very top left corner of the screen, so we move all the icons slightly down:
+
+```css
+  header {
+    padding-top: 0.75rem;
+  }
+```
+
+Now we can fully appreciate its physicality through the shadow cast by this on the sidebar. However, if we are to pay attention, we notice that the corners on the right that connect with the rest of the main content are at jarring right angles. Let's use [this trick](https://itnext.io/how-to-make-a-fancy-inverted-border-radius-in-css-5db048a53f95) to create fancy inverted borders:
+
+```css
+  .selected::before, .selected::after {
+    content: '';
+    height: 1rem;
+    width: 1rem;
+    position: absolute;
+    right: 0;
+  }
+
+  .selected::before {
+    bottom: var(--sidebar-width);
+    border-radius: 0 0 5px 0;
+    box-shadow: 0 5px 0 0 white;
+  }
+
+  .selected::after {
+    top: var(--sidebar-width);
+    border-radius: 0 5px 0 0;
+    box-shadow: 0 -5px 0 0 white;
+  }
+```
+
+If you wish to debug where the elements are, simply set `background-color` or `border` to something obvious like red, and the box-shadow color to something like blue.
+
+If we run the visual Storybook test again now:
+
+```
+Serialized Error: { matcherResult: { message: 'Expected image to match or be a close match to snapshot but was 0.05102040816326531% different from snapshot (12 differing pixels).\n\u001b[1m\u001b[31mSee diff for details:\u001b[39m\u001b[22m \u001b[31mscreenshots/testing/diff/navigation/sidebar/settings-selected-diff.png\u001b[39m', pass: false } }
+```
+
+It's amazing what a difference 12 pixels can make.
+
+### Refactoring Tailwind parameters
+
+Let's put corner roundedness into a single CSS variable so that we can control all of it at once. To do that, we need to either stop using the `rounded-l-md` class and define everything using our own CSS, or else define a new custom Tailwind class that will be compatible with the existing ones. We choose the former to maintain separation of content from presentation and allow for cleaner HTML code.
+
+We see from the [Tailwind documentation](https://tailwindcss.com/docs/border-radius) that `rounded-l-md` is equivalent to
+
+```css
+border-top-left-radius: 0.375rem; /* 6px */
+border-bottom-left-radius: 0.375rem; /* 6px */
+```
+
+We therefore edit `src-svelte/src/routes/styles.css` to define:
+
+```css
+:root {
+  ...
+  --corner-roundness: 0.375rem;
+  ...
+}
+```
+
+Next, edit `src-svelte/src/routes/Sidebar.svelte` to remove the class and add the CSS:
+
+```svelte
+<header>
+  ...
+      <div class="{icon === selectedIcon ? 'selected' : ''} icon">
+  ...
+</header>
+
+<style>
+  ...
+
+  .selected {
+    border-top-left-radius: var(--corner-roundness);
+    border-bottom-left-radius: var(--corner-roundness);
+    ...
+  }
+
+  ...
+
+  .selected::before {
+    border-radius: 0 0 var(--corner-roundness) 0;
+    ...
+  }
+
+  .selected::after {
+    border-radius: 0 var(--corner-roundness) 0 0;
+    ...
+  }
+</style>
+```
+
+### Adding a story to the Storybook
+
+We add this new component to the Storybook at `src-svelte/src/routes/sidebar.stories.ts`:
+
+```ts
+import Sidebar from "./Sidebar.svelte";
+import type { StoryObj } from "@storybook/svelte";
+
+export default {
+  component: Sidebar,
+  title: "Navigation/Sidebar",
+  argTypes: {},
+};
+
+const Template = ({ ...args }) => ({
+  Component: Sidebar,
+  props: args,
+});
+
+export const SettingsSelected: StoryObj = Template.bind({}) as any;
+
+```
+
+We add a corresponding entry to `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+...
+
+const components: ComponentTestConfig[] = [
+  ...
+  {
+    path: ["navigation", "sidebar"],
+    variants: ["settings-selected"],
+  },
+];
+
+...
+```
+
+Check that all tests pass.
+
 ## Logo
 
 ### Creating the SVG
