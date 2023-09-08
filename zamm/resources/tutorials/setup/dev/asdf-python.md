@@ -41,6 +41,18 @@ Then reload the conrfig file:
 
 `. ~/.zshrc`
 
+If you see an error such as
+
+```
+6.581 asdf: Error: Source directory could not be calculated. Please set $ASDF_DIR manually before sourcing this file.
+```
+
+then you may want to manually export it:
+
+```bash
+$ export ASDF_DIR=/home/your_home/.asdf
+```
+
 Add the plugin to asdf:
 
 ```bash

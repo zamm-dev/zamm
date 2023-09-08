@@ -27,6 +27,8 @@ rules:
     - error
     - code: 88
   no-inner-declarations: off
+  '@typescript-eslint/no-unused-vars':
+    [error, { argsIgnorePattern: ^_, varsIgnorePattern: ^_ }]
 ignorePatterns: [build/, dist/]
 ```
 

@@ -99,7 +99,11 @@ $ cargo tauri build
         /home/amos/projects/zamm/ui/zamm/src-tauri/target/release/bundle/appimage/zamm_0.0.0_amd64.AppImage
 ```
 
-Finally, you can run the generated AppImage. If it errors out with this message:
+Finally, you can run the generated AppImage.
+
+### Fuse Error
+
+If it errors out with this message:
 
 ```bash
 $ src-tauri/target/release/bundle/appimage/zamm_0.0.0_amd64.AppImage
@@ -122,6 +126,8 @@ Processing triggers for libc-bin (2.35-0ubuntu3.1) ...
 /sbin/ldconfig.real: /usr/lib/wsl/lib/libcuda.so.1 is not a symbolic link
 ```
 
+### Makefile edit
+
 You may want to enter this into the Tauri Makefile:
 
 ```Makefile
@@ -131,6 +137,115 @@ target/release/zamm: ./Cargo.toml $(shell find . -type f \( -name "*.rs" \) -not
 ```
 
 Alternatively, you can just build the target without specifying dependencies, because Cargo is pretty performant anyways when everything is up to date.
+
+### GLIBC error
+
+If on the other hand you see the problem
+
+```bash
+zamm: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found (required by zamm)
+zamm: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.33' not found (required by zamm)
+zamm: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by zamm)
+...
+```
+
+then that means you should follow the instructions at [`cross.md`](zamm/resources/tutorials/setup/dev/cross.md) for compiling in a way that's compatible across Linux versions. We do this because static linking with musl is [not currently supported](https://github.com/tauri-apps/tauri/issues/5466) by Tauri, and compiling with an older version of glibc is necessary due to [the way GLIBC handles backwards-compatibility](https://developers.redhat.com/blog/2019/08/01/how-the-gnu-c-library-handles-backward-compatibility).
+
+Afterwards, edit `src-tauri/tauri.conf.json` according to [its JSON schema](https://github.com/tauri-apps/tauri/blob/4cb51a2/tooling/cli/schema.json), because this feature appears to be undocumented anywhere except for [this issue](https://github.com/tauri-apps/tauri/issues/4255):
+
+```json
+{
+  "build": {
+    ...
+    "runner": "cross"
+  },
+  ...
+}
+```
+
+If you've edited `src-tauri/Makefile` as mentioned above, edit it again to use `cross` instead of `cargo`:
+
+```Makefile
+...
+
+target/release/zamm: ./Cargo.toml $(shell find . -type f \( -name "*.rs" \) -not -path "./target/*")
+	cross build --release --features custom-protocol
+	touch target/release/zamm
+```
+
+Note that the build fails now because `src-svelte` is in another folder and therefore missing from the Docker container:
+
+```
+$ make
+...
+   Compiling tauri-specta v1.0.2
+   Compiling zamm v0.0.0 (/project)
+error: proc macro panicked
+  --> src/main.rs:42:14
+   |
+42 |         .run(tauri::generate_context!())
+   |              ^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = help: message: The `distDir` configuration is set to `"../src-svelte/build"` but this path doesn't exist
+
+warning: unused import: `std::env`
+  --> src/main.rs:13:5
+   |
+13 | use std::env;
+   |     ^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: `zamm` (bin "zamm") generated 1 warning
+error: could not compile `zamm` (bin "zamm") due to previous error; 1 warning emitted
+make: *** [Makefile:4: target/release/zamm] Error 101
+```
+
+To fix this, we can mount additional volumes for cross as described [here](https://github.com/cross-rs/cross#mounting-volumes-into-the-build-environment). However, as described by [this issue](https://github.com/cross-rs/cross/issues/388), that doesn't actually work when we try it out and debug with `cross -vv ...`. Therefore, we use mkhattab's workaround in [this comment](https://github.com/cross-rs/cross/issues/388#issuecomment-1076862505) and edit our Makefile again:
+
+```Makefile
+...
+
+target/release/zamm: ./Cargo.toml $(shell find . -type f \( -name "*.rs" \) -not -path "./target/*")
+	DOCKER_OPTS="-v $(realpath ../src-svelte):/src-svelte" cross -vv build --release --features custom-protocol
+	touch target/release/zamm
+
+...
+```
+
+Now compilation works:
+
+```bash
+$ make
+...
+thiserror=/target/x86_64-unknown-linux-gnu/release/deps/libthiserror-3f9911903402c34c.rlib --extern uuid=/target/x86_64-unknown-linux-gnu/release/deps/libuuid-f91a98274275e90b.rlib --cfg desktop`
+    Finished release [optimized] target(s) in 16.23s
+touch target/release/zamm
+```
+
+Now we can remove the `-vv` option from cross debugging in the `src-tauri/Makefile`. However, we try running `make` in the overall directory, and note that it still fails on our local machine:
+
+```bash
+$ rsync -P -e ssh hetzner:/root/zamm/src-tauri/target/release/zamm ~/Downloads
+zamm
+     13,131,960 100%    2.30MB/s    0:00:05 (xfr#1, to-chk=0/1)
+$ ./zamm
+./zamm: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found (required by ./zamm)
+./zamm: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.33' not found (required by ./zamm)
+./zamm: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by ./zamm)
+
+```
+
+Try running cross again inside `src-tauri` to confirm:
+
+```bash
+$ cross clean
+$ make
+```
+
+Now it does work on the local development machine. This means that `cargo tauri build` is rebuilding the executable without cross.
+
+### Continuing on...
 
 Then in the main project Makefile:
 

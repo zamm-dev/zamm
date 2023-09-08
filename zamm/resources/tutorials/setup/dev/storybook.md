@@ -348,3 +348,35 @@ Known.parameters = {
 ```
 
 Now we can render all three different component states based on mocked return values.
+
+## Errors and warnings
+
+If you see this warning when starting Storybook up:
+
+```
+WARN No story files found for the specified pattern: src/**/*.mdx
+```
+
+remove `"../src/**/*.mdx"` from your `StorybookConfig` in `src-svelte/.storybook/main.ts`, from
+
+```ts
+...
+
+const config: StorybookConfig = {
+  stories: ["../src/**/*.mdx", "../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+  ...
+};
+export default config;
+```
+
+to
+
+```ts
+...
+
+const config: StorybookConfig = {
+  stories: ["../src/**/*.stories.@(js|jsx|mjs|ts|tsx)"],
+  ...
+};
+export default config;
+```

@@ -397,13 +397,14 @@ There shold be a sidebar next to the main content. `src-svelte/src/routes/+layou
 <div class="app">
   <Sidebar />
 
-  <main class="p-4 h-screen">
+  <main class="h-screen">
     <slot />
   </main>
 </div>
 
 <style>
   main {
+    padding: 0.5em;
     margin-left: var(--sidebar-width);
   }
 </style>
@@ -596,6 +597,158 @@ Serialized Error: { matcherResult: { message: 'Expected image to match or be a c
 ```
 
 It's amazing what a difference 12 pixels can make.
+
+Note that if we blow up the font size to 38px, for example, the corners start looking off. This is because we're using absolute pixel units to define the shadow offset. Instead, adjust it using `rem` until it fits:
+
+```css
+  .selected::before {
+    box-shadow: 0 0.375rem 0 0 white;
+  }
+
+  .selected::after {
+    box-shadow: 0 -0.375rem 0 0 white;
+  }
+```
+
+Note if we increase the size of the elements by a lot, it makes it more obvious that the rounded corner is incongruously casting a square shadow. To make the inverted border radius shadow rounded is hard to do with CSS alone, and might call for custom graphics. However, this is really only noticeable at large font sizes, especially when the shadow is a very intense one.
+
+### Embossing icons
+
+To use icons, follow the instructions for [unplugin-icons](/zamm/resources/tutorials/setup/dev/unplugin.md). Then we follow the instructions [here](https://css-tricks.com/adding-shadows-to-svg-icons-with-css-and-svg-filters/) to define a filter that will emboss our icons:
+
+```svelte
+...
+
+<header>
+  <svg version="1.1" width="0" height="0">
+    <filter id="inset-shadow">
+      <feOffset dx="0" dy="0" />
+      <feGaussianBlur stdDeviation="1" result="offset-blur" />
+      <feComposite
+        operator="out"
+        in="SourceGraphic"
+        in2="offset-blur"
+        result="inverse"
+      />
+      <feFlood flood-color="#555" flood-opacity=".95" result="color" />
+      <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+      <feComposite operator="over" in="shadow" in2="SourceGraphic" />
+    </filter>
+  </svg>
+
+  <nav>
+    <div class="selected icon">
+      <IconSettings />
+    </div>
+    <div class="icon">
+      <IconChat />
+    </div>
+  </nav>
+</header>
+```
+
+We make our icons bigger and apply the filter to them. We use `:global` here to make the CSS actually apply to the externally defined component, as described [here](https://learn.svelte.dev/tutorial/component-styles).
+
+```css
+  .icon > :global(:only-child) {
+    font-size: calc(0.5 * var(--sidebar-width));
+    color: #aaa;
+    filter: url(#inset-shadow);
+  }
+```
+
+Next, we make the selected icon stand out by applying an activation color to it. Note that there is [no way](https://stackoverflow.com/a/31847031) to pass parameters to SVG filters, so we copy-paste the code from before and tweak it:
+
+```svelte
+
+<header>
+  <svg version="1.1" width="0" height="0">
+    ...
+
+    <filter id="inset-shadow-selected">
+      <feOffset dx="0" dy="0" />
+      <feGaussianBlur stdDeviation="2" result="offset-blur" />
+      <feComposite
+        operator="out"
+        in="SourceGraphic"
+        in2="offset-blur"
+        result="inverse"
+      />
+      <feFlood flood-color="#002966" flood-opacity=".95" result="color" />
+      <feComposite operator="in" in="color" in2="inverse" result="shadow" />
+      <feComposite operator="over" in="shadow" in2="SourceGraphic" />
+    </filter>
+
+<style>
+  ...
+
+  .icon.selected > :global(:only-child) {
+    color: #1a75ff;
+    filter: url(#inset-shadow-selected) url(#sofGlow);
+  }
+
+  ...
+</style>
+```
+
+Note the increase in `stdDeviation`, to make the embossed effect more obvious when the colors involved are darker.
+
+#### Refactoring width
+
+Remember what we did above with `margin-top` for the header? Let's shift the icons a little to the left as well so that we can appreciate the shadow on the left too. Note that here, we'll have to take into account the item size as well; it used to be synonymous with sidebar width, but this is no longer the case. This calls for a little refactoring challenge that will test the LLM's ability to keep code clean in the face of new demands for features.
+
+First define new constants in `src-svelte/src/routes/styles.css`:
+
+```css
+...
+
+:root {
+  ...
+  --sidebar-width: 68px;
+  --sidebar-left-padding: 0.5rem;
+  --sidebar-icon-size: calc(var(--sidebar-width) - var(--sidebar-left-padding));
+  ...
+}
+```
+
+Now in `src-svelte/src/routes/Sidebar.svelte`:
+
+```css
+  header {
+    ...
+    /* this is the icon size, not the sidebar-width, because
+    sidebar-width is supposed to control the total width of the sidebar,
+    whereas CSS width only controls the sidebar's content area */
+    width: var(--sidebar-icon-size);
+    ...
+  }
+
+  ...
+
+  .icon {
+    width: var(--sidebar-icon-size);
+    height: var(--sidebar-icon-size);
+    ...
+  }
+
+  .icon > :global(:only-child) {
+    font-size: calc(0.5 * var(--sidebar-icon-size));
+    ...
+  }
+
+  ...
+
+
+  .selected::before {
+    bottom: var(--sidebar-icon-size);
+    ...
+  }
+
+  .selected::after {
+    top: var(--sidebar-icon-size);
+    ...
+  }
+```
 
 ### Refactoring Tailwind parameters
 

@@ -145,6 +145,24 @@ $ pyinstaller -F zamm/main.py --distpath ../src-tauri/binaries/ --name zamm-pyth
 28573 INFO: Building EXE from EXE-00.toc completed successfully.
 ```
 
+If instead you get the error
+
+```
+...
+  File "/root/.cache/pypoetry/virtualenvs/zamm-yQ9XAN83-py3.11/lib/python3.11/site-packages/PyInstaller/depend/bindepend.py", line 1018, in get_python_library_path
+    raise IOError(msg)
+OSError: Python library not found: libpython3.11.so, libpython3.11mu.so.1.0, libpython3.11.so.1.0, libpython3.11m.so, libpython3.11m.so.1.0
+    This means your Python installation does not come with proper shared library files.
+    This usually happens due to missing development package, or unsuitable build parameters of the Python installation.
+
+    * On Debian/Ubuntu, you need to install Python development packages:
+      * apt-get install python3-dev
+      * apt-get install python-dev
+    * If you are building Python by yourself, rebuild with `--enable-shared` (or, `--enable-framework` on macOS).
+```
+
+then follow the suggestions and install `python3-dev`.
+
 We can edit the `src-python/Makefile` to produce this as a target, from this:
 
 ```Makefile

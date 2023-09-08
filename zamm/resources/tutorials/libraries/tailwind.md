@@ -102,4 +102,4 @@ $ yarn tauri dev
       at Input.error (/root/zamm/node_modules/vite/node_modules/postcss/lib/input.js:106:16)
 ```
 
-then restarting the app appears to fix this issue, as it appears the issue is non-deterministic.
+then restarting the app appears to fix this issue, as it appears the issue is non-deterministic. If restarting the app does not help, then you can disable postcss (and thus Tailwind) by deleting the `src-svelte/postcss.config.js` file.
