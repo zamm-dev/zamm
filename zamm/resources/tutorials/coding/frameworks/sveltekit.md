@@ -148,6 +148,8 @@ $ git rm -rf src-svelte/static/fonts
 $ git submodule add git@github.com:amosjyng/zamm-fonts.git src-svelte/static/fonts
 ```
 
+Make sure to add submodule init to your repo documentation.
+
 Then in your workflows such as `.github/workflows/tests.yaml`, you have to change this:
 
 ```yaml
@@ -180,3 +182,66 @@ Observe that you get the error
 ```
 
 on the CI run. It appeaers submodule cloning in CI environments is not yet supported for the beta feature of fine-grained PATs.
+
+## Refactoring components
+
+If you have built a new component in your library and wish to apply it to another one, you can follow this as an example for what to do. Say you have built an `InfoBox` component that is located at `src-svelte/src/lib/InfoBox.svelte`. Say you have an existing table like this:
+
+```svelte
+<table>
+  <tr class="h2">
+    <th class="header-text" colspan="2">API Keys</th>
+  </tr>
+  <tr>
+    <td>OpenAI</td>
+    <td class="key">
+      {#await api_keys}
+        ...loading
+      {:then keys}
+        {#if keys.openai !== undefined && keys.openai !== null}
+          <span class="actual-key">{keys.openai.value}</span>
+        {:else}
+          unknown
+        {/if}
+      {:catch error}
+        error: {error}
+      {/await}
+    </td>
+  </tr>
+</table>
+```
+
+Then import the new InfoBox:
+
+```svelte
+<script lang="ts">
+  import InfoBox from "$lib/InfoBox.svelte";
+</script>
+```
+
+and change the existing table implementation to use it instead:
+
+```svelte
+<InfoBox title="API Keys">
+  <table>
+    <tr>
+      <td>OpenAI</td>
+      <td class="key">
+        {#await api_keys}
+          ...loading
+        {:then keys}
+          {#if keys.openai !== undefined && keys.openai !== null}
+            <span class="actual-key">{keys.openai.value}</span>
+          {:else}
+            unknown
+          {/if}
+        {:catch error}
+          error: {error}
+        {/await}
+      </td>
+    </tr>
+  </table>
+</InfoBox>
+```
+
+This requires understanding what the InfoBox is for, and what information the existing table is meant to convey.

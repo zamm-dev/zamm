@@ -49,3 +49,98 @@ $ git archive -o ~/latest.zip HEAD
 ```
 
 Then transfer it to another computer.
+
+## Divergent branch reconciliation
+
+If you get an error such as this:
+
+```bash
+$ git pull 
+hint: You have divergent branches and need to specify how to reconcile them.
+hint: You can do so by running one of the following commands sometime before
+hint: your next pull:
+hint: 
+hint:   git config pull.rebase false  # merge (the default strategy)
+hint:   git config pull.rebase true   # rebase
+hint:   git config pull.ff only       # fast-forward only
+hint: 
+hint: You can replace "git config" with "git config --global" to set a default
+hint: preference for all repositories. You can also pass --rebase, --no-rebase,
+hint: or --ff-only on the command line to override the configured default per
+hint: invocation.
+fatal: Need to specify how to reconcile divergent branches.
+```
+
+then follow the instructions and choose one of the options. It's recommended to choose a global strategy, for example
+
+```bash
+$ git config pull.rebase --global true
+```
+
+## Merge conflicts
+
+Let's say you're doing a rebase. If you have two commits that both add a new Makefile rule, for example:
+
+```
+<<<<<<< HEAD
+=======
+docker:
+	docker build . -t $(BUILD_IMAGE)
+	docker push $(BUILD_IMAGE)
+
+icon:
+	yarn tauri icon src-tauri/icons/icon.png
+
+>>>>>>> ee32ff6 (Add custom logo)
+```
+
+and you now want to rebase your latest commit so that these two changes are independent of each other, then you'll want to only keep the rule from the commit you care about.
+
+If instead you're rebasing one commit onto another, then you'll likely want to keep both changes:
+
+```
+<<<<<<< HEAD
+icon:
+	yarn tauri icon src-tauri/icons/icon.png
+=======
+docker:
+	docker build . -t $(BUILD_IMAGE)
+	docker push $(BUILD_IMAGE)
+>>>>>>> 8d08f05 (Dockerize build process)
+```
+
+You should use ZAMM to automatically resolve the merge conflict based on the semantic purposes of the changes.
+
+## Submodules
+
+If your repo state is dirty because of a submodule:
+
+```bash
+$ git status
+On branch docker
+Your branch is up to date with 'origin/docker'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   src-svelte/static/fonts (new commits)
+
+no changes added to commit (use "git add" and/or "git commit -a")
+```
+
+which can happen simply by checking out a branch that points to a different commit of the submodule, you'll find that a `git reset --hard` does nothing because it only resets the files in the main repo, not the submodule. Instead, do this:
+
+```bash
+$ git submodule update --init
+Submodule path 'src-svelte/static/fonts': checked out 'b5bf1655bcffe96126fb99c41e09b4d51e873fa3'
+```
+
+Now the repo state is clean:
+
+```bash
+$ git status
+On branch docker
+Your branch is up to date with 'origin/docker'.
+
+nothing to commit, working tree clean
+```

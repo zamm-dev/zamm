@@ -183,6 +183,8 @@ Note that we'll have to edit the timeout in `src-svelte/src/lib/__mocks__/invoke
     }
 ```
 
+### Automatically starting Storybook before tests
+
 Note that this requires `yarn storybook` to be running first before the tests run. We can automate this by installing
 
 ```bash
@@ -308,6 +310,230 @@ Make sure you now update `.github/workflows/tests.yaml` as well. Screenshots sho
           retention-days: 1
 ```
 
+### Diff direction
+
+In some cases, we want the diff to be vertical when the screenshot is wide, and we want the diff to be horizontal when the screenshot is tall. We install
+
+
+```bash
+$ yarn add -D image-size
+```
+
+and then do
+
+```ts
+import sizeOf from "image-size";
+
+describe("Storybook visual tests", () => {
+  ...
+          const screenshotSize = sizeOf(screenshot);
+          const diffDirection = (screenshotSize.width && screenshotSize.height && screenshotSize.width > screenshotSize.height) ? "vertical" : "horizontal";
+
+          // @ts-ignore
+          expect(screenshot).toMatchImageSnapshot({
+            diffDirection,
+            ...
+          });
+  ...
+});
+```
+
+### Testing dynamic images
+
+Let's say we want to also optionally check that static elements are static, whereas dynamic elements (e.g. animated ones) change. We wouldn't want to do exact screenshot tests because depending on the exact timing of the screenshot, the animation may be in a slightly different place each time. Instead, we take two screenshots and check that they're different. But first, we want to only *optionally* specify this for each test. We do this by defining an optional additional config for each test variant:
+
+```ts
+interface ComponentTestConfig {
+  path: string[]; // Represents the Storybook hierarchy path
+  variants: string[] | VariantConfig[];
+}
+
+interface VariantConfig {
+  name: string;
+  assertDynamic?: boolean;
+}
+```
+
+Now we change the test components to:
+
+```ts
+const components: ComponentTestConfig[] = [
+  {
+    path: ["background"],
+    variants: [{
+      name: "static",
+      assertDynamic: false,
+    }, {
+      name: "dynamic",
+      assertDynamic: true,
+    }],
+  },
+  ...
+]
+```
+
+We refactor screenshot-taking to be able to reuse it:
+
+```ts
+  const takeScreenshot = (page: Page) => {
+    const frame = page.frame({ name: "storybook-preview-iframe" });
+          if (!frame) {
+            throw new Error("Could not find Storybook iframe");
+          }
+    return frame
+    .locator("#storybook-root > :first-child")
+    .screenshot();
+  }
+```
+
+Then we update our tests as such:
+
+```ts
+  for (const config of components) {
+    const storybookUrl = config.path.join("-");
+    const storybookPath = config.path.join("/");
+    describe(storybookPath, () => {
+      for (const variant of config.variants) {
+        const variantConfig = typeof variant === "string" ? {
+          name: variant,
+        } : variant;
+        const testName = variantConfig.name;
+        test(`${testName} should render the same`, async () => {
+          const variantPrefix = `--${variantConfig.name}`;
+
+          await page.goto(
+            `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
+          );
+
+          const screenshot = await takeScreenshot(page);
+
+          const screenshotSize = sizeOf(screenshot);
+          const diffDirection =
+            screenshotSize.width &&
+            screenshotSize.height &&
+            screenshotSize.width > screenshotSize.height
+              ? "vertical"
+              : "horizontal";
+
+          if (!variantConfig.assertDynamic) {
+            // don't compare dynamic screenshots against baseline
+            // @ts-ignore
+            expect(screenshot).toMatchImageSnapshot({
+              diffDirection,
+              storeReceivedOnFailure: true,
+              customSnapshotsDir: "screenshots/baseline",
+              customSnapshotIdentifier: `${storybookPath}/${testName}`,
+              customDiffDir: "screenshots/testing/diff",
+              customReceivedDir: "screenshots/testing/actual",
+              customReceivedPostfix: "",
+            });
+          }
+
+          if (variantConfig.assertDynamic !== undefined) {
+            await new Promise(r => setTimeout(r, 1000));
+            const newScreenshot = await takeScreenshot(page);
+
+            if (variantConfig.assertDynamic) {
+              expect(newScreenshot).not.toEqual(screenshot);
+            } else {
+              // do the same assertion from before so that we can see what changed the
+              // second time around if a static screenshot turns out to be dynamic
+              //
+              // @ts-ignore
+              expect(newScreenshot).toMatchImageSnapshot({
+                diffDirection,
+                storeReceivedOnFailure: true,
+                customSnapshotsDir: "screenshots/baseline",
+                customSnapshotIdentifier: `${storybookPath}/${testName}`,
+                customDiffDir: "screenshots/testing/diff",
+                customReceivedDir: "screenshots/testing/actual",
+                customReceivedPostfix: "",
+              });
+            }
+          }
+        });
+      }
+    });
+  }
+```
+
+We get an error:
+
+```
+ FAIL  src/routes/storybook.test.ts > Storybook visual tests > background > dynamic should render the same
+TypeError: this.customTesters is not iterable
+ ❯ Proxy.<anonymous> ../node_modules/playwright/lib/matchers/expect.js:166:37
+ ❯ src/routes/storybook.test.ts:159:41
+    157| 
+    158|             if (variantConfig.assertDynamic) {
+    159|               expect(newScreenshot).not.toEqual(screenshot);
+       |                                         ^
+    160|             } else {
+    161|               // do the same assertion from before so that we can see …
+```
+
+It appears we can't use our regular testers here. Even doing `expect(Buffer.compare(screenshot, newScreenshot)).not.toEqual(0);` doesn't help. We confirm that we literally can't use any of the usual matchers:
+
+```ts
+expect("one").not.toEqual("two");
+```
+
+fails as well.
+
+We finally see that [others](https://github.com/microsoft/playwright/issues/20432) have run into this issue too. Our usage of `expect.extend({ toMatchImageSnapshot });` turns out to be a red herring, as the problem is that Playwright replaces the default `expect` with its own. We'll have to check from the list of assertions [here](https://playwright.dev/docs/test-assertions). This is the solution:
+
+
+```ts
+expect(Buffer.compare(screenshot, newScreenshot) !== 0).toBeTruthy();
+```
+
+Of course, we should also test that our tests are actually discriminatory between passing and failing states. If we disable the animation, does the test for dynamism now fail? It turns out that it does, so we are good here.
+
+### Testing entire body
+
+Sometimes, if we change the shadow of an element, the shadow is not part of the element's bounding box and therefore won't be captured in the screenshot. For these cases, we may want to zoom out to take a screenshot of the entire body instead of just the element itself. We can add an option:
+
+```ts
+interface ComponentTestConfig {
+  ...
+  screenshotEntireBody?: boolean;
+}
+
+const components: ComponentTestConfig[] = [
+  ...
+  {
+    path: ["dashboard", "api-keys-display"],
+    variants: ["loading", "unknown", "known"],
+    screenshotEntireBody: true,
+  },
+  {
+    path: ["dashboard", "metadata"],
+    variants: ["metadata"],
+    screenshotEntireBody: true,
+  },
+  ...
+];
+
+...
+
+  const takeScreenshot = (page: Page, screenshotEntireBody?: boolean) => {
+    const frame = page.frame({ name: "storybook-preview-iframe" });
+    if (!frame) {
+      throw new Error("Could not find Storybook iframe");
+    }
+    const locator = screenshotEntireBody ? "body" : "#storybook-root > :first-child";
+    return frame.locator(locator).screenshot();
+  };
+
+...
+
+          const screenshot = await takeScreenshot(page, config.screenshotEntireBody);
+
+...
+```
+
+You may find some of these full-body tests to be flaky. In that case, specify a certain number of retries as explained [here](/zamm/resources/tutorials/setup/tauri/vitest.md).
+
 ## Errors
 
 ### Test timeout
@@ -356,3 +582,43 @@ and you are in the specific context of trying to take a Storybook screenshot, th
 ```
 
 This has the added benefit of making the screenshot more compact, since it will only be the size of the child element and not the entire Storybook root element.
+
+## Errors
+
+If you get
+
+```
+ FAIL  src/routes/storybook.test.ts > Storybook visual tests
+Error: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium-1080/chrome-linux/chrome
+╔═════════════════════════════════════════════════════════════════════════╗
+║ Looks like Playwright Test or Playwright was just installed or updated. ║
+║ Please run the following command to download new browsers:              ║
+║                                                                         ║
+║     yarn playwright install                                             ║
+║                                                                         ║
+║ <3 Playwright Team                                                      ║
+╚═════════════════════════════════════════════════════════════════════════╝
+```
+
+then do as it says and run
+
+```bash
+$ yarn playwright install     
+yarn run v1.22.19
+$ /root/zamm/node_modules/.bin/playwright install
+Removing unused browser at /root/.cache/ms-playwright/chromium-1076
+Removing unused browser at /root/.cache/ms-playwright/firefox-1422
+Removing unused browser at /root/.cache/ms-playwright/webkit-1883
+Downloading Chromium 117.0.5938.62 (playwright build v1080) from https://playwright.azureedge.net/builds/chromium/1080/chromium-linux.zip
+153.1 Mb [====================] 100% 0.0s
+Chromium 117.0.5938.62 (playwright build v1080) downloaded to /root/.cache/ms-playwright/chromium-1080
+Downloading Firefox 117.0 (playwright build v1424) from https://playwright.azureedge.net/builds/firefox/1424/firefox-ubuntu-22.04.zip
+78.8 Mb [====================] 100% 0.0s
+Firefox 117.0 (playwright build v1424) downloaded to /root/.cache/ms-playwright/firefox-1424
+Downloading Webkit 17.0 (playwright build v1908) from https://playwright.azureedge.net/builds/webkit/1908/webkit-ubuntu-22.04.zip
+82.5 Mb [====================] 100% 0.0s
+Webkit 17.0 (playwright build v1908) downloaded to /root/.cache/ms-playwright/webkit-1908
+Done in 10.96s.
+```
+
+**Note that when a new browser is used,** some effects such as SVG filters may be rendered ever so slightly differently. This may cause your screenshot tests to fail. Visually inspect the changes, and if they are minor as expected, then update the baseline screenshots. Alternatively, as mentioned [here](https://news.ycombinator.com/item?id=32908506), update screenshots for a build that is known to be good. You may want to combine this with visual inspection if the differences are large enough, in case the old build relied on some quirks of the old browser version to render correctly.

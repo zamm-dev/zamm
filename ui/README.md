@@ -208,7 +208,7 @@ Entire page:
   }
 
   table {
-    width:0.1%;
+    width: 0.1%;
     white-space: nowrap;
   }
 
@@ -612,6 +612,26 @@ Note that if we blow up the font size to 38px, for example, the corners start lo
 
 Note if we increase the size of the elements by a lot, it makes it more obvious that the rounded corner is incongruously casting a square shadow. To make the inverted border radius shadow rounded is hard to do with CSS alone, and might call for custom graphics. However, this is really only noticeable at large font sizes, especially when the shadow is a very intense one.
 
+### No shadows on older browsers
+
+However, note that on some older browsers, negative values for `clip-path` will not show the shadow being cast outside of the element's usual bounding box, resulting in problems such as [this](https://css-tricks.com/using-box-shadows-and-clip-path-together/). The trick noted in that article won't work because we already have the shape we want to cast a shadow with, we just want to truncate the shadow on one side. Instead, we shift the `clip-path` property out of `header::before` and `.selected`, and into `header` instead:
+
+```css
+  header {
+    ...
+    clip-path: inset(0 0 0 0);
+  }
+
+  header::before {
+    ...
+    box-shadow: calc(-1 * var(--shadow-offset)) 0 var(--shadow-blur) 0 #ccc;
+  }
+
+  .selected {
+    ...
+  }
+```
+
 ### Embossing icons
 
 To use icons, follow the instructions for [unplugin-icons](/zamm/resources/tutorials/setup/dev/unplugin.md). Then we follow the instructions [here](https://css-tricks.com/adding-shadows-to-svg-icons-with-css-and-svg-filters/) to define a filter that will emboss our icons:
@@ -692,6 +712,14 @@ Next, we make the selected icon stand out by applying an activation color to it.
 ```
 
 Note the increase in `stdDeviation`, to make the embossed effect more obvious when the colors involved are darker.
+
+Finally, we make this SVG completely invisible, because we are after all only using it for its filter:
+
+```svelte
+  <svg version="1.1" style="visibility: hidden; position: absolute;" width="0" height="0">
+    ...
+  </svg>
+```
 
 #### Refactoring width
 
@@ -846,9 +874,9 @@ Check that all tests pass.
 
 ## Logo
 
-### Creating the SVG
+### Creating the typographic SVG
 
-To create the logo SVG, open Gimp up and type in "ZAMM" in 24 point Ropa Sans font. Then, follow [these instructions](https://www.techwalla.com/articles/text-to-path-in-gimp) to convert it to a path. Create a long line that runs parallel to the sloped middle edges of the Z. It may be easier if you press `Edit Mode > Edit (Ctrl)` in the `Paths` palette. Now use that line to extend the top and bottom of the Z to the line, so that the Z becomes a zig-zag. Delete the two intermediate points that are now redundant.
+To create a typographic SVG version of the logo, open Gimp up and type in "ZAMM" in 24 point Ropa Sans font. Then, follow [these instructions](https://www.techwalla.com/articles/text-to-path-in-gimp) to convert it to a path. Create a long line that runs parallel to the sloped middle edges of the Z. It may be easier if you press `Edit Mode > Edit (Ctrl)` in the `Paths` palette. Now use that line to extend the top and bottom of the Z to the line, so that the Z becomes a zig-zag. Delete the two intermediate points that are now redundant.
 
 Next, extend the horizontal top and bottom of the Z to cover the whole word. To select multiple points to move at once, select `Edit Mode > Design` and shift-click on each node of the path.
 
@@ -856,3 +884,167 @@ If you see a dotted yellow border, that's the layer boundary. If it doesn't cove
 
 You can export the path as an SVG by right-clicking the path on the Paths Tool palette and selecting "Export Path...".
 
+### Creating the image logo
+
+Use the prompt "a logo of a robot hand typing on a keyboard, simple, vector, futuristic" on Midjourney. Then, for the image we have chosen, use the fuzzy select tool as described [here](https://logosbynick.com/gimp-delete-background-to-transparent/) to select the back background. This will also end up selecting dark parts of the robot itself, so subtract parts of the selection as described [here](http://gimpchat.com/viewtopic.php?f=4&t=15616) to make sure that it's only the background that is being selected.
+
+Then, export the PNG. Because there's a lot of whitespace in the logo, we'll want a zoomed-in version of the logo for the app icon so that the icon will look more filled-up. Use the crop tool in Gimp, but lock the aspect ratio to be square. Then, export the cropped PNG as well.
+
+Copy the cropped PNG over to `src-tauri/icons/icon.png`, and add a Makefile rule to generate all the app icons that Tauri expects:
+
+```Makefile
+icon:
+	yarn tauri icon src-tauri/icons/icon.png
+```
+
+Copy the uncropped logo over to `src-svelte/static/logo.png`. Edit `src-svelte/src/routes/+page.svelte` to display it on the main page, above the other stuff:
+
+```svelte
+...
+
+<img src="/logo.png" alt="Robot typing on keyboard" />
+
+...
+```
+
+#### Main page banner
+
+The image creates a lot of whitespace to the right. To fill it up, we add some system information:
+
+```svelte
+...
+
+<section class="homepage-banner">
+  <img src="/logo.png" alt="Robot typing on keyboard" />
+  <div class="zamm-metadata info-box">
+    <h2>System Information</h2>
+    <table>
+      <tr>
+        <th colspan="2">ZAMM</th>
+      </tr>
+      <tr>
+        <td>Version</td>
+        <td class="version-value">0.0.0</td>
+      </tr>
+      <tr>
+        <td>Stability</td>
+        <td class="stability-value">Unstable (Alpha)</td>
+      </tr>
+      <tr>
+        <td>Fork</td>
+        <td>Original</td>
+      </tr>
+    </table>
+
+    <table>
+      <tr>
+        <th colspan="2">Computer</th>
+      </tr>
+      <tr>
+        <td>OS</td>
+        <td>Linux</td>
+      </tr>
+      <tr>
+        <td>Release</td>
+        <td>Ubuntu 18.04</td>
+      </tr>
+    </table>
+  </div>
+</section>
+
+...
+```
+
+Let's style this. The homepage banner should be one horizontal row, separated from any content below it by a little gap:
+
+```css
+  .homepage-banner {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 1rem;
+  }
+```
+
+Every element in it should have some space from the one to its left:
+
+```css
+  .homepage-banner > * {
+    margin-left: 1rem;
+  }
+```
+
+The system information div to the right should take up all the space that the logo doesn't take up:
+
+```css
+  .zamm-metadata {
+    flex: 1;
+  }
+```
+
+Each table should have some space from the element above it:
+
+```css
+  .zamm-metadata table {
+    margin-top: 0.5rem;
+  }
+```
+
+All cells in the table should have their text be flush to the left:
+
+```css
+  .zamm-metadata th, td {
+    text-align: left;
+    padding-left: 0;
+  }
+```
+
+Cell text should be aligned to the top, in case the window width is is small enogh that the value line wraps around:
+
+```css
+  td {
+    vertical-align: text-top;
+  }
+```
+
+Table keys should be faded:
+
+```css
+  .zamm-metadata td:first-child {
+    color: var(--color-faded);
+    padding-right: 1rem;
+  }
+```
+
+The value for system stability we highlight in orange for now:
+
+```css
+  .stability-value {
+    color: var(--color-caution);
+  }
+```
+
+with the accompanying var declaration in `src-svelte/src/routes/styles.css`:
+
+```css
+:root {
+  --color-caution: #FF8C00;
+}
+```
+
+Finally, we give the logo this size:
+
+```css
+  img {
+    width: 19rem;
+  }
+```
+
+This is just for the elements specific to this page. To complete the styling, we'll make use of the [rounded cut-corner CSS trick](/zamm/resources/tutorials/coding/css.md).
+
+Afterwards, we notice that because the last line of the table, "Release    Ubuntu 18.04", contains no descenders in any of its characters, it looks as if there's extra padding at the bottom of the div, between the text baseline and the div border. To fix this, we add the class `.less-space` to the last table, and define the CSS for this class as:
+
+```css
+  .less-space {
+    margin-bottom: -0.33rem;
+  }
+```

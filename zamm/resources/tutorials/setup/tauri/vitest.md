@@ -501,3 +501,31 @@ interface Window {
 ### Specta
 
 If instead you [set up Specta](/zamm/resources/tutorials/libraries/specta.md), you should follow the mocking instructions in that file.
+
+## Tips
+
+### Specifying specific test
+
+Do
+
+```bash
+$ yarn vitest -t sidebar
+```
+
+to specify a specific test
+
+### Retrying flaky tests
+
+To specify a certain number of retries, simply add the options to the end of the test as mentioned [here](https://vitest.dev/api/):
+
+```ts
+        test(
+          `${testName} should render the same`,
+          async () => {
+            // ... actual testing code ...
+          },
+          {
+            retry: 3,
+          },
+        );
+```

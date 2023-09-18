@@ -167,3 +167,16 @@ $ yarn quicktype src-python/sample-calls/canonical/greet_args.json -o src-python
 ...
 $ yarn quicktype src-python/sample-calls/canonical/greet_response.json -o src-python/api/schemas/greet_response.json -l schema
 ```
+
+## Optional dependency
+
+Because this dependency requires Node v18, you may want to mark this as an optional dependency if you want to build the rest of your project on an older version of Node:
+
+```json
+{
+  ...
+  "optionalDependencies": {
+    "quicktype": "^23.0.71"
+  }
+}
+```

@@ -349,6 +349,62 @@ Known.parameters = {
 
 Now we can render all three different component states based on mocked return values.
 
+## Custom viewport for component
+
+To make the component render at a specific size, we can use the `@storybook/addon-viewport` addon. Install it:
+
+```bash
+$ yarn add -D @storybook/addon-viewport
+```
+
+Then edit `src-svelte/.storybook/main.ts`:
+
+```ts
+...
+
+const config: StorybookConfig = {
+  ...
+  addons: [
+    ...
+    getAbsolutePath("@storybook/addon-viewport"),
+  ],
+  ...
+};
+```
+
+Then, as shown [here](https://stackoverflow.com/a/73028857) (note the typo in the answer), edit your story at, say, `src-svelte/src/routes/Metadata.stories.ts`,  to add the parameters:
+
+```ts
+...
+
+export const Metadata: StoryObj = Template.bind({}) as any;
+Metadata.parameters = {
+  viewport: {
+      defaultViewport: "mobile2"
+  }
+}
+```
+
+### Custom props for component
+
+To create different stories that have different prop values by default, you can do this:
+
+```ts
+const Template = ({ ...args }) => ({
+  Component: BackgroundComponent,
+  props: args,
+});
+
+export const Static: StoryObj = Template.bind({}) as any;
+Static.args = {
+  animated: false,
+};
+export const Dynamic: StoryObj = Template.bind({}) as any;
+Dynamic.args = {
+  animated: true,
+};
+```
+
 ## Errors and warnings
 
 If you see this warning when starting Storybook up:

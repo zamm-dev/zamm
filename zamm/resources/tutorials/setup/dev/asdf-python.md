@@ -190,3 +190,31 @@ Successfully installed SecretStorage-3.3.3 attrs-23.1.0 build-0.10.0 cachecontro
 [notice] To update, run: pip3 install --upgrade pip
 Reshimming asdf python...
 ```
+
+## Building Python from source
+
+If you're building python from source, and get an error such as
+
+```
+OSError: Python library not found: libpython3.11m.so.1.0, libpython3.11m.so, libpython3.11mu.so.1.0, libpython3.11.so, libpython3.11.so.1.0
+    This means your Python installation does not come with proper shared library files.
+```
+
+or
+
+```
+libpython3.11.so.1.0: cannot open shared object file: No such file or directory
+```
+
+then you should make sure to rebuild it with the `--enable-shared` flag:
+
+```bash
+$ ./configure --enable-shared
+$ make && make install
+```
+
+Then, run `ldconfig`:
+
+```bash
+$ ldconfig
+```

@@ -86,3 +86,31 @@ Success: no issues found in 2 source files
 ```
 
 That's all! **Don't take any more steps** because the task is now done!
+
+## Errors
+
+If you get
+
+```bash
+$ poetry run mypy .
+/home/runner/.cache/pypoetry/virtualenvs/langchain-visualizer-asnL2hpd-py3.10/lib/python3.10/site-packages/fastapi/openapi/models.py:281: error: INTERNAL ERROR -- Please try using mypy master on GitHub:
+https://mypy.readthedocs.io/en/stable/common_issues.html#using-a-development-mypy-build
+If this issue continues with mypy master, please report a bug at https://github.com/python/mypy/issues
+version: 0.991
+/home/runner/.cache/pypoetry/virtualenvs/langchain-visualizer-asnL2hpd-py3.10/lib/python3.10/site-packages/fastapi/openapi/models.py:281: : note: please use --show-traceback to print a traceback when reporting a bug
+```
+
+or if mypy hangs, try running it with `--verbose` to see what it's printing out:
+
+```bash
+$ mypy --verbose .
+...
+LOG:  Parsing /root/.cache/pypoetry/virtualenvs/langchain-visualizer-I9VChdX2-py3.11/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/result.py (sqlalchemy.ext.asyncio.result)
+LOG:  Parsing /root/.cache/pypoetry/virtualenvs/langchain-visualizer-I9VChdX2-py3.11/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/base.py (sqlalchemy.ext.asyncio.base)
+LOG:  Parsing /root/.cache/pypoetry/virtualenvs/langchain-visualizer-I9VChdX2-py3.11/lib/python3.11/site-packages/sqlalchemy/ext/asyncio/__init__.py (sqlalchemy.ext.asyncio)
+^CLOG:  Build finished in 11.021 seconds with 1799 modules, and 0 errors
+Interrupted
+^C
+```
+
+Upgrade to the latest version of `mypy`, say version 1.5.1.

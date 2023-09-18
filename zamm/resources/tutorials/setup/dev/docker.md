@@ -63,6 +63,14 @@ Error response from daemon: Cannot kill container: throwaway: Container 9e1f033a
 
 that means the container is already stopped, and you can proceed directly to `docker rm`.
 
+### Logging
+
+To see the logs of a container you just started, do
+
+```bash
+$ docker logs -f throwaway
+```
+
 ### Clean and reset
 
 To completely nuke all existing Docker images, containers, and volumes, do
@@ -85,3 +93,279 @@ If you get an error such as
 ```
 
 try installing `ca-certificates` as mentioned [here](https://unix.stackexchange.com/a/445609).
+
+### Cargo installation
+
+Because `cargo` does not support only downloading dependencies for caching, you'll have to do a workaround as described in [this answer](https://stackoverflow.com/a/49664709).
+
+## Pushing to remote registry
+
+### GitHub
+
+Create a PAT as mentioned [here](/zamm/resources/tutorials/coding/frameworks/sveltekit.md) that has permissions to read, write, and delete packages. Put the key in an environmental variable such as `GHCR_PAT`. Now suppose your GitHub username is `amosjyng` and you have a local image `zamm-build` that you want to push to the repo at `github.com/amosjyng/zamm`. Then do
+
+```bash
+$ docker login ghcr.io -u amosjyng -p $GHCR_PAT
+WARNING! Using --password via the CLI is insecure. Use --password-stdin.
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+$ docker tag zamm-build ghcr.io/amosjyng/zamm:v0.0.0-build
+$ docker push ghcr.io/amosjyng/zamm:v0.0.0-build
+```
+
+You'll want to now visit https://github.com/users/amosjyng/packages/container/zamm/settings and set its visibility to public if it's an open-source project, and allow your repos to access it in GitHub actions.
+
+#### Makefile
+
+If you are using a Makefile for your build, you can set it as such:
+
+```
+BUILD_IMAGE = ghcr.io/amosjyng/zamm:v0.0.0-build
+CURRENT_DIR = $(shell pwd)
+
+build-docker:
+	docker run --rm -v $(CURRENT_DIR):/zamm -w /zamm $(BUILD_IMAGE) make build
+
+build: python svelte rust
+	cargo tauri build
+
+docker:
+	docker build . -t $(BUILD_IMAGE)
+	docker push $(BUILD_IMAGE)
+```
+
+where `build-docker` uses Docker to run the `build` command.
+
+##### Cleaning
+
+To clean up artifacts to make sure that you are actually successfully building everything from scratch, you can do
+
+```Makefile
+clean:
+	cd src-python && make clean
+	cd src-svelte && make clean
+	cd src-tauri && make clean
+```
+
+Then clean up whatever files are generated in each subdirectory. For example, in `src-python/Makefile`:
+
+```Makefile
+...
+
+clean:
+	rm -rf build dist
+```
+
+Meanwhile, in `src-svelte/Makefile`:
+
+```Makefile
+...
+
+clean:
+	rm -rf build
+```
+
+## CI
+
+To use this in GitHub CI, follow the instructions in the previous section for pushing to GHCR, the GitHub Container Registry. Then, look at [this answer](https://stackoverflow.com/a/74217028) for how to parameterize the container image used in the workflow.
+
+If you get an error such as:
+
+```
+Invalid workflow file: .github/workflows/tests.yaml#L1
+No steps defined in `steps` and no workflow called in `uses` for the following jobs: prepare-image
+```
+
+that's because you didn't specify the dummy step mentioned in the code above.
+
+If you get an error such as
+
+```
+Error: Input 'submodules' not supported when falling back to download using the GitHub REST API. To create a local Git repository instead, add Git 2.18 or higher to the PATH.
+```
+
+it is because you need to install a recent version of Git into your Docker image. See [this issue](https://github.com/actions/checkout/issues/758) and [this answer](https://askubuntu.com/a/568596) for how to install the latest version of Git on Ubuntu, because the default Git for older versions of Ubuntu may only be 2.17. To check the Git version before running tests:
+
+```bash
+$ docker run --rm -v $(pwd):/zamm -w /zamm ghcr.io/amosjyng/zamm:v0.0.0-build git --version
+git version 2.42.0
+```
+
+If you get an error such as
+
+```
+/__w/_temp/5681534b-2316-4cc1-b769-4adaa19dd285.sh: 1: /__w/_temp/5681534b-2316-4cc1-b769-4adaa19dd285.sh: pre-commit: not found
+Error: Process completed with exit code 127.
+```
+
+it is because somehow `pipx`'s installation of `pre-commit` did not make it into the PATH. Either add it to the environment variables in the workflow as suggested [here](https://stackoverflow.com/a/68214331):
+
+```yaml
+jobs:
+	...
+  pre-commit:
+    ...
+    steps:
+      ...
+      - name: Add pre-commit to PATH
+        run: echo "/root/.local/pipx/venvs/pre-commit/bin" >> $GITHUB_PATH
+			- run: pre-commit run --show-diff-on-failure --color=always --all-files
+```
+
+or put it into your Dockerfile as suggested [here](https://stackoverflow.com/a/68758943):
+
+```Dockerfile
+...
+ENV PATH="${PATH}:/root/.local/pipx/venvs/pre-commit/bin"
+
+...
+
+COPY .pre-commit-config.yaml .
+RUN git init . && \
+  pre-commit install-hooks
+```
+
+Now you might get an error such as
+
+```
+An error has occurred: FatalError: git failed. Is it installed, and are you in a Git repository directory?
+Check the log at /github/home/.cache/pre-commit/pre-commit.log
+```
+
+We look at the CI steps:
+
+```
+  /usr/bin/git init /__w/zamm-ui/zamm-ui
+```
+
+The repo is initialized there. We run `pwd` in the job right before the pre-commit step. We see that we are in the right folder after all:
+
+```
+WARNING: Error loading config file: /root/.docker/config.json: open /root/.docker/config.json: permission denied
+/__w/zamm-ui/zamm-ui
+```
+
+Let's try exporting the pre-commit log after all.
+
+While researching this, [we find](https://github.com/actions/checkout/issues/841#issuecomment-1220502440) that we should be running this as the root user. We try again:
+
+```yaml
+  pre-commit:
+    name: Check pre-commit hooks
+    runs-on: ubuntu-latest
+    needs: prepare-image
+    container:
+      image: ${{ needs.prepare-image.outputs.image }}
+      options: --user root
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FONTS_PAT }}
+          submodules: "recursive"
+      - run: pwd
+```
+
+If you get an error such as
+
+```
+cargo build --release --features custom-protocol
+error: rustup could not choose a version of cargo to run, because one wasn't specified explicitly, and no default is configured.
+help: run 'rustup default stable' to download the latest stable release of Rust and set it as your default toolchain.
+make[1]: *** [target/release/zamm] Error 1
+Makefile:4: recipe for target 'target/release/zamm' failed
+make[1]: Leaving directory '/__w/zamm-ui/zamm-ui/src-tauri'
+make: *** [rust] Error 2
+Makefile:42: recipe for target 'rust' failed
+Error: Process completed with exit code 2.
+```
+
+see what toolschains made it into the image:
+
+```
+$ docker run --rm ghcr.io/amosjyng/zamm:v0.0.0-build rustup tool
+chain list
+1.71.1-x86_64-unknown-linux-gnu (default)
+```
+
+Then try to add that to your `.github/workflows/tests.yaml` to debug:
+
+```yaml
+jobs:
+  ...
+  build:
+    ...
+    steps:
+      ...
+      - run: rustup toolchain list
+```
+
+The output of this step on the CI server is:
+
+```
+no installed toolchains
+```
+
+Let's check the image download logs on the CI build:
+
+```
+  ...
+  ef8fdfc391be: Pull complete
+  Digest: sha256:72b56197483c9fed714a773b4b1239708f43c1a15ecb53328b3d6836de74b629
+  Status: Downloaded newer image for ghcr.io/amosjyng/zamm:v0.0.0-build
+	...
+```
+
+Using [this answer](https://stackoverflow.com/a/33511811), we check the SHA of the Docker image:
+
+```bash
+$ docker inspect --format='{{index .RepoDigests 0}}' ghcr.io/amosjyng/zamm:v0.0.0-build
+ghcr.io/amosjyng/zamm@sha256:72b56197483c9fed714a773b4b1239708f43c1a15ecb53328b3d6836de74b629
+```
+
+It checks out. Let's see about the toolchains:
+
+```bash
+$ docker run --rm -v $(pwd):/zamm -w /zamm ghcr.io/amosjyng/zamm:v0.0.0-build ls -la ~/.rustup/toolchains
+total 12
+drwxr-xr-x 3 root root 4096 Sep 11 07:43 .
+drwxr-xr-x 6 root root 4096 Sep 11 07:43 ..
+drwxr-xr-x 7 root root 4096 Sep 11 07:43 1.71.1-x86_64-unknown-linux-gnu
+$ docker run --rm -v $(pwd):/zamm -w /zamm ghcr.io/amosjyng/zamm:v0.0.0-build whoami                         
+root
+```
+
+We observe the GitHub CI container logs:
+
+```
+	...
+  /usr/bin/docker inspect --format "{{range .Config.Env}}{{println .}}{{end}}" 270de6d2a6e6916e823d7b444bdae3186c0a2b29b0684e4e1dc6b820dffd9699
+  HOME=/github/home
+	...
+```
+
+HOME should point to `/root` instead of `/github/home`. The picture is coming together. With a configuration such as this:
+
+```yaml
+  build:
+    name: Build entire program
+    runs-on: ubuntu-latest
+    needs: prepare-image
+    container:
+      image: ${{ needs.prepare-image.outputs.image }}
+      options: --user root
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FONTS_PAT }}
+          submodules: "recursive"
+      - name: Build artifacts
+        run: make build
+			...
+```
+
+the build finally works. However, this is still the only step that works. Seeing as using the Docker build does not actually save us any time, and even takes more time for some steps such as Python and the Webdriver end-to-end tests, we give up on this endeavor for now.
