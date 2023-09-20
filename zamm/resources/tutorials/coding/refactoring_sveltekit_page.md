@@ -1,5 +1,9 @@
 ## SvelteKit refactoring
 
+# Naming conventions
+
+Filenames for components should be in camelcase. For example, `src-svelte/src/routes/api_keys_display.svelte` should be renamed to `src-svelte/src/routes/ApiKeysDisplay.svelte`, along with the associated `src-svelte/src/routes/ApiKeysDisplay.stories.ts` and `src-svelte/src/routes/ApiKeysDisplay.test.ts`.
+
 # Refactoring a SvelteKit page into components
 
 Let's say you have a SvelteKit page such as `src-svelte/src/routes/+page.svelte`:

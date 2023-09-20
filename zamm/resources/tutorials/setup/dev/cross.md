@@ -453,4 +453,6 @@ $ make
 error: could not compile `zamm` (bin "zamm") due to previous error
 ```
 
-Add `libsqlite3-dev` to the Docker build.
+Add `libsqlite3-dev` to the Docker build. In fact, we add all the regular dependencies. At this point we might as well create our own Dockerfile from scratch.
+
+We choose a NodeJS version from [here](https://nodejs.org/en/download/releases), using the latest release of each series to see which one will build on the current version of GLIBC.
