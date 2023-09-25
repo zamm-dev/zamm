@@ -583,7 +583,7 @@ and you are in the specific context of trying to take a Storybook screenshot, th
 
 This has the added benefit of making the screenshot more compact, since it will only be the size of the child element and not the entire Storybook root element.
 
-## Errors
+### New browser download needed
 
 If you get
 
@@ -622,3 +622,41 @@ Done in 10.96s.
 ```
 
 **Note that when a new browser is used,** some effects such as SVG filters may be rendered ever so slightly differently. This may cause your screenshot tests to fail. Visually inspect the changes, and if they are minor as expected, then update the baseline screenshots. Alternatively, as mentioned [here](https://news.ycombinator.com/item?id=32908506), update screenshots for a build that is known to be good. You may want to combine this with visual inspection if the differences are large enough, in case the old build relied on some quirks of the old browser version to render correctly.
+
+### Vitest error unhandled
+
+If you get an unhandled error:
+
+```
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Unhandled Errors ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+Vitest caught 1 unhandled error during the test run.
+This might cause false positive tests. Resolve unhandled errors to make sure your tests are not affected.
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Error: expect(received).toHaveAttribute(expected)
+
+Expected string: "true"
+Received string: "false"
+Call log:
+  - locator._expect with timeout 5000ms
+  - waiting for getByRole('switch')
+  -   locator resolved to <button tabindex="0" type="button" role="switch" id="swi…>…</button>
+  -   unexpected value "false"
+```
+
+that's because of [this problem](https://github.com/vitest-dev/vitest/discussions/3229#discussioncomment-5685717). Your assert is likely making a promise. Await on it, for example:
+
+```ts
+await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
+```
+
+Then you get a proper error:
+
+```
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/lib/Switch.playwright.test.ts > Switch drag test > plays clicking sound when drag released
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+```

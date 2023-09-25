@@ -439,6 +439,8 @@ export default config;
 
 ## Tips and tricks
 
+### New browser window
+
 To start Storybook without opening a new browser window (for example, if you already have it open and are merely restarting Storybook), run
 
 ```bash
@@ -474,3 +476,24 @@ Emitted 'error' event on ChildProcess instance at:
 ```
 
 As such, we'll stick to `--ci`.
+
+### Child process
+
+Simply killing the spawned child in a NodeJS test might not work. Sa you log the child PID and it comes out as 193290:
+
+```bash
+$ ps aux | grep 193290      
+root      193290  3.1  1.1 1262256 89044 pts/1   Sl+  03:32   0:00 /root/.asdf/installs/nodejs/20.5.1/bin/node /root/.asdf/installs/nodejs/20.5.1/bin/yarn storybook --ci
+root      193740  0.0  0.0   6608  2276 pts/0    S+   03:32   0:00 grep --color=auto --exclude-dir=.bzr --exclude-dir=CVS --exclude-dir=.git --exclude-dir=.hg --exclude-dir=.svn --exclude-dir=.idea --exclude-dir=.tox 193290
+```
+
+But then you look at the actual process listening on port 6006, and it's a different one:
+
+```bash
+$ sudo lsof -t -i:6006
+193341
+$ ps aux | grep 193341      
+root      193341  9.3  3.6 54489228 288556 pts/1 Sl   03:32   0:15 /root/.asdf/installs/nodejs/20.5.1/bin/node /root/zamm/src-svelte/node_modules/.bin/storybook dev -p 6006 --ci
+root      194226  0.0  0.0   6608  2260 pts/0    S+   03:35   0:00 grep --color=auto --exclude-dir=.bzr --exclude-dir=CVS --exclude-dir=.git --exclude-dir=.hg --exclude-dir=.svn --exclude-dir=.idea --exclude-dir=.tox 193341
+
+```

@@ -880,4 +880,149 @@ describe("Switch", () => {
 });
 ```
 
-Now everything passes, including the new test. However, we want to test the drag interactions more thoroughly. We see that we'll have to emulate the individual mouse events ourselves for drag testing, much as described in the example documentation [here](https://testing-library.com/docs/example-drag/). The Neodrag library also already has drag tests at `src-svelte/forks/neodrag/packages/svelte/tests/Draggable.spec.ts`. We take inspiration from those.
+Now everything passes, including the new test. However, we want to test the drag interactions more thoroughly. We see that we'll have to emulate the individual mouse events ourselves for drag testing, much as described in the example documentation [here](https://testing-library.com/docs/example-drag/). The Neodrag library also already has drag tests at `src-svelte/forks/neodrag/packages/svelte/tests/Draggable.spec.ts`. We take inspiration from those, but ultimately decide to go with Playwright so that we don't have to mock all of the bounding boxes, which would make the test really brittle anyways.
+
+First, we refactor the Playwright setup code from Storybook into `src-svelte/src/lib/test-helpers.ts`. Then, we write a new test file at `src-svelte/src/lib/Switch.playwright.test.ts` that uses the same Playwright setup:
+
+```ts
+import {
+  type Browser,
+  type BrowserContext,
+  chromium,
+  expect,
+  type Page,
+  type Frame,
+} from "@playwright/test";
+import { afterAll, beforeAll, describe, test } from "vitest";
+import type { ChildProcess } from "child_process";
+import { ensureStorybookRunning, killStorybook } from "$lib/test-helpers";
+
+describe("Switch drag test", () => {
+  let storybookProcess: ChildProcess | undefined;
+  let page: Page;
+  let frame: Frame;
+  let browser: Browser;
+  let context: BrowserContext;
+  let numSoundsPlayed: number;
+
+  beforeAll(async () => {
+    storybookProcess = await ensureStorybookRunning();
+
+    browser = await chromium.launch({ headless: true });
+    context = await browser.newContext();
+    await context.exposeFunction(
+      "_testRecordSoundPlayed",
+      () => numSoundsPlayed++,
+    );
+    page = await context.newPage();
+  });
+
+  afterAll(async () => {
+    await browser.close();
+    await killStorybook(storybookProcess);
+  });
+
+  beforeEach(() => {
+    numSoundsPlayed = 0;
+  });
+
+  const getSwitchAndToggle = async (initialState = "off") => {
+    await page.goto(
+      `http://localhost:6006/?path=/story/reusable-switch--${initialState}`,
+    );
+
+    const maybeFrame = page.frame({ name: "storybook-preview-iframe" });
+    if (!maybeFrame) {
+      throw new Error("Could not find Storybook iframe");
+    }
+    frame = maybeFrame;
+    const onOffSwitch = frame.getByRole("switch");
+    const toggle = onOffSwitch.locator(".toggle");
+    const switchBounds = await onOffSwitch.boundingBox();
+    if (!switchBounds) {
+      throw new Error("Could not get switch bounding box");
+    }
+
+    return { onOffSwitch, toggle, switchBounds };
+  };
+
+  test("switches state when drag released at end", async () => {
+    const { onOffSwitch, toggle, switchBounds } = await getSwitchAndToggle();
+    await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
+    expect(numSoundsPlayed).toBe(0);
+
+    await toggle.dragTo(onOffSwitch, {
+      targetPosition: { x: switchBounds.width, y: switchBounds.height / 2 },
+    });
+    await expect(onOffSwitch).toHaveAttribute("aria-checked", "true");
+    expect(numSoundsPlayed).toBe(1);
+  });
+
+  test("switches state when drag released more than halfway to end", async () => {
+    const { onOffSwitch, toggle, switchBounds } = await getSwitchAndToggle();
+    await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
+    expect(numSoundsPlayed).toBe(0);
+
+    await toggle.dragTo(onOffSwitch, {
+      targetPosition: {
+        x: switchBounds.width * 0.75,
+        y: switchBounds.height / 2,
+      },
+    });
+    await expect(onOffSwitch).toHaveAttribute("aria-checked", "true");
+    expect(numSoundsPlayed).toBe(1);
+  });
+
+  test("maintains state when drag released less than halfway to end", async () => {
+    const { onOffSwitch, toggle, switchBounds } = await getSwitchAndToggle();
+    await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
+    expect(numSoundsPlayed).toBe(0);
+
+    await toggle.dragTo(onOffSwitch, {
+      targetPosition: {
+        x: switchBounds.width * 0.25,
+        y: switchBounds.height / 2,
+      },
+    });
+    await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
+    expect(numSoundsPlayed).toBe(0);
+  });
+
+  test("clicks twice when dragged to end and back", async () => {
+    const { onOffSwitch, toggle, switchBounds } = await getSwitchAndToggle();
+    const finalY = switchBounds.y + switchBounds.height / 2;
+    await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
+    expect(numSoundsPlayed).toBe(0);
+
+    await toggle.hover();
+    await page.mouse.down();
+
+    // move to the very end
+    await page.mouse.move(switchBounds.x + switchBounds.width, finalY);
+    expect(numSoundsPlayed).toBe(1);
+
+    // move back to the beginning
+    await page.mouse.move(switchBounds.x, finalY);
+    await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
+    expect(numSoundsPlayed).toBe(2);
+  });
+});
+
+```
+
+Playwright offers browser API mocking, as documented [here](https://playwright.dev/docs/mock-browser-apis) in general, [here](https://playwright.dev/docs/api/class-page#page-expose-function) for pages, and [here](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-function) for browser contexts. Apart from [this issue](https://github.com/microsoft/playwright/issues/4870), there does not seem to be much desire for audio-specific testing for Playwright.
+
+We are unable to get the tests to successfully call an overridden version of the browser audio API, so instead we expose a custom function. Then, we edit `src-svelte/src/lib/Switch.svelte` to call this custom test function:
+
+```ts
+  function playClick() {
+    ...
+    if (window._testRecordSoundPlayed !== undefined) {
+      window._testRecordSoundPlayed();
+    }
+  }
+```
+
+Mixing test code with production code is not great, but there appears to be no other easy to programmatically verify the correctness of our code here for now. Ideally, we could automate the addition and removal of these lines in the future.
+
+Next, we look at [this documentation](https://playwright.dev/docs/input#drag-and-drop) and [this documentation](https://playwright.dev/docs/api/class-locator#locator-drag-to), and [this example](https://reflect.run/articles/how-to-test-drag-and-drop-interactions-in-playwright/) to implement our tests. Finally, our tests run successfully.
