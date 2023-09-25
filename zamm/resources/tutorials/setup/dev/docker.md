@@ -81,6 +81,24 @@ $ docker system prune -a
 
 ### Python installation
 
+A typical Python install inside a Docker container might look like this:
+
+```Dockerfile
+ARG PYTHON_VERSION=3.11.4
+WORKDIR /tmp
+RUN wget https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz && \
+  tar -xvf Python-${PYTHON_VERSION}.tgz && \
+  cd Python-${PYTHON_VERSION} && \
+  ./configure --enable-shared && \
+  make -j && \
+  make install && \
+  ldconfig && \
+  pip3 install poetry && \
+  rm -rf /tmp/Python-${PYTHON_VERSION}*
+```
+
+#### Errors
+
 If you get an error such as
 
 ```
@@ -94,9 +112,121 @@ If you get an error such as
 
 try installing `ca-certificates` as mentioned [here](https://unix.stackexchange.com/a/445609).
 
-### Cargo installation
+### Rust installation
 
-Because `cargo` does not support only downloading dependencies for caching, you'll have to do a workaround as described in [this answer](https://stackoverflow.com/a/49664709).
+A typical Rust installation inside a Docker container might look like this:
+
+```Dockerfile
+ARG RUST_VERSION=1.71.1
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VERSION}
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cargo install tauri-cli
+```
+
+#### Caching dependencies
+
+Because `cargo` does not support only downloading dependencies for caching, you'll have to do a workaround as described in [this answer](https://stackoverflow.com/a/49664709):
+
+```Dockerfile
+RUN mkdir /tmp/dependencies
+WORKDIR /tmp/dependencies
+COPY src-tauri/Cargo.toml Cargo.toml
+COPY src-tauri/Cargo.lock Cargo.lock
+RUN mkdir src/ && \
+  echo "// dummy file" > src/lib.rs && \
+  cargo build --release
+```
+
+Afterwards, during the actual build phase:
+
+```bash
+mv /tmp/dependencies/target ./src-tauri/target 
+```
+
+Caching dependencies may make less sense for languages where dependency resolution and download are really fast, such as JS, because your base image will be out of date every time you add a new dependency. However, for a language such as Rust, where compilation of dependencies may take a long time, it may make sense to do so.
+
+You'll want to check your Dockerized build logs. If they show that dependencies are still being built:
+
+```
+cargo build --release --features custom-protocol
+   Compiling embed-resource v2.2.0
+   Compiling tauri v1.4.1
+   Compiling tauri-winres v0.1.1
+   Compiling tauri-macros v1.4.0
+   Compiling cargo_toml v0.15.3
+   Compiling tauri-build v1.4.0
+   Compiling specta v1.0.5
+   Compiling zamm v0.0.0 (/__w/zamm-ui/zamm-ui/src-tauri)
+   Compiling tauri-specta v1.0.2
+    Finished release [optimized] target(s) in 1m 01s
+```
+
+it may be because you haven't specified the same exact features you're going to use at build time. After syncing the two commands, we see that there are still some libraries Cargo hasn't compiled:
+
+```
+cargo build --release --features custom-protocol
+   Compiling embed-resource v2.2.0
+   Compiling cargo_toml v0.15.3
+   Compiling tauri-winres v0.1.1
+   Compiling tauri-build v1.4.0
+   Compiling zamm v0.0.0 (/__w/zamm-ui/zamm-ui/src-tauri)
+    Finished release [optimized] target(s) in 46.21s
+```
+
+This is because of the `tauri-build` build dependency. We add one more line:
+
+```Dockerfile
+RUN mkdir src/ && \
+  ...
+  echo "pub use tauri_build; fn main () {}" > build.rs && \
+  ...
+```
+
+We can use [this trick](https://stackoverflow.com/a/65582435) to see our Docker build output to verify that the remaining libraries are being compiled in the image.
+
+### NodeJS installation
+
+A typical NodeJS installation inside a Docker container might look like this:
+
+```Dockerfile
+ARG NODEJS_VERSION=16.20.2
+WORKDIR /tmp
+RUN curl -SLO "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}-linux-x64.tar.xz" && \
+    tar -xJf "node-v${NODEJS_VERSION}-linux-x64.tar.xz" -C /usr/local --strip-components=1 && \
+    npm install --global yarn pnpm json && \
+    rm "node-v${NODEJS_VERSION}-linux-x64.tar.xz"
+```
+
+#### Caching dependencies
+
+If you want to cache your NodeJS dependencies so that the build can run faster next time, you can do
+
+```Dockerfile
+RUN mkdir /tmp/dependencies
+WORKDIR /tmp/dependencies
+COPY package.json yarn.lock ./
+COPY src-svelte/package.json ./src-svelte/package.json
+COPY webdriver/package.json ./webdriver/package.json
+RUN yarn
+```
+
+Then during your actual build with real project files, you can do something like
+
+```bash
+mv /tmp/dependencies/node_modules ./node_modules
+mv /tmp/dependencies/src-svelte/node_modules ./src-svelte/node_modules
+```
+
+Note that if you are using `pnpm`, you may need to add `.pnpm-store` to your `.gitignore` because it appears the default caching location of `~/.pnpm-store` could resolve to just the current directory on Docker.
+
+If you need to get rid of some dependencies because you've forked them and don't want to copy their whole build into the local repo, you can do
+
+```Dockerfile
+RUN json -I -f src-svelte/package.json \
+         -e 'delete this.dependencies["@neodrag/svelte"]'
+```
+
+to remove one specific dependency. See the `json` tool [documentation](https://trentm.com/json/#FEATURE-In-place-editing) for more information. You can also use other alternatives described [here](https://stackoverflow.com/questions/43292243/how-to-modify-a-keys-value-in-a-json-file-from-command-line).
 
 ## Pushing to remote registry
 

@@ -436,3 +436,41 @@ const config: StorybookConfig = {
 };
 export default config;
 ```
+
+## Tips and tricks
+
+To start Storybook without opening a new browser window (for example, if you already have it open and are merely restarting Storybook), run
+
+```bash
+$ yarn storybook --ci
+```
+
+Based on [this comment](https://github.com/storybookjs/storybook/issues/6201#issuecomment-812005603), we see that there is an alternative to disabling the auto-opening mechanism. However, it does not always work:
+
+```
+$ BROWSER=none yarn workspace gui storybook
+...
+/root/zamm/node_modules/@storybook/cli/bin/index.js:23
+  throw error;
+  ^
+
+Error: spawn none ENOENT
+    at __node_internal_captureLargerStackTrace (node:internal/errors:496:5)
+    at __node_internal_errnoException (node:internal/errors:623:12)
+    at ChildProcess._handle.onexit (node:internal/child_process:286:19)
+    at onErrorNT (node:internal/child_process:484:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21)
+Emitted 'error' event on ChildProcess instance at:
+    at ChildProcess._handle.onexit (node:internal/child_process:292:12)
+    at onErrorNT (node:internal/child_process:484:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'spawn none',
+  path: 'none',
+  spawnargs: [ 'http://localhost:6006/' ]
+}
+
+```
+
+As such, we'll stick to `--ci`.
