@@ -660,3 +660,69 @@ Then you get a proper error:
 Error: Test timed out in 5000ms.
 If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
 ```
+
+## Moving screenshot locations
+
+Say you want to move dashboard screenshots to be under a more general screens directory. Then:
+
+Rename entire folders like `src-svelte/screenshots/baseline/dashboard/metadata/` to `src-svelte/screenshots/baseline/screens/dashboard/metadata/`.
+
+Edit `src-svelte/src/routes/ApiKeysDisplay.stories.ts` from
+
+```ts
+export default {
+  ...
+  title: "Dashboard/API Keys Display",
+  ...
+};
+```
+
+to
+
+```ts
+export default {
+  ...
+  title: "Screens/Dashboard/API Keys Display",
+  ...
+};
+```
+
+Do the same thing for the stories at `src-svelte/src/routes/Metadata.stories.ts`.
+
+Then, edit the tests at `src-svelte/src/routes/storybook.test.ts` from
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+    {
+    path: ["dashboard", "api-keys-display"],
+    variants: ["loading", "unknown", "known"],
+    screenshotEntireBody: true,
+  },
+  {
+    path: ["dashboard", "metadata"],
+    variants: ["metadata"],
+    screenshotEntireBody: true,
+  },
+  ...
+```
+
+to
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+    {
+    path: ["screens", "dashboard", "api-keys-display"],
+    variants: ["loading", "unknown", "known"],
+    screenshotEntireBody: true,
+  },
+  {
+    path: ["screens", "dashboard", "metadata"],
+    variants: ["metadata"],
+    screenshotEntireBody: true,
+  },
+  ...
+```
+
+Rearrange the entries, for example in alphabetical order, so that the screen stories still appear next to each other.

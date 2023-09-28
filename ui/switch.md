@@ -1026,3 +1026,110 @@ We are unable to get the tests to successfully call an overridden version of the
 Mixing test code with production code is not great, but there appears to be no other easy to programmatically verify the correctness of our code here for now. Ideally, we could automate the addition and removal of these lines in the future.
 
 Next, we look at [this documentation](https://playwright.dev/docs/input#drag-and-drop) and [this documentation](https://playwright.dev/docs/api/class-locator#locator-drag-to), and [this example](https://reflect.run/articles/how-to-test-drag-and-drop-interactions-in-playwright/) to implement our tests. Finally, our tests run successfully.
+
+## Browser scrollbar
+
+If we place the switch next to the right edge of the viewport, we find that a scrollbar appears in the browser window because the toggle layer is not covered by the groove's `visibility: hidden;` and extends invisibly to the right. To fix this, we remove the very last `<div class="toggle-label"></div>` from the toggle layer, since it's just an invisible non-element anyways.
+
+## Expanding to fill up space
+
+We want the label to soak up all available additional space in the parent container:
+
+```css
+  label {
+    flex: 1;
+  }
+```
+
+We also notice that the button juts slightly out of the bounding box due to the skew, so we try to nudge it back inside the parent container. To do this, we refactor out `toggle-height`, which depends on `--label-height`, so we might as well pick out `--label-width` as well out of `button` and into the top-level `.container`:
+
+```css
+  .container {
+    ...
+
+    /* button stats */
+    --label-width: 3rem;
+    --label-height: 1.5rem;
+    --toggle-height: calc(1.2 * var(--label-height));
+    height: var(--toggle-height);
+  }
+
+  ...
+
+  .toggle {
+    height: var(--toggle-height);
+  }
+```
+
+We are setting the `height` on the container because setting it on the button causes the toggle to no longer be vertically centered within the groove.
+
+Now we can finally use :
+
+```css
+  ...
+
+  button {
+    margin-right: calc(-0.5 * var(--toggle-height) * sin(var(--skew)));
+  }
+```
+
+And now, we have the correct sizing for the container, ensuring that it gets laid out properly without any of its components sticking out.
+
+## em sizing
+
+If we want to be able to resize the button size at will, we can do this:
+
+```svelte
+<script lang="ts">
+  ...
+
+  const rootFontSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+  const switchSize = 0.5 * rootFontSize;
+  const labelWidth = 3 * switchSize;
+
+  ...
+</script>
+
+<div class="container">
+  ...
+  <button
+    ...
+    style="font-size: {switchSize}px;"
+  >
+    ...
+  </button>
+</div>
+```
+
+and then replace all `rem` with `em`:
+
+```css
+  .container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+
+    /* button stats */
+    --label-width: 3em;
+    --label-height: 1.5em;
+    --toggle-height: calc(1.2 * var(--label-height));
+    height: var(--toggle-height);
+  }
+
+  ...
+```
+
+We've renamed the `rem` variable in JS to make it easier to make remaining usages of `rem` more obvious. Note that `gap` still uses `rem` because we want that spacing to remain the same.
+
+Note that because we've moved the height setting to the container rather than the button, the container sizing will be off if the button sizing is less than 1.
+
+## Nits
+
+Make it obvious that the label can be clicked as well:
+
+```css
+  label {
+    cursor: pointer;
+  }
+```

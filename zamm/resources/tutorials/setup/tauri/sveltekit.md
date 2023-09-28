@@ -265,6 +265,18 @@ export const prerender = true
 export const ssr = false
 ```
 
+Now you can edit `src-svelte/src/routes/+page.ts` to remove the `prerender` value because it will be set to the default anyways. If that file is now empty, you can even remove it entirely. If you get an error such as
+
+```
+Error: Failed to load url /src/routes/+page.ts (resolved id: /root/zamm/src-svelte/src/routes/+page.ts) in /root/zamm/src-svelte/.svelte-kit/generated/client/nodes/2.js. Does the file exist?
+    at loadAndTransform (file:///root/zamm/node_modules/vite/dist/node/chunks/dep-df561101.js:54939:21)
+    at async instantiateModule (file:///root/zamm/node_modules/vite/dist/node/chunks/dep-df561101.js:55875:10) {
+  code: 'ERR_LOAD_URL'
+}
+```
+
+you can simply restart the Vite server and the error will disappear.
+
 `yarn tauri dev` now works to serve the new UI! Edit `src/routes/+page.svelte` as recommended, from
 
 ```svelte
