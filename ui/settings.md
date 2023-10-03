@@ -149,3 +149,32 @@ const components: ComponentTestConfig[] = [
 ```
 
 Check that the tests now pass.
+
+## WebdriverIO E2E testing
+
+Edit `webdriver/test/specs/e2e.test.js` to add this:
+
+```js
+...
+
+async function findAndClick(selector, timeout) {
+  const button = await $(selector);
+  await button.waitForClickable({
+    timeout,
+  });
+  await browser.execute("arguments[0].click();", button);
+}
+
+describe("Welcome screen", function () {
+  ...
+
+  it("should allow navigation to the settings page", async function () {
+    findAndClick('a[title="Settings"]');
+    findAndClick("aria/Sounds");
+    await browser.pause(500); // for CSS transitions to finish
+    expect(
+      await browser.checkFullPageScreen("settings-screen", {}),
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
+});
+```

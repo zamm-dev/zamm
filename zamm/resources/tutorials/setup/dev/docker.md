@@ -228,6 +228,23 @@ RUN json -I -f src-svelte/package.json \
 
 to remove one specific dependency. See the `json` tool [documentation](https://trentm.com/json/#FEATURE-In-place-editing) for more information. You can also use other alternatives described [here](https://stackoverflow.com/questions/43292243/how-to-modify-a-keys-value-in-a-json-file-from-command-line).
 
+##### Copying cached dependencies
+
+After building the Docker image, you can copy the cached dependencies like so:
+
+```Makefile
+copy-docker-deps:
+	mv -n /tmp/dependencies/src-svelte/forks/neodrag/packages/svelte/dist ./src-svelte/forks/neodrag/packages/svelte/dist
+	mv -n /tmp/dependencies/node_modules ./node_modules
+	mv -n /tmp/dependencies/src-svelte/node_modules ./src-svelte/node_modules
+	mv -n /tmp/dependencies/target ./src-tauri/target
+
+build-docker:
+	docker run --rm -v $(CURRENT_DIR):/zamm -w /zamm $(BUILD_IMAGE) make copy-docker-deps build
+```
+
+You may want the `-n` option as shown [here](https://unix.stackexchange.com/a/248547) so that even if the build is not clean, the `build-docker` step will continue instead of erroring out and forcing you to clean, which would cause everything to need to be rebuilt again.
+
 ## Pushing to remote registry
 
 ### GitHub

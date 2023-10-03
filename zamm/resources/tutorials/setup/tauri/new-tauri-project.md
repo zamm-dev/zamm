@@ -245,6 +245,176 @@ $ make
 
 Now it does work on the local development machine. This means that `cargo tauri build` is rebuilding the executable without cross.
 
+### GStreamer error
+
+If you see the screen go blank as soon as audio is played, and this error pop up:
+
+```
+GStreamer element appsink not found. Please install it
+GStreamer element autoaudiosink not found. Please install it
+
+(WebKitWebProcess:44034): GLib-GObject-WARNING **: 16:33:39.921: invalid (NULL) pointer instance
+
+(WebKitWebProcess:44034): GLib-GObject-CRITICAL **: 16:33:39.921: g_signal_connect_data: assertion 'G_TYPE_CHECK_INSTANCE (instance)' failed
+
+```
+
+this is because you need to enable the media bundling as mentioned [here](https://tauri.app/v1/guides/building/linux/#appimage). This is also mentioned in [this issue](https://github.com/tauri-apps/tauri/issues/4642) and [this issue](https://github.com/tauri-apps/tauri/issues/4092). Edit `src-tauri/tauri.conf.json`:
+
+```json
+{
+  ...
+  "tauri": {
+    ...
+    "bundle": {
+      ...
+      "appimage": {
+        "bundleMediaFramework": true
+      },
+      ...
+    },
+    ...
+  }
+}
+
+```
+
+If you try to build the app now, you might run into this error:
+
+```
+cargo tauri build
+   Compiling zamm v0.0.0 (/__w/zamm-ui/zamm-ui/src-tauri)
+    Finished release [optimized] target(s) in 25.34s
+    Bundling zamm_0.0.0_amd64.deb (/__w/zamm-ui/zamm-ui/src-tauri/target/release/bundle/deb/zamm_0.0.0_amd64.deb)
+    Bundling zamm_0.0.0_amd64.AppImage (/__w/zamm-ui/zamm-ui/src-tauri/target/release/bundle/appimage/zamm_0.0.0_amd64.AppImage)
+       Error failed to bundle project: error running appimage.sh
+```
+
+We find [this issue](https://github.com/tauri-apps/tauri/issues/5781), and make the build verbose as requested. We now see these errors:
+
+```
+-- Running input plugin: gstreamer -- 
+[gstreamer/stdout] Error: patchelf not found
+[gstreamer/stdout] 
+[gstreamer/stdout] Usage: /zamm/src-tauri/target/release/bundle/appimage/linuxdeploy-plugin-gstreamer.sh --appdir <path to AppDir>
+[gstreamer/stdout] 
+[gstreamer/stdout] Bundles GStreamer plugins into an AppDir
+[gstreamer/stdout] 
+[gstreamer/stdout] Required variables:
+[gstreamer/stdout]   LINUXDEPLOY=".../linuxdeploy" path to linuxdeploy (e.g., AppImage); set automatically when plugin is run directly by linuxdeploy
+[gstreamer/stdout] 
+[gstreamer/stdout] Optional variables:
+[gstreamer/stdout]   GSTREAMER_INCLUDE_BAD_PLUGINS="1" (default: disabled; set to empty string or unset to disable)
+[gstreamer/stdout]   GSTREAMER_PLUGINS_DIR="..." (directory containing GStreamer plugins; default: guessed based on main distro architecture)
+[gstreamer/stdout]   GSTREAMER_HELPERS_DIR="..." (directory containing GStreamer helper tools like gst-plugin-scanner; default: guessed based on main distro architecture)
+[gstreamer/stdout]   GSTREAMER_VERSION="1.0" (default: 1.0)
+ERROR: Failed to run plugin: gstreamer (exit code: 2) 
+       Error [tauri_cli] failed to bundle project: error running appimage.sh
+
+```
+
+We install `patchelf` as well in the base Docker image. It compiles, but we now see additional errors:
+
+```
+(WebKitWebProcess:68629): GStreamer-CRITICAL **: 12:29:58.529: gst_object_unref: assertion 'object != NULL' failed
+GStreamer element audioconvert not found. Please install it
+GStreamer element audioconvert not found. Please install it
+GStreamer element audioresample not found. Please install it
+GStreamer element audioresample not found. Please install it
+GStreamer element volume not found. Please install it
+
+(WebKitWebProcess:68629): GStreamer-CRITICAL **: 12:29:58.529: gst_bin_add_many: assertion 'GST_IS_ELEMENT (element_1)' failed
+
+(WebKitWebProcess:68629): GStreamer-CRITICAL **: 12:29:58.529: gst_element_get_static_pad: assertion 'GST_IS_ELEMENT (element)' failed
+```
+
+If you want more logs, you can set the `GST_DEBUG` environment variable to 2 to see:
+
+```
+0:00:00.104933837 69728 0x5595712c4950 WARN     GST_ELEMENT_FACTORY gstelementfactory.c:456:gst_element_factory_make: no such element factory "autoaudiosink"!
+0:00:00.104957714 69728 0x5595712c4950 WARN            webkitcommon GStreamerCommon.cpp:458:createPlatformAudioSink: GStreamer's autoaudiosink not found. Please check your gst-plugins-good installation
+
+```
+
+We actually install GStreamer as mentioned in [their docs](https://gstreamer.freedesktop.org/documentation/installing/on-linux.html?gi-language=c#install-gstreamer-on-ubuntu-or-debian).
+
+Now when we try to play a sound on the app, it takes a few seconds to load, but the logs finally come through:
+
+```
+date_time_format_iso8601
+Failed to load module: /usr/lib/x86_64-linux-gnu/gio/modules/libgvfsdbus.so
+0:00:00.005019519 72221 0x55be8fd9baf0 WARN                  ladspa gstladspa.c:507:plugin_init:<plugin1> no LADSPA plugins found, check LADSPA_PATH
+...
+0:00:00.006583997 72292 0x561e63a5cb80 WARN                 default gstsf.c:98:gst_sf_create_audio_template_caps: format 0x190000: 'WVE (Psion Series 3)' is not mapped
+0:00:00.006195039 72342 0x55592d515a90 ERROR                x264enc gstx264enc.c:163:load_x264: Failed to load '/usr/lib/x86_64-linux-gnu/x264-10bit/libx264.so.152'
+0:00:10.559651313 72057 0x55e74388b400 WARN    webkitregistryscanner GStreamerRegistryScanner.cpp:160:hasElementForMediaType: All video decoder elements matching caps video/x-av1 are disallowed
+0:00:10.561124458 72057 0x55e74388b400 WARN    webkitregistryscanner GStreamerRegistryScanner.cpp:160:hasElementForMediaType: All video encoder elements matching caps video/x-av1 are disallowed
+0:00:10.595886072 72057 0x55e74388b400 WARN            uridecodebin gsturidecodebin.c:1409:gen_source_element:<uridecodebin0> error: No URI handler implemented for "tauri".
+
+```
+
+Only the last line repeats when we try to press a switch, so the others are likely red herrings.
+
+Potentially related problems include [#4624](https://github.com/tauri-apps/tauri/issues/4624) (only on Windows, and flaky), [#3478](https://github.com/tauri-apps/tauri/issues/3478) (we do have user interaction), and [#6815](https://github.com/tauri-apps/tauri/issues/6815) (closed due to a lack of minimal reproducibility).
+
+#### Bundle error
+
+If you see
+
+```
+    Finished release [optimized] target(s) in 2.40s
+    Bundling zamm_0.0.0_amd64.deb (/home/amos/Documents/ui/zamm/src-tauri/target/release/bundle/deb/zamm_0.0.0_amd64.deb)
+    Bundling zamm_0.0.0_amd64.AppImage (/home/amos/Documents/ui/zamm/src-tauri/target/release/bundle/appimage/zamm_0.0.0_amd64.AppImage)
+       Error failed to bundle project: error running appimage.sh
+```
+
+then you may want to turn verbose build mode on with `cargo tauri build --verbose` as noted [here](https://github.com/tauri-apps/tauri/issues/5781).
+
+##### Makefile
+
+To allow passing verbose mode into the Makefile, you can follow [this answer](https://stackoverflow.com/a/2214593) and do:
+
+```Makefile
+build: python svelte rust
+	cargo tauri build $(ARGS)
+
+...
+
+build-docker:
+	docker run --rm -v $(CURRENT_DIR):/zamm -w /zamm $(BUILD_IMAGE) make copy-docker-deps build ARGS=$(ARGS)
+```
+
+#### ssl/private permissions error
+
+If you turned verbose build mode on above, and you see
+
+```
+++ dirname '{}'
++ find -L /usr/lib /usr/lib32 /usr/lib64 /usr/libexec /usr/libx32 -name WebKitNetworkProcess -exec mkdir -p . ';' -exec cp --parents '{}' . ';'
+find: ‘/usr/lib/ssl/private’: Permission denied
++ true
+
+```
+
+note that this is fine. This is just [a symptom](https://github.com/triton-inference-server/server/issues/4030) of the find command skipping `/usr/lib/ssl/private` because it doesn't have permission to enter it, and as the link notes, is a red herring for any actual issues that exist.
+
+Instead, if the last line of the log looks like this:
+
+```
+wget -q -4 -N https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gstreamer/master/linuxdeploy-plugin-gstreamer.sh
+```
+
+the error may be if you lost network connectivity.
+
+### Rebuilding target when frontend changes
+
+You may find that making a purely frontend change does not trigger a target rebuild right now, meaning that the executable will be misleadingly stuck on a previous version of the frontend for the end-to-end tests. To fix this, add the Svelte built to the Makefile dependency, like so:
+
+```Makefile
+target/release/zamm: ./Cargo.toml ../src-svelte/build $(shell find . -type f \( -name "*.rs" \) -not -path "./target/*")
+	...
+```
+
 ### Continuing on...
 
 Then in the main project Makefile:

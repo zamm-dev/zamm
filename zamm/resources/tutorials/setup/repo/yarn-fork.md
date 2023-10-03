@@ -91,6 +91,28 @@ To https://github.com/amosjyng/neodrag.git
 Branch 'z-customizations' set up to track remote branch 'z-customizations' from 'origin'.
 ```
 
-Then, in your own project root:
+Then, in your own project root, edit `.gitmodules` to point to your own fork.
 
 When you're done with your changes, you can open a pull request to see if the original maintainers are interested in incorporating your changes upstream.
+
+## Makefile
+
+If you add this to your Makefile:
+
+```Makefile
+build: forks/neodrag/packages/svelte/dist $(shell find src -type f \( -name "*.svelte" -o -name "*.js" -o -name "*.ts" -o -name "*.html" \) -not -path "*/node_modules/*")
+	yarn && yarn svelte-kit sync && yarn build
+
+forks/neodrag/packages/core/dist: forks/neodrag/packages/core/src/*
+	cd forks/neodrag/packages/core && pnpm install && pnpm compile
+
+forks/neodrag/packages/svelte/dist: forks/neodrag/packages/core/dist forks/neodrag/packages/svelte/src/*
+	cd forks/neodrag/packages/svelte && pnpm install && pnpm compile
+```
+
+then you should also add the corresponding clean command:
+
+```Makefile
+ clean:
+       rm -rf build node_modules ../node_modules forks/neodrag/packages/svelte/dist/dist
+```

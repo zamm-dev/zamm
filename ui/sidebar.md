@@ -363,3 +363,51 @@ We see on the actual app, outside of Storybook, that the page contents update bu
   $: currentRoute = $page.url.pathname;
 </script>
 ```
+
+## WebdriverIO E2E tests
+
+We need some way of inspecting what WebdriverIO is showing. We edit `src-svelte/src/routes/SidebarUI.svelte` to add this:
+
+```svelte
+    <p id="debug">current={currentRoute}</p>
+```
+
+We now log it in `webdriver/test/specs/e2e.test.js`:
+
+```js
+  ...
+
+  it("should render the welcome screen correctly", async function () {
+    await $("table"); // ensure page loads before taking screenshot
+    console.log(await $("#debug").getText());
+    ...
+  });
+
+  ...
+```
+
+We see from the execution logs that the path is indeed empty:
+
+```
+...
+[0-0] 2023-10-02T03:23:39.023Z INFO webdriver: COMMAND findElement("css selector", "#debug")
+[0-0] 2023-10-02T03:23:39.024Z INFO webdriver: [POST] http://localhost:4444/session/ca14bbf1-6260-470e-ba93-77a7eea8a36b/element
+[0-0] 2023-10-02T03:23:39.024Z INFO webdriver: DATA { using: 'css selector', value: '#debug' }
+[0-0] 2023-10-02T03:23:39.075Z INFO webdriver: RESULT {
+[0-0]   'element-6066-11e4-a52e-4f735466cecf': 'node-8661461B-EFC9-49E9-B4DE-72580626B1BF'
+[0-0] }
+[0-0] 2023-10-02T03:23:39.077Z INFO webdriver: COMMAND getElementText("node-8661461B-EFC9-49E9-B4DE-72580626B1BF")
+[0-0] 2023-10-02T03:23:39.078Z INFO webdriver: [GET] http://localhost:4444/session/ca14bbf1-6260-470e-ba93-77a7eea8a36b/element/node-8661461B-EFC9-49E9-B4DE-72580626B1BF/text
+[0-0] 2023-10-02T03:23:39.123Z INFO webdriver: RESULT current=
+[0-0] current=
+...
+```
+
+We fix this by editing `src-svelte/src/routes/Sidebar.svelte` to ensure that the current path is never undefined:
+
+```svelte
+<script lang="ts">
+  ...
+  $: currentRoute = $page.url.pathname || "/";
+</script>
+```

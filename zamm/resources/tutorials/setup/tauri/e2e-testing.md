@@ -820,13 +820,26 @@ and the tests from before should pass. To make this permanent on your local deve
 export MISMATCH_TOLERANCE=0.07
 ```
 
-If tests still prove flaky on CI, you can try rerunning the suite a certain number of times:
+If tests still prove flaky on CI, you can try rerunning the suite a certain number of times, as noted [here](https://webdriver.io/docs/retry/):
 
 ```js
 describe("Welcome screen", function () {
   this.retries(2);
 
   ...
+```
+
+Or, run just that one test multiple times, because it is the one that ensures the whole screen is ready:
+
+```js
+describe("Welcome screen", function () {
+  it("should render the welcome screen correctly", async function () {
+    this.retries(2);
+    ...
+  });
+
+  ...
+});
 ```
 
 ## Using local user directories

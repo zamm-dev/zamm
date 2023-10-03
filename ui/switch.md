@@ -1027,6 +1027,66 @@ Mixing test code with production code is not great, but there appears to be no o
 
 Next, we look at [this documentation](https://playwright.dev/docs/input#drag-and-drop) and [this documentation](https://playwright.dev/docs/api/class-locator#locator-drag-to), and [this example](https://reflect.run/articles/how-to-test-drag-and-drop-interactions-in-playwright/) to implement our tests. Finally, our tests run successfully.
 
+### Turning sound on and off
+
+We create `src-svelte/src/preferences.ts`:
+
+```ts
+import { writable, derived } from "svelte/store";
+
+interface Preferences {
+  unceasingAnimations: boolean;
+  sounds: boolean;
+}
+
+const defaultPreferences: Preferences = {
+  unceasingAnimations: false,
+  sounds: true,
+};
+
+export const preferences = writable(defaultPreferences);
+export const soundOn = derived(preferences, ($preferences) => $preferences.sounds);
+
+```
+
+We update `src-svelte/src/lib/Switch.svelte`:
+
+```ts
+<script lang="ts">
+  import { soundOn } from "../preferences";
+  ...
+
+  function playClick() {
+    if (!$soundOn) {
+      return;
+    }
+
+    ...
+  }
+
+  ...
+</script>
+```
+
+Then we test in `src-svelte/src/lib/Switch.test.ts`:
+
+```ts
+...
+import { preferences } from "../preferences";
+
+...
+
+  test("does not play clicking sound when sound off", async () => {
+    render(Switch, {});
+    preferences.update((p) => ({ ...p, sounds: false }));
+    expect(mockAudio.play).not.toHaveBeenCalled();
+
+    const onOffSwitch = screen.getByRole("switch");
+    await act(() => userEvent.click(onOffSwitch));
+    expect(mockAudio.play).not.toHaveBeenCalled();
+  });
+```
+
 ## Browser scrollbar
 
 If we place the switch next to the right edge of the viewport, we find that a scrollbar appears in the browser window because the toggle layer is not covered by the groove's `visibility: hidden;` and extends invisibly to the right. To fix this, we remove the very last `<div class="toggle-label"></div>` from the toggle layer, since it's just an invisible non-element anyways.

@@ -144,3 +144,28 @@ Your branch is up to date with 'origin/docker'.
 
 nothing to commit, working tree clean
 ```
+
+### Init from Git
+
+If you're using a version of Git such as version 2.25.1, you may get a prompt like this when you try to clone a private submodule:
+
+```bash
+$ git submodule update --init
+Cloning into '/home/amos/Documents/ui/zamm/src-svelte/static/fonts'...
+Username for 'https://github.com': 
+```
+
+If you try to enter your username and password in, you'll only get more error:
+
+```bash
+Username for 'https://github.com': amosjyng
+Password for 'https://amosjyng@github.com': 
+remote: Support for password authentication was removed on August 13, 2021.
+remote: Please see https://docs.github.com/en/get-started/getting-started-with-git/about-remote-repositories#cloning-with-https-urls for information on currently recommended modes of authentication.
+fatal: Authentication failed for 'https://github.com/amosjyng/zamm-fonts.git/'
+fatal: clone of 'https://github.com/amosjyng/zamm-fonts.git' into submodule path '/home/amos/Documents/ui/zamm/src-svelte/static/fonts' failed
+Failed to clone 'src-svelte/static/fonts'. Retry scheduled
+
+```
+
+Follow [the link](https://docs.github.com/en/get-started/getting-started-with-git/about-remote-repositories#cloning-with-https-urls) to see that you'll want to get a PAT. Then repeat this again with the PAT.

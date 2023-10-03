@@ -97,3 +97,49 @@ $ export XAUTHORITY=~/.Xauthority
 ```
 
 and try starting Firefox again.
+
+## Sound
+
+Say you install `alsa-utils` and then run into this error when trying to run `alsamixer`:
+
+```
+$ alsamixer           
+ALSA lib confmisc.c:855:(parse_card) cannot find card '0'
+ALSA lib conf.c:5178:(_snd_config_evaluate) function snd_func_card_inum returned error: No such file or directory
+ALSA lib confmisc.c:422:(snd_func_concat) error evaluating strings
+ALSA lib conf.c:5178:(_snd_config_evaluate) function snd_func_concat returned error: No such file or directory
+ALSA lib confmisc.c:1334:(snd_func_refer) error evaluating name
+ALSA lib conf.c:5178:(_snd_config_evaluate) function snd_func_refer returned error: No such file or directory
+ALSA lib conf.c:5701:(snd_config_expand) Evaluate error: No such file or directory
+ALSA lib control.c:1528:(snd_ctl_open_noupdate) Invalid CTL default
+cannot open mixer: No such file or directory
+```
+
+You'll probably want to create a dummy soundcard.
+
+```bash
+$ sudo modprobe snd-dummy
+
+modprobe: FATAL: Module snd-dummy not found in directory /lib/modules/5.15.0-84-generic
+```
+
+It appears there is no `snd-dummy` for the kernel on Hetzner. We try `pulseaudio` instead:
+
+```bash
+$ pulseaudio --start  
+
+W: [pulseaudio] main.c: This program is not intended to be run as root (unless --system is specified).
+$ pulseaudio --start --system
+
+E: [pulseaudio] main.c: --start not supported for system instances.
+$ pulseaudio --system
+```
+
+Then in another terminal:
+
+```bash
+$ pactl load-module module-null-sink sink_name=Virtual_Sink
+19
+```
+
+`alsamixer` will still fail, but at least ZAMM's sound-playing won't error out like it did before.
