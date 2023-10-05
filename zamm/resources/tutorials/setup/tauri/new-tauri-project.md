@@ -355,7 +355,7 @@ Failed to load module: /usr/lib/x86_64-linux-gnu/gio/modules/libgvfsdbus.so
 
 Only the last line repeats when we try to press a switch, so the others are likely red herrings.
 
-Potentially related problems include [#4624](https://github.com/tauri-apps/tauri/issues/4624) (only on Windows, and flaky), [#3478](https://github.com/tauri-apps/tauri/issues/3478) (we do have user interaction), and [#6815](https://github.com/tauri-apps/tauri/issues/6815) (closed due to a lack of minimal reproducibility).
+We find that this is likely due to an existing issue around loading video or audio as assets. We leave [a comment](https://github.com/tauri-apps/tauri/issues/3725#issuecomment-1747970925) on the issue to describe the data we have on this. It is clear now that we must work around this issue instead.
 
 #### Bundle error
 

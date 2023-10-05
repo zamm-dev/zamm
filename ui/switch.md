@@ -1087,6 +1087,29 @@ import { preferences } from "../preferences";
   });
 ```
 
+It turns out that it is not straightforward to update a derived store's value. There is an example [here](https://svelte.dev/repl/359180bc0cf34fb3b9076f12baf0d28e?version=3.42.6) of a derived store updating its parent's value, but this is too roundabout for our purposes. As such, we update the preferences file to simply be
+
+```ts
+import { writable } from "svelte/store";
+
+export const soundOn = writable(true);
+
+```
+
+and then the switch test file will be
+
+```ts
+import { soundOn } from "../preferences";
+
+...
+
+  test("does not play clicking sound when sound off", async () => {
+    ...
+    soundOn.update(() => false);
+    ...
+  });
+```
+
 ## Browser scrollbar
 
 If we place the switch next to the right edge of the viewport, we find that a scrollbar appears in the browser window because the toggle layer is not covered by the groove's `visibility: hidden;` and extends invisibly to the right. To fix this, we remove the very last `<div class="toggle-label"></div>` from the toggle layer, since it's just an invisible non-element anyways.

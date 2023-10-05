@@ -411,3 +411,7 @@ We fix this by editing `src-svelte/src/routes/Sidebar.svelte` to ensure that the
   $: currentRoute = $page.url.pathname || "/";
 </script>
 ```
+
+## Lag
+
+You might notice that the sidebar animations lag so much as to be nigh imperceptible on Linux. This appears to be because of performance issues with webkit2gtk on Linux, as noted [here](https://github.com/tauri-apps/tauri/issues/7021) and [here](https://github.com/tauri-apps/tauri/issues/3988).

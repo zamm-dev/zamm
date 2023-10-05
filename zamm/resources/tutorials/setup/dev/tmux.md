@@ -30,6 +30,24 @@ Then
 $ chmod +x tmux.sh
 ```
 
+You may want to first check if the session exists already, and if so simply attach to it:
+
+```sh
+#!/bin/bash
+
+SESSION_NAME="zamm"
+
+tmux has-session -t $SESSION_NAME
+
+if [ $? != 0 ]; then
+    tmux new-session -d -s $SESSION_NAME 'yarn workspace gui storybook --ci'
+    tmux split-window -h 'yarn tauri dev'
+fi
+
+tmux attach-session -t $SESSION_NAME
+
+```
+
 ## Enabling mouse support
 
 Put this in your `~/.tmux.conf` file:
@@ -38,7 +56,9 @@ Put this in your `~/.tmux.conf` file:
 set -g mouse on
 ```
 
-As noted in [this answer](https://unix.stackexchange.com/a/559562), you may have to restart your tmux instance if you're already running it. You can restart it with the instructions as noted, or if you're only running the one session, `ctrl-B` and then type `:kill-session<RET>`. Other commands are noted [here](https://www.baeldung.com/linux/tmux-kill-respawn-pane).
+As noted in [this answer](https://unix.stackexchange.com/a/559562), you may have to restart your tmux instance if you're already running it. You can restart it with the instructions as noted, or if you're only running the one session, `ctrl-B` and then type `:kill-session<RET>`. Other commands are noted [here](https://www.baeldung.com/linux/tmux-kill-respawn-pane):
+
+- To forcibly restart a pane, `ctrl-B :respawn-pane -k`
 
 Now you can simply click on a pane with the mouse to move to it.
 
