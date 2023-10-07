@@ -85,6 +85,16 @@ $ xclip -o
 <pasted text here>
 ```
 
+## Shortcuts
+
+To make it easy to restart a pane, for example, edit `~/.tmux.conf`:
+
+```
+bind r respawn-pane -k
+```
+
+Then type `<ctrl-B>:source-file ~/.tmux.conf` to read in the new configuration.
+
 ## VSCode
 
 Note that if you're using a remote VSCode session, xclip won't transfer into your own OS's clipboard. In this case, you may want to open a native VSCode pane instead while leaving the others running on tmux.

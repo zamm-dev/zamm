@@ -349,6 +349,115 @@ Known.parameters = {
 
 Now we can render all three different component states based on mocked return values.
 
+## Per-story decorator
+
+We can follow the example [here](https://storybook.js.org/docs/svelte/writing-stories/decorators#component-decorators) to move the above decorator into a single story. Edit `src-svelte/.storybook/preview.ts` to remove the `TauriInvokeDecorator`, then edit the story that needs it, `src-svelte/src/routes/ApiKeysDisplay.stories.ts`, to add the decorator:
+
+```ts
+import ApiKeysDisplay from "./ApiKeysDisplay.svelte";
+import type { ApiKeys } from "$lib/bindings";
+import type { StoryObj } from "@storybook/svelte";
+import TauriInvokeDecorator from "$lib/__mocks__/invoke";
+
+export default {
+  component: ApiKeysDisplay,
+  title: "Screens/Dashboard/API Keys Display",
+  argTypes: {},
+  decorators: [TauriInvokeDecorator],
+};
+
+...
+```
+
+## Mocking store values
+
+Create `src-svelte/src/lib/__mocks__/stores.ts`:
+
+```ts
+import type { StoryFn, Decorator, StoryContext } from "@storybook/svelte";
+import { unceasingAnimations } from "../../preferences";
+
+interface Preferences {
+  unceasingAnimations?: boolean;
+}
+
+interface StoreArgs {
+  preferences?: Preferences;
+  [key: string]: any;
+}
+
+const SvelteStoresDecorator: Decorator = (
+  story: StoryFn,
+  context: StoryContext,
+) => {
+  const { args, parameters } = context;
+  const { preferences } = parameters as StoreArgs;
+  if (preferences?.unceasingAnimations !== undefined) {
+    unceasingAnimations.set(preferences.unceasingAnimations);
+  }
+  
+  return story(args, context);
+};
+
+export default SvelteStoresDecorator;
+
+```
+
+Then use it like so in `src-svelte/src/routes/AppLayout.stories.ts`:
+
+```ts
+import AppLayout from "./AppLayout.svelte";
+import type { StoryObj } from "@storybook/svelte";
+import SvelteStoresDecorator from "$lib/__mocks__/stores";
+
+export default {
+  component: AppLayout,
+  title: "Layout/App",
+  argTypes: {},
+  decorators: [SvelteStoresDecorator],
+};
+
+const Template = ({ ...args }) => ({
+  Component: AppLayout,
+  props: args,
+});
+
+export const Dynamic: StoryObj = Template.bind({}) as any;
+Dynamic.parameters = {
+  preferences: {
+    unceasingAnimations: true,
+  },
+};
+
+export const Static: StoryObj = Template.bind({}) as any;
+Static.parameters = {
+  preferences: {
+    unceasingAnimations: false,
+  },
+};
+
+```
+
+## Custom background color for component
+
+Follow the instructions [here](https://storybook.js.org/docs/react/writing-stories/parameters#component-parameters) and adapt to Svelte (the Svelte-specific docs don't mention the default option):
+
+```ts
+export default {
+  component: SidebarUI,
+  title: "Navigation/Sidebar",
+  argTypes: {},
+  parameters: {
+    backgrounds: {
+      default: 'ZAMM background',
+      values: [
+        { name: 'ZAMM background', value: '#f4f4f4' },
+      ],
+    },
+  },
+};
+```
+
 ## Custom viewport for component
 
 To make the component render at a specific size, we can use the `@storybook/addon-viewport` addon. Install it:

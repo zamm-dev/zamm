@@ -632,6 +632,48 @@ However, note that on some older browsers, negative values for `clip-path` will 
   }
 ```
 
+### Making inverted round corner scalable with corner roundness
+
+The inverted corner effect might disappear entirely if it is too small in relation to the corner roundness. On the other hand, the selected tab might appear over the rounded corner if it is not up enough. To scale it up, we make all units relative to `--corner-roundness`:
+
+```css
+  header {
+    --icons-top-offset: calc(2 * var(--corner-roundness));
+  }
+
+  .indicator::before,
+  .indicator::after {
+    height: calc(2 * var(--corner-roundness));
+    width: var(--corner-roundness);
+  }
+
+  .indicator::before {
+    box-shadow: 0 var(--corner-roundness) 0 0 var(--color-foreground);
+  }
+
+  .indicator::after {
+    box-shadow: 0 calc(-1 * var(--corner-roundness)) 0 0 var(--color-foreground);
+  }
+```
+
+We notice that this works on the Tauri app but not on the latest Firefox, so we make our CSS more appropriate by adding
+
+```css
+  nav {
+    position: relative;
+  }
+```
+
+which makes the `nav` a positioned element and makes the calculation of `--icons-top-offset` entirely irrelevant. We update our TypeScript code accordingly:
+
+```ts
+  function setIndicatorPosition(newRoute: string) {
+    ...
+    indicatorPosition = `calc(${routeIndex} * var(--sidebar-icon-size))`;
+    ...
+  }
+```
+
 ### Embossing icons
 
 To use icons, follow the instructions for [unplugin-icons](/zamm/resources/tutorials/setup/dev/unplugin.md). Then we follow the instructions [here](https://css-tricks.com/adding-shadows-to-svg-icons-with-css-and-svg-filters/) to define a filter that will emboss our icons:
