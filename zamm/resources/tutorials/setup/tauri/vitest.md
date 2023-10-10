@@ -529,3 +529,19 @@ To specify a certain number of retries, simply add the options to the end of the
           },
         );
 ```
+
+## Errors
+
+If you see an error such as
+
+```
+ReferenceError: expect is not defined
+ ❯ node_modules/@testing-library/jest-dom/dist/index.mjs:12:1
+ ❯ src/Demo.test.ts:2:31
+      1| import { expect, it } from "vitest";
+      2| import "@testing-library/jest-dom";
+       |                               ^
+      3| 
+      4| it("can render demo", async () => {
+
+```

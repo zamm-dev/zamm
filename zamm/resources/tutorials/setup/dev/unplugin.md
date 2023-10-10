@@ -42,6 +42,26 @@ export default defineConfig(async () => ({
 
 ```
 
+If you are using Vitest, you'll want to also edit `src-svelte/vitest.config.ts` to do the same thing:
+
+```ts
+import { defineConfig } from "vitest/config";
+import { svelte } from "@sveltejs/vite-plugin-svelte";
+import Icons from "unplugin-icons/vite";
+...
+
+export default defineConfig({
+  plugins: [
+    svelte({ hot: !process.env.VITEST }),
+    Icons({
+      compiler: "svelte",
+    }),
+  ],
+  ...
+});
+
+```
+
 Now use it. For example, in `src-svelte/src/routes/Sidebar.svelte`:
 
 ```svelte

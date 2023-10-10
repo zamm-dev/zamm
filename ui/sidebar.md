@@ -415,3 +415,116 @@ We fix this by editing `src-svelte/src/routes/Sidebar.svelte` to ensure that the
 ## Lag
 
 You might notice that the sidebar animations lag so much as to be nigh imperceptible on Linux. This appears to be because of performance issues with webkit2gtk on Linux, as noted [here](https://github.com/tauri-apps/tauri/issues/7021) and [here](https://github.com/tauri-apps/tauri/issues/3988).
+
+## Sound
+
+We compare the whooshing sound from [here](https://pixabay.com/sound-effects/whoosh-6316/) and [here](https://pixabay.com/sound-effects/quick-swhooshing-noise-80898/), and choose the latter for its snappiness. We convert it to ogg following the instructions [here](https://superuser.com/a/584177):
+
+```bash
+$ ffmpeg -i quick-swhooshing-noise-80898.mp3 -c:a libvorbis -q:a 4 whoosh.ogg
+```
+
+It sounds too high-pitched for us, so we take it down from F to D in Audacity as described [here](https://www.businessinsider.com/guides/tech/how-to-change-pitch-in-audacity), and lower the volume by 8dB as described [here](https://www.techsoup.ca/community/blog/getting-good-audio-on-a-budget-how-to-edit-sound).
+
+We update `src-tauri/src/commands/sounds.rs` to include this new sound:
+
+```rust
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
+pub enum Sound {
+    Switch,
+    Whoosh,
+}
+
+...
+
+fn play_sound_async(sound: Sound) -> ZammResult<()> {
+    ...
+    let embedded_sound: &[u8] = match sound {
+        Sound::Switch => include_bytes!("../../sounds/switch.ogg"),
+        Sound::Whoosh => include_bytes!("../../sounds/whoosh.ogg"),
+    };
+    ...
+}
+```
+
+Note that we had to change `embedded_sound` to be of type `&[u8]`, or else the error
+
+```
+error[E0308]: `match` arms have incompatible types
+  --> src/commands/sounds.rs:33:26
+   |
+31 |       let embedded_sound = match sound {
+   |  __________________________-
+32 | |         Sound::Switch => include_bytes!("../../sounds/switch.ogg"),
+   | |                          ----------------------------------------- this is found to be of type `&[u8; 6409]`
+33 | |         Sound::Whoosh => include_bytes!("../../sounds/whoosh.ogg"),
+   | |                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected an array with a fixed size of 6409 elements, found one with 10075 elements
+34 | |     };
+   | |_____- `match` arms have incompatible types
+   |
+   = note: this error originates in the macro `include_bytes` (in Nightly builds, run with -Z macro-backtrace for more info)
+```
+
+appears because the different sound files have different lengths.
+
+Following the rest of the file, we add a test for this new API call in `src-tauri/src/commands/sounds.rs`:
+
+```rust
+
+```rust
+    #[test]
+    fn test_play_whoosh() {
+        check_play_sound_sample("./api/sample-calls/play_sound-whoosh.yaml");
+    }
+```
+
+where `src-tauri/api/sample-calls/play_sound-whoosh.yaml` looks like:
+
+```yaml
+request:
+  - play_sound
+  - >
+    {
+      "sound": "Whoosh"
+    }
+response: "null"
+
+```
+
+We see that Specta has automatically updated `src-svelte/src/lib/bindings.ts` to have
+
+```ts
+export type Sound = "Switch" | "Whoosh"
+```
+
+We see the error
+
+```
+ FAIL  src/routes/Sidebar.test.ts [ src/routes/Sidebar.test.ts ]
+Error: Failed to resolve import "$app/stores" from "src/routes/Sidebar.svelte". Does the file exist?
+```
+
+We're running into the same old problem. If we try to edit `src-svelte/vitest.config.ts` to make it consistent with `vite.config.ts`:
+
+```ts
+import { sveltekit } from "@sveltejs/kit/vite";
+
+export default defineConfig({
+  plugins: [
+    sveltekit(),
+    ...
+  ],
+  ...
+});
+```
+
+then we get
+
+```
+ FAIL  src/routes/Sidebar.test.ts [ src/routes/Sidebar.test.ts ]
+Error: Cannot find package '__sveltekit' imported from /root/zamm/node_modules/@sveltejs/kit/src/runtime/app/environment.js
+
+Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
+```
+
+This appears to be a problem that has been mentioned [here](https://github.com/sveltejs/kit/issues/9162) and [here](https://github.com/vitest-dev/vitest/issues/3483) and fixed already.
