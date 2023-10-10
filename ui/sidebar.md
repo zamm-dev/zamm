@@ -497,14 +497,148 @@ We see that Specta has automatically updated `src-svelte/src/lib/bindings.ts` to
 export type Sound = "Switch" | "Whoosh"
 ```
 
-We see the error
+We edit `src-svelte/src/routes/SidebarUI.svelte` accordingly:
+
+```ts
+<script lang="ts">
+  ...
+  import { playSound } from "$lib/bindings";
+  import { soundOn } from "../preferences";
+
+  ...
+
+  function playWhooshSound() {
+    if ($soundOn) {
+      playSound("Whoosh");
+    }
+  }
+
+  function routeChangeSimulator(newRoute: App.Route) {
+    return (e: MouseEvent) => {
+      e.preventDefault();
+      if (newRoute.path !== currentRoute) {
+        playWhooshSound();
+      }
+      if (dummyLinks) {
+        currentRoute = newRoute.path;
+      }
+    };
+  }
+
+  ...
+</script>
+
+<header>
+  ...
+  <nav>
+    ...
+    {#each routes as route}
+      <a
+        ...
+        on:click={routeChangeSimulator(route)}
+      >
+        ...
+      </a>
+    {/each}
+  </nav>
+</header>
+```
+
+Now we test it like we did with the switch by creating `src-svelte/src/routes/SidebarUI.test.ts`:
+
+```ts
+import { expect, test, vi, type SpyInstance } from "vitest";
+import "@testing-library/jest-dom";
+
+import { act, render, screen } from "@testing-library/svelte";
+import userEvent from "@testing-library/user-event";
+import SidebarUI from "./SidebarUI.svelte";
+import { soundOn } from "../preferences";
+import fs from "fs";
+import yaml from "js-yaml";
+import { Convert, type SampleCall } from "$lib/sample-call";
+
+const tauriInvokeMock = vi.fn();
+
+vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+
+
+describe("Sidebar", () => {
+  let whooshCall: SampleCall;
+  let whooshRequest: (string | Record<string, string>)[];
+  let spy: SpyInstance;
+  let homeLink: HTMLElement;
+  let settingsLink: HTMLElement;
+
+  beforeAll(() => {
+    const sample_call_yaml = fs.readFileSync(
+      "../src-tauri/api/sample-calls/play_sound-whoosh.yaml",
+      "utf-8",
+    );
+    const sample_call_json = JSON.stringify(yaml.load(sample_call_yaml));
+    whooshCall = Convert.toSampleCall(sample_call_json);
+    whooshRequest = whooshCall.request;
+    whooshRequest[1] = JSON.parse(whooshCall.request[1]);
+  });
+
+  beforeEach(() => {
+    spy = vi.spyOn(window, "__TAURI_INVOKE__");
+    const response = JSON.parse(whooshCall.response);
+    tauriInvokeMock.mockResolvedValueOnce(response);
+
+    render(SidebarUI, {
+      currentRoute: "/",
+      dummyLinks: true,
+    });
+    homeLink = screen.getByTitle("Home");
+    settingsLink = screen.getByTitle("Settings");
+    expect(homeLink).toHaveAttribute("aria-current", "page");
+    expect(settingsLink).not.toHaveAttribute("aria-current", "page");
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  })
+
+  test("can change page path", async () => {
+    await act(() => userEvent.click(settingsLink));
+    expect(homeLink).not.toHaveAttribute("aria-current", "page");
+    expect(settingsLink).toHaveAttribute("aria-current", "page");
+  });
+
+  test("plays whoosh sound during page path change", async () => {
+    await act(() => userEvent.click(settingsLink));
+    expect(spy).toHaveBeenLastCalledWith(...whooshRequest);
+  });
+
+  test("does not play whoosh sound when sound off", async () => {
+    soundOn.update(() => false);
+
+    await act(() => userEvent.click(settingsLink));
+    expect(homeLink).not.toHaveAttribute("aria-current", "page");
+    expect(settingsLink).toHaveAttribute("aria-current", "page");
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  test("does not play whoosh sound when path unchanged", async () => {
+    await act(() => userEvent.click(homeLink));
+    expect(homeLink).toHaveAttribute("aria-current", "page");
+    expect(settingsLink).not.toHaveAttribute("aria-current", "page");
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+```
+
+At first, when we try importing from `Sidebar.svelte` instead to also test the page change functionality, we see the error
 
 ```
  FAIL  src/routes/Sidebar.test.ts [ src/routes/Sidebar.test.ts ]
 Error: Failed to resolve import "$app/stores" from "src/routes/Sidebar.svelte". Does the file exist?
 ```
 
-We're running into the same old problem. If we try to edit `src-svelte/vitest.config.ts` to make it consistent with `vite.config.ts`:
+We're running into the same old problem encountered above. If we try to edit `src-svelte/vitest.config.ts` to make it consistent with `vite.config.ts`:
 
 ```ts
 import { sveltekit } from "@sveltejs/kit/vite";
@@ -527,4 +661,45 @@ Error: Cannot find package '__sveltekit' imported from /root/zamm/node_modules/@
 Serialized Error: { code: 'ERR_MODULE_NOT_FOUND' }
 ```
 
-This appears to be a problem that has been mentioned [here](https://github.com/sveltejs/kit/issues/9162) and [here](https://github.com/vitest-dev/vitest/issues/3483) and fixed already.
+This appears to be a problem that has been mentioned [here](https://github.com/sveltejs/kit/issues/9162) and [here](https://github.com/vitest-dev/vitest/issues/3483) and fixed already. However, in our attempt to create a working minimal repro, we run into the store subscription issue mentioned [here](/zamm/resources/tutorials/setup/tauri/vitest.md). We try to use a modified version of the [workaround](https://github.com/sveltejs/kit/issues/5525#issuecomment-1186390654) mentioned there by creating `src-svelte/src/vitest-mocks/stores.ts`:
+
+```ts
+import { readable, writable } from 'svelte/store';
+import type { Subscriber } from 'svelte/store';
+
+interface Page {
+  url: URL;
+  params: Record<string, string>;
+}
+
+const getStores = () => ({
+  navigating: readable(null),
+  page: readable({ url: new URL('http://localhost'), params: {} }),
+  session: writable(null),
+  updated: readable(false)
+});
+
+export const page = {
+  subscribe(fn: Subscriber<Page>) {
+    return getStores().page.subscribe(fn);
+  }
+};
+
+```
+
+and editing `src-svelte/vitest.config.ts` to point to this resolution:
+
+```ts
+export default defineConfig({
+  ...
+  resolve: {
+    alias: {
+      ...
+      $app: path.resolve("src/vitest-mocks"),
+    },
+  },
+});
+
+```
+
+However, this still doesn't actually simulate the store being updated with the correct path. As such, we revert to importing `SidebarUI` instead to simply mock the values.

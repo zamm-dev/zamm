@@ -129,3 +129,20 @@ $ . ~/.zshrc
 ```
 
 Now you should see ZSH with autocomplete as the default shell!
+
+## Corrupted history file
+
+If you see
+
+```
+zsh: corrupt history file /home/amos/.zsh_history
+```
+
+then follow [these instructions](https://shapeshed.com/zsh-corrupt-history-file/) to fix it:
+
+```bash
+$ mv ~/.zsh_history ~/.zsh_history_bad
+$ strings ~/.zsh_history_bad > ~/.zsh_history
+$ fc -R ~/.zsh_history
+$ rm ~/.zsh_history_bad
+```

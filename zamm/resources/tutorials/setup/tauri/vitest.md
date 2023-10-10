@@ -532,6 +532,8 @@ To specify a certain number of retries, simply add the options to the end of the
 
 ## Errors
 
+### expect is not defined
+
 If you see an error such as
 
 ```
@@ -545,3 +547,107 @@ ReferenceError: expect is not defined
       4| it("can render demo", async () => {
 
 ```
+
+that's because you haven't set `globals: true` in the default test config:
+
+```ts
+export default defineConfig({
+  ...
+  test: {
+    ...
+    globals: true,
+    environment: "jsdom",
+  },
+});
+```
+
+### screen.querySelector is not a function
+
+If you see an error such as
+
+```
+TypeError: screen.querySelector is not a function
+ ❯ src/Demo.test.ts:8:28
+      6| it("can render demo", async () => {
+      7|   render(Demo);
+      8|   const paragraph = screen.querySelector("p");
+       |                            ^
+      9|   expect(paragraph).toHaveTextContent("Demo URL: ")
+     10| });
+
+```
+
+it is because for querySelector, you have to use the returned `container` variable instead of the screen:
+
+```ts
+it("can render demo", async () => {
+  const { container } = render(Demo);
+  const paragraph = container.querySelector("p");
+  ...
+});
+```
+
+### Cannot subscribe to store on server
+
+If you do
+
+```svelte
+<script lang="ts">
+  import { page } from "$app/stores";
+</script>
+
+<p>Demo URL: {$page.url.pathname}</p>
+
+```
+
+and get an error like
+
+```
+Error: Cannot subscribe to 'page' store on the server outside of a Svelte component, as it is bound to the current request via component context. This prevents state from leaking between users.For more information, see https://kit.svelte.dev/docs/state-management#avoid-shared-state-on-the-server
+ ❯ get_store node_modules/@sveltejs/kit/src/runtime/app/stores.js:96:9
+ ❯ Object.subscribe node_modules/@sveltejs/kit/src/runtime/app/stores.js:39:37                                                                      
+```
+
+this is because of an [outstanding issue](https://github.com/sveltejs/kit/issues/1485) with a [minimal repro](https://github.com/amosjyng/sveltekit-vitest-minimal-repro). It was mentioned before with [a workaround](https://github.com/sveltejs/kit/issues/5525#issuecomment-1186390654).
+
+## Minimal SvelteKit setup
+
+Create a new SvelteKit project with `yarn create svelte`. Then
+
+```bash
+$ yarn add --dev @testing-library/jest-dom @testing-library/svelte jsdom
+```
+
+Create `src/Demo.svelte`:
+
+```svelte
+<p>Demo URL: </p>
+```
+
+Create `src/Demo.test.ts`:
+
+```ts
+import { expect, it } from "vitest";
+import "@testing-library/jest-dom";
+import { render, screen } from "@testing-library/svelte";
+import Demo from "./Demo.svelte";
+
+it("can render demo", async () => {
+  const { container } = render(Demo);
+  const paragraph = container.querySelector("p");
+  expect(paragraph).toHaveTextContent("Demo URL:")
+});
+
+```
+
+Edit `vite.config.ts`:
+
+```ts
+        test: {
+               include: ['src/**/*.{test,spec}.{js,ts}'],
+               globals: true,
+               environment: 'jsdom',
+        }
+```
+
+
