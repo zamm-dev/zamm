@@ -336,7 +336,11 @@ If you want more logs, you can set the `GST_DEBUG` environment variable to 2 to 
 
 ```
 
-We actually install GStreamer as mentioned in [their docs](https://gstreamer.freedesktop.org/documentation/installing/on-linux.html?gi-language=c#install-gstreamer-on-ubuntu-or-debian).
+We actually install GStreamer as mentioned in [their docs](https://gstreamer.freedesktop.org/documentation/installing/on-linux.html?gi-language=c#install-gstreamer-on-ubuntu-or-debian). In the Dockerfile, this looks like:
+
+```Dockerfile
+RUN apt install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav gstreamer1.0-tools gstreamer1.0-x gstreamer1.0-alsa gstreamer1.0-gl gstreamer1.0-gtk3 gstreamer1.0-qt5 gstreamer1.0-pulseaudio
+```
 
 Now when we try to play a sound on the app, it takes a few seconds to load, but the logs finally come through:
 
@@ -356,6 +360,310 @@ Failed to load module: /usr/lib/x86_64-linux-gnu/gio/modules/libgvfsdbus.so
 Only the last line repeats when we try to press a switch, so the others are likely red herrings.
 
 We find that this is likely due to an existing issue around loading video or audio as assets. We leave [a comment](https://github.com/tauri-apps/tauri/issues/3725#issuecomment-1747970925) on the issue to describe the data we have on this. It is clear now that we must work around this issue instead.
+
+We do so by first setting up Rodio as described in [`rodio.md`](/zamm/resources/tutorials/libraries/rust/rodio.md). We move the sound file to `src-tauri/sounds/switch.ogg`. Since this is our first time using the rodio crate, we define new errors in `src-tauri/src/commands/errors.rs`. We keep to one top-level error per external crate, so we define a new error type `RodioError`:
+
+```rust
+#[derive(thiserror::Error, Debug)]
+pub enum RodioError {
+    #[error(transparent)]
+    Stream {
+        #[from]
+        source: rodio::StreamError,
+    },
+    #[error(transparent)]
+    Decode {
+        #[from]
+        source: rodio::decoder::DecoderError,
+    },
+    #[error(transparent)]
+    Play {
+        #[from]
+        source: rodio::PlayError,
+    },
+}
+```
+
+Then we nest this inside the existing `Error`:
+
+```rust
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    ...
+    #[error(transparent)]
+    Rodio {
+        #[from]
+        source: RodioError,
+    },
+    ...
+}
+```
+
+Unfortunately, `From` trait implementations are not transitive, so we manually implement the nested relation:
+
+```rust
+impl From<rodio::StreamError> for Error {
+    fn from(err: rodio::StreamError) -> Self {
+        let rodio_err: RodioError = err.into();
+        rodio_err.into()
+    }
+}
+
+impl From<rodio::decoder::DecoderError> for Error {
+    fn from(err: rodio::decoder::DecoderError) -> Self {
+        let rodio_err: RodioError = err.into();
+        rodio_err.into()
+    }
+}
+
+impl From<rodio::PlayError> for Error {
+    fn from(err: rodio::PlayError) -> Self {
+        let rodio_err: RodioError = err.into();
+        rodio_err.into()
+    }
+}
+```
+
+Now in `src-tauri/src/commands/mod.rs`, export our new function:
+
+```rust
+...
+mod sounds;
+
+...
+pub use sounds::play_sound;
+```
+
+And in `src-tauri/src/main.rs`, add this new function:
+
+```rust
+...
+use commands::{..., play_sound};
+
+fn main() {
+    #[cfg(debug_assertions)]
+    ts::export(
+        collect_types![..., play_sound],
+        "../src-svelte/src/lib/bindings.ts",
+    )
+    .unwrap();
+
+    ...
+
+    tauri::Builder::default()
+        ...
+        .invoke_handler(tauri::generate_handler![..., play_sound])
+        ...;
+```
+
+`src-svelte/src/lib/bindings.ts` will automatically be edited on the next run of the development app, with the new function
+
+```ts
+export function playSound(sound: Sound) {
+    return invoke()<null>("play_sound", { sound })
+}
+```
+
+We therefore edit `src-svelte/src/lib/Switch.svelte` to stop doing
+
+```ts
+  import clickSound from "$lib/sounds/switch.ogg";
+
+  function playClick() {
+    ...
+    const audio = new Audio(clickSound);
+    audio.volume = 0.05;
+    audio.play();
+    ...
+  }
+```
+
+and instead do:
+
+```ts
+  import { playSound } from "./bindings";
+
+  function playClick() {
+    ...
+    playSound("Switch");
+    ...
+  }
+```
+
+while editing the sound file to be `0.05` of its original volume. We could also use Rodio's `Sink` instead, but that introduces extra complexity that is unnecessary for now.
+
+Next, as usual whenever we add an API call, we test it by creating a sample call file at `src-tauri/api/sample-calls/play_sound-switch.yaml`:
+
+```yaml
+request: ["play_sound", "\"Switch\""]
+response: null
+
+```
+
+and then we add a test in `src-tauri/src/commands/sounds.rs`:
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sample_call::SampleCall;
+    use crate::setup::api_keys::{ApiKey, Source};
+    use std::sync::Mutex;
+
+    use std::fs;
+
+    fn parse_sound(request_str: &str) -> Sound {
+        serde_json::from_str(request_str).unwrap()
+    }
+
+    fn read_sample(filename: &str) -> SampleCall {
+        let sample_str = fs::read_to_string(filename)
+            .unwrap_or_else(|_| panic!("No file found at {filename}"));
+        serde_yaml::from_str(&sample_str).unwrap()
+    }
+
+    fn check_play_sound_sample(file_prefix: &str) {
+        let greet_sample = read_sample(file_prefix);
+        assert_eq!(greet_sample.request.len(), 2);
+        assert_eq!(greet_sample.request[0], "play_sound");
+
+        let requested_sound = parse_sound(&greet_sample.request[1]);
+        let actual_result = play_sound(requested_sound);
+        let actual_json = serde_json::to_string(&actual_result).unwrap();
+        let expected_json = greet_sample.response;
+        assert_eq!(actual_json, expected_json);
+    }
+
+    #[test]
+    fn test_get_empty_keys() {
+        check_play_sound_sample(
+            "./api/sample-calls/play_sound-switch.yaml",
+        );
+    }
+}
+
+```
+
+and edit `src-svelte/src/lib/Switch.test.ts` to confirm that the frontend is calling the backend in the same way. In doing so, we realize that the API call from the frontend's perspective actually looks like this:
+
+```yaml
+request:
+  - play_sound
+  - >
+    {
+      "sound": "Switch"
+    }
+response: "null"
+
+```
+
+The switch test file now looks like this:
+
+```ts
+import { expect, test, vi, type SpyInstance } from "vitest";
+...
+import fs from "fs";
+import yaml from "js-yaml";
+import { Convert, type SampleCall } from "$lib/sample-call";
+
+const tauriInvokeMock = vi.fn();
+
+vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+
+describe("Switch", () => {
+  let switchCall: SampleCall;
+  let switchRequest: (string | Record<string, string>)[];
+  let spy: SpyInstance;
+
+  beforeAll(() => {
+    const sample_call_yaml = fs.readFileSync("../src-tauri/api/sample-calls/play_sound-switch.yaml", "utf-8");
+    const sample_call_json = JSON.stringify(yaml.load(sample_call_yaml));
+    switchCall = Convert.toSampleCall(sample_call_json);
+    switchRequest = switchCall.request;
+    switchRequest[1] = JSON.parse(switchCall.request[1]);
+  });
+
+  beforeEach(() => {
+    spy = vi.spyOn(window, "__TAURI_INVOKE__");
+    const response = JSON.parse(switchCall.response);
+    tauriInvokeMock.mockResolvedValueOnce(response);
+  });
+
+  ...
+
+    test("plays clicking sound during toggle", async () => {
+    render(Switch, {});
+    expect(spy).not.toHaveBeenCalled();
+
+    const onOffSwitch = screen.getByRole("switch");
+    await act(() => userEvent.click(onOffSwitch));
+    expect(spy).toHaveBeenLastCalledWith(...switchRequest);
+  });
+
+  test("does not play clicking sound when sound off", async () => {
+    render(Switch, {});
+    soundOn.update(() => false);
+    expect(spy).not.toHaveBeenCalled();
+
+    const onOffSwitch = screen.getByRole("switch");
+    await act(() => userEvent.click(onOffSwitch));
+    expect(spy).not.toHaveBeenCalled();
+  });
+});
+
+```
+
+We now also edit `src-svelte/src/routes/settings/Settings.test.ts` to have the same test setup and the test:
+
+```ts
+  test("can toggle sound on and off", async () => {
+    render(Settings, {});
+    expect(get(soundOn)).toBe(true);
+    expect(spy).not.toHaveBeenCalled();
+
+    const soundSwitch = screen.getByLabelText("Sounds");
+    await act(() => userEvent.click(soundSwitch));
+    expect(get(soundOn)).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
+
+    await act(() => userEvent.click(soundSwitch));
+    expect(get(soundOn)).toBe(true);
+    expect(spy).toBeCalledTimes(1);
+    expect(spy).toHaveBeenLastCalledWith(...switchRequest);
+  });
+```
+
+Finally, we should also edit `src-tauri/src/commands/sounds.rs`:
+
+```rust
+    #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize)]
+    struct PlaySoundRequest {
+        sound: Sound,
+    }
+
+    fn parse_request(request_str: &str) -> PlaySoundRequest {
+        serde_json::from_str(request_str).unwrap()
+    }
+
+    ...
+
+    fn check_play_sound_sample(file_prefix: &str) {
+        ...
+
+        let request = parse_request(&greet_sample.request[1]);
+        let actual_result = play_sound(request.sound);
+        ...
+    }
+```
+
+`clippy` warns us about assigning a unit type, but we do want the type check here. There is an [outstanding issue](https://github.com/rust-lang/rust-clippy/issues/9048) about this, so we simply ignore the rule for now:
+
+```rust
+        #[allow(clippy::let_unit_value)]
+        let actual_result = play_sound(request.sound);
+```
+
+We now get rid of our previous changes by removnig GStreamer from the Dockerfile and re-disabling `bundleMediaFramework`.
 
 #### Bundle error
 
@@ -456,6 +764,10 @@ Then for pre-commit, follow the instructions at
 - [`pre-commit.md`](/zamm/resources/tutorials/setup/repo/pre-commit/pre-commit.md)
 - [`cargo.md`](/zamm/resources/tutorials/setup/repo/pre-commit/cargo.md)
 - [`svelte.md`](/zamm/resources/tutorials/setup/repo/pre-commit/svelte.md)
+
+### Debugging
+
+To allow the web inspector in a final build, add the `"devtools"` feature to `Cargo.toml` as mentioned [here](https://github.com/tauri-apps/tauri/discussions/3059).
 
 ## Testing setup
 

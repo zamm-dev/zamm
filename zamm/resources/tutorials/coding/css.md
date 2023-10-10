@@ -402,7 +402,7 @@ You'll want to make sure this goes below other elements. For example, if you're 
 </style>
 ```
 
-Note that this produces a jerky effect when switching from animated to not animated. To make it smoother, we can dynamically set the `animation-play-state` instead, with a [negative animation-delay](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-delay#values) to separate the different slides instead of doing it with an edited gradient position:
+Note that this produces a jerky effect when switching from animated to not animated, as is also demonstrated in [this post](https://pragmaticpineapple.com/smoothly-reverting-css-animations/). To make it smoother, we can dynamically set the `animation-play-state` instead, with a [negative animation-delay](https://developer.mozilla.org/en-US/docs/Web/CSS/animation-delay#values) to separate the different slides instead of doing it with an edited gradient position:
 
 ```svelte
 <script lang="ts">

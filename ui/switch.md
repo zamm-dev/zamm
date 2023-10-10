@@ -833,6 +833,12 @@ Then, in `src-svelte/src/lib/Switch.svelte`:
   }
 ```
 
+Note that instead of manually setting the volume to be at 0.05, we can also edit the volume to begin with using the audio volume setting [here](https://trac.ffmpeg.org/wiki/AudioVolume):
+
+```bash
+$ ffmpeg -i switch.ogg -filter:a "volume=0.05" switch2.ogg
+```
+
 We want the sound to play whenever we click on the switch. If we're dragging the switch, however, then the sound should only play when the switch is successfully dragged all the way to the other end. Even then, we would want to play the sound again if it is dragged back to the starting end -- basically, whenever it switches ends. Finally, if the user releases the switch more than halfway through, then the switch should snap to the other end, and the sound should play, but only if it hasn't already been played yet for that end.
 
 We also want the sound to be played twice if the user quickly double-clicks on the switch. As we see from [this answer](https://stackoverflow.com/a/66991558), we'll need to create a fresh audio object every time to achieve this effect. The default sound is also too loud, so we edit the [volume](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume).

@@ -150,6 +150,37 @@ use specta::collect_types;
 use tauri_specta::ts;
 ```
 
+## Runtime error
+
+If you see an error such as
+
+```
+Unhandled Promise Rejection: command play_sound not found
+```
+
+it is likely because you added the command to specta but forgot to add it to the regular list of commands specified to `tauri::generate_handler`. You'll also be likely to see warnings such as
+
+```
+warning: unused import: `play_sound`
+  --> src/main.rs:23:37
+   |
+23 | use commands::{get_api_keys, greet, play_sound};
+   |                                     ^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` on by default
+
+warning: function `play_sound` is never used
+  --> src/commands/sounds.rs:19:8
+   |
+19 | pub fn play_sound(sound: Sound) -> ZammResult<()> {
+   |        ^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` on by default
+
+```
+
+during the release build phase but not the debug build phase.
+
 ## Frontend tests
 
 If you have previously set up frontend tests [here](/zamm/resources/tutorials/setup/tauri/vitest.md) in addition with [mocked sidecar invocation](/zamm/resources/tutorials/setup/tauri/python-sidecar.md), you may now get an error such as
