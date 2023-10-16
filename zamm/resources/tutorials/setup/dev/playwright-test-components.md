@@ -489,6 +489,45 @@ expect(Buffer.compare(screenshot, newScreenshot) !== 0).toBeTruthy();
 
 Of course, we should also test that our tests are actually discriminatory between passing and failing states. If we disable the animation, does the test for dynamism now fail? It turns out that it does, so we are good here.
 
+#### Refactoring duplicate config
+
+Note that if we are to now add a new setting such as `allowSizeMismatch`, we now need to add it to two separate configs because it got duplicated now. To avoid this, refactor out the common parts:
+
+```ts
+import { toMatchImageSnapshot, type MatchImageSnapshotOptions } from "jest-image-snapshot";
+
+const baseMatchOptions: MatchImageSnapshotOptions = {
+    allowSizeMismatch: true,
+    storeReceivedOnFailure: true,
+    customSnapshotsDir: "screenshots/baseline",
+    customDiffDir: "screenshots/testing/diff",
+    customReceivedDir: "screenshots/testing/actual",
+    customReceivedPostfix: "",
+  };
+
+  for (const config of components) {
+    ...
+            const matchOptions = {
+              ...baseMatchOptions,
+              diffDirection,
+              customSnapshotIdentifier: `${storybookPath}/${testName}`,
+            };
+
+            if (!variantConfig.assertDynamic) {
+              // don't compare dynamic screenshots against baseline
+              // @ts-ignore
+              expect(screenshot).toMatchImageSnapshot(matchOptions);
+            }
+
+            if (variantConfig.assertDynamic !== undefined) {
+              ...
+                expect(newScreenshot).toMatchImageSnapshot(matchOptions);
+              ...
+            }
+          },
+          ...
+```
+
 ### Testing entire body
 
 Sometimes, if we change the shadow of an element, the shadow is not part of the element's bounding box and therefore won't be captured in the screenshot. For these cases, we may want to zoom out to take a screenshot of the entire body instead of just the element itself. We can add an option:
@@ -726,3 +765,15 @@ const components: ComponentTestConfig[] = [
 ```
 
 Rearrange the entries, for example in alphabetical order, so that the screen stories still appear next to each other.
+
+## Approximate screenshots
+
+To allow for approximate screenshots to pass, you can use
+
+```ts
+                expect(newScreenshot).toMatchImageSnapshot({
+                  ...
+                  allowSizeMismatch: true,
+                  ...
+                });
+```

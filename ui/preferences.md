@@ -832,4 +832,632 @@ fn main() {
 }
 ```
 
-We are finally done with the Tauri backend portion of this feature.
+We are finally done with the Tauri backend portion of this feature. As for the frontend, we find that because Specta defines preferences this way in `src-svelte/src/lib/bindings.ts`:
+
+```ts
+export type Preferences = { unceasing_animations: boolean | null; sound_on: boolean | null }
+```
+
+we'll have to edit `src-svelte/src/preferences.ts` to help selectively define preferences:
+
+```ts
+...
+import type { Preferences } from "$lib/bindings";
+
+...
+
+export const NullPreferences: Preferences = {
+  unceasing_animations: null,
+  sound_on: null,
+};
+```
+
+We want the preferences to be read on app startup, so we edit `src-svelte/src/routes/AppLayout.svelte` to do so on mount:
+
+```ts
+  import { onMount } from "svelte";
+  import { getPreferences } from "$lib/bindings";
+  import { soundOn, unceasingAnimations } from "../preferences";
+
+  onMount(async () => {
+    const prefs = await getPreferences();
+    if (prefs.sound_on !== null) {
+      soundOn.set(prefs.sound_on);
+    }
+    if (prefs.unceasing_animations !== null) {
+      unceasingAnimations.set(prefs.unceasing_animations);
+    }
+  });
+```
+
+Now we test it at `src-svelte/src/routes/AppLayout.test.ts`, keeping in mind the need to wait for [Svelte ticks](https://dev.to/d_ir/testing-svelte-async-state-changes-3mip):
+
+```ts
+import { expect, test, vi, assert } from "vitest";
+import { get } from "svelte/store";
+import "@testing-library/jest-dom";
+import { tick } from "svelte";
+
+import { render } from "@testing-library/svelte";
+import AppLayout from "./AppLayout.svelte";
+import { soundOn } from "../preferences";
+import fs from "fs";
+import yaml from "js-yaml";
+import { Convert } from "$lib/sample-call";
+
+const tauriInvokeMock = vi.fn();
+
+vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+
+interface ParsedCall {
+  request: (string | Record<string, string>)[];
+  response: Record<string, string>;
+}
+
+function parseSampleCall(
+  sampleFile: string,
+  argumentsExpected: boolean,
+): ParsedCall {
+  const sample_call_yaml = fs.readFileSync(sampleFile, "utf-8");
+  const sample_call_json = JSON.stringify(yaml.load(sample_call_yaml));
+  const rawSample = Convert.toSampleCall(sample_call_json);
+
+  const numExpectedArguments = argumentsExpected ? 2 : 1;
+  assert(rawSample.request.length === numExpectedArguments);
+  const parsedRequest = argumentsExpected
+    ? [rawSample.request[0], JSON.parse(rawSample.request[1])]
+    : rawSample.request;
+  const parsedSample: ParsedCall = {
+    request: parsedRequest,
+    response: JSON.parse(rawSample.response),
+  };
+  return parsedSample;
+}
+
+async function tickFor(ticks: number) {
+  for (let i = 0; i < ticks; i++) {
+    await tick();
+  }
+}
+
+describe("AppLayout", () => {
+  let unmatchedCalls: ParsedCall[];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    tauriInvokeMock.mockImplementation(
+      (...args: (string | Record<string, string>)[]) => {
+        const jsonArgs = JSON.stringify(args);
+        const matchingCallIndex = unmatchedCalls.findIndex(
+          (call) => JSON.stringify(call.request) === jsonArgs,
+        );
+        assert(
+          matchingCallIndex !== -1,
+          `No matching call found for ${jsonArgs}`,
+        );
+        const matchingCall = unmatchedCalls[matchingCallIndex].response;
+        unmatchedCalls.splice(matchingCallIndex, 1);
+        return Promise.resolve(matchingCall);
+      },
+    );
+  });
+
+  test("will do nothing if no custom settings exist", async () => {
+    expect(get(soundOn)).toBe(true);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    const getPreferencesCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/get_preferences-no-file.yaml",
+      false,
+    );
+    unmatchedCalls = [getPreferencesCall];
+
+    render(AppLayout, {});
+    await tickFor(3);
+    expect(get(soundOn)).toBe(true);
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+  });
+
+  test("will set sound if sound preference overridden", async () => {
+    expect(get(soundOn)).toBe(true);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    const getPreferencesCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/get_preferences-sound-override.yaml",
+      false,
+    );
+    unmatchedCalls = [getPreferencesCall];
+
+    render(AppLayout, {});
+    await tickFor(3);
+    expect(get(soundOn)).toBe(false);
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+  });
+});
+
+```
+
+This also requires the changes mentioned in [`vitest.md`](/zamm/resources/tutorials/setup/tauri/vitest.md) for getting `onMount` to execute.
+
+We want the preferences to be read when the user hits the switch, not when the store gets updated, because the store appears to get updated even on app startup. As such, we edit `src-svelte/src/lib/Switch.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  export let onToggle: (toggledOn: boolean) => void = () => undefined;
+  ...
+
+  let toggleDragOptions: DragOptions = {
+    ...
+    onDragEnd: (data: DragEventData) => {
+      ...
+      if (dragging) {
+        const previousValue = toggledOn;
+        toggledOn = data.offsetX > offLeft / 2;
+        if (previousValue !== toggledOn) {
+          onToggle(toggledOn);
+        }
+      }
+      ...
+    },
+  };
+
+  export function toggle() {
+    if (!dragging) {
+      toggledOn = !toggledOn;
+      onToggle(toggledOn);
+      ...
+    }
+    ...
+  }
+```
+
+We make sure to note all the places where the store value actually changes, and then trigger the callback. Note that we use `() => undefined` instead of `() => {}`, as explained [here](https://stackoverflow.com/a/48987474), to avoid this eslint error:
+
+```
+/root/zamm/src-svelte/src/lib/Switch.svelte
+  28:61  error  Unexpected empty arrow function  @typescript-eslint/no-empty-function
+
+```
+
+We add a corresponding test to `src-svelte/src/lib/Switch.test.ts`:
+
+```ts
+  test("calls onToggle when toggled", async () => {
+    const onToggle = vi.fn();
+    render(Switch, { onToggle });
+
+    const onOffSwitch = screen.getByRole("switch");
+    await act(() => userEvent.click(onOffSwitch));
+    expect(onToggle).toBeCalledTimes(1);
+  });
+```
+
+We pass this through `src-svelte/src/routes/settings/SettingsSwitch.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  export let onToggle: (toggledOn: boolean) => void = () => undefined;
+  ...
+</script>
+
+<div
+  class="settings-switch container"
+  ...
+>
+  <Switch
+    ...
+    {onToggle}
+    ...
+  />
+</div>
+```
+
+so that `src-svelte/src/routes/settings/Settings.svelte` can end up passing the desired callback down:
+
+```svelte
+<script lang="ts">
+  ...
+  import { setPreferences } from "$lib/bindings";
+  import { NullPreferences } from "../../preferences";
+
+  const onUnceasingAnimationsToggle = (newValue: boolean) => {
+    setPreferences({
+      ...NullPreferences,
+      unceasing_animations: newValue,
+    });
+  };
+
+  const onSoundToggle = (newValue: boolean) => {
+    setPreferences({
+      ...NullPreferences,
+      sound_on: newValue,
+    });
+  };
+</script>
+
+<InfoBox title="Settings">
+  <div class="container">
+    <SettingsSwitch
+      ...
+      onToggle={onUnceasingAnimationsToggle}
+    />
+    <SettingsSwitch
+      ...
+      onToggle={onSoundToggle}
+    />
+  </div>
+</InfoBox>
+```
+
+Now we edit `src-svelte/src/routes/settings/Settings.test.ts`, which must now not only play the sound API, but also invoke the preference setting API:
+
+```ts
+import { expect, test, vi, assert } from "vitest";
+import { get } from "svelte/store";
+import "@testing-library/jest-dom";
+
+import { act, render, screen } from "@testing-library/svelte";
+import userEvent from "@testing-library/user-event";
+import Settings from "./Settings.svelte";
+import { soundOn } from "../../preferences";
+import fs from "fs";
+import yaml from "js-yaml";
+import { Convert } from "$lib/sample-call";
+
+const tauriInvokeMock = vi.fn();
+
+vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+
+interface ParsedCall {
+  request: (string | Record<string, string>)[];
+  response: Record<string, string>;
+}
+
+function parseSampleCall(sampleFile: string): ParsedCall {
+  const sample_call_yaml = fs.readFileSync(sampleFile, "utf-8");
+  const sample_call_json = JSON.stringify(yaml.load(sample_call_yaml));
+  const rawSample = Convert.toSampleCall(sample_call_json);
+  assert(rawSample.request.length === 2);
+  const parsedSample: ParsedCall = {
+    request: [rawSample.request[0], JSON.parse(rawSample.request[1])],
+    response: JSON.parse(rawSample.response),
+  };
+  return parsedSample;
+}
+
+describe("Switch", () => {
+  let playSwitchSoundCall: ParsedCall;
+  let setSoundOnCall: ParsedCall;
+  let setSoundOffCall: ParsedCall;
+  let unmatchedCalls: ParsedCall[];
+
+  beforeAll(() => {
+    playSwitchSoundCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/play_sound-switch.yaml",
+    );
+    setSoundOnCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/set_preferences-sound-on.yaml",
+    );
+    setSoundOffCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/set_preferences-sound-off.yaml",
+    );
+  });
+
+  beforeEach(() => {
+    tauriInvokeMock.mockImplementation(
+      (...args: (string | Record<string, string>)[]) => {
+        const jsonArgs = JSON.stringify(args);
+        const matchingCallIndex = unmatchedCalls.findIndex(
+          (call) => JSON.stringify(call.request) === jsonArgs,
+        );
+        assert(
+          matchingCallIndex !== -1,
+          `No matching call found for ${jsonArgs}`,
+        );
+        const matchingCall = unmatchedCalls[matchingCallIndex].response;
+        unmatchedCalls.splice(matchingCallIndex, 1);
+        return Promise.resolve(matchingCall);
+      },
+    );
+  });
+
+  test("can toggle sound on and off while saving setting", async () => {
+    render(Settings, {});
+    expect(get(soundOn)).toBe(true);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    const soundSwitch = screen.getByLabelText("Sounds");
+    unmatchedCalls = [setSoundOffCall];
+    await act(() => userEvent.click(soundSwitch));
+    expect(get(soundOn)).toBe(false);
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+    expect(unmatchedCalls.length).toBe(0);
+
+    unmatchedCalls = [setSoundOnCall, playSwitchSoundCall];
+    await act(() => userEvent.click(soundSwitch));
+    expect(get(soundOn)).toBe(true);
+    expect(tauriInvokeMock).toBeCalledTimes(3);
+    expect(unmatchedCalls.length).toBe(0);
+  });
+});
+
+```
+
+This leads us to edit `src-tauri/api/sample-calls/set_preferences-sound-off.yaml` and `src-tauri/api/sample-calls/set_preferences-sound-on.yaml` to add in the new null preferences, like so:
+
+```yaml
+request:
+  - set_preferences
+  - >
+    {
+      "preferences": {
+        "unceasing_animations": null,
+        "sound_on": false
+      }
+    }
+response: "null"
+
+```
+
+Fortunately, the Tauri backend tests still pass, so nothing needs to be done there.
+
+We notice that the `parseSampleCall` functions are getting quite similar, so we refactor them out into `src-svelte/src/lib/sample-call-testing.ts`:
+
+```ts
+import { assert } from "vitest";
+import fs from "fs";
+import yaml from "js-yaml";
+import { Convert } from "./sample-call";
+
+export interface ParsedCall {
+  request: (string | Record<string, string>)[];
+  response: Record<string, string>;
+}
+
+export function parseSampleCall(
+  sampleFile: string,
+  argumentsExpected: boolean,
+): ParsedCall {
+  const sample_call_yaml = fs.readFileSync(sampleFile, "utf-8");
+  const sample_call_json = JSON.stringify(yaml.load(sample_call_yaml));
+  const rawSample = Convert.toSampleCall(sample_call_json);
+
+  const numExpectedArguments = argumentsExpected ? 2 : 1;
+  assert(rawSample.request.length === numExpectedArguments);
+  const parsedRequest = argumentsExpected
+    ? [rawSample.request[0], JSON.parse(rawSample.request[1])]
+    : rawSample.request;
+  const parsedSample: ParsedCall = {
+    request: parsedRequest,
+    response: JSON.parse(rawSample.response),
+  };
+  return parsedSample;
+}
+```
+
+and in `src-svelte/src/routes/AppLayout.test.ts` we just replace the existing definitions with an import:
+
+```ts
+import { parseSampleCall, type ParsedCall } from "$lib/sample-call-testing";
+
+```
+
+We do the same in `src-svelte/src/routes/settings/Settings.test.ts`, but here we must change the arguments a little to fit the refactored function:
+
+```ts
+  beforeAll(() => {
+    playSwitchSoundCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/play_sound-switch.yaml",
+      true,
+    );
+    setSoundOnCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/set_preferences-sound-on.yaml",
+      true,
+    );
+    setSoundOffCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/set_preferences-sound-off.yaml",
+      true,
+    );
+  });
+```
+
+We notice further similarities in the code for playing back expected sample calls, and refactor that as well into `src-svelte/src/lib/sample-call-testing.ts`:
+
+```ts
+export class TauriInvokePlayback {
+  unmatchedCalls: ParsedCall[];
+
+  constructor() {
+    this.unmatchedCalls = [];
+  }
+
+  mockCall(...args: (string | Record<string, string>)[]): Promise<Record<string, string>> {
+    const jsonArgs = JSON.stringify(args);
+    const matchingCallIndex = this.unmatchedCalls.findIndex(
+      (call) => JSON.stringify(call.request) === jsonArgs,
+    );
+    assert(
+      matchingCallIndex !== -1,
+      `No matching call found for ${jsonArgs}`,
+    );
+    const matchingCall = this.unmatchedCalls[matchingCallIndex].response;
+    this.unmatchedCalls.splice(matchingCallIndex, 1);
+    return Promise.resolve(matchingCall);
+  }
+
+  addCalls(...calls: ParsedCall[]): void {
+    this.unmatchedCalls.push(...calls);
+  }
+}
+```
+
+and in `src-svelte/src/routes/settings/Settings.test.ts`, we use the new refactored API:
+
+```ts
+...
+import { parseSampleCall, type ParsedCall, TauriInvokePlayback } from "$lib/sample-call-testing";
+
+describe("Switch", () => {
+  let tauriInvokeMock: Mock;
+  let playback: TauriInvokePlayback;
+
+  ...
+
+  beforeEach(() => {
+    tauriInvokeMock = vi.fn();
+    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    playback = new TauriInvokePlayback();
+    tauriInvokeMock.mockImplementation((...args: (string | Record<string, string>)[]) => playback.mockCall(...args));
+  });
+
+  test("can toggle sound on and off while saving setting", async () => {
+    ...
+    playback.addCalls(setSoundOffCall);
+    ...
+    expect(playback.unmatchedCalls.length).toBe(0);
+
+    playback.addCalls(setSoundOnCall, playSwitchSoundCall);
+    ...
+    expect(playback.unmatchedCalls.length).toBe(0);
+  });
+});
+```
+
+and we do the same in `src-svelte/src/routes/AppLayout.test.ts` as well.
+
+We're finally done with initial implementation, but now we realize using TOML for the settings may make it more similar to other `rc` files on Unix. As such, we add the `toml` dependency:
+
+```bash
+$ cargo add toml
+```
+
+and edit `src-tauri/Cargo.toml` to once again move `serde_yaml` back into dev dependencies.
+
+We edit preference reading by editing `src-tauri/src/commands/errors.rs` to use `TomlDeserialize` instead of `Yaml`, and use a source of `toml::de::Error` instead of `serde_yaml::Error`. We propagate these changes to `src-tauri/src/commands/preferences/read.rs`.
+
+We edit preference writing by editing the errors again to introduce
+
+```rust
+#[derive(thiserror::Error, Debug)]
+pub enum SerdeError {
+    ...
+    #[error(transparent)]
+    TomlSerialize {
+        #[from]
+        source: toml::ser::Error,
+    },
+}
+
+...
+
+impl From<toml::ser::Error> for Error {
+    fn from(err: toml::ser::Error) -> Self {
+        let serde_err: SerdeError = err.into();
+        serde_err.into()
+    }
+}
+```
+
+We propagate these changes to `src-tauri/src/commands/preferences/write.rs`:
+
+```rust
+use toml::Table;
+use toml::Value;
+use toml::map::Entry;
+use specta::specta;
+use std::fs;
+use std::path::PathBuf;
+
+use crate::commands::errors::ZammResult;
+use crate::commands::preferences::models::{get_preferences_file, Preferences};
+
+fn deep_merge(base: &mut Value, other: &Value) {
+    match (base, other) {
+        (&mut Value::Table(ref mut base_map), Value::Table(other_map)) => {
+            for (k, v) in other_map {
+                match base_map.entry(k.clone()) {
+                    Entry::Vacant(entry) => {
+                        entry.insert(v.clone());
+                    }
+                    Entry::Occupied(mut entry) => {
+                        deep_merge(entry.get_mut(), v);
+                    }
+                }
+            }
+        }
+        (base, other) => {
+            *base = other.clone();
+        }
+    }
+}
+
+fn set_preferences_helper(
+    maybe_preferences_dir: &Option<PathBuf>,
+    preferences: &Preferences,
+) -> ZammResult<()> {
+    let preferences_dir = maybe_preferences_dir
+        .as_ref()
+        .ok_or(anyhow!("No preferences dir found"))?;
+    let preferences_path = get_preferences_file(Some(preferences_dir))?;
+    let mut existing_yaml: Value = if preferences_path.exists() {
+        let file_contents = fs::read_to_string(&preferences_path)?;
+        toml::from_str::<Table>(&file_contents)?.into()
+    } else {
+        toml::Table::new().into()
+    };
+
+    let override_toml = Table::try_from(preferences)?;
+    deep_merge(&mut existing_yaml, &override_toml.into());
+
+    let merged_prefs_str = toml::to_string(&existing_yaml)?;
+    fs::create_dir_all(preferences_dir)?;
+    fs::write(preferences_path, merged_prefs_str)?;
+    Ok(())
+}
+
+...
+```
+
+and rename all the settings files like `src-tauri/api/sample-settings/extra-settings/preferences.yaml` into ``src-tauri/api/sample-settings/extra-settings/preferences.toml` and update them:
+
+```toml
+sound_on=false
+unknown_key=123
+
+```
+
+Note that for files that are compared to outputs, such as `src-tauri/api/sample-settings/extra-settings/sound-on.toml`, their formatting should be made to be the same as the Rust output:
+
+```toml
+sound_on = true
+unknown_key = 123
+
+```
+
+We will update all the references in the tests to refer to these new TOML files instead of the old YAML ones. Note that for this test in `src-tauri/src/commands/preferences/write.rs`:
+
+```rust
+    #[test]
+    fn test_set_preferences_sound_on_with_extra_settings() {
+        check_set_preferences_sample(
+            "./api/sample-calls/set_preferences-sound-on.yaml",
+            Some("./api/sample-settings/extra-settings/preferences.toml"),
+            "./api/sample-settings/extra-settings/sound-on.toml",
+        );
+    }
+```
+
+only the settings files have their extensions renamed to TOML, because the sample calls are still in YAML.
+
+We see that our tests are still failing:
+
+```
+No preferences found at /root/zamm/src-tauri/api/sample-settings/sound-override/preferences.yaml
+thread 'commands::preferences::read::tests::test_get_preferences_with_sound_override' panicked at 'assertion failed: `(left == right)`
+  left: `"{\n  \"unceasing_animations\": null,\n  \"sound_on\": null\n}"`,
+ right: `"{\n  \"unceasing_animations\": null,\n  \"sound_on\": false\n}"`', src/commands/preferences/read.rs:62:9
+```
+
+Thanks to our good errors, we know exactly where to look. We edit `src-tauri/src/commands/preferences/models.rs` to change `PREFERENCES_FILENAME` to `preferences.toml` instead.

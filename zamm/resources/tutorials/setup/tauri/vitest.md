@@ -610,6 +610,20 @@ Error: Cannot subscribe to 'page' store on the server outside of a Svelte compon
 
 this is because of an [outstanding issue](https://github.com/sveltejs/kit/issues/1485) with a [minimal repro](https://github.com/amosjyng/sveltekit-vitest-minimal-repro). It was mentioned before with [a workaround](https://github.com/sveltejs/kit/issues/5525#issuecomment-1186390654).
 
+### Tests depending on onMount fail
+
+From [this question](https://stackoverflow.com/a/76615709), we can see that we need to edit `src-svelte/vitest.config.ts` to include
+
+```ts
+export default defineConfig({
+  ...
+  test: {
+    ...
+    alias: [{ find: /^svelte$/, replacement: 'svelte/internal' }],
+  },
+});
+```
+
 ## Minimal SvelteKit setup
 
 Create a new SvelteKit project with `yarn create svelte`. Then

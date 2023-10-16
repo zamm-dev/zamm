@@ -443,6 +443,8 @@ In addition to all the setup required for pre-commit hooks as described in [`pre
           path: webdriver/screenshots/*.png
 ```
 
+`actions-rs` allows for caching of installed binaries so that they're not compiled from scratch for every single workflow run.
+
 Alternatively, you can use [this](https://webdriver.io/docs/wdio-image-comparison-service/) and install
 
 ```bash
