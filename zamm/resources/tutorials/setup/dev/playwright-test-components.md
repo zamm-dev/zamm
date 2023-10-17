@@ -573,6 +573,93 @@ const components: ComponentTestConfig[] = [
 
 You may find some of these full-body tests to be flaky. In that case, specify a certain number of retries as explained [here](/zamm/resources/tutorials/setup/tauri/vitest.md).
 
+## Parallelization
+
+You can follow the instructions [here](https://vitest.dev/guide/test-context.html) to make tests concurrent. Note that this only affects tests within a single suite; separate suites of tests will still execute sequentially.
+
+For example, to refactor `src-svelte/src/routes/storybook.test.ts` to run tests in parallel:
+
+```ts
+import {
+  type Browser,
+  chromium,
+  type Page,
+  type BrowserContext,
+} from "@playwright/test";
+import { afterAll, beforeAll, afterEach, beforeEach, describe, test, type TestContext } from "vitest";
+...
+
+interface StorybookTestContext {
+  page: Page;
+}
+
+describe.concurrent("Storybook visual tests", () => {
+  let storybookProcess: ChildProcess | undefined;
+  let browser: Browser;
+  let browserContext: BrowserContext;
+
+  beforeAll(async () => {
+    browser = await chromium.launch({ headless: true });
+    browserContext = await browser.newContext();
+    storybookProcess = await ensureStorybookRunning();
+  });
+
+  afterAll(async () => {
+    await browserContext.close();
+    await browser.close();
+    await killStorybook(storybookProcess);
+  });
+
+  beforeEach<StorybookTestContext>(
+    async (context: TestContext & StorybookTestContext) => {
+      context.page = await browserContext.newPage();
+      context.expect.extend({ toMatchImageSnapshot });
+    },
+  );
+
+  afterEach<StorybookTestContext>(
+    async (context: TestContext & StorybookTestContext) => {
+      await context.page.close();
+    },
+  );
+
+  ...
+
+  for (const config of components) {
+    const storybookUrl = config.path.join("-");
+    const storybookPath = config.path.join("/");
+    for (const variant of config.variants) {
+      const variantConfig =
+        typeof variant === "string"
+          ? {
+              name: variant,
+            }
+          : variant;
+      const testName = variantConfig.name;
+      test(
+        `${testName} should render the same`,
+        async ({ expect, page }: TestContext & StorybookTestContext) => {
+          const variantPrefix = `--${variantConfig.name}`;
+
+          await page.goto(
+            `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
+          );
+
+          ...
+        },
+        {
+          retry: 4,
+          timeout: 10_000,
+        },
+      );
+    }
+  }
+});
+
+```
+
+Note that the nested `describe` has been stripped to allow full concurrency across all tests in this file.
+
 ## Errors
 
 ### Test timeout
@@ -594,6 +681,21 @@ then you can increase the timeout like so:
         test(`${testName} should render the same`, async () => {
           ...
         }, 40_000);
+
+...
+```
+
+If you're specifying other options such as `retry`, then add `timeout` like so:
+
+```ts
+...
+
+        test(`${testName} should render the same`, async () => {
+          ...
+        }, {
+          retry: 4,
+          timeout: 40_000,
+        });
 
 ...
 ```

@@ -459,3 +459,25 @@ rules:
   ...
   "@typescript-eslint/no-explicit-any": off
 ```
+
+## $lib refactoring
+
+When moving a file to `src/lib`, all paths can now be qualified under `$lib`. For example, `src/lib/Greet.svelte` can be imported as `$lib/Greet.svelte` instead of `../lib/Greet.svelte`.
+
+If you do this refactor, and get an error such as
+
+```
+4:34:31 AM [vite] Internal server error: Failed to resolve import "../preferences" from "src/routes/SidebarUI.svelte". Does the file exist?
+  Plugin: vite:import-analysis
+  File: /root/zamm/src-svelte/src/routes/SidebarUI.svelte:6:26
+  40 |  import IconDashboard from "~icons/material-symbols/monitor-heart";
+  41 |  import { playSound } from "$lib/bindings";
+  42 |  import { soundOn } from "../preferences";
+     |                           ^
+  43 |  const file = "src/routes/SidebarUI.svelte";
+  44 |
+      at formatError (file:///root/zamm/node_modules/vite/dist/node/chunks/dep-df561101.js:43993:46)
+      at TransformContext.error (file:///root/zamm/node_modules/vite/dist/node/chunks/dep-df561101.js:43989:19)                                        
+```
+
+that likely means that you haven't replaced the relative imports like `"../preferences"` here with a better qualified one such as `"$lib/preferences"`.

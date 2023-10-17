@@ -1461,3 +1461,27 @@ thread 'commands::preferences::read::tests::test_get_preferences_with_sound_over
 ```
 
 Thanks to our good errors, we know exactly where to look. We edit `src-tauri/src/commands/preferences/models.rs` to change `PREFERENCES_FILENAME` to `preferences.toml` instead.
+
+Finally, we edit `src-svelte/src/routes/AppLayout.svelte` to ensure that background animations start off disabled, but are enabled by default if the settings file is confirmed to not have it set. This ensure that if animations are disabled, then they won't move even during the latency between frontend startup and the reading of the preferences file by the backend:
+
+```ts
+  onMount(async () => {
+    ...
+    if (prefs.unceasing_animations === null) {
+      unceasingAnimations.set(true);
+    } else {
+      unceasingAnimations.set(prefs.unceasing_animations);
+    }
+  });
+```
+
+Then edit `.github/workflows/tests.yaml` to disable background animations for the end-to-end tests on CI:
+
+```yaml
+      - name: Try creating directories
+        run: |
+          ...
+          mkdir -p /home/runner/.config/dev.zamm/
+          echo "unceasing_animations = false" > /home/runner/.config/dev.zamm/preferences.toml
+          ...
+```
