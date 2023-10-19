@@ -671,14 +671,14 @@ To do all this, we edit `src-svelte/src/lib/SubInfoBox.svelte` as such:
   ...
 ```
 
-and `src-svelte/src/routes/settings/Settings.svelte` as such:
+and `src-svelte/src/routes/settings/Settings.svelte` as such (adding 0.5rem to the top margin as well to better separate the controls from the subheading):
 
 ```css
   .container {
     margin-top: 1rem;
   }
 
-  .container {
+  .container:first-of-type {
     margin-top: 0;
   }
 
@@ -687,7 +687,7 @@ and `src-svelte/src/routes/settings/Settings.svelte` as such:
     display: grid;
     grid-template-columns: 1fr;
     gap: 0.1rem;
-    margin: 0 calc(-1 * var(--side-padding)) 0.5rem;
+    margin: 0.5rem calc(-1 * var(--side-padding));
   }
 
   .container :global(h3) {

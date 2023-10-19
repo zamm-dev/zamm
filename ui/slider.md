@@ -491,3 +491,15 @@ But this now introduces the problem that the cursor doesn't change when the thum
 ```
 
 Now we have re-implemented the switch toggle in the slider.
+
+## Debugging
+
+We see that the switch toggle no longer releases the drag state during the mouse up event. After doing a quick Git bisect, we find out that this regression started with commit `6928575`, when we first implemented the slider. The interesting thing is that this commit didn't even touch the switch. And yet it is reproducible -- no bug on the previous commit `e5be997`, bug on `6928575`.
+
+We check out commit `e5be997`, and from here check out one compiling file at a time from `6928575` until the bug appears:
+
+- `src-svelte/src/lib/Slider.svelte` is fine
+- All screenshot files in `src-svelte/screenshots/baseline/` are of course fine
+- `src-svelte/src/lib/Slider.stories.ts` causes a failure
+
+Interestingly, taking out all the component code from `src-svelte/src/lib/Slider.svelte`, leaving it a completely blank file, still causes a failure. Removing all exported stories fixes the problem. Leaving even a single one in, any one at all, restores the problem. It turns out even changing the title to `"Non-reusable/Switch"`, for the switch, works. Or, changing the title of the slider to `"Non-reusable/Slider"` also works. Or, both. It appears that this is only a Storybook cache issue, as the issue does not appear on the actual app itself.
