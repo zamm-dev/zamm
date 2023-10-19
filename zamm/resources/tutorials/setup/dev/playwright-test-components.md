@@ -658,7 +658,21 @@ describe.concurrent("Storybook visual tests", () => {
 
 ```
 
-Note that the nested `describe` has been stripped to allow full concurrency across all tests in this file.
+Note that the nested `describe` has been stripped to allow full concurrency across all tests in this file. Because we have removed that context from which test is being run, we should add the information back into each test:
+
+```ts
+      const testName = `${storybookPath}/${variantConfig.name}.png`;
+```
+
+However, this means that we should also change `matchOptions` to use `variantConfig.name` instead of `testName`, or else none of the existing screenshot files will match because new ones will be created instead at paths like `src-svelte/screenshots/baseline/screens/dashboard/api-keys-display/screens/dashboard/api-keys-display/...`:
+
+```ts
+          const matchOptions = {
+            ...baseMatchOptions,
+            diffDirection,
+            customSnapshotIdentifier: `${storybookPath}/${variantConfig.name}`,
+          };
+```
 
 ## Errors
 

@@ -390,3 +390,104 @@ We edit `src-svelte/src/lib/Slider.svelte` accordingly to add this in:
 ```
 
 All the tests still pass.
+
+## Mimicking the switch toggle
+
+Upon further consideration, we would like to further mimic the switch toggle for consistency when the controls are placed together on the settings page. We therefore edit `src-svelte/src/lib/Slider.svelte` as such:
+
+```css
+  input {
+    ...
+    margin-right: calc(-0.5 * var(--toggle-height) * sin(var(--skew)));
+    ...
+  }
+```
+
+This gives it the same right-side offset as the switch. This becomes visible on the settings page when many controls are placed next to each other.
+
+We also change the thumb to be exactly the same size as the switch toggle:
+
+```css
+  .container {
+    --label-width: 3rem;
+    --label-height: 1.5rem;
+    --thumb-height: calc(1.2 * var(--label-height));
+    --thumb-width: calc(1.05 * var(--label-width));
+  }
+```
+
+and change the track to be exactly the same height as the switch groove:
+
+```css
+  .container {
+    --track-height: calc(1 * var(--label-height));
+  }
+```
+
+This makes us notice that in Firefox, there's an extra border around the toggle. We remove it as such:
+
+```css
+  input::-moz-range-thumb {
+    border: none;
+  }
+```
+
+The thickness of the thumb now also makes the `ew-resize` cursor inappropriate. We change it to `grab`:
+
+```css
+  input::-moz-range-thumb {
+    cursor: grab;
+  }
+
+  input::-webkit-slider-thumb {
+    cursor: grab;
+  }
+```
+
+But this now introduces the problem that the cursor doesn't change when the thumb is being grabbed. From the answers to [this question](https://stackoverflow.com/questions/4082195/changing-the-cursor-on-a-hold-down), it appears that we must use JavaScript to change the cursor:
+
+```svelte
+<script lang="ts">
+  ...
+  let grabbing: boolean = false;
+
+  const startGrabbing = () => {
+    grabbing = true;
+  };
+
+  const stopGrabbing = () => {
+    grabbing = false;
+  };
+
+  ...
+</script>
+
+<div class="container">
+  ...
+  <input
+    ...
+    class={grabbing ? "grabbing" : ""}
+    ...
+    on:mousedown={startGrabbing}
+    on:mouseup={stopGrabbing}
+  />
+</div>
+
+<style>
+  ...
+
+  input.grabbing::-moz-range-thumb {
+    cursor: grabbing;
+  }
+
+  ...
+
+  input.grabbing::-webkit-slider-thumb {
+    cursor: grabbing;
+  }
+
+  ...
+</style>
+```
+
+Now we have re-implemented the switch toggle in the slider.

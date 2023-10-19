@@ -436,3 +436,296 @@ and edit the `BackgroundUI` to change the duration reactively:
 
 ...
 ```
+
+## Adding sliders
+
+We add these dummy preferences to `src-svelte/src/lib/preferences.ts`:
+
+```ts
+export const animationsOn = writable(true);
+export const animationSpeed = writable(4);
+export const volume = writable(100);
+```
+
+We want to expose these new preferences in the settings page, but first we create slider components styled specifically for the settings page, by creating `src-svelte/src/routes/settings/SettingsSlider.svelte`:
+
+```svelte
+<script lang="ts">
+  import Slider from "$lib/Slider.svelte";
+
+  export let label: string;
+  export let min = 0;
+  export let max: number;
+  export let step: number | undefined = undefined;
+  export let value: number = min;
+</script>
+
+<div class="settings-slider container">
+  <Slider {label} {min} {max} {step} bind:value />
+</div>
+
+<style>
+  .container {
+    padding: calc(0.5 * var(--side-padding)) var(--side-padding);
+    border-radius: var(--corner-roundness);
+    transition: background 0.5s;
+  }
+
+  .container:hover {
+    background: hsla(60, 100%, 50%, 0.2);
+  }
+</style>
+
+```
+
+This is of course copied straight from `src-svelte/src/routes/settings/SettingsSwitch.svelte`.
+
+We now add the new settings to `src-svelte/src/routes/settings/Settings.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  import SettingsSlider from "./SettingsSlider.svelte";
+  import {
+    animationsOn,
+    animationSpeed,
+    ...
+    volume,
+    ...
+  } from "$lib/preferences";
+  ...
+</script>
+
+<InfoBox title="Settings">
+  <h3>Animation</h3>
+  <div class="container">
+    <SettingsSwitch
+      label="Enabled"
+      bind:toggledOn={$animationsOn}
+    />
+    <SettingsSwitch
+      label="Background"
+      bind:toggledOn={$unceasingAnimations}
+      onToggle={onUnceasingAnimationsToggle}
+    />
+    <SettingsSlider label="General speed" min={0} max={4} bind:value={$animationSpeed} />
+  </div>
+
+  <h3>Sound</h3>
+  <div class="container">
+    <SettingsSwitch
+      label="Enabled"
+      bind:toggledOn={$soundOn}
+      onToggle={onSoundToggle}
+    />
+    <SettingsSlider label="Volume" min={0} max={200} bind:value={$volume} />
+  </div>
+</InfoBox>
+
+...
+```
+
+We notice that the slider takes up less vertical space than the switch, causing the slider to not be aligned vertically with the switch. This means we have to edit `src-svelte/src/routes/settings/SettingsSlider.svelte` to center the slider vertically:
+
+```css
+  .container {
+    --label-height: 1.5em;
+    --toggle-height: calc(1.2 * var(--label-height));
+    min-height: var(--toggle-height);
+    display: flex;
+    align-items: center;
+  }
+```
+
+and then edit `src-svelte/src/lib/Slider.svelte` to make sure that the resulting slider flex box still expands to fill 100% of its parent width:
+
+```css
+  .container {
+    width: 100%;
+  }
+```
+
+The settings page is definitely getting a bit crowded now, but we don't want to sacrifice too much information density if it can be helped. The settings page is now starting to mimic the crowded 1950’s control panel aesthetic. The only problem is that the Nasalization font for the "Sounds" subcategory looks off, so we edit `src-svelte/src/routes/styles.css`, making sure to keep `h3` and `th` consistent still:
+
+```css
+h3, th {
+  font-family: var(--font-header);
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 400;
+  filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.7));
+}
+
+h3 {
+  margin-top: 1rem;
+}
+```
+
+Now that we have it looking the way we want, we have to make sure the tests pass as well. Because we have now separated the settings into different categories, where the toggle for enabling a setting is now called "Enabled" rather than "Sounds", we have to update `src-svelte/src/routes/settings/Settings.test.ts` accordingly. We need an accessible way of finding the sound enablement toggle when there are actually now two such toggles with the name "Enabled", so we encapsulate the categories into a `<section>` tag that automatically has the [`region` ARIA role](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/Roles/region_role). We create `src-svelte/src/lib/SubInfoBox.svelte` as such:
+
+```svelte
+<script lang="ts">
+  import getComponentId from "./label-id";
+
+  export let subheading: string;
+  const subinfoboxId = getComponentId("subinfobox");
+</script>
+
+<section class="sub-info-box" aria-labelledby={subinfoboxId}>
+  <h3 id={subinfoboxId}>{subheading}</h3>
+  <slot />
+</section>
+
+```
+
+and add the same accessibility feature to `src-svelte/src/lib/InfoBox.svelte`:
+
+```svelte
+<script lang="ts">
+  import getComponentId from "./label-id";
+
+  export let title = "";
+  const infoboxId = getComponentId("infobox");
+</script>
+
+<section class="container" aria-labelledby={infoboxId}>
+  ...
+  <div class="border-container">
+    <div class="border-box"></div>
+    <div class="info-box">
+      <h2 id={infoboxId}>{title}</h2>
+      <slot />
+    </div>
+  </div>
+</section>
+```
+
+We edit `src-svelte/src/routes/settings/Settings.svelte` to make use of this new `SubInfoBox`, which still needs to be wrapped in a `container` div to make use of the component-specific CSS:
+
+```svelte
+<script lang="ts">
+  ...
+  import SubInfoBox from "$lib/SubInfoBox.svelte";
+  ...
+</script>
+
+<InfoBox title="Settings">
+  <div class="container">
+    <SubInfoBox subheading="Animation">
+      <SettingsSwitch
+        label="Enabled"
+        bind:toggledOn={$animationsOn}
+      />
+      <SettingsSwitch
+        label="Background"
+        bind:toggledOn={$unceasingAnimations}
+        onToggle={onUnceasingAnimationsToggle}
+      />
+      <SettingsSlider label="General speed" min={0} max={4} bind:value={$animationSpeed} />
+    </SubInfoBox>
+  </div>
+
+  <div class="container">
+    <SubInfoBox subheading="Sound">
+      <SettingsSwitch
+        label="Enabled"
+        bind:toggledOn={$soundOn}
+        onToggle={onSoundToggle}
+      />
+      <SettingsSlider label="Volume" min={0} max={200} bind:value={$volume} />
+    </SubInfoBox>
+  </div>
+</InfoBox>
+
+...
+```
+
+We now finally get to edit `src-svelte/src/routes/settings/Settings.test.ts`. As described [here](https://testing-library.com/docs/queries/bylabeltext), for nested ARIA queries, don't start the call with `screen.`.
+
+```ts
+...
+import { act, getByLabelText, render, screen } from "@testing-library/svelte";
+...
+
+  test("can toggle sound on and off while saving setting", async () => {
+    ...
+    const soundRegion = screen.getByRole("region", { name: "Sound" });
+    const soundSwitch = getByLabelText(soundRegion, "Enabled");
+    ...
+  });
+```
+
+Now, looking at the component screenshot tests, we realize the change to `SubInfoBox` has messed up the h3 placement. Requirements:
+
+- The h3 subheading should be flush with the rest of the content
+- When the viewport is wide enough, the content should be visible in two columns, but the subheading should not be part of those columns
+- Every subheading after the first one should have a 1 rem spacing from the previous element
+
+To do all this, we edit `src-svelte/src/lib/SubInfoBox.svelte` as such:
+
+```svelte
+  ...
+  <div class="content">
+    <slot />
+  </div>
+  ...
+```
+
+and `src-svelte/src/routes/settings/Settings.svelte` as such:
+
+```css
+  .container {
+    margin-top: 1rem;
+  }
+
+  .container {
+    margin-top: 0;
+  }
+
+  .container :global(.sub-info-box .content) {
+    --side-padding: 0.8rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+    margin: 0 calc(-1 * var(--side-padding)) 0.5rem;
+  }
+
+  .container :global(h3) {
+    margin-left: var(--side-padding);
+  }
+
+  /* this takes sidebar width into account */
+  @media (min-width: 52rem) {
+    .container :global(.sub-info-box .content) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+```
+
+and we remove this from `src-svelte/src/routes/styles.css`:
+
+```css
+...
+h3 {
+  margin-top: 1rem;
+}
+...
+```
+
+We now update the screenshot `src-svelte/screenshots/baseline/screens/dashboard/metadata/metadata.png` because our changes to the h3 and th displays also affected the metadata info box, and we update the screenshot `src-svelte/screenshots/baseline/screens/settings/tablet.png` to reflect our extensive changes to the settings page. However, we notice that for other screen sizes such as the large phone screen, portions of the Storybook UI are caught in view. We fix this by editing `src-svelte/src/routes/storybook.test.ts` to click the close button on the bottom Storybook panel:
+
+```ts
+          await page.goto(
+            `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
+          );
+          await page.locator("button[title='Hide addons [A]']").click();
+```
+
+After running the tests one more time, we can now add the fixed settings screen screenshots. However, we must now also add the following screenshots, because the increased height of the frame has also changed these screenshots:
+
+- `src-svelte/screenshots/baseline/background/static.png`
+- `src-svelte/screenshots/baseline/layout/app/static.png`
+- `src-svelte/screenshots/baseline/layout/sidebar/dashboard-selected.png`
+- `src-svelte/screenshots/baseline/layout/sidebar/settings-selected.png`
+
+We have finally finished adding sliders to the settings page.
