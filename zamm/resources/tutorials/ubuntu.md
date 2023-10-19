@@ -26,3 +26,7 @@ Then run
 ```bash
 $ startx
 ```
+
+## Flashing another distro to USB
+
+If you use balenaEtcher and run into the problem `No polkit authentication agent found`, then follow the steps [here](https://askubuntu.com/a/1195823).
