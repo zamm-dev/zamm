@@ -90,6 +90,14 @@ fn play_sound_async(sound: Sound) -> ZammResult<()> {
 
 In fact, here we don't even need the `ZammResult` anymore in the public function.
 
+## Controlling volume
+
+Call `amplify` on the sound source, like so:
+
+```rust
+let source = Decoder::new(cursor)?.amplify(volume);
+```
+
 ## Docker
 
 If you're using this library with Docker, remember to update your Docker image to include the installation of `libasound2-dev`.

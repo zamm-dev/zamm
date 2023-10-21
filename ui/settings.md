@@ -729,3 +729,216 @@ After running the tests one more time, we can now add the fixed settings screen 
 - `src-svelte/screenshots/baseline/layout/sidebar/settings-selected.png`
 
 We have finally finished adding sliders to the settings page.
+
+### Volume control
+
+We implement the functionality on the backend first by editing `src-tauri/src/commands/sounds.rs`:
+
+```rust
+#[tauri::command]
+#[specta]
+pub fn play_sound(..., volume: f32) {
+    thread::spawn(move || {
+        if let Err(e) = play_sound_async(..., volume) {
+            ...
+        }
+    });
+}
+
+fn play_sound_async(..., volume: f32) -> ZammResult<()> {
+    ...
+    let source = Decoder::new(cursor)?.amplify(volume);
+    ...
+}
+
+#[cfg(test)]
+mod tests {
+    ...
+
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    struct PlaySoundRequest {
+        ...
+        volume: f32,
+    }
+
+    ...
+
+    fn check_play_sound_sample(file_prefix: &str) {
+        ...
+        #[allow(clippy::let_unit_value)]
+        let actual_result = play_sound(..., request.volume);
+        ...
+    }
+
+    ...
+}
+```
+
+We then also edit the YAML files to play sound at different volumes. For example, `src-tauri/api/sample-calls/play_sound-whoosh.yaml` changes to:
+
+```yaml
+request:
+  - play_sound
+  - >
+    {
+      "sound": "Whoosh",
+      "volume": 0.5
+    }
+response: "null"
+
+```
+
+Because this is an internal API, we don't have to worry about backwards compatibility.
+
+`src-svelte/src/lib/bindings.ts` gets automatically updated thanks to Specta:
+
+
+```ts
+...
+
+export function playSound(..., volume: number) {
+    return invoke()<null>("play_sound", { ...,volume })
+}
+
+...
+```
+
+Because sound playing now involves more complicated logic (both check if sound is enabled, and if so, its volume), we refactor this logic out into `src-svelte/src/lib/sound.ts`:
+
+```ts
+import { get } from "svelte/store";
+import { playSound, type Sound } from "./bindings";
+import { soundOn, volume } from "./preferences";
+
+export function playSoundEffect(sound: Sound) {
+  if (get(soundOn)) {
+    const soundEffectVolume = get(volume) / 100.0;
+    playSound(sound, soundEffectVolume);
+    if (window._testRecordSoundPlayed !== undefined) {
+      window._testRecordSoundPlayed();
+    }
+  }
+}
+
+```
+
+and edit the callers at `src-svelte/src/routes/SidebarUI.svelte`:
+
+```ts
+  import { playSoundEffect } from "$lib/sound";
+
+  ...
+
+  function playWhooshSound() {
+    playSoundEffect("Whoosh");
+  }
+
+  ...
+```
+
+and `src-svelte/src/lib/Switch.svelte`:
+
+```ts
+  import { playSoundEffect } from "./sound";
+  ...
+
+  function playClick() {
+    playSoundEffect("Switch");
+  }
+
+  ...
+```
+
+Because we changed the volume in the whoosh sample call from the default, we edit `src-svelte/src/routes/SidebarUI.test.ts` accordingly to make sure that we're still making the right call as expected:
+
+```ts
+import { soundOn, volume } from "$lib/preferences";
+
+...
+
+  test("plays whoosh sound with right volume during page path change", async () => {
+    volume.update(() => 50);
+    await act(() => userEvent.click(settingsLink));
+    expect(spy).toHaveBeenLastCalledWith(...whooshRequest);
+  });
+
+...
+```
+
+Now we notice that we get the old error `TypeError: this.customTesters is not iterable` (mentioned [here](/zamm/resources/tutorials/setup/dev/playwright-test-components.md)) from `src-svelte/src/lib/Switch.playwright.test.ts`. It turns out that the error message is a red herring, and just an indication that the test is failing but the matcher is also failing to produce output in the way that Vitest expects.
+
+We want to try print debugging, but we find that no console output is being shown. We see [this answer](https://stackoverflow.com/a/75823426) for a solution, and edit the test file accordingly:
+
+```ts
+describe("Switch drag test", () => {
+  ...
+
+  beforeAll(async () => {
+    ...
+
+    page.on('console', async (msg) => {
+      const msgArgs = msg.args();
+      const logValues = await Promise.all(msgArgs.map(async arg => await arg.jsonValue()));
+      console.log(...logValues);
+    });
+  });
+
+  ...
+});
+```
+
+Now we see that somehow, `window._testRecordSoundPlayed` is no longer being defined inside the Playwright tests in this file. We commit the results first, and then try to see when exactly the tests break here.
+
+We start by checking out the previous commit `3b096b6`, and see that `yarn test src/lib/Switch.playwright.test.ts` does pass successfully. We then check out our latest commit again, running
+
+```bash
+$ yarn vitest src/lib/Switch.playwright.test.ts -t "at end"
+```
+
+to repeated run one single indicative test as soon as we make changes. We try
+
+```bash
+$ git checkout 3b096b6 -- src/lib/Switch.svelte
+```
+
+and, after manually adding a number to the second argument of `playSound`, find that the test now passes. Interestingly, `console.log(window._testRecordSoundPlayed);` still outputs `undefined`, but the test does finally fail when the lines
+
+```ts
+    if (window._testRecordSoundPlayed !== undefined) {
+      window._testRecordSoundPlayed();
+    }
+```
+
+are removed. Console logging something else shows that console logging is indeed working as expected. `console.log(typeof window._testRecordSoundPlayed);` finally shows `function` as expected. Testing further in a browser, it turns out that `console.log((() => {console.log("asdf")}))` *returns* `undefined`. but actually logs the message. We edit `src-svelte/src/lib/Switch.playwright.test.ts` to use the first answer instead:
+
+```ts
+    page.on("console", (msg) => {
+      console.log(msg);
+    });
+```
+
+Given that changing the call in this one file fails the test, clearly the problem somehow lies in calling the function in `sound.ts`. We edit `src-svelte/src/lib/sound.ts` to always call the function if it exists, and it still never gets called.
+
+We finally realize that the test actually fails now because it's being called *twice*. We were somehow chasing a ghost, debugging a problem caused by our own debugging.
+
+We finally note that the debug logging pollutes the output even when tests succeed, so we add a final guard for it:
+
+```ts
+const DEBUG_LOGGING = false;
+
+describe("Switch drag test", () => {
+  ...
+
+  beforeAll(async () => {
+    ...
+
+    if (DEBUG_LOGGING) {
+      page.on("console", (msg) => {
+        console.log(msg);
+      });
+    }
+  });
+
+  ...
+});
+```
