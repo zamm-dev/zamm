@@ -942,3 +942,303 @@ describe("Switch drag test", () => {
   ...
 });
 ```
+
+Now we make this setting persistent by editing `src-tauri/src/commands/preferences/models.rs`:
+
+```rust
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Type)]
+pub struct Preferences {
+    ...
+    volume: Option<f32>,
+}
+```
+
+Note that we have removed `Eq` from `Preferences` because `f32` doesn't implement it. We have to edit `src-tauri/src/commands/preferences/write.rs` as well for this to compile. As expected, Tauri tests now fail. We now edit both get_* and set_* preference sample calls, such as `src-tauri/api/sample-calls/set_preferences-sound-on.yaml`:
+
+```yaml
+request:
+  - set_preferences
+  - >
+    {
+      "preferences": {
+        "unceasing_animations": null,
+        "sound_on": true,
+        "volume": null
+      }
+    }
+response: "null"
+
+```
+
+Now the Tauri tests pass, but the Svelte tests fail, as expected. We edit the frontend as well at `src-svelte/src/lib/preferences.ts`:
+
+```ts
+export const NullPreferences: Preferences = {
+  ...
+  volume: null,
+};
+```
+
+Now the tests pass. Ideally, we should create a sample preferences file to check against. We briefly consider deferring this until the creation of these tests can be automated, but notice that the volume slider settings update API call is never actually triggered. Because this will involve a whole non-trivial change that involves piping the callback function from the Settings page parent to the child slider, we will create a new sample file and test it fully anyways. We create `src-tauri/api/sample-calls/set_preferences-volume-partial.yaml`:
+
+```yaml
+request:
+  - set_preferences
+  - >
+    {
+      "preferences": {
+        "unceasing_animations": null,
+        "sound_on": null,
+        "volume": 0.5
+      }
+    }
+response: "null"
+
+```
+
+and the expected output `src-tauri/api/sample-settings/volume-override/preferences.toml`:
+
+```toml
+volume = 0.5
+
+```
+
+and edit `src-tauri/src/commands/preferences/write.rs` to add this test:
+
+```rust
+    #[test]
+    fn test_set_preferences_volume_partial() {
+        check_set_preferences_sample(
+            "./api/sample-calls/set_preferences-volume-partial.yaml",
+            None,
+            "./api/sample-settings/volume-override/preferences.toml",
+        );
+    }
+```
+
+We check that the Tauri tests pass, as expected. We then edit `src-svelte/src/routes/settings/Settings.test.ts` to add a reference to this sample call:
+
+```ts
+...
+import { fireEvent } from '@testing-library/dom';
+...
+import { soundOn, volume } from "$lib/preferences";
+...
+
+describe("Switch", () => {
+  ...
+  let setVolumePartialCall: ParsedCall;
+
+  beforeAll(() => {
+    ...
+    setVolumePartialCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/set_preferences-volume-partial.yaml",
+      true,
+    );
+  });
+
+  ...
+
+  test("can persist changes to volume slider", async () => {
+    render(Settings, {});
+    expect(get(volume)).toBe(100);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    const soundRegion = screen.getByRole("region", { name: "Sound" });
+    const volumeSlider = getByLabelText(soundRegion, "Volume");
+    playback.addCalls(setVolumePartialCall);
+    await fireEvent.change(volumeSlider, { target: { value: 50 } });
+    expect(get(volume)).toBe(50);
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+    expect(playback.unmatchedCalls.length).toBe(0);
+  });
+});
+```
+
+Note that because there's no explicit method for dragging the input range slider in `testing-library` just yet, we are using [this workaround](https://github.com/testing-library/user-event/issues/871#issuecomment-1059317998).
+
+As expected, the test fails because the functionality is still unimplemented. We edit `src-svelte/src/lib/Slider.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  export let onUpdate: (newValue: number) => void = () => undefined;
+  ...
+
+  function onChange(e: Event) {
+    const target = e.target as HTMLInputElement;
+    onUpdate(parseFloat(target.value));
+  }
+
+  ...
+</script>
+
+<div class="container">
+  ...
+  <input
+    ...
+    on:change={onChange}
+  />
+</div>
+```
+
+and `src-svelte/src/routes/settings/SettingsSlider.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  export let onUpdate: (newValue: number) => void = () => undefined;
+</script>
+
+<div class="settings-slider container">
+  <Slider ... {onUpdate} ... />
+</div>
+```
+
+and `src-svelte/src/routes/settings/Settings.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+
+  const onVolumeUpdate = (newValue: number) => {
+    setPreferences({
+      ...NullPreferences,
+      volume: newValue,
+    });
+  };
+</script>
+
+...
+
+      <SettingsSlider label="Volume" min={0} max={200} onUpdate={onVolumeUpdate} bind:value={$volume} />
+```
+
+We see that the tests still fail, albeit for a different reason now because no matching call has been found. We add some more logging to `src-svelte/src/lib/sample-call-testing.ts` to shed light on the problem:
+
+```ts
+    assert(matchingCallIndex !== -1, `No matching call found for ${jsonArgs}.\nCandidates are ${this.unmatchedCalls.map((call) => JSON.stringify(call.request)).join("\n")}`);
+```
+
+Now we see that the problem is:
+
+```
+AssertionError: No matching call found for ["set_preferences",{"preferences":{"unceasing_animations":null,"sound_on":null,"volume":50}}].
+Candidates are ["set_preferences",{"preferences":{"unceasing_animations":null,"sound_on":null,"volume":0.5}}]
+```
+
+We see that the problem is that we've been setting the volume setting as a percentage on the frontend, but playing it as a float on the backend. We change them to be consistent at `src-svelte/src/lib/preferences.ts`:
+
+```ts
+export const volume = writable(1);
+```
+
+and `src-svelte/src/routes/settings/Settings.svelte`:
+
+```svelte
+      <SettingsSlider label="Volume" min={0} max={2} onUpdate={onVolumeUpdate} bind:value={$volume} />
+```
+
+and `src-svelte/src/routes/settings/Settings.test.ts`:
+
+```ts
+  test("can persist changes to volume slider", async () => {
+    ...
+    expect(get(volume)).toBe(1);
+    ...
+    await fireEvent.change(volumeSlider, { target: { value: 0.5 } });
+    expect(get(volume)).toBe(0.5);
+    ...
+  });
+```
+
+and `src-svelte/src/lib/sound.ts`:
+
+```ts
+    const soundEffectVolume = get(volume);
+```
+
+and `src-svelte/src/routes/SidebarUI.test.ts`:
+
+```ts
+  test("plays whoosh sound with right volume during page path change", async () => {
+    volume.update(() => 0.5);
+    ...
+  });
+```
+
+Now all the tests finally pass. However, we notice that the sound is still not set on app start. We add a `src-tauri/api/sample-calls/get_preferences-volume-override.yaml` to ensure that the sound file is indeed getting correctly parsed by the backend, and edit `src-tauri/src/commands/preferences/read.rs` to reference it:
+
+```rust
+    #[test]
+    fn test_get_preferences_with_volume_override() {
+        check_get_preferences_sample(
+            "./api/sample-calls/get_preferences-volume-override.yaml",
+            "./api/sample-settings/volume-override",
+        );
+    }
+```
+
+The tests still pass. We realize the problem is because we never actually update the setting after getting the latest value on app startup. We edit `src-svelte/src/routes/AppLayout.svelte`:
+
+```ts
+  import { soundOn, unceasingAnimations, volume } from "$lib/preferences";
+
+  onMount(async () => {
+    ...
+
+    if (prefs.volume !== null) {
+      volume.set(prefs.volume);
+    }
+
+    ...
+  });
+```
+
+We double-check on `src-svelte/src/routes/AppLayout.test.ts`:
+
+```ts
+  ...
+  import { soundOn, volume } from "$lib/preferences";
+  ...
+
+  test("will set volume if volume preference overridden", async () => {
+    expect(get(volume)).toBe(1);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    const getPreferencesCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/get_preferences-volume-override.yaml",
+      false,
+    );
+    playback.addCalls(getPreferencesCall);
+
+    render(AppLayout, {});
+    await tickFor(3);
+    expect(get(volume)).toBe(0.5);
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+  });
+```
+
+Now the sound gets persisted, but the slider looks off in the final built app. The progress bar vertical height is proportional to the progress.
+
+## Sidebar mock navigation
+
+We notice that the mocked sidebar navigation no longer works in Storybook due to the console error
+
+```
+TypeError: invoke() is not a function
+```
+
+We edit `src-svelte/src/lib/sound.ts` to make sure that things are ok even if the backend is not mocked:
+
+```ts
+export function playSoundEffect(sound: Sound) {
+  ...
+    try {
+      playSound(sound, soundEffectVolume);
+    } catch (e) {
+      console.error(`Problem playing ${sound}: ${e}`);
+    }
+  ...
+}
+```

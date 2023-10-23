@@ -81,7 +81,74 @@ Now on your local machine:
 ssh -L 59000:localhost:5901 -C -N -l root hetzner
 ```
 
-and connect to `localhost:59000` with your local VNC client. On Ubuntu, this would be Vinagre.
+and connect to `localhost:59000` with your local VNC client. On Ubuntu, this would be Vinagre. On KDE, this would be KRDC.
+
+### Starting X server at startup
+
+Create `/etc/systemd/system/vncserver@.service`:
+
+```service
+[Unit]
+Description=Start TightVNC server at startup
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=root
+Group=root
+WorkingDirectory=/root
+
+PIDFile=/root/.vnc/%H:%i.pid
+ExecStartPre=-/usr/bin/vncserver -kill :%i > /dev/null 2>&1
+ExecStart=/usr/bin/vncserver -depth 24 -geometry 1600x800 -localhost :%i
+ExecStop=/usr/bin/vncserver -kill :%i
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Then
+
+```bash
+$ sudo systemctl daemon-reload
+$ sudo systemctl enable vncserver@1.service
+Created symlink /etc/systemd/system/multi-user.target.wants/vncserver@1.service → /etc/systemd/system/vncserver@.service.
+```
+
+Start the service (kill the previous process if it's running):
+
+```bash
+$ sudo systemctl start vncserver@1
+```
+
+Check that it's running:
+
+```bash
+$ sudo systemctl status vncserver@1
+
+● vncserver@1.service - Start TightVNC server at startup
+     Loaded: loaded (/etc/systemd/system/vncserver@.service; enabled; vendor preset: enabled)
+     Active: active (running) since Sun 2023-10-22 23:36:21 UTC; 6s ago
+    Process: 60528 ExecStartPre=/usr/bin/vncserver -kill :1 > /dev/null 2>&1 (code=exited, status=0/SUCCESS)
+    Process: 60535 ExecStart=/usr/bin/vncserver -depth 24 -geometry 1600x800 -localhost :1 (code=exited, status=0/SUCCESS)
+   Main PID: 60546 (Xtightvnc)
+      Tasks: 99 (limit: 9242)
+     Memory: 255.8M
+        CPU: 2.684s
+     CGroup: /system.slice/system-vncserver.slice/vncserver@1.service
+             ├─60546 Xtightvnc :1 -desktop X -auth /root/.Xauthority -geometry 1600x800 -depth 24 -rfbwait 120000 -rfbauth /root/.vnc/passwd -rfbport 5901 -fp /usr/share/fonts/X11/misc/,/usr/share>
+             ├─60568 xfce4-session
+```
+
+You may want to add this to your shell init script, along with
+
+```bash
+export DISPLAY=:1.0
+```
+
+as described in [`tauri.md`](/zam/zamm/resources/tutorials/setup/dev/tauri.md).
+
+### Errors
 
 If you get an error such as this when starting Firefox:
 

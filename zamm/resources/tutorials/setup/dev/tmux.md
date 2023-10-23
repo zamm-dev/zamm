@@ -85,6 +85,14 @@ $ xclip -o
 <pasted text here>
 ```
 
+## Keeping panes open after commands exit
+
+To keep panes open after their commands exit (e.g. to easily respawn those commands, or to see what caused them to die), there are several options as noted [here](https://unix.stackexchange.com/questions/17116/prevent-pane-window-from-closing-when-command-completes-tmux). We'll choose to add this to `~/.tmux.conf`, as it allows us to quickly respawn panes with the commands they were created with:
+
+```
+set-option -g remain-on-exit on
+```
+
 ## Shortcuts
 
 To make it easy to restart a pane, for example, edit `~/.tmux.conf`:

@@ -116,3 +116,62 @@ then you should also add the corresponding clean command:
  clean:
        rm -rf build node_modules ../node_modules forks/neodrag/packages/svelte/dist/dist
 ```
+
+## yarn linking
+
+To automatically update the installed version of the package whenever you edit it for development purposes, you can try using `yarn link` as described [here](https://stackoverflow.com/a/41879331). Enter the directory for the dependency:
+
+```bash
+$ cd forks/neodrag/packages/svelte
+$ yarn link                
+yarn link v1.22.19
+success Registered "@neodrag/svelte".
+info You can now run `yarn link "@neodrag/svelte"` in the projects where you want to use this package and it will be used instead.
+Done in 0.05s.
+```
+
+Then go back to the original directory and
+
+```bash
+$ yarn link @neodrag/svelte
+yarn link v1.22.19
+success Using linked package for "@neodrag/svelte".
+Done in 0.05s.
+```
+
+However, you may run into this problem:
+
+```
+Failed to load url /forks/neodrag/packages/svelte/dist/index.js (resolved id: /root/zamm/src-svelte/forks/neodrag/packages/svelte/dist/index.js) in /root/zamm/src-svelte/src/lib/Switch.svelte. Does the file exist?
+Failed to load url /forks/neodrag/packages/svelte/dist/index.js (resolved id: /root/zamm/src-svelte/forks/neodrag/packages/svelte/dist/index.js) in /root/zamm/src-svelte/src/lib/Switch.svelte. Does the file exist?
+The request url "/root/zamm/src-svelte/forks/neodrag/packages/svelte/dist/index.js" is outside of Vite serving allow list.
+
+- /root/zamm/src-svelte/src/lib
+- /root/zamm/src-svelte/src/routes
+- /root/zamm/src-svelte/.svelte-kit
+- /root/zamm/src-svelte/src
+- /root/zamm/src-svelte/node_modules
+- /root/zamm/node_modules
+- /root/zamm/src-svelte/.storybook
+
+Refer to docs https://vitejs.dev/config/server-options.html#server-fs-allow for configurations and more details.
+```
+
+This is misleading because the file actually exists:
+
+```bash
+$ ls /root/zamm/src-svelte/forks/neodrag/packages/svelte/dist/index.js                      
+/root/zamm/src-svelte/forks/neodrag/packages/svelte/dist/index.js
+```
+
+You would have to change the allow list, as described in one of the solutions [here](https://stackoverflow.com/questions/74902697/error-the-request-url-is-outside-of-vite-serving-allow-list-after-git-init).
+
+To undo, do
+
+```bash
+$ yarn unlink @neodrag/svelte
+yarn unlink v1.22.19
+success Removed linked package "@neodrag/svelte".
+info You will need to run `yarn install --force` to re-install the package that was linked.
+Done in 0.07s.
+```

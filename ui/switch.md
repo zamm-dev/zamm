@@ -1222,3 +1222,63 @@ Make it obvious that the label can be clicked as well:
     cursor: pointer;
   }
 ```
+
+### From slider
+
+After implementing the slider, we transfer over a few ideas from the slider. We first make the switch logic continue (e.g. to reset the drag state) no matter if the callback fails or not:
+
+```ts
+  ...
+
+  function tryToggle(toggledOn: boolean) {
+    try {
+      onToggle(toggledOn);
+    } catch (e) {
+      console.error(`Error in callback: ${e}`);
+    }
+  }
+
+  ...
+
+    onDragEnd: (data: DragEventData) => {
+      ...
+          tryToggle(toggledOn);
+      ...
+    },
+  
+  ...
+
+  export function toggle() {
+    ...
+      tryToggle(toggledOn);
+    ...
+  }
+```
+
+Next, we change the cursor to a grabbing one once the drag starts:
+
+```svelte
+<script lang="ts>
+  ...
+
+  let toggleDragOptions: DragOptions = {
+    ...
+    defaultClassDragging: "grabbing",
+    ...
+  }
+
+  ...
+</script>
+
+...
+
+<style>
+  ...
+
+  :global(.grabbing .toggle) {
+    cursor: grabbing;
+  }
+</style>
+```
+
+Just as we want, Neodrag doesn't set the `defaultClassDragging` until the mouse actually moves during a mousedown.
