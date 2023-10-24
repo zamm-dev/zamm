@@ -1219,7 +1219,7 @@ We double-check on `src-svelte/src/routes/AppLayout.test.ts`:
   });
 ```
 
-Now the sound gets persisted, but the slider looks off in the final built app. The progress bar vertical height is proportional to the progress.
+Now the sound gets persisted, but the slider [looks off](./screenshots/6c04f56.png) in the final built app. The progress bar vertical height is proportional to the progress. We therefore completely implement the slider ourselves from scratch in [`slider.md`](./slider.md), so as to not be beholden to the whims of various browsers.
 
 ## Sidebar mock navigation
 
@@ -1241,4 +1241,57 @@ export function playSoundEffect(sound: Sound) {
     }
   ...
 }
+```
+
+## Settings artifacts
+
+We see [artifacts](./screenshots/222fe89.png) on the settings page on the `.deb` (but not the AppImage). We find that this turns out to be because of the `erd_scroll_detection_container` div that `svelte-watch-resize` inserts into the page, because deleting that div also removes the artifacts.
+
+We try using `ResizeObserver` [directly](https://stackoverflow.com/a/39312522) instead. We edit `src-svelte/src/lib/Slider.svelte`:
+
+```ts
+  ...
+
+  function handleResize() {
+    // disable transition temporarily to avoid progress bar and thumb going out of sync
+    transition = "";
+    toggleDragOptions = calculatePosition(value);
+    setTimeout(() => (transition = transitionAnimation), 100);
+  }
+
+  ...
+
+  onMount(() => {
+    toggleDragOptions = calculatePosition(value);
+    new ResizeObserver(handleResize).observe(track);
+  });
+```
+
+We find that `src-svelte/src/routes/settings/Settings.test.ts` fails as well due to the `ResizeObserver` not being defined in `jest-dom`, so we mock it as that appears to be the [standard solution](https://github.com/jsdom/jsdom/issues/3368#issuecomment-1147970817) to this problem.
+
+Finally, we remove `svelte-watch-resize` from `src-svelte/package.json` and run `yarn` again to update the lockfile.
+
+We now see the eslint errors
+
+```
+/root/zamm/src-svelte/src/routes/settings/Settings.test.ts
+  25:17  error  Unexpected empty method 'observe'     @typescript-eslint/no-empty-function
+  26:19  error  Unexpected empty method 'unobserve'   @typescript-eslint/no-empty-function
+  27:20  error  Unexpected empty method 'disconnect'  @typescript-eslint/no-empty-function
+```
+
+It appears that they want us to [add explicit comments](https://eslint.org/docs/latest/rules/no-empty-function) saying that the empty functions are not an accident, so we do just that:
+
+```ts
+    global.ResizeObserver = class ResizeObserver {
+      observe() {
+        // do nothing
+      }
+      unobserve() {
+        // do nothing
+      }
+      disconnect() {
+        // do nothing
+      }
+    };
 ```
