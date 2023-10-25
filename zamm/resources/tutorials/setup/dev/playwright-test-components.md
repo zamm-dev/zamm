@@ -757,6 +757,10 @@ Note that we do this again in [settings.md](/ui/settings.md), making it
   };
 ```
 
+### Faster timeouts
+
+To timeout faster so that your tests can run faster, see [this answer](https://stackoverflow.com/a/68107808).
+
 ### New browser download needed
 
 If you get

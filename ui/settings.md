@@ -1720,6 +1720,43 @@ and now we edit `src-svelte/src/routes/storybook.test.ts` to take this into acco
   };
 ```
 
+#### CI
+
+Now our tests are failing on CI because a bit of the "Storybook update" [popup](/ui/screenshots/c72b7ff.png) ("Click to learn what's new in Storybook") sneaks into our screenshots. Even the `--no-version-updates` [option](https://stackoverflow.com/a/67279259) does anything to hide this. We try upgrading Storybook:
+
+```ts
+$ npx storybook@latest upgrade
+```
+
+and say "yes" when asked whether or not we want to do an auto-migration.
+
+This still doesn't get rid of the popup. We do a little digging and find that the string is located [here](https://github.com/storybookjs/storybook/blob/3e098fd/code/lib/manager-api/src/modules/whatsnew.ts#L95). It turns out the `whatsnew` module is controlled by [this option](https://storybook.js.org/docs/7.4/react/api/main-config-core#disablewhatsnewnotifications). We edit `src-svelte/.storybook/main.ts` as requested:
+
+```ts
+const config: StorybookConfig = {
+  ...
+  core: {
+    disableWhatsNewNotifications: true,
+  },
+  ...
+};
+```
+
+Somehow, the `svelte-check` pre-commit hook is failing now too:
+
+```
+Loading svelte-check in workspace: /home/runner/work/zamm-ui/zamm-ui/src-svelte
+Getting Svelte diagnostics...
+
+/home/runner/work/zamm-ui/zamm-ui/src-svelte/src/lib/Slider.svelte:8:10
+Error: Cannot find module '@neodrag/svelte' or its corresponding type declarations. (ts)
+    type DragEventData,
+  } from "@neodrag/svelte";
+
+```
+
+And we had somehow accidentally deleted `src-svelte/screenshots/baseline/reusable/slider/tablet.png` when upgrading Storybook, which means we just need to put that back in.
+
 #### Sounds
 
 Some sounds, like the sidebar whoosh, should be slower if the animation speed is slower. We'll start off by enabling that on the backend at `src-tauri/src/commands/sounds.rs`:
@@ -1855,7 +1892,327 @@ export function playSoundEffect(sound: Sound, speed?: number) {
 }
 ```
 
-The pitch is low as well. Browsers themselves have [an option](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preservesPitch) to preserve pitch, but [pitch-corrected audio timestretch](https://en.wikipedia.org/wiki/Audio_time_stretching_and_pitch_scaling) is not available for Rodio.
+The pitch is low as well. Browsers themselves have [an option](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preservesPitch) to preserve pitch, but [pitch-corrected audio timestretch](https://en.wikipedia.org/wiki/Audio_time_stretching_and_pitch_scaling) is not available for Rodio. There is the [`pitch_shift`](https://docs.rs/pitch_shift/1.0.0/pitch_shift/struct.PitchShifter.html#method.shift_pitch) library, and we find that the [formula](https://forum.cockos.com/showthread.php?t=251580) for converting speed changes to pitch is "Starting rate * 2^(1/12) = up one semitone". However, the pitch_shift library doesn't take in Rodio data structures, so there will need to be a conversion between different data structures, and most likely caching in order to avoid having to do an expensive pitch correction on each audio playthrough. Pitch correction looks to be more trouble than it is worth at the moment.
+
+The switch, on the other hand, is meant to have a crisp clicking sound when the toggle reaches the other side. As such, this means a sound delay rather than a slowdown. We edit `src-svelte/src/lib/Switch.svelte`:
+
+```svelte
+<script lang="ts" context="module">
+  export function getClickDelayMs(animationSpeed: number) {
+    // time taken to reach other end of switch, meaning that this doesn't account
+    // for the time it takes to bounce back from the overshoot
+    const usualAnimationDurationMs = 50;
+    const presentAnimationDuration = usualAnimationDurationMs / animationSpeed;
+    return Math.max(0, presentAnimationDuration - usualAnimationDurationMs);
+  }
+</script>
+
+<script lang="ts">
+  ...
+  import { animationSpeed } from "./preferences";
+  ...
+
+  function playDelayedClick() {
+    setTimeout(() => playClick(), getClickDelayMs($animationSpeed));
+  }
+
+  ...
+
+  export function toggle() {
+    if (!dragging) {
+      ...
+      playDelayedClick();
+    }
+    ...
+  }
+</script>
+```
+
+We only want to delay the click when the switch is not being dragged, because the distance from releasing the mouse drag to the end would be much shorter and not deserving of a delay.
+
+We edit `src-svelte/src/lib/Switch.test.ts` as well to ensure that our logic is working as expected:
+
+```ts
+...
+import Switch, { getClickDelayMs } from "./Switch.svelte";
+...
+
+describe("Switch delay", () => {
+  test("is 0 under regular animation speeds", () => {
+    expect(getClickDelayMs(1)).toBe(0);
+  });
+
+  test("increases a little when animation is twice as slow", () => {
+    expect(getClickDelayMs(0.5)).toBe(50);
+  });
+
+  test("increases a lot when animation is 10x as slow", () => {
+    expect(getClickDelayMs(0.1)).toBe(450);
+  });
+});
+```
+
+Upon trying this out, we realize that we do want to always delay the click, because when the user has dragged it closer, the switch also goes towards its final position slower. We merge the two functions into one with `playClick`:
+
+```ts
+  function playClick() {
+    setTimeout(() => playSoundEffect("Switch"), getClickDelayMs($animationSpeed));
+  }
+```
+
+and replaced the reference to `playDelayedClick` with `playClick`. This is an example of how different degrees of splitting abstractions make sense given different requirements.
+
+Upon even further testing, we realize that we do want a delayed click in all instances *except* for the one where the user has manually dragged it past the edge. There, a delayed click would sound weird because it's already reached the position where the click is supposed to happen. That means that this function, which decides whether or not a click should be made during a drag:
+
+```ts
+  function playDragClick(offsetX: number) {
+    if (dragging) {
+      if (dragPositionOnLeft && offsetX >= onLeft) {
+        playClick();
+        dragPositionOnLeft = false;
+      } else if (!dragPositionOnLeft && offsetX <= offLeft) {
+        playClick();
+        dragPositionOnLeft = true;
+      }
+    }
+  }
+```
+
+must take in a new argument specifying whether the click is to be delayed. It would be awkward to have to specify if-else statements twice, so we should either set the function variable like `const clickFn = delayed ? playClick : playDelayedClick;`, or else have `playClick` take the argument and perform the logic there, leaving `playDragClick` to simply pass the argument on. `playClick` seems like a more natural place for this logic, and this way we won't have to define two functions:
+
+```ts
+  function playClick(delayed: boolean = true) {
+    const delay = delayed ? getClickDelayMs($animationSpeed) : 0;
+    setTimeout(() => playSoundEffect("Switch"), delay);
+  }
+
+  ...
+
+  function playDragClick(..., delayed: boolean) {
+    if (dragging) {
+      if (...) {
+        playClick(delayed);
+        ...
+      } else if (...) {
+        playClick(delayed);
+        ...
+      }
+    }
+  }
+
+  let toggleDragOptions: DragOptions = {
+    ...
+    onDrag: (data: DragEventData) => {
+      ...
+      playDragClick(data.offsetX, false);
+    },
+    onDragEnd: (data: DragEventData) => {
+      ...
+      playDragClick(..., true);
+      ...
+    },
+  };
+
+  ...
+```
+
+This is an example of yet a third way of abstracting these functions given different requirements. Given the non-triviality of these requirements, we should test them. We first modify the fast `jest-dom` tests at `src-svelte/src/lib/Switch.test.ts`, renaming `spy` to `tauriInvokeSpy` because there are now multiple spies:
+
+```ts
+...
+import { soundOn, animationSpeed } from "$lib/preferences";
+...
+
+const tauriInvokeMock = vi.fn();
+const recordSoundDelay = vi.fn();
+
+vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+vi.stubGlobal("_testRecordSoundDelay", recordSoundDelay);
+
+...
+
+describe("Switch", () => {
+  ...
+  let tauriInvokeSpy: SpyInstance;
+  let recordSoundDelaySpy: SpyInstance;
+
+  ...
+
+  beforeEach(() => {
+    tauriInvokeSpy = vi.spyOn(window, "__TAURI_INVOKE__");
+    recordSoundDelaySpy = vi.spyOn(window, "_testRecordSoundDelay");
+    ...
+  });
+
+  ...
+
+  test("does not usually delay click", async () => {
+    render(Switch, {});
+    expect(recordSoundDelaySpy).not.toHaveBeenCalled();
+
+    const onOffSwitch = screen.getByRole("switch");
+    await act(() => userEvent.click(onOffSwitch));
+    expect(recordSoundDelaySpy).toHaveBeenLastCalledWith(0);
+  });
+
+  test("delays click when animation speed is slow", async () => {
+    animationSpeed.set(0.1);
+    render(Switch, {});
+    expect(recordSoundDelaySpy).not.toHaveBeenCalled();
+
+    const onOffSwitch = screen.getByRole("switch");
+    await act(() => userEvent.click(onOffSwitch));
+    expect(recordSoundDelaySpy).toHaveBeenLastCalledWith(450);
+  });
+
+  ...
+});
+```
+
+We edit `src-svelte/src/lib/Switch.svelte` to record this value for testing:
+
+```ts
+  function playClick(delayed: boolean = true) {
+    const delay = ...;
+    ...
+    if (window._testRecordSoundDelay !== undefined) {
+      window._testRecordSoundDelay(delay);
+    }
+  }
+```
+
+Then we add tests to `src-svelte/src/lib/Switch.playwright.test.ts`, comparing via `JSON.stringify` because JS [doesn't support](https://stackoverflow.com/questions/7837456/how-to-compare-arrays-in-javascript) these kinds of array equality by default:
+
+```ts
+...
+import { animationSpeed } from "./preferences";
+
+...
+
+describe("Switch drag test", () => {
+  ...
+  let soundDelays: number[];
+
+  beforeAll(async () => {
+    ...
+    await context.exposeFunction(
+      "_testRecordSoundDelay",
+      (delay: number) => soundDelays.push(delay),
+    );
+    ...
+  });
+
+  ...
+
+  beforeEach(() => {
+    ...
+    soundDelays = [];
+  });
+
+  test(
+    "switches state when drag released more than halfway to end",
+    async () => {
+      ...
+      const expectedDelays = [0];
+      expect(JSON.stringify(soundDelays) === JSON.stringify(expectedDelays)).toBeTruthy();
+    },
+    { retry: 2 },
+  );
+
+  test(
+    "delays click sound when animation speed slow",
+    async () => {
+      animationSpeed.set(0.1);
+      // ===== same as previous test =====
+      const { onOffSwitch, toggle, switchBounds } = await getSwitchAndToggle();
+      ...
+      // ===== end similarity block =====
+      const expectedDelays = [450];
+      expect(JSON.stringify(soundDelays) === JSON.stringify(expectedDelays)).toBeTruthy();
+    },
+    { retry: 2 },
+  );
+
+  ...
+
+  test(
+    "clicks twice when dragged to end and back",
+    async () => {
+      animationSpeed.set(0.1);
+      ...
+      // does not play sound when released
+      await page.mouse.up();
+      expect(numSoundsPlayed === 2).toBeTruthy();
+
+      // should have no delay for both sounds played despite slower animation
+      const expectedDelays = [0, 0];
+      expect(JSON.stringify(soundDelays) === JSON.stringify(expectedDelays)).toBeTruthy();
+    },
+    { retry: 2 },
+  );
+});
+```
+
+Our tests fail. We realize that `animationSpeed` is being set on the local test runner and has nothing to do with `animationSpeed` on the Playwright browser page. Instead, we do
+
+```ts
+  test(
+    "delays click sound when animation speed slow",
+    async () => {
+      const { onOffSwitch, toggle, switchBounds } = await getSwitchAndToggle("slow-motion");
+      // ===== same as previous test =====
+      ...
+    },
+    { retry: 2 },
+  );
+
+  ...
+
+  test(
+    "clicks twice when dragged to end and back",
+    async () => {
+      const { onOffSwitch, toggle, switchBounds } = await getSwitchAndToggle("slow-motion");
+      ...
+    },
+    { retry: 2 },
+  );
+```
+
+The "delays click sound" test is still failing. Upon more debugging, we realize this is actually because it has gotten dragged so far that it triggers the immediate click. We fix this by dragging it more than halfway, but not all the way:
+
+```ts
+  test(
+    "switches state when drag released more than halfway to end",
+    async () => {
+      ...
+
+      await toggle.dragTo(onOffSwitch, {
+        targetPosition: {
+          x: switchBounds.width * 0.55,
+          y: switchBounds.height / 2,
+        },
+      });
+      ...
+    },
+    { retry: 2 },
+  );
+
+  test(
+    "delays click sound when animation speed slow",
+    async () => {
+      ...
+
+      await toggle.dragTo(onOffSwitch, {
+        targetPosition: {
+          x: switchBounds.width * 0.55,
+          y: switchBounds.height / 2,
+        },
+      });
+      ...
+    },
+    { retry: 2 },
+  );
+```
 
 ## Sidebar mock navigation
 
