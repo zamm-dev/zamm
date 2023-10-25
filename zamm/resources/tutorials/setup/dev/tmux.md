@@ -93,6 +93,10 @@ To keep panes open after their commands exit (e.g. to easily respawn those comma
 set-option -g remain-on-exit on
 ```
 
+## Resizing split panes to be equal
+
+If you're creating multiple panes and want them all to have the same size, follow the instructions [here](https://unix.stackexchange.com/a/37754).
+
 ## Shortcuts
 
 To make it easy to restart a pane, for example, edit `~/.tmux.conf`:

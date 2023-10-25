@@ -1221,6 +1221,642 @@ We double-check on `src-svelte/src/routes/AppLayout.test.ts`:
 
 Now the sound gets persisted, but the slider [looks off](./screenshots/6c04f56.png) in the final built app. The progress bar vertical height is proportional to the progress. We therefore completely implement the slider ourselves from scratch in [`slider.md`](./slider.md), so as to not be beholden to the whims of various browsers.
 
+### General animations control
+
+We see that we can disable all animations like [this](https://stackoverflow.com/a/11132887). As such, we edit `src-svelte/src/routes/AppLayout.svelte`:
+
+```svelte
+<script>
+  ...
+  import { soundOn, unceasingAnimations, volume, animationsOn } from "$lib/preferences";
+
+  ...
+</script>
+
+<div class="app" class:animations-disabled={animationsOn}>
+  ...
+</div>
+
+<style>
+  ...
+
+  .app.animations-disabled :global(*) {
+    animation-play-state: paused !important;
+    transition: none !important;
+  }
+  
+  ...
+</style>
+```
+
+Now we need to actually control this new setting via preferences. We edit `src-tauri/src/commands/preferences/models.rs` to add it:
+
+```rust
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Type)]
+pub struct Preferences {
+    animations_on: Option<bool>,
+    ...
+}
+```
+
+The Tauri app runs, and Specta updates `src-svelte/src/lib/bindings.ts` to include this new field in the preferences read. Now we edit `src-svelte/src/routes/AppLayout.svelte` again to actuall set animationsOn when preferences are read:
+
+```ts
+  onMount(async () => {
+    ...
+
+    if (prefs.animations_on !== null) {
+      animationsOn.set(prefs.animations_on);
+    }
+
+    ...
+  });
+```
+
+The UI for the setting is already there, so we wire it up in `src-svelte/src/routes/settings/Settings.svelte`:
+
+```svelte
+<script lang="ts>
+  ...
+
+    const onAnimationsToggle = (newValue: boolean) => {
+    setPreferences({
+      ...NullPreferences,
+      animations_on: newValue,
+    });
+  };
+
+  ...
+
+</script>
+
+<InfoBox title="Settings">
+  ...
+      <SettingsSwitch label="Enabled" bind:toggledOn={$animationsOn} onToggle={onAnimationsToggle} />
+  ...
+</InfoBox>
+```
+
+We see that `svelte-check` gives an error:
+
+```
+/root/zamm/src-svelte/src/lib/preferences.ts:10:14
+Error: Property 'animations_on' is missing in type '{ unceasing_animations: null; sound_on: null; volume: null; }' but required in type 'Preferences'. 
+
+export const NullPreferences: Preferences = {
+  unceasing_animations: null,
+```
+
+We fix `src-svelte/src/lib/preferences.ts` accordingly:
+
+```ts
+export const NullPreferences: Preferences = {
+  animations_on: null,
+  ...
+};
+```
+
+This reminds us that we should update all existing preference-related API calls. We add this new element to files such as `src-tauri/api/sample-calls/get_preferences-extra-settings.yaml`, and then make sure that all tests pass.
+
+However, we notice that the tests don't pass. We add some tests after all, first by creating `src-tauri/api/sample-calls/get_preferences-animations-off.yaml`:
+
+```yaml
+request: ["get_preferences"]
+response: >
+  {
+    "animations_on": false,
+    "unceasing_animations": null,
+    "sound_on": null,
+    "volume": null
+  }
+
+```
+
+Because this setting does not involve any interesting new read/write functionality, we can skip writing new Rust tests. Instead, we update `AppLayout` to use an "app" ID instead of a class for the semantics, and create new tests in `src-svelte/src/routes/AppLayout.test.ts`:
+
+```ts
+...
+import { soundOn, volume, animationsOn } from "$lib/preferences";
+...
+
+    test("will enable animations by default", async () => {
+    expect(get(animationsOn)).toBe(true);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    const getPreferencesCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/get_preferences-no-file.yaml",
+      false,
+    );
+    playback.addCalls(getPreferencesCall);
+
+    render(AppLayout, {});
+    await tickFor(3);
+    expect(get(animationsOn)).toBe(true);
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+    const app = document.querySelector("#app") as Element;
+    expect(app.classList).not.toContainEqual("animations-disabled");
+  });
+
+  test("will disable animations if settings set", async () => {
+    expect(get(animationsOn)).toBe(true);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    const getPreferencesCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/get_preferences-animations-off.yaml",
+      false,
+    );
+    playback.addCalls(getPreferencesCall);
+
+    render(AppLayout, {});
+    await tickFor(3);
+    expect(get(animationsOn)).toBe(false);
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+    const app = document.querySelector("#app") as Element;
+    expect(app.classList).toContainEqual("animations-disabled");
+  });
+```
+
+These tests fail, and we find that it is because we got the class name condition wrong, and we're also not actually accessing the value of the store with the `$`. We fix it in `src-svelte/src/routes/AppLayout.svelte`:
+
+```svelte
+<div id="app" class:animations-disabled={!$animationsOn}>
+  ...
+</div>
+```
+
+### Animation speed control
+
+We follow the route just taken by editing `src-tauri/src/commands/preferences/models.rs`:
+
+```rust
+#[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Type)]
+pub struct Preferences {
+    ...
+    animation_speed: Option<f64>,
+    ...
+}
+```
+
+We update all the preference API call files, and create a new one at `src-tauri/api/sample-calls/get_preferences-animation-speed-override.yaml`:
+
+```yaml
+request: ["get_preferences"]
+response: >
+  {
+    "animations_on": null,
+    "unceasing_animations": null,
+    "animation_speed": 0.9,
+    "sound_on": null,
+    "volume": null
+  }
+
+```
+
+We handle this API call at `src-svelte/src/routes/AppLayout.svelte`:
+
+```ts
+  import {
+    ...
+    animationSpeed,
+    ...
+  } from "$lib/preferences";
+
+  ...
+
+  onMount(async () => {
+    ...
+    if (prefs.animation_speed !== null) {
+      animationSpeed.set(prefs.animation_speed);
+    }
+  });
+```
+
+and write the settings back out at `src-svelte/src/routes/settings/Settings.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+
+  const onAnimationSpeedUpdate = (newValue: number) => {
+    setPreferences({
+      ...NullPreferences,
+      animation_speed: newValue,
+    });
+  };
+
+  ...
+</script>
+
+<InfoBox title="Settings">
+  ...
+        <SettingsSlider
+        label="General speed"
+        min={0.25}
+        max={1}
+        ...
+        onUpdate={onAnimationSpeedUpdate}
+      />
+  ...
+</div>
+```
+
+We make it a minimum of 0.25 so as to not make animations take infinitely long. We are going to make this setting an inverse multiplier on animation durations.
+
+We edit `src-svelte/src/lib/preferences.ts` accordingly as well, to not only do this but also add a null animation speed to the set of null preferences:
+
+```ts
+...
+export const animationSpeed = writable(1);
+...
+
+export const NullPreferences: Preferences = {
+  ...
+  animation_speed: null,
+  ...
+};
+```
+
+Now for the actual functionality, we update `src-svelte/src/routes/styles.css`:
+
+```css
+:root {
+  ...
+  --base-animation-speed: 1;
+  ...
+}
+```
+
+and we update `src-svelte/src/routes/AppLayout.svelte` again to override this everywhere:
+
+```svelte
+<div id="app" class:animations-disabled={!$animationsOn} style="--base-animation-speed: {$animationSpeed};">
+  ...
+</div>
+```
+
+We test this override in `src-svelte/src/routes/AppLayout.test.ts`:
+
+```ts
+...
+import { soundOn, volume, animationsOn, animationSpeed } from "$lib/preferences";
+...
+
+  test("will slow down animations if preference overridden", async () => {
+    expect(get(animationSpeed)).toBe(1);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    const getPreferencesCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/get_preferences-animation-speed-override.yaml",
+      false,
+    );
+    playback.addCalls(getPreferencesCall);
+
+    render(AppLayout, {});
+    await tickFor(3);
+    expect(get(animationSpeed)).toBe(0.9);
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+    const app = document.querySelector("#app") as Element;
+    expect(app.getAttribute("style")).toEqual("--base-animation-speed: 0.9;");
+  });
+```
+
+Now in `src-svelte/src/routes/SidebarUI.svelte`:
+
+```css
+  header {
+    --animation-duration: calc(0.1s / var(--base-animation-speed));
+    ...
+  }
+```
+
+We test this out by adding a new story to `src-svelte/src/routes/SidebarUI.stories.ts`:
+
+```ts
+import SvelteStoresDecorator from "$lib/__mocks__/stores";
+...
+
+export default {
+  ...
+  decorators: [SvelteStoresDecorator],
+};
+
+
+export const SlowMotion: StoryObj = Template.bind({}) as any;
+SlowMotion.args = {
+  currentRoute: "/",
+  dummyLinks: true,
+};
+SlowMotion.parameters = {
+  preferences: {
+    animationSpeed: 0.1,
+  },
+};
+
+```
+
+We handle this additional preference at `src-svelte/src/lib/__mocks__/stores.ts`:
+
+```ts
+...
+import { unceasingAnimations, animationSpeed } from "$lib/preferences";
+
+interface Preferences {
+  ...
+  animationSpeed?: number;
+}
+
+...
+
+const SvelteStoresDecorator: Decorator = (
+  story: StoryFn,
+  context: StoryContext,
+) => {
+  ...
+  if (preferences?.animationSpeed !== undefined) {
+    animationSpeed.set(preferences.animationSpeed);
+  }
+
+  ...
+};
+```
+
+However, our new setting has no effect whatsoever. This is because the `base-animation-speed` is not actually being overwritten in the Storybook story because the `AppLayout` is not included here. As such, we'll have to create a mock `AppLayout` at `src-svelte/src/lib/__mocks__/MockAppLayout.svelte`:
+
+```svelte
+<script lang="ts">
+  import { animationSpeed } from "$lib/preferences";
+</script>
+
+<div style="--base-animation-speed: {$animationSpeed};">
+  <slot />
+</div>
+
+```
+
+We add in this new mock wrapper decorator to `src-svelte/src/routes/SidebarUI.stories.ts`, noting that the [story type](https://stackoverflow.com/a/66861907) is `StoryFn`:
+
+```ts
+...
+import type { StoryFn, StoryObj } from "@storybook/svelte";
+import MockAppLayout from "$lib/__mocks__/MockAppLayout.svelte";
+...
+
+export default {
+  ...
+  decorators: [
+    SvelteStoresDecorator,
+    (story: StoryFn) => {
+      return {
+        Component: MockAppLayout,
+        slot: story,
+      };
+    },
+  ],
+};
+
+...
+```
+
+and we see that our animations finally do take longer to happen.
+
+We finally update `src-svelte/src/routes/settings/Settings.svelte` one last time to lower the minimum further, now that we know 1/4th the speed still feels reasonably fast:
+
+```svelte
+      <SettingsSlider
+        label="General speed"
+        min={0.1}
+        ...
+      />
+```
+
+Finally, we add this setting to the other places with animations, such `src-svelte/src/lib/Slider.svelte`:
+
+```ts
+  const transitionAnimation = `transition: left calc(0.1s / var(--base-animation-speed)) ease-out;`;
+```
+
+and then edit `src-svelte/src/lib/Slider.stories.ts` in the same way:
+
+```ts
+...
+import type { StoryFn, StoryObj } from "@storybook/svelte";
+import SvelteStoresDecorator from "$lib/__mocks__/stores";
+import MockAppLayout from "$lib/__mocks__/MockAppLayout.svelte";
+
+export default {
+  ...
+  decorators: [
+    SvelteStoresDecorator,
+    (story: StoryFn) => {
+      return {
+        Component: MockAppLayout,
+        slot: story,
+      };
+    },
+  ],
+};
+
+...
+
+export const SlowMotion: StoryObj = Template.bind({}) as any;
+SlowMotion.args = {
+  label: "Extra Large Simulation",
+  max: 10,
+  value: 5,
+};
+SlowMotion.parameters = {
+  viewport: {
+    defaultViewport: "mobile1",
+  },
+  preferences: {
+    animationSpeed: 0.1,
+  },
+};
+```
+
+We notice that the animation speed does not reset to the default values for the stores when going back to the other stories, so we edit `src-svelte/src/lib/__mocks__/stores.ts` to do this for us:
+
+```ts
+const SvelteStoresDecorator: Decorator = (
+  story: StoryFn,
+  context: StoryContext,
+) => {
+  ...
+  if (preferences?.animationSpeed === undefined) {
+    animationSpeed.set(1);
+  } else {
+    animationSpeed.set(preferences.animationSpeed);
+  }
+
+  ...
+};
+```
+
+We do this to `src-svelte/src/lib/Switch.svelte` and its stories as well, and `src-svelte/src/routes/BackgroundUI.svelte` and its stories, and we are now done with initial implementation. However, we find that the sidebar tests are failing because we're running into the same problem around Playwright screenshot timeouts mentioned [here](/zamm/zamm/resources/tutorials/setup/dev/playwright-test-components.md), this time because the sidebar is absolutely positioned and therefore does not give the wrapper div any dimensions. We edit `src-svelte/src/lib/__mocks__/MockAppLayout.svelte` to make it obvious that this is a test wrapper:
+
+```svelte
+<div class="storybook-wrapper" ...>
+  ...
+</div>
+
+```
+
+and now we edit `src-svelte/src/routes/storybook.test.ts` to take this into account too:
+
+```ts
+  const takeScreenshot = async (page: Page, screenshotEntireBody?: boolean) => {
+    const frame = page.frame({ name: "storybook-preview-iframe" });
+    if (!frame) {
+      throw new Error("Could not find Storybook iframe");
+    }
+    let locator = screenshotEntireBody
+      ? "body"
+      : "#storybook-root > :first-child";
+    const elementClass = await frame.locator(locator).getAttribute("class");
+    if (elementClass === "storybook-wrapper") {
+      locator = "#storybook-root > :first-child > :first-child";
+    }
+    return await frame.locator(locator).screenshot();
+  };
+```
+
+#### Sounds
+
+Some sounds, like the sidebar whoosh, should be slower if the animation speed is slower. We'll start off by enabling that on the backend at `src-tauri/src/commands/sounds.rs`:
+
+```rust
+...
+
+#[tauri::command]
+#[specta]
+pub fn play_sound(..., speed: f32) {
+    thread::spawn(move || {
+        if let Err(e) = play_sound_async(..., speed) {
+            ...
+        }
+    });
+}
+
+fn play_sound_async(..., speed: f32) -> ZammResult<()> {
+    ...
+    let source = Decoder::new(cursor)?.amplify(volume).speed(speed);
+    ...
+}
+
+#[cfg(test)]
+mod tests {
+    ...
+
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    struct PlaySoundRequest {
+        ...
+        speed: f32,
+    }
+
+    ...
+
+    fn check_play_sound_sample(file_prefix: &str) {
+        ...
+        #[allow(clippy::let_unit_value)]
+        let actual_result = play_sound(request.sound, request.volume, request.speed);
+        ...
+    }
+
+    ...
+}
+```
+
+`src-svelte/src/lib/bindings.ts` should get updated automatically. Meanwhile, we make sure nothing changes in `src-tauri/api/sample-calls/play_sound-switch.yaml`:
+
+```yaml
+request:
+  - play_sound
+  - >
+    {
+      "sound": "Switch",
+      "volume": 1,
+      "speed": 1
+    }
+response: "null"
+
+```
+
+and that custom sound volumes are specified in `src-tauri/api/sample-calls/play_sound-whoosh.yaml`:
+
+```yaml
+request:
+  - play_sound
+  - >
+    {
+      "sound": "Whoosh",
+      "volume": 0.5,
+      "speed": 0.25
+    }
+response: "null"
+
+```
+
+After confirming that backend tests still pass, we edit `src-svelte/src/lib/sound.ts` to enable optionally specifying that option on the frontend:
+
+```ts
+...
+
+export function playSoundEffect(sound: Sound, speed?: number) {
+  if (get(soundOn)) {
+    ...
+    const soundEffectSpeed = speed || 1;
+    try {
+      playSound(sound, ..., soundEffectSpeed);
+    }
+    ...
+  }
+}
+
+```
+
+Then we edit `src-svelte/src/routes/SidebarUI.svelte`, the one place where this new feature will be used:
+
+```ts
+  import { animationSpeed } from "$lib/preferences";
+  ...
+
+  function playWhooshSound() {
+    playSoundEffect("Whoosh", $animationSpeed);
+  }
+
+  ...
+```
+
+We update the test `src-svelte/src/routes/SidebarUI.test.ts` to make sure this new feature is actually used:
+
+```ts
+...
+import { soundOn, volume, animationSpeed } from "$lib/preferences";
+...
+
+  test("plays whoosh sound with right speed and volume", async () => {
+    volume.update(() => 0.5);
+    animationSpeed.update(() => 0.25);
+    await act(() => userEvent.click(settingsLink));
+    expect(spy).toHaveBeenLastCalledWith(...whooshRequest);
+  });
+```
+
+We notice when we do this that the volume is low, so we compensate for that by boosting it in `src-svelte/src/lib/sound.ts`:
+
+```ts
+export function playSoundEffect(sound: Sound, speed?: number) {
+  if (get(soundOn)) {
+    const soundEffectSpeed = speed || 1;
+    // boost volume to compensate for lowered volume from lower speed
+    const soundEffectVolume = get(volume) / soundEffectSpeed;
+    ...
+  }
+}
+```
+
+The pitch is low as well. Browsers themselves have [an option](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preservesPitch) to preserve pitch, but [pitch-corrected audio timestretch](https://en.wikipedia.org/wiki/Audio_time_stretching_and_pitch_scaling) is not available for Rodio.
+
 ## Sidebar mock navigation
 
 We notice that the mocked sidebar navigation no longer works in Storybook due to the console error

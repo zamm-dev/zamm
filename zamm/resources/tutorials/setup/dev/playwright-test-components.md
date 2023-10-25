@@ -738,6 +738,25 @@ and you are in the specific context of trying to take a Storybook screenshot, th
 
 This has the added benefit of making the screenshot more compact, since it will only be the size of the child element and not the entire Storybook root element.
 
+Note that we do this again in [settings.md](/ui/settings.md), making it
+
+```ts
+  const takeScreenshot = async (page: Page, screenshotEntireBody?: boolean) => {
+    const frame = page.frame({ name: "storybook-preview-iframe" });
+    if (!frame) {
+      throw new Error("Could not find Storybook iframe");
+    }
+    let locator = screenshotEntireBody
+      ? "body"
+      : "#storybook-root > :first-child";
+    const elementClass = await frame.locator(locator).getAttribute("class");
+    if (elementClass === "storybook-wrapper") {
+      locator = "#storybook-root > :first-child > :first-child";
+    }
+    return await frame.locator(locator).screenshot();
+  };
+```
+
 ### New browser download needed
 
 If you get
