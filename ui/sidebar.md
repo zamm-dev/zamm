@@ -703,3 +703,30 @@ export default defineConfig({
 ```
 
 However, this still doesn't actually simulate the store being updated with the correct path. As such, we revert to importing `SidebarUI` instead to simply mock the values.
+
+## Chrome separation
+
+In Chrome, there's a visible line between the sidebar and the main content. This is due to a less than one pixel gap between the sidebar and main context, which you can verify by changing the color of the shadow cast by the main content, and seeing that color light up the gap.
+
+This is likely due to rounding off of widths at the sub-pixel level. We fix this by making the two slightly overlap. Edit `src-svelte/src/routes/SidebarUI.svelte` to make the header float:
+
+```css
+  header {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+```
+
+and then edit `src-svelte/src/routes/AppLayout.svelte` to bring the app layout slightly left:
+
+```css
+  .main-container {
+    --sidebar-space: calc(var(--sidebar-width) - 0.5px);
+    margin-left: var(--sidebar-space);
+  }
+
+  .background-layout {
+    left: var(--sidebar-space);
+  }
+```

@@ -93,9 +93,25 @@ To keep panes open after their commands exit (e.g. to easily respawn those comma
 set-option -g remain-on-exit on
 ```
 
+To run a command without letting it exit after completion (e.g. to cd into a directory), run the command
+
+```bash
+$ tmux send-keys -t $SESSION_NAME:1.1 'cd src-svelte' Enter
+```
+
 ## Resizing split panes to be equal
 
 If you're creating multiple panes and want them all to have the same size, follow the instructions [here](https://unix.stackexchange.com/a/37754).
+
+To do this with the commandline:
+
+```bash
+$ tmux select-layout -t $SESSION_NAME:1 even-horizontal
+```
+
+## Renaming windows
+
+See [here](https://stackoverflow.com/a/40333995).
 
 ## Shortcuts
 

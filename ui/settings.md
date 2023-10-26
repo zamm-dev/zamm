@@ -1892,6 +1892,18 @@ export function playSoundEffect(sound: Sound, speed?: number) {
 }
 ```
 
+Now `src/routes/SidebarUI.test.ts` fails because the actual call to the API has changed and no longer matches the sample API file. We edit it and document the reason why:
+
+```ts
+  test("plays whoosh sound with right speed and volume", async () => {
+    // volume is at 0.125 so that when it's boosted 4x to compensate for the 4x
+    // reduction in playback speed, the net volume will be at 0.5 as specified in the
+    // sample file
+    volume.update(() => 0.125);
+    ...
+  });
+```
+
 The pitch is low as well. Browsers themselves have [an option](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preservesPitch) to preserve pitch, but [pitch-corrected audio timestretch](https://en.wikipedia.org/wiki/Audio_time_stretching_and_pitch_scaling) is not available for Rodio. There is the [`pitch_shift`](https://docs.rs/pitch_shift/1.0.0/pitch_shift/struct.PitchShifter.html#method.shift_pitch) library, and we find that the [formula](https://forum.cockos.com/showthread.php?t=251580) for converting speed changes to pitch is "Starting rate * 2^(1/12) = up one semitone". However, the pitch_shift library doesn't take in Rodio data structures, so there will need to be a conversion between different data structures, and most likely caching in order to avoid having to do an expensive pitch correction on each audio playthrough. Pitch correction looks to be more trouble than it is worth at the moment.
 
 The switch, on the other hand, is meant to have a crisp clicking sound when the toggle reaches the other side. As such, this means a sound delay rather than a slowdown. We edit `src-svelte/src/lib/Switch.svelte`:
