@@ -53,6 +53,26 @@ To then test these *transitions* specifically in Storybook, create a new decorat
 
 ```
 
+Note that because we'll always have to hide and then show the component again to trigger a transition, we might as well do both with a single click of the button:
+
+```svelte
+<script lang="ts">
+  ...
+
+  function toggleVisibility() {
+    visible = !visible;
+
+    setTimeout(() => {
+      visible = !visible;
+    }, 100);
+  }
+</script>
+
+...
+  <button ...>Remount</button>
+...
+```
+
 Unfortunately, when we test this on the app, we find that navigating between pages causes the contents of both pages to be laid out simulatenously without overlap. We see that in the future, we'll perhaps be able to use the [View Transitions API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API) to handle this case, but for now we'll have to use other means. We follow the instructions [here](https://joshcollinsworth.com/blog/sveltekit-page-transitions) to create `src-svelte/src/routes/PageTransition.svelte`:
 
 ```svelte

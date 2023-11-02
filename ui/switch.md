@@ -1282,3 +1282,34 @@ Next, we change the cursor to a grabbing one once the drag starts:
 ```
 
 Just as we want, Neodrag doesn't set the `defaultClassDragging` until the mouse actually moves during a mousedown.
+
+### Using translateX instead of left
+
+As noted [here](https://joshcollinsworth.com/blog/great-transitions#9-lean-on-hardware-acceleration), applying a `transform` doesn't affect page layout, which is why hardware acceleration is possible for that and not the `left` property. We adjust `src-svelte/src/lib/Switch.svelte` accordingly:
+
+```svelte
+<script lang="ts">
+  ...
+    const transitionAnimation = `
+    transition: transform calc(0.1s / var(--base-animation-speed));
+    transition-timing-function: cubic-bezier(0, 0, 0, 1.3);
+  `;
+  ...
+</script>
+
+...
+
+<style>
+  ...
+
+    .groove-contents {
+    --left: 0;
+    ...
+    transform: translateX(var(--left));
+  }
+
+  ...
+</style>
+```
+
+We see that this does make the animation significantly smoother.

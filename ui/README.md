@@ -387,7 +387,7 @@ pub fn get_api_keys(api_keys: State<ZammApiKeys>) -> ApiKeys {
 
 From this we can observe that the screen is not rendering at all until the API call finishes, unlike what SvelteKit should be doing with `await`. At first it is unclear if this is not working as intended due to Tauri or SvelteKit behavior, but with more testing we realize it is definitely on the Tauri side, as not a single way to implement async function on Svelte works.
 
-From further searching, we find [this discussion](https://github.com/tauri-apps/tauri/discussions/4191) where we realize that we need to say `#[tauri::command(async)]`. After this change, the wait works as expected. Make sure to undo the wait before committing.
+From further searching, we find [this discussion](https://github.com/tauri-apps/tauri/discussions/4191) where we realize that we need to say `#[tauri::command(async)]`. After this change, the wait works as expected. Make sure to undo the wait before committing. **Note: `tauri::command(async)` should almost always be used. Go back and add it in to whichever commands you have forgotten to do this with.
 
 ## Sidebar
 

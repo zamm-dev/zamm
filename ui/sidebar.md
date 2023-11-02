@@ -730,3 +730,27 @@ and then edit `src-svelte/src/routes/AppLayout.svelte` to bring the app layout s
     left: var(--sidebar-space);
   }
 ```
+
+## Hardware acceleration
+
+As done with the [switch](./switch.md), we use `transform` instead of `top` to move the indicator, so that it can be hardware accelerated. We edit `src-svelte/src/routes/SidebarUI.svelte` accordingly:
+
+```svelte
+...
+  <div class="indicator" style="--top: {indicatorPosition};"></div>
+...
+
+<style>
+  ...
+
+  .indicator {
+    ...
+    top: 0;
+    ...
+    transform: translateY(var(--top));
+    transition: transform var(--animation-duration) ease-out;
+  }
+
+  ...
+</style>
+```

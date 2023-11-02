@@ -978,3 +978,42 @@ pub struct Preferences {
     volume: Option<f64>,
 }
 ```
+
+## Hardware acceleration
+
+As with the [switch](./switch.md), we use CSS transforms rather than positioning so as to enable hardware acceleration on the slider animations. We edit `src-svelte/src/lib/Slider.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+    const transitionAnimation =
+    `transition: transform ` +
+    `calc(0.1s / var(--base-animation-speed)) ` +
+    `ease-out;`;
+  ...
+</script>
+
+...
+
+<style>
+  ...
+
+  groove-contents.progress {
+    ...
+    left: calc(-1 * var(--total-width));
+    transform: translateX(var(--left));
+    ...
+  }
+
+  .toggle-label {
+    ...
+    left: 0;
+    ...
+    transform: translateX(var(--left));
+  }
+
+  ...
+</style>
+```
+
+Note that we can also go [further](https://blog.teamtreehouse.com/increase-your-sites-performance-with-hardware-accelerated-css) with hardware acceleration by asking for GPU usage, but as that article notes, that comes with a lot of caveats.
