@@ -201,7 +201,7 @@ Now we define the reveal animation itself:
   }
 ```
 
-Note the overlap, where the height starts growing before the width stops completely.
+Note that we can't simply do a scale transformation, because that would also transform the notches. Also note the animation overlap, where the height starts growing before the width stops completely, because this looks more aesthetically pleasing.
 
 Now we hook the HTML up and manually stagger the fade, which also overlaps with the growth of the height:
 
@@ -235,6 +235,162 @@ Now we hook the HTML up and manually stagger the fade, which also overlaps with 
 ```
 
 We use `|global` here because otherwise, we find that we aren't seeing any animations in the reveal. This is because we need to use [global transitions](https://svelte.dev/tutorial/global-transitions) when the element is being hidden or revealed as part of a parent element.
+
+### Persistence
+
+Because the animation takes a bit of time, we only show it on the first load of a page. To do so, we'll need to keep track of which pages we've seen, and then signal to the `InfoBox` that it should not animate. As such, we first implement the signaling mechanism in `src-svelte/src/lib/firstPageLoad.ts`:
+
+```ts
+import { writable } from "svelte/store";
+
+export const firstPageLoad = writable(false);
+
+```
+
+Now we get InfoBox to listen to this signal in `src-svelte/src/lib/InfoBox.svelte`:
+
+```ts
+  ...
+  import {firstPageLoad} from "./firstPageLoad";
+  ...
+
+  $: borderBoxDelay = $firstPageLoad ? 100 / $animationSpeed : 0;
+  $: borderBoxDuration = $firstPageLoad ? 200 / $animationSpeed : 0;
+  $: infoBoxDelay = $firstPageLoad ? 260 / $animationSpeed : 0;
+  $: infoBoxDuration = $firstPageLoad ? 100 / $animationSpeed : 0;
+```
+
+And now we get PageTransition to set this signal in `src-svelte/src/routes/PageTransition.svelte`:
+
+```ts
+  ...
+  import { firstPageLoad } from "$lib/firstPageLoad";
+
+  ...
+
+  const visitedKeys = new Set<string>();
+  
+  function checkFirstPageLoad(key: string) {
+    if (visitedKeys.has(key)) {
+      firstPageLoad.set(false);
+    } else {
+      visitedKeys.add(key);
+      firstPageLoad.set(true);
+    }
+  }
+
+  ...
+  $: checkFirstPageLoad(currentRoute);
+```
+
+We make the function take in `currentRoute` as an explicit argument instead of accessing its value directly, because Svelte's reactivity won't know to trigger if `currentRoute` isn't a [direct dependency](https://sveltesociety.dev/recipes/svelte-language-fundamentals/reactivity).
+
+Finally, we create a test for the page transition component successfully signaling whether or not the animations should be disabled. We edit `src-svelte/src/routes/PageTransition.test.ts` to produce a test using the testing library's [rerender](https://testing-library.com/docs/react-testing-library/api/#rerender) function:
+
+```ts
+  it("should unset first page load on visit to old page", async () => {
+    const pageTransition = render(PageTransitionControl, { currentRoute: "/" });
+    pageTransition.rerender({ currentRoute: "/settings" });
+    pageTransition.rerender({ currentRoute: "/" });
+    expect(get(firstPageLoad)).toEqual(false);
+  });
+```
+
+This does not work because the component gets completely remounted every time. If we want to avoid using a store just to persist this data for testing purposes, then it appears we'll have to [mock](https://stackoverflow.com/q/66072846) a wrapper component from scratch.
+
+We create `src-svelte/src/routes/PageTransitionControl.svelte`:
+
+```svelte
+<script lang="ts">
+  import PageTransition from "./PageTransition.svelte";
+
+  export let currentRoute = "/";
+</script>
+
+<input type="text" aria-label="Route" bind:value={currentRoute} />
+<PageTransition {currentRoute} />
+
+```
+
+However, this does not work:
+
+```ts
+  it("should unset first page load on visit to old page", async () => {
+    const pageTransition = render(PageTransitionControl, { currentRoute: "/" });
+    const routeInput = screen.getByLabelText("Route");
+    await act(() => userEvent.type(routeInput, "/settings"));
+    await act(() => userEvent.type(routeInput, "/"));
+    expect(get(firstPageLoad)).toEqual(false);
+  });
+```
+
+because the user's typed text simply appends to the existing URL. Instead of wrangling with user events to backspace and delete all existing text, we instead edit the mock Svelte page to use a button that navigates to the new page while clearing all old input:
+
+```svelte
+<script lang="ts">
+  import PageTransition from "./PageTransition.svelte";
+
+  export let currentRoute = "/";
+  let newRoute = "";
+
+  function navigate() {
+    currentRoute = newRoute;
+    newRoute = "";
+  }
+</script>
+
+<input type="text" aria-label="Route" bind:value={newRoute} />
+<button on:click={navigate}>Navigate</button>
+<PageTransition {currentRoute} />
+
+```
+
+Finally, we have a working `src-svelte/src/routes/PageTransition.test.ts`, with two groups of tests, the first one of which we rename to distinguish them:
+
+```ts
+...
+import PageTransitionControl from "./PageTransitionControl.svelte";
+import { act, render, screen } from "@testing-library/svelte";
+import userEvent from "@testing-library/user-event";
+import { get } from "svelte/store";
+import { firstPageLoad } from "$lib/firstPageLoad";
+
+describe("PageTransition durations", () => {
+  ...
+});
+
+describe("PageTransition", () => {
+  let routeInput: HTMLElement;
+  let navigateButton: HTMLElement;
+
+  const navigateTo = async (url: string) => {
+    await act(() => userEvent.type(routeInput, url));
+    await act(() => userEvent.click(navigateButton));
+  };
+
+  beforeEach(() => {
+    render(PageTransitionControl, { currentRoute: "/" });
+    routeInput = screen.getByLabelText("Route");
+    navigateButton = screen.getByText("Navigate");
+  });
+
+  it("should set first page load on initial visit", async () => {
+    expect(get(firstPageLoad)).toEqual(true);
+  });
+
+  it("should set first page load on visit to new page", async () => {
+    await navigateTo("/settings");
+    expect(get(firstPageLoad)).toEqual(true);
+  });
+
+  it("should unset first page load on visit to old page", async () => {
+    await navigateTo("/settings");
+    await navigateTo("/");
+    expect(get(firstPageLoad)).toEqual(false);
+  });
+});
+
+```
 
 ### AnimeJS
 
