@@ -1,5 +1,29 @@
 # Information boxes
 
+## Dimensions
+
+On a large screen, the text inside of the info box becomes too sparse and unreadable. We edit `src-svelte/src/lib/InfoBox.svelte` to constrain the maximum width:
+
+```svelte
+<script lang="ts">
+  ...
+  export let maxWidth = "50rem";
+  ...
+</script>
+
+<section class="container" aria-labelledby={infoboxId} style="max-width: {maxWidth};">
+  ...
+</section>
+```
+
+We find that this is a comfortable maximum width except for the settings screen. We edit `src-svelte/src/routes/settings/Settings.svelte` accordingly:
+
+```svelte
+<InfoBox title="Settings" maxWidth="70rem">
+  ...
+</InfoBox>
+```
+
 ## Storybook
 
 We follow the strategy recommended [here](https://stackoverflow.com/a/63710793) to simply create a custom view just for the story. We create `src-svelte/src/lib/InfoBoxView.svelte`, making use of [`$$restProps`](https://stackoverflow.com/a/62900378):
@@ -2181,4 +2205,84 @@ Finally, we once again update the test `src-svelte/src/lib/InfoBox.test.ts` to r
       }),
     );
   });
+```
+
+#### Cursor layout
+
+The addition of the cursor pseudo-element with its own content causes the layout to shift. This would not be a problem, except that the layout appears different when navigating to a page for the first time versus the second time.
+
+There appears to be [no way](https://stackoverflow.com/questions/41947434/how-stop-pseudo-elements-affecting-layout) to display a pseudo-element with content without letting it affect layout, at least not if we want to preserve word wrapping.
+
+As such, we fix this by always making the pseudo-element present, even if it is completely invisible. We get rid of the `typewriting` class, which is no longer needed, and set the pseudo-element display to always contain the cursor block:
+
+```css
+  .info-box h2::after {
+    content: "█";
+    opacity: var(--cursor-opacity);
+  }
+```
+
+We could also manually draw the cursor ourselves by creating a pseudo-element with no content but its own non-zero width and height and background color, as Svelte Typewriter does:
+
+```css
+  .info-box h2::after {
+    content: "";
+    width: 1ex;
+    height: 2ex;
+    background-color: var(--color-header);
+    display: inline-block;
+    opacity: var(--cursor-opacity);
+  }
+```
+
+However, because this still affects the layout due to the `inline-block` display, there is no point to doing this except for perhaps browser compatibility issues.
+
+#### Multi-line title
+
+When word wrap applies and the title spans multiple lines, the cursor block will run ahead of the width expansion. To avoid this, we'll have to check at runtime whether or not the title element is being wrapped. We first bind the title element to a new variable:
+
+```svelte
+<script lang="ts">
+  ...
+  let titleElement: HTMLElement | undefined;
+  ...
+</script>
+
+...
+      <h2 ... bind:this={titleElement}>
+        ...
+      </h2>
+...
+```
+
+Then, when computing the transition effects, we will query for the title height. We notice from console logging observation that the title is at 26px on Chrome when there's only a single line. Firefox renders the title height at 27px. So, anything significantly greater than this will mean it's wrapped. When it's wrapped:
+
+1. We'll have the info box height start at a value large enough to capture the entire vertical width of the title
+2. We'll grow the info box width quickly using the cubic out easing function, because otherwise the turbocharged linear growth of the title (2x or even 3x depending on how many lines it's wrapped across) will overtake the info box width
+
+```ts
+  function revealOutline(
+    node: Element,
+    timing: BorderBoxTiming,
+  ): TransitionConfig {
+    ...
+    const heightPerTitleLinePx = 26;
+    const titleHeight = (titleElement as HTMLElement).clientHeight;
+    // multiply by 1.3 to account for small pixel differences between browsers
+    const titleIsMultiline = titleHeight > heightPerTitleLinePx * 1.3;
+    const minHeight = titleHeight + heightPerTitleLinePx; // add a little for padding
+    const minWidth = 3.5 * heightPerTitleLinePx;
+
+    const growWidth = new ProperyAnimation({
+      ...
+      min: minWidth,
+      ...
+      easingFunction: titleIsMultiline ? cubicOut : linear,
+    });
+
+    const growHeight = new ProperyAnimation({
+      ...
+      min: minHeight,
+      ...
+    });
 ```

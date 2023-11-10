@@ -551,3 +551,129 @@ Finally, because there [doesn't](https://github.com/carbon-design-system/carbon-
 ```
 
 If `totalDurationMs` is recording 2000 at every turn, it is likely because you forgot the `$` in front of `animationsOn`.
+
+### Animating on first mount
+
+Once we add info box animations, we notice that the animations don't run when the page is first loaded, but they do run when we navigate to another page and back to the first page, as if we've never visited the first page. We could decide to stomp this out entirely, or else we could animate the app on the first load as well.
+
+It turns out that in order to get Svelte to perform transitions and animations on [initial page load](https://stackoverflow.com/a/64444463), we'll have to avoid rendering the content until the page is loaded. We edit `src-svelte/src/routes/PageTransition.svelte` accordingly:
+
+```svelte
+<script lang="ts">
+  import { onMount, tick } from "svelte";
+  ...
+  let ready = false;
+
+  onMount(async () => {
+    ready = true;
+    await tick();
+    checkFirstPageLoad(currentRoute);
+  });
+
+  function checkFirstPageLoad(route: string) {
+    if (!ready) {
+      return;
+    }
+
+    if (visitedKeys.has(route)) {
+      firstPageLoad.set(false);
+    } else {
+      visitedKeys.add(route);
+      firstPageLoad.set(true);
+    }
+  }
+
+  ...
+</script>
+
+{#key currentRoute}
+  {#if ready}
+    <div
+      class="transition-container"
+      in:fly={transitions.in}
+      out:fly={transitions.out}
+    >
+      <slot />
+    </div>
+  {/if}
+{/key}
+
+```
+
+The transitions don't seem to play well with both `key` and `if`. After some debugging, we realize that this is because we now need to add `|global` to both `fly` effects:
+
+```svelte
+    <div
+      ...
+      in:fly|global={transitions.in}
+      out:fly|global={transitions.out}
+    >
+      ...
+    </div>
+```
+
+Next, we notice that the animation on first load is delayed, as if it's waiting for the transition out to finish. Since it's the first load, there's no transition out to speak of, and we can being the transition in immediately. We edit the transition duration accordingly:
+
+```ts
+  onMount(async () => {
+    const regularDelay = transitions.in.delay;
+    transitions.in.delay = 0;
+    ready = true;
+    await tick();
+    transitions.in.delay = regularDelay;
+    ...
+  });
+```
+
+We await the tick here to ensure that the non-delayed animation plays first before we reset the delay to its longer value, or else the animation will play using the most up-to-date value of `transitions.in.delay`.
+
+Now we notice that the info box is still delayed. As such, we add a new variable to determine whether it's the first page load or not. We add this to `src-svelte/src/lib/firstPageLoad.ts`:
+
+```ts
+export const firstAppLoad = writable(true);
+```
+
+Then in `src-svelte/src/lib/InfoBox.svelte`:
+
+```ts
+  import { firstAppLoad, firstPageLoad } from "./firstPageLoad";
+
+  ...
+  export let preDelay = $firstAppLoad ? 0 : 100;
+```
+
+We now set this in `src-svelte/src/routes/PageTransition.svelte` after the initial mount:
+
+```ts
+  import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
+
+  ...
+
+  onMount(async () => {
+    ...
+    transitions.in.delay = regularDelay;
+    firstAppLoad.set(false);
+    ...
+  });
+```
+
+Finally, we edit `src-svelte/src/lib/__mocks__/stores.ts` to make it easier to test components by remounting in Storybook rather than having to refresh the entire page:
+
+```ts
+import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
+
+...
+
+const SvelteStoresDecorator: Decorator = (
+  story: StoryFn,
+  context: StoryContext,
+) => {
+  ...
+
+  // set to their defaults on first load
+  firstAppLoad.set(true);
+  firstPageLoad.set(true);
+
+  ...
+};
+```
