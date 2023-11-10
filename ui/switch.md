@@ -1312,4 +1312,4 @@ As noted [here](https://joshcollinsworth.com/blog/great-transitions#9-lean-on-ha
 </style>
 ```
 
-We see that this does make the animation significantly smoother.
+We see that this does make the animation significantly smoother. This also slightly changes our screenshots, so we update our baseline screenshot tests.
