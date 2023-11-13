@@ -178,3 +178,15 @@ In `src-svelte/src/routes/SidebarUI.svelte`:
 We remove z-index, width, background-color, position, top, and left from the header because they're no longer needed.
 
 We remove `header::before` entirely because now the shadow is cast properly by the main element and captured in the screenshot for the overall layout instead of the screenshot for the sidebar itself.
+
+## Centering content horizontally
+
+Edit `src-svelte/src/routes/AppLayout.svelte` to constrain the maximum width of the app layout and center it horizontally:
+
+```css
+  main {
+    ...
+    max-width: 70rem;
+    margin: 0 auto;
+  }
+```

@@ -1,6 +1,8 @@
 # Information boxes
 
-## Dimensions
+## Layout
+
+### Dimensions
 
 On a large screen, the text inside of the info box becomes too sparse and unreadable. We edit `src-svelte/src/lib/InfoBox.svelte` to constrain the maximum width:
 
@@ -22,6 +24,116 @@ We find that this is a comfortable maximum width except for the settings screen.
 <InfoBox title="Settings" maxWidth="70rem">
   ...
 </InfoBox>
+```
+
+However, upon visiting the homepage when the window is maximized, we realize that the info boxes are no longer aligned. We therefore constrain the max width as indicated in [`layout.md`](/ui/layout.md), and then edit `src-svelte/src/lib/InfoBox.svelte` to make the max width constraint optional:
+
+```svelte
+<script lang="ts">
+  ...
+  export let maxWidth: string | undefined = undefined;
+  let maxWidthStyle = maxWidth === undefined ? "" : `max-width: ${maxWidth};`;
+  ...
+</script>
+
+<section
+  ...
+  style={maxWidthStyle}
+  ...
+>
+</section>
+```
+
+and remove the constraint from `src-svelte/src/routes/settings/Settings.svelte`:
+
+```svelte
+<InfoBox ...>
+  ...
+</InfoBox>
+```
+
+Finally, we constrain the size in our Storybook stories in order to make them look good even when the browser window is maximized. We edit `src-svelte/src/routes/PageTransitionView.svelte`:
+
+```css
+  .storybook-wrapper {
+    ...
+    max-width: 50rem;
+    ...
+  }
+```
+
+and `src-svelte/src/lib/InfoBox.stories.ts`:
+
+```ts
+...
+Regular.args = {
+  ...
+  maxWidth: "50rem",
+};
+
+...
+MountTransition.args = {
+  ...
+  maxWidth: "50rem",
+};
+
+...
+SlowMotion.args = {
+  ...
+  maxWidth: "50rem",
+};
+
+...
+Motionless.args = {
+  ...
+  maxWidth: "50rem",
+};
+```
+
+We could also do this by introducing a Storybook wrapper that constrains the size of the content within.
+
+### Bottom padding
+
+We notice that at some point, the bottom padding from the content to the border is much thicker than it is between the title and the top border. We find that this is because of the default 1 rem margin around `<p>` elements. We disable this in `src-svelte/src/lib/InfoBox.svelte`:
+
+```css
+  .info-box :global(p:last-child) {
+    margin-bottom: 0;
+  }
+```
+
+but find that the subheadings are now too close to the text from the previous section. We fix this in `src-svelte/src/lib/SubInfoBox.svelte`:
+
+```css
+  .subheading {
+    ...
+    margin: 0.5rem 0;
+  }
+```
+
+Now the subheadings are too far from the text that follows them. We disable the margins from the first paragraph as well:
+
+```css
+  .content :global(p:first-child) {
+    margin-top: 0;
+  }
+```
+
+It is not recommended to update `src-svelte/src/routes/settings/Settings.svelte` to remove the `.container` and `.container:first-of-type` styles, because it's still useful to add a little extra spacing in cases of dense non-text elements such as the settings page.
+
+### Text justification
+
+We justify all text except for the h2:
+
+```css
+  .info-box {
+    ...
+    text-align: justify;
+  }
+
+  .info-box h2 {
+    text-align: left;
+  }
 ```
 
 ## Storybook
@@ -2192,6 +2304,17 @@ Now we implement the rest in `src-svelte/src/lib/InfoBox.svelte`:
 
 An explanation of `children` versus `childNodes` can be found [here](https://stackoverflow.com/a/7935719).
 
+After some testing, we find that we should actually change the content fade-in to be linear. Due to the nature of this attribute, values near the extremes are nearly indistinguishable, and time spent at the extremes is not noticed and makes the entire animation feel faster than it actually is.
+
+```ts
+  class RevealContent extends SubAnimation<void> {
+    ... {
+      const easingFunction = linear;
+      ...
+    }
+  }
+```
+
 Finally, we once again update the test `src-svelte/src/lib/InfoBox.test.ts` to record that our expected test timings have indeed changed:
 
 ```ts
@@ -2236,6 +2359,8 @@ We could also manually draw the cursor ourselves by creating a pseudo-element wi
 ```
 
 However, because this still affects the layout due to the `inline-block` display, there is no point to doing this except for perhaps browser compatibility issues.
+
+We now rename the `System Information` box to `System Info` to avoid having a multi-line title with the default app sizing.
 
 #### Multi-line title
 
@@ -2285,4 +2410,138 @@ Then, when computing the transition effects, we will query for the title height.
       min: minHeight,
       ...
     });
+```
+
+### Staggered initialization
+
+Let's try staggering info box reveal animations so that if there's multiple of them on the same page, they don't all start and end at the exact same time. We edit `src-svelte/src/lib/InfoBox.svelte` to take in this new option:
+
+```ts
+  ...
+  export let childNumber = 0;
+  ...
+  const perChildStagger = 100;
+  const totalDelay = preDelay + (childNumber * perChildStagger);
+
+  ...
+  $: timing = getAnimationTiming(totalDelay, timingScaleFactor);
+```
+
+And we have to pass this prop through the other components that use an info box, such as `src-svelte/src/routes/ApiKeysDisplay.svelte`:
+
+```svelte
+<InfoBox ... {...$$restProps}>
+  ...
+</Infobox>
+```
+
+and `src-svelte/src/routes/Metadata.svelte`:
+
+```svelte
+<InfoBox ... {...$$restProps}>
+  ...
+</InfoBox>
+```
+
+Now we can finally set this attribute in `src-svelte/src/routes/Homepage.svelte` (this requires the Storybook refactor mentioned [here](ui/homepage.md)):
+
+```svelte
+<section ...>
+  ...
+    <Metadata childNumber={0} />
+  ...
+</section>
+
+<section>
+  <ApiKeysDisplay childNumber={1} />
+</section>
+```
+
+Having done this, it now becomes apparent that the info boxes waiting for their turn to display their transition animation should not be visible until shortly before their display is set to begin. We add a new timing to the info box at `src-svelte/src/lib/InfoBox.svelte`:
+
+```ts
+  ...
+
+  export interface InfoBoxTiming {
+    ...
+    overallFadeIn: TransitionTimingMs;
+  }
+
+  class InfoBoxTimingCollection extends TimingGroupAsCollection {
+    ...
+
+    overallFadeIn(): TransitionTimingMs {
+      return this.children[3];
+    }
+
+    ...
+
+    finalize(): InfoBoxTiming {
+      return {
+        ...
+        overallFadeIn: this.overallFadeIn(),
+      };
+    }
+  }
+
+  function newInfoBoxTimingCollection({
+    ...
+    overallFadeIn,
+  }: {
+    ...
+    overallFadeIn: TransitionTimingMs;
+  }) {
+    return new InfoBoxTimingCollection([..., overallFadeIn]);
+  }
+```
+
+and we calculate when this timing should happen, which would be 50ms before all the other animations are set to occur. In other words, whenever the main animations are supposed to play, the info box will start fading in 50ms before that, and finish in time for everything else to start playing -- *unless* there is no delay to speak of in the first place.
+
+```ts
+  export function getAnimationTiming(
+    ...
+  ): InfoBoxTiming {
+    ...
+    const effectsGroup = new TimingGroupAsCollection([
+      borderBox,
+      title,
+      infoBox,
+    ]).delayByMs(overallDelayMs);
+    const [delayedBorder, delayedTitle, delayedInfo] = effectsGroup.children;
+
+    const overallFadeIn = new PrimitiveTimingMs({
+      startMs: Math.max(0, effectsGroup.startMs() - 50),
+      endMs: effectsGroup.startMs(),
+    });
+
+    const infoBoxTimingCollection = newInfoBoxTimingCollection({
+      borderBox: delayedBorder as BorderBoxTimingCollection,
+      title: delayedTitle as TitleTimingCollection,
+      infoBox: delayedInfo,
+      overallFadeIn,
+    });
+    return infoBoxTimingCollection.scaleBy(timingScaleFactor).finalize();
+  }
+```
+
+Now, we actually use this newly computed timing:
+
+```svelte
+<script lang="ts">
+  ...
+  import { fade, type TransitionConfig } from "svelte/transition";
+  ...
+
+  $: overallFadeInArgs = {
+    delay: timing.overallFadeIn.delayMs(),
+    duration: timing.overallFadeIn.durationMs(),
+  };
+</script>
+
+<section
+  ...
+  in:fade|global={overallFadeInArgs}
+>
+  ...
+</section>
 ```

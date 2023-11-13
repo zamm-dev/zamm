@@ -75,3 +75,7 @@ Homepage.parameters = {
   },
 };
 ```
+
+## Renaming to Dashboard
+
+Upon realizing that this was already called the "Dashboard" for Storybook purposes, we rename both files and their imports.
