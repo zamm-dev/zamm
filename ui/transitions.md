@@ -159,6 +159,19 @@ and edit `src-svelte/src/routes/+layout.svelte` to pass in the new attribute:
 
 ```
 
+We find that this works on Ubuntu, but not on Linux Mint because the url is empty on app start. We edit `src-svelte/src/routes/+layout.ts` again to take this possibility into account:
+
+```ts
+...
+
+export function load({ url }) {
+  return {
+    url: url.pathname || "/",
+  };
+}
+
+```
+
 Now it works as expected except for the vertical scrollbars that appear temporarily when both of them are displayed simultaneously. We lay them on top of each other instead by editing `src-svelte/src/routes/PageTransition.svelte` to add a `transition-container` class to the div:
 
 ```css
@@ -675,5 +688,68 @@ const SvelteStoresDecorator: Decorator = (
   firstPageLoad.set(true);
 
   ...
+};
+```
+
+#### Waiting for animation speed preference to be set
+
+We notice that in practice, the first page load executes quickly because it kicks off before the animation speed preference is loaded. We fix this by editing `src-svelte/src/routes/+layout.svelte` to only refer to `AppLayout`, because that is where the API call to the backend is made:
+
+```svelte
+<script>
+  import AppLayout from "./AppLayout.svelte";
+  import "./styles.css";
+  export let data;
+</script>
+
+<AppLayout currentRoute={data.url}>
+  <slot />
+</AppLayout>
+```
+
+Next, we edit the actual `src-svelte/src/routes/AppLayout.svelte` to only render the page transition once the initial preferences are retrieved:
+
+```svelte
+<script lang="ts">
+  ...
+  import PageTransition from "./PageTransition.svelte";
+  ...
+
+  export let currentRoute: string;
+  let ready = false;
+
+  onMount(async () => {
+    ...
+
+    ready = true;
+  });
+</script>
+
+...
+    <main>
+      {#if ready}
+        <PageTransition {currentRoute}>
+          <slot />
+        </PageTransition>
+      {/if}
+    </main>
+```
+
+We now edit the usage of `AppLayout` to take in this new variable, namely all the tests in `src-svelte/src/routes/AppLayout.test.ts`:
+
+```ts
+  test("will do nothing if no custom settings exist", async () => {
+    ...
+    render(AppLayout, { currentRoute: "/" });
+    ...
+  });
+```
+
+and all the stories in `src-svelte/src/routes/AppLayout.stories.ts`:
+
+```ts
+export const Dynamic: StoryObj = Template.bind({}) as any;
+Dynamic.args = {
+  currentRoute: "/",
 };
 ```

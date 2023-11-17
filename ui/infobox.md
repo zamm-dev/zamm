@@ -2330,6 +2330,10 @@ Finally, we once again update the test `src-svelte/src/lib/InfoBox.test.ts` to r
   });
 ```
 
+##### Refactoring generic timing code
+
+We realize that we should refactor the non-trivial portions of the code referring to generic timing logic into a new file at `src-svelte/src/lib/animation-timing.ts`, along with the corresponding generic tests at `src-svelte/src/lib/animation-timing.test.ts`.
+
 #### Cursor layout
 
 The addition of the cursor pseudo-element with its own content causes the layout to shift. This would not be a problem, except that the layout appears different when navigating to a page for the first time versus the second time.

@@ -33,3 +33,39 @@ $ swapon --show
 NAME      TYPE SIZE USED PRIO
 /swapfile file   4G   2M   -2
 ```
+
+Note that this command only ever allocates space for the space, and never takes it away. You can verify this:
+
+```bash
+$ sudo mkswap /swapfile
+mkswap: /swapfile: warning: wiping old swap signature.
+Setting up swapspace version 1, size = 20 GiB (21474832384 bytes)
+no label, UUID=4d26bbeb-27ae-4ac2-b79f-b8520282ea72
+$ swapon --show
+NAME      TYPE SIZE USED PRIO
+/swapfile file  20G 9.3M   -2
+```
+
+To actually reduce the swap size, you'll have to remove the swap file altogether and create a new one:
+
+```bash
+$ sudo rm /swapfile
+$ sudo fallocate -l 8G /swapfile
+```
+
+Note that if you activate the swap immediately, you'll get
+
+```bash
+$ sudo swapon /swapfile 
+swapon: /swapfile: insecure permissions 0644, 0600 suggested.
+```
+
+So instead, change the permissions first before doing that:
+
+```bash
+$ sudo chmod 0600 /swapfile
+$ sudo swapon /swapfile
+$ swapon --show        
+NAME      TYPE SIZE USED PRIO
+/swapfile file   8G 3.8M   -2
+```
