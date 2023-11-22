@@ -428,3 +428,292 @@ and pass it in through `src-svelte/src/routes/components/api-keys/Service.svelte
 ```svelte
     <Form {apiKey} />
 ```
+
+#### Styling the text input
+
+We follow [this example](https://codepen.io/maheshambure21/pen/EozKKy) from [here](https://freefrontend.com/css-input-text/), and refactor and create `src-svelte/src/lib/controls/TextInput.svelte` to style the text input:
+
+```svelte
+<script lang="ts">
+  export let name: string;
+  export let value: string;
+</script>
+
+<div class="fancy-input">
+  <input type="text" id={name} {name} {value} />
+  <span class="focus-border"></span>
+</div>
+
+<style>
+  .fancy-input {
+    position: relative;
+    flex: 1;
+  }
+
+  input[type="text"] {
+    min-width: 1rem;
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-background);
+    font-family: var(--font-mono);
+    font-weight: bold;
+    font-size: 1rem;
+  }
+
+  input[type="text"]:focus {
+    outline: none;
+  }
+
+  input[type="text"] + .focus-border {
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: blue;
+    transition: width calc(0.05s / var(--base-animation-speed)) ease-out;
+  }
+
+  input[type="text"]:focus + .focus-border {
+    width: 100%;
+  }
+</style>
+```
+
+Then, we use this new input in `src-svelte/src/routes/components/api-keys/Form.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  import TextInput from "$lib/controls/TextInput.svelte";
+
+  ...
+  export let saveKeyLocation = "";
+  ...
+</script>
+
+...
+  <form>
+    <div ...>
+      ...
+      <TextInput name="apiKey" value={apiKey} />
+    </div>
+
+    <div ...>
+      ...
+      <label for="saveKeyLocation">Save key to:</label>
+      <TextInput name="saveKeyLocation" value={saveKeyLocation} />
+    </div>
+
+    ...
+  </form>
+```
+
+#### Styling the button
+
+We create a button element at `src-svelte/src/lib/controls/Button.svelte`:
+
+```svelte
+<script lang="ts">
+  export let text: string;
+</script>
+
+<button class="outer">
+  <div class="inner">{text}</div>
+</button>
+
+<style>
+  .outer, .inner {
+    --cut: 7px;
+    --background-color: var(--color-background);
+    --border-color: #ccc;
+    --border: 0.15rem;
+    --diagonal-border: calc(var(--border) * 0.8);
+    font-size: 0.9rem;
+    font-family: var(--font-body);
+    border: var(--border) solid var(--border-color);
+    text-transform: uppercase;
+    background:
+      linear-gradient(-45deg, var(--border-color) 0 calc(var(--cut) + var(--diagonal-border)), var(--background-color) 0) bottom right / 50% 100%,
+      linear-gradient(135deg, var(--border-color) 0 calc(var(--cut) + var(--diagonal-border)), var(--background-color) 0) top left / 50% 100%;
+    background-origin:border-box;
+    background-repeat: no-repeat;
+    -webkit-mask:
+      linear-gradient(-45deg, transparent 0 var(--cut), #fff 0) bottom right,
+      linear-gradient(135deg, transparent 0 var(--cut), #fff 0) top left;
+    -webkit-mask-size: 51% 100%;
+    -webkit-mask-repeat: no-repeat;
+    mask:
+      linear-gradient(-45deg, transparent 0 var(--cut), #fff 0) bottom right,
+      linear-gradient(135deg, transparent 0 var(--cut), #fff 0) top left;
+    mask-size: 51% 100%;
+    mask-repeat: no-repeat;
+    transition: all calc(0.05s / var(--base-animation-speed)) ease-out;
+  }
+
+  .inner {
+    padding: 5px 10px;
+  }
+
+  .inner:hover {
+    filter: brightness(1.05);
+  }
+
+  .inner:active {
+    transform: translateY(0.08rem) scale(0.98);
+  }
+
+  .outer {
+    --background-color: #eee;
+    --border: 2px;
+    --diagonal-border: 2.5px;
+    --cut: 8px;
+    padding: 1px;
+    display: inline-block;
+  }
+</style>
+
+```
+
+Note that we use a brightness filter on hover because changes to the background gradient colors don't get animated. The brightness filter lights up the entire element, including borders, but that is an acceptable look for our purposes.
+
+We also create `src-svelte/src/lib/controls/Button.stories.ts`:
+
+```ts
+import Button from "./Button.svelte";
+import type { StoryFn, StoryObj } from "@storybook/svelte";
+
+export default {
+  component: Button,
+  title: "Reusable/Button",
+  argTypes: {},
+};
+
+const Template = ({ ...args }) => ({
+  Component: Button,
+  props: args,
+});
+
+export const Regular: StoryObj = Template.bind({}) as any;
+Regular.args = {
+  text: "Simulate",
+};
+
+```
+
+We also add this as a test to `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+  {
+    path: ["reusable", "button"],
+    variants: ["regular"],
+  },
+  ...
+];
+```
+
+Finally, we use this new element in `src-svelte/src/routes/components/api-keys/Form.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  import Button from "$lib/controls/Button.svelte";
+  ...
+</script>
+
+...
+      <div class="save-button">
+        <Button text="Save" />
+      </div>
+...
+
+<style>
+  ...
+  .save-button {
+    align-self: flex-start;
+  }
+</style>
+```
+
+#### Fixing corner overlap and bottom shadow
+
+If we play the animation slowly, we see that 1) the corner of the form overlaps the supposed border of the div for a while until the animation finishes, and 2) there is no shadow on the bottom of the inset until the animation finishes playing. We fix this by moving the box shadow from the form to a containing element, and by first growing the padding before growing the container for the form:
+
+```svelte
+<script lang="ts">
+  ...
+  function growY(node: HTMLElement) {
+    const rem = 18;
+    const totalFinalPadding = 1 * rem;
+    ...
+    return {
+      ...
+      css: (t: number) => {
+        const totalHeight = height * t;
+        const totalCurrentPadding = Math.min(totalFinalPadding, totalHeight);
+        const contentHeight = totalHeight - totalCurrentPadding;
+        return `
+          --vertical-padding: ${totalCurrentPadding / 2}px;
+          --form-height: ${contentHeight}px;
+        `;
+      },
+    };
+  }
+</script>
+
+<div class="container" transition:growY>
+  <div class="inset-container">
+    <form>
+      ...
+    </form>
+  </div>
+</div>
+
+<style>
+  .container {
+    --form-height: 100%;
+    --vertical-padding: 0.5rem;
+    --horizontal-overshoot: 1rem;
+    overflow: hidden;
+    margin: 0 calc(-1 * var(--horizontal-overshoot));
+    padding: var(--vertical-padding) 0;
+  }
+
+  .inset-container {
+    height: var(--form-height);
+    overflow: hidden;
+    box-shadow: inset 0.05em 0.05em 0.3em rgba(0, 0, 0, 0.4);
+    background-color: var(--color-background);
+  }
+
+  form {
+    padding: 0.5rem var(--horizontal-overshoot);
+    ...
+  }
+  ...
+</style>
+```
+
+#### Fixing animation on Firefox
+
+We notice that the animation isn't running for some reason on Firefox. As such, we implement it by manually changing the style:
+
+```ts
+  function growY(node: HTMLElement) {
+    ...
+    const duration = $animationsOn ? 200 / $animationSpeed : 0;
+    return {
+      ...
+      tick: (t: number) => {
+        ...
+        node.style.setProperty("--vertical-padding", `${totalCurrentPadding / 2}px`);
+        node.style.setProperty("--form-height", `${contentHeight}px`);
+      }
+    };
+  }
+```
+
+Note that we're now using the `tick` function instead of the `css` function, and we doubled the duration to make its speed feel consistent with the rest of the page.
