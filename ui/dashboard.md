@@ -1688,3 +1688,601 @@ fn main() {
 ```
 
 As usual, `src-svelte/src/lib/bindings.ts` should be updated automatically by Specta.
+
+#### Loading shell info
+
+We want to load shell info on app startup. Let's do this in the metadata component. We first move it to the `src-svelte/src/routes/components` folder, just like the API keys display was.
+
+Then, we refactor out the loading part of `Display.svelte` into `src-svelte/src/lib/Loading.svelte`:
+
+```svelte
+<span class="loading" role="status">...loading</span>
+
+<style>
+  span.loading {
+    color: var(--color-faded);
+  }
+</style>
+
+```
+
+and then we import this new definition in the original file at `src-svelte/src/routes/components/api-keys/Display.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  import Loading from "$lib/Loading.svelte";
+  ...
+</script>
+
+<InfoBox ...>
+  {#await apiKeys}
+    <Loading />
+  {:then keys}
+    ...
+  {/await}
+</InfoBox>
+```
+
+Now we use this same pattern in `src-svelte/src/routes/components/Metadata.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  import Loading from "$lib/Loading.svelte";
+  import { getSystemInfo } from "$lib/bindings";
+
+  let systemInfoCall = getSystemInfo();
+</script>
+
+<InfoBox title="System Info" {...$$restProps}>
+  {#await systemInfoCall}
+    <Loading />
+  {:then systemInfo}
+    <table>
+      ...
+    </table>
+  {:catch error}
+    <span role="status">error: {error}</span>
+  {/await}
+</InfoBox>
+
+...
+```
+
+It appears there is not really a better way to cut down on the boilerplate for the pattern here, as evidence by [this question](https://stackoverflow.com/q/64023421).
+
+Next, we update the stories at `src-svelte/src/routes/components/Metadata.stories.ts` to also display the loading page:
+
+```ts
+...
+import type { SystemInfo } from "$lib/bindings";
+import TauriInvokeDecorator from "$lib/__mocks__/invoke";
+
+export default {
+  ...,
+  decorators: [TauriInvokeDecorator],
+};
+
+...
+
+const linuxInfo: SystemInfo = {
+  shell: "Zsh",
+  shell_init_file: "/home/john.smith/.zshrc",
+};
+
+export const Loaded: StoryObj = Template.bind({}) as any;
+Loaded.parameters = {
+  viewport: {
+    defaultViewport: "mobile2",
+  },
+  resolution: linuxInfo,
+};
+
+export const Loading: StoryObj = Template.bind({}) as any;
+Loading.parameters = {
+  viewport: {
+    defaultViewport: "mobile2",
+  },
+  resolution: linuxInfo,
+  shouldWait: true,
+};
+```
+
+Finally, we'll update the tests at `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+  {
+    path: ["screens", "dashboard", "metadata"],
+    variants: ["loading", "loaded"],
+    screenshotEntireBody: true,
+  },
+  ...
+];
+```
+
+Now, to make sure the diffs work correctly, we rename `src-svelte/screenshots/baseline/screens/dashboard/metadata/metadata.png` to `src-svelte/screenshots/baseline/screens/dashboard/metadata/loaded.png`.
+
+Next, we'll want to make sure that the API call is being triggered correctly on page load, and updating the HTML as expected. We copy and modify the code from `src-svelte/src/routes/components/api-keys/Display.test.ts`, and end up creating `src-svelte/src/routes/components/Metadata.test.ts` as such:
+
+```ts
+import { expect, test, vi, type Mock } from "vitest";
+import "@testing-library/jest-dom";
+
+import { render, screen } from "@testing-library/svelte";
+import Metadata from "./Metadata.svelte";
+import { within, waitFor } from "@testing-library/dom";
+import { parseSampleCall, TauriInvokePlayback } from "$lib/sample-call-testing";
+import { tickFor } from "$lib/test-helpers";
+
+describe("Metadata", () => {
+  let tauriInvokeMock: Mock;
+  let playback: TauriInvokePlayback;
+
+  beforeEach(() => {
+    tauriInvokeMock = vi.fn();
+    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    playback = new TauriInvokePlayback();
+    tauriInvokeMock.mockImplementation(
+      (...args: (string | Record<string, string>)[]) =>
+        playback.mockCall(...args),
+    );
+  });
+
+  test("loading by default", async () => {
+    const getSystemInfoCall = parseSampleCall("../src-tauri/api/sample-calls/get_system_info-linux.yaml", false);
+    playback.addCalls(getSystemInfoCall);
+
+    render(Metadata, {});
+
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent(/^...loading$/);
+  });
+
+  test("linux system info returned", async () => {
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+    const getSystemInfoCall = parseSampleCall("../src-tauri/api/sample-calls/get_system_info-linux.yaml", false);
+    playback.addCalls(getSystemInfoCall);
+
+    render(Metadata, {});
+    await tickFor(3);
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+
+    const shellRow = screen.getByRole("row", { name: /Shell/ });
+    const shellValueCell = within(shellRow).getAllByRole("cell")[1];
+    await waitFor(() =>
+      expect(shellValueCell).toHaveTextContent("Zsh"),
+    );
+  });
+
+  test("API key error", async () => {
+    const spy = vi.spyOn(window, "__TAURI_INVOKE__");
+    expect(spy).not.toHaveBeenCalled();
+    tauriInvokeMock.mockRejectedValueOnce("testing");
+
+    render(Metadata, {});
+    expect(spy).toHaveBeenLastCalledWith("get_system_info");
+
+    await waitFor(() => {
+      const status = screen.getByRole("status");
+      expect(status).toHaveTextContent(/^error: testing$/);
+    });
+  });
+});
+
+```
+
+In the course of adapting the old test file to the new case, we made some changes to the mocking functionality. We port these changes back into `src-svelte/src/routes/components/api-keys/Display.test.ts`:
+
+```ts
+...
+
+  test("loading by default", async () => {
+    const getApiKeysCall = parseSampleCall("../src-tauri/api/sample-calls/get_api_keys-empty.yaml", false);
+    playback.addCalls(getApiKeysCall);
+
+    render(ApiKeysDisplay, {});
+
+    ...
+  });
+
+...
+```
+
+#### Refactoring playback tests
+
+Before we go further, we observe an opportunity to simplify sample call parsing in `src-svelte/src/lib/sample-call-testing.ts` by getting rid of the `argumentsExpected` argument:
+
+```ts
+export function parseSampleCall(sampleFile: string): ParsedCall {
+  ...
+  assert(rawSample.request.length <= 2);
+  const parsedRequest = rawSample.request.length === 2
+    ...;
+  ...
+```
+
+After all, the arguments (or lack thereof) to the API call will be checked later, so there is no need to make this check at sample parsing time. Now, the resulting calls at `src-svelte/src/routes/AppLayout.test.ts`, `src-svelte/src/routes/components/Metadata.test.ts`, `src-svelte/src/routes/components/api-keys/Display.test.ts`, and `src-svelte/src/routes/settings/Settings.test.ts` will also have to be modified.
+
+Now we can edit `src-svelte/src/lib/sample-call-testing.ts` yet again to add a simpler function for registering sample call files:
+
+```ts
+export class TauriInvokePlayback {
+  ...
+  addSamples(...sampleFiles: string[]): void {
+    const calls = sampleFiles.map((filename) => parseSampleCall(filename));
+    this.addCalls(...calls);
+  }
+}
+```
+
+Now we can make refactors such as changing this:
+
+```ts
+    const getSystemInfoCall = parseSampleCall(
+      "../src-tauri/api/sample-calls/get_system_info-linux.yaml",
+    );
+    playback.addCalls(getSystemInfoCall);
+```
+
+into this:
+
+```ts
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/get_system_info-linux.yaml",
+    );
+```
+
+We once again make these changes in every one of the above files except for `Settings.test.ts`. In that particular file, the shorter names for the function calls make the test more interpretable, and therefore the existing call to `playback.addCalls` can be kept.
+
+#### Sample API playback in stories
+
+Now that we have performed the above refactor, we can use the test playback mechanism in the Storybook stories as well. We modify `src-svelte/src/lib/__mocks__/invoke.ts`:
+
+```ts
+import { TauriInvokePlayback } from "$lib/sample-call-testing";
+
+let playback = new TauriInvokePlayback();
+let nextShouldWait = false;
+
+function mockInvokeFn<T>(command: string, args?: Record<string, string>): Promise<T> {
+  if (nextShouldWait) {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve(null as T);
+      }, 1_000_000); // the re-render never happens, so any timeout is fine
+   });
+  } else {
+    let allArgs = args === undefined ? [command] : [command, args];
+    return playback.mockCall(...allArgs) as Promise<T>;
+  }
+};
+
+window.__TAURI_INVOKE__ = mockInvokeFn;
+
+interface TauriInvokeArgs {
+  sampleCallFiles?: string[];
+  ...
+}
+
+const TauriInvokeDecorator: Decorator = (
+  ...
+) => {
+  ...
+  const { sampleCallFiles, shouldWait } = parameters as TauriInvokeArgs;
+  if (sampleCallFiles !== undefined) {
+    playback.addSamples(...sampleCallFiles);
+  }
+  ...
+};
+
+...
+```
+
+and modify `src-svelte/src/routes/components/api-keys/Display.stories.ts`:
+
+```ts
+...
+
+const unknownKeys = [
+  "src-tauri/api/sample-calls/get_api_keys-empty.yaml",
+];
+
+const knownKeys = [
+  "src-tauri/api/sample-calls/get_api_keys-openai.yaml",
+];
+
+export const Loading: StoryObj = Template.bind({}) as any;
+Loading.parameters = {
+  shouldWait: true,
+  viewport: {
+    defaultViewport: "mobile2",
+  },
+};
+
+export const Unknown: StoryObj = Template.bind({}) as any;
+Unknown.parameters = {
+  sampleCallFiles: unknownKeys,
+  ...
+};
+
+...
+```
+
+Our first attempt at this gives us the error
+
+```ts
+Vitest failed to access its internal state.
+
+
+One of the following is possible:
+- "vitest" is imported directly without running "vitest" command
+- "vitest" is imported inside "globalSetup" (to fix this, use "setupFiles" instead, because "globalSetup" runs in a different context)
+- Otherwise, it might be a Vitest bug. Please report it to https://github.com/vitest-dev/vitest/issues
+```
+
+This is because `parseSampleCall` and `TauriInvokePlayback` both make use of Vitest's `assert` function, but that is not available in Storybook. We try to copy over Vitest's `Assert` type definition:
+
+```ts
+interface Assert {
+  (expression: any, message?: string): asserts expression;
+}
+```
+
+but this only results in the error
+
+```
+Assertions require every name in the call target to be declared with an explicit type annotation.
+```
+
+We see that [this](https://stackoverflow.com/a/71617709) is a proposed workaround, but for simplicity we define the assert ourselves in `src-svelte/src/lib/sample-call-testing.ts`:
+
+```ts
+function customAssert(condition: boolean, message?: string): void {
+  if (!condition) {
+    throw new Error(message);
+  }
+}
+
+...
+
+export function parseSampleCall(sampleFile: string): ParsedCall {
+  ...
+  customAssert(rawSample.request.length <= 2);
+  ...
+}
+
+export class TauriInvokePlayback {
+  ...
+
+  mockCall(
+    ...
+  ): Promise<Record<string, string>> {
+    ...
+    customAssert(
+      matchingCallIndex !== -1,
+      `No matching call found ...`
+    );
+    ...
+  }
+
+  ...
+}
+```
+
+Unfortunately, we now run into the problem
+
+```
+Module "fs" has been externalized for browser compatibility. Cannot access "fs.readFileSync" in client code.  See http://vitejs.dev/guide/troubleshooting.html#module-externalized-for-browser-compatibility for more details.
+```
+
+Even initializing `playback` in the story file instead of the decorator doesn't work. Therefore, we'll have to make a network request instead when loading sample call files in Storybook. We see that we can determine whether or not we're running in the browser context [here](https://stackoverflow.com/a/34550964), and avoid changing too much of our code by using `XMLHttpRequest` synchronously as described [here](https://stackoverflow.com/a/72561702). We now make the corresponding changes to `src-svelte/src/lib/sample-call-testing.ts`:
+
+```ts
+...
+
+function loadYamlFromNetwork(url: string): string {
+  const request = new XMLHttpRequest();
+  request.open("GET", url, false);
+  request.send(null);
+  return request.responseText;
+}
+
+export function parseSampleCall(sampleFile: string): ParsedCall {
+  const sample_call_yaml = typeof process === "object"
+    ? fs.readFileSync(sampleFile, "utf-8")
+    : loadYamlFromNetwork(sampleFile);
+  ...
+}
+```
+
+and tell Storybook how to find these API calls by editing `src-svelte/.storybook/main.ts`:
+
+```ts
+const config: StorybookConfig = {
+  ...
+  staticDirs: [..., "../../src-tauri"],
+  ...
+};
+```
+
+We edit `src-svelte/src/routes/components/api-keys/Display.stories.ts` again to point to the new URL:
+
+```ts
+...
+
+const unknownKeys = [
+  "/api/sample-calls/get_api_keys-empty.yaml",
+];
+
+const knownKeys = [
+  "/api/sample-calls/get_api_keys-openai.yaml",
+];
+
+...
+```
+
+After restarting Storybook, we notice that the sample calls don't work as expected when navigating between pages, so we edit `src-svelte/src/lib/__mocks__/invoke.ts`:
+
+```ts
+...
+let playback: TauriInvokePlayback;
+...
+
+const TauriInvokeDecorator: Decorator = (
+  ...
+) => {
+  ...
+  playback = new TauriInvokePlayback();
+  if (...) {
+    playback.addSamples(...sampleCallFiles);
+  }
+  ...
+};
+
+```
+
+If we want a "soft" failure where our own UI (instead of the Storybook UI) displays the error around not finding a matching call, then we can edit `src-svelte/src/lib/sample-call-testing.ts`:
+
+```ts
+export class TauriInvokePlayback {
+  ...
+  mockCall(
+    ...
+  ): Promise<Record<string, string>> {
+    ...
+    if (matchingCallIndex === -1) {
+      const candidates = this.unmatchedCalls
+        .map((call) => JSON.stringify(call.request))
+        .join("\n");
+      const errorMessage = `No matching call found for ${jsonArgs}.\nCandidates are ${candidates}`;
+      if (typeof process === "object") {
+        throw new Error(errorMessage);
+      } else {
+        return Promise.reject(errorMessage);
+      }
+    }
+    ...
+  }
+}
+```
+
+We continue editing files where `TauriInvokeDecorator` appears, such as `src-svelte/src/routes/Dashboard.stories.ts` (which can now finally support two different kinds of API calls, which was the whole point of this refactor):
+
+```ts
+export const FullPage: StoryObj = Template.bind({}) as any;
+FullPage.parameters = {
+  sampleCallFiles: [
+    "/api/sample-calls/get_api_keys-empty.yaml",
+    "/api/sample-calls/get_system_info-linux.yaml",
+  ],
+};
+```
+
+#### Fixing the info box grow animation on API call resolution
+
+When the API call resolves, the info box grows in size because the loading indicator is replaced by a visualization of the API call data. The border box growth animation should dynamically update to reflect the change in the size of the info box's child nodes. To do this, we first make it possible to dynamically update the final stopping value of `PropertyAnimation` in `src-svelte/src/lib/animation-timing.ts`:
+
+```ts
+...
+
+export class PropertyAnimation extends SubAnimation<string> {
+  max: number;
+
+  constructor(anim: {
+    ...
+  }) {
+    ...
+    const css = (t: number) => {
+      ...
+      const growth = this.max - anim.min;
+      ...
+    };
+    ...
+
+    this.max = anim.max;
+  }
+}
+```
+
+Next, we'll make use of this in `src-svelte/src/lib/InfoBox.svelte`. First, let's handle the border box growth:
+
+1. We use the parent node instead of the border box node because the parent node dimensions will get updated when its children change, but the border box's dimensions cannot be trusted while it is in the middle of its animation.
+2. We copy the mutation observer code from the existing logic for the content reveal.
+3. We finally realize that the reason the `css` animation function doesn't work in Firefox is that it gets precomputed beforehand, which means that the mutation observer gets deregistered early before any mutations occur. Even if it didn't get deregistered early, the fact that it gets precomputed means that the old growth values never get updated. This is why we change the returned object to use `tick` instead of `css` to set the border box style.
+
+```ts
+  function revealOutline(
+    ...
+  ): TransitionConfig {
+    const parentNode = node.parentNode as Element;
+    const actualWidth = parentNode.clientWidth;
+    const actualHeight = parentNode.clientHeight;
+    ...
+    const contentNode = parentNode.querySelector(".info-content") as Element;
+    const observer = new MutationObserver(() => {
+      growWidth.max = parentNode.clientWidth;
+      growHeight.max = parentNode.clientHeight;
+    });
+    observer.observe(contentNode, { childList: true, subtree: true });
+
+    return {
+      ...
+      tick: (tGlobalFraction: number) => {
+        const width = growWidth.tickForGlobalTime(tGlobalFraction);
+        const height = growHeight.tickForGlobalTime(tGlobalFraction);
+        node.setAttribute(
+          "style",
+          width + height,
+        );
+
+        if (tGlobalFraction === 1) {
+          observer.disconnect();
+        }
+      },
+    };
+  }
+```
+
+While this dynamically fixes the border box growth, the content still waits until the very end to reveal itself, as if the mutation observer for the content reveal effect isn't doing anything. This is because the updates made there are still based on the old dimensions of the border box. We get rid of `infoBoxHeight` and `infoBoxTop`, and instead dynamically feed that information as required:
+
+```ts
+  function revealInfoBox(node: Element, timing: InfoBoxTiming) {
+    ...
+    const getChildKickoffFraction = (child: Element, border: DOMRect) => {
+      const childRect = child.getBoundingClientRect();
+      const childBottomYRelativeToInfoBox =
+        childRect.top + childRect.height - border.top;
+      const equivalentYProgress = inverseCubicInOut(
+        childBottomYRelativeToInfoBox / border.height,
+      );
+      ...
+    };
+
+    const getNodeAnimations = (currentNode: Element, root?: DOMRect): RevealContent[] => {
+      if (root === undefined) {
+        root = currentNode.getBoundingClientRect();
+      }
+      ...
+      if (
+        ...
+      ) {
+        return [
+          new RevealContent({
+            ...,
+            timing: getChildKickoffFraction(currentNode, root),
+          }),
+        ];
+      } else {
+        ...
+        for (const child of currentNode.children) {
+          revealAnimations.push(...getNodeAnimations(child, root));
+        }
+        ...
+      }
+    };
+    ...
+  }
+```

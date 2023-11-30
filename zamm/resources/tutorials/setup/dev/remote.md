@@ -140,6 +140,42 @@ $ sudo systemctl status vncserver@1
              ├─60568 xfce4-session
 ```
 
+To view logs for this service, do
+
+```bash
+$ sudo journalctl -u vncserver@1.service
+```
+
+If you see a lot of DPMS errors of this sort:
+
+```
+Oct 22 23:37:51 ubuntu-8gb-hil-1 org.xfce.ScreenSaver[60619]: Xlib:  extension "DPMS" missing on display ":1".
+```
+
+that may be [because](https://forums.opensuse.org/t/getting-rid-of-the-dpms-error-in-vnc/150440/2) of the Xfce screensaver. Kill it with
+
+```bash
+$ ps -aux | grep xfce4-screensaver
+root      329309  0.0  0.3 227388 25508 ?        Sl   09:25   0:00 /usr/bin/xfce4-screensaver
+root      330424  0.0  0.0   6612  2272 pts/1    S+   09:29   0:00 grep --color=auto --exclude-dir=.bzr --exclude-dir=CVS --exclude-dir=.git --exclude-dir=.hg --exclude-dir=.svn --exclude-dir=.idea --exclude-dir=.tox xfce4-screensaver
+$ kill 329309
+```
+
+Confirm the kill:
+
+```bash
+$ ps -aux | grep xfce4-screensaver
+root      330570  0.0  0.0   6612  2328 pts/1    S+   09:30   0:00 grep --color=auto --exclude-dir=.bzr --exclude-dir=CVS --exclude-dir=.git --exclude-dir=.hg --exclude-dir=.svn --exclude-dir=.idea --exclude-dir=.tox xfce4-screensaver
+```
+
+If you see a line such as:
+
+```
+Nov 28 09:25:46 ubuntu-8gb-hil-1 vncserver[329226]: Log file is /root/.vnc/ubuntu-8gb-hil-1:1.log
+```
+
+then `/root/.vnc/ubuntu-8gb-hil-1:1.log` is naturally where you'd want to view additional logs.
+
 You may want to add this to your shell init script, along with
 
 ```bash
