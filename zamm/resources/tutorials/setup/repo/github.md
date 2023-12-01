@@ -59,3 +59,9 @@ Already up to date.
 ```
 
 **Stop now** because "Already up to date" exists in the terminal output. **Don't take any more steps** because the task is now done!
+
+## Secret environment variables in external PRs
+
+If tests on a pull request are failing because secret environment variables are not being shown, even though you clearly have them defined on a page such as https://github.com/YOUR_USERNAME/YOUR_REPO/settings/secrets/actions, this is likely because of GitHub's security mechanisms.
+
+[This answer](https://stackoverflow.com/a/73867674) appears to suggest using `pull_request_target` instead. However, it's not clear how this would work.

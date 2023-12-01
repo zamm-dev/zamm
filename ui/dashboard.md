@@ -2286,3 +2286,121 @@ While this dynamically fixes the border box growth, the content still waits unti
     ...
   }
 ```
+
+Note that both `MutationObserver`s now are listening for the exact same changes to the exact same node.
+
+Unfortunately we see that the width growth is not fixed on Chrome, and only when refreshing the page for the first time. We find that we might as well remove the observer code altogether:
+
+```ts
+  function revealOutline(
+    node: Element,
+    timing: BorderBoxTiming,
+  ): TransitionConfig {
+    ...
+    const growWidth = new PropertyAnimation({
+      ...
+    });
+
+    const growHeight = new PropertyAnimation({
+      ...
+    });
+
+    return {
+      ...
+      tick: (tGlobalFraction: number) => {
+        growWidth.max = parentNode.clientWidth;
+        growHeight.max = parentNode.clientHeight;
+        ...
+
+        if (tGlobalFraction === 1) {
+          node.removeAttribute("style");
+        }
+      },
+    };
+  }
+```
+
+#### Accessing the loaded metadata from the edit form
+
+We want the loaded metadata to be available for use in the API keys edit form. As such, we create a store at `src-svelte/src/lib/system-info.ts`:
+
+```ts
+import { writable, type Writable } from "svelte/store";
+import type { SystemInfo } from "./bindings";
+
+export const systemInfo: Writable<SystemInfo | undefined> = writable(undefined);
+
+```
+
+and then we use this store in `src-svelte/src/routes/components/Metadata.svelte`:
+
+```ts
+  ...
+  import { systemInfo } from "$lib/system-info";
+
+  let systemInfoCall = getSystemInfo();
+  systemInfoCall.then((result) => {
+    systemInfo.set(result);
+  }).catch((error) => {
+    console.error(`Could not retrieve system info: ${error}`);
+  });
+```
+
+and we test that this is set in `src-svelte/src/routes/components/Metadata.test.ts`:
+
+```ts
+...
+import { systemInfo } from "$lib/system-info";
+import { get } from "svelte/store";
+...
+
+  test("linux system info returned", async () => {
+    ...
+    expect(get(systemInfo)?.shell_init_file).toEqual("/root/.zshrc");
+  });
+```
+
+Note that if we don't include the `.catch(...)` statement in the Svelte file, then we'll get this error for the `API key error` test case:
+
+```
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Unhandled Rejection ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Unknown Error: testing
+This error originated in "src/routes/components/Metadata.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+```
+
+Finally, we read this store in when creating the form at `src-svelte/src/routes/components/api-keys/Form.svelte`:
+
+```ts
+  ...
+  import { systemInfo } from "$lib/system-info";
+  ...
+  export let saveKeyLocation = $systemInfo?.shell_init_file ?? "";
+  ...
+```
+
+and we test this at `src-svelte/src/routes/components/api-keys/Display.test.ts`:
+
+```ts
+...
+import userEvent from "@testing-library/user-event";
+import { systemInfo } from "$lib/system-info";
+...
+
+  test("some API key set", async () => {
+    systemInfo.set({
+      shell: "Zsh",
+      shell_init_file: "/home/rando/.zshrc",
+    });
+    await checkSampleCall(
+      "../src-tauri/api/sample-calls/get_api_keys-openai.yaml",
+      "Active",
+    );
+
+    const openAiCell = screen.getByRole("cell", { name: "OpenAI" });
+    await userEvent.click(openAiCell);
+    const apiKeyInput = screen.getByLabelText("API key:");
+    expect(apiKeyInput).toHaveValue("0p3n41-4p1-k3y");
+    const saveFileInput = screen.getByLabelText("Save key to:");
+    expect(saveFileInput).toHaveValue("/home/rando/.zshrc");
+  });
+```
