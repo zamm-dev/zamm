@@ -606,3 +606,16 @@ root      193341  9.3  3.6 54489228 288556 pts/1 Sl   03:32   0:15 /root/.asdf/i
 root      194226  0.0  0.0   6608  2260 pts/0    S+   03:35   0:00 grep --color=auto --exclude-dir=.bzr --exclude-dir=CVS --exclude-dir=.git --exclude-dir=.hg --exclude-dir=.svn --exclude-dir=.idea --exclude-dir=.tox 193341
 
 ```
+
+# Errors
+
+## babel.js
+
+If you get
+
+```
+10:37:55 AM [vite] error while updating dependencies:
+Error: ENOENT: no such file or directory, open '/root/zamm/node_modules/prettier/plugins/babel.js'
+```
+
+then nuke all `node_module` directories in your project and restart Storybook.

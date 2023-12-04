@@ -2404,3 +2404,310 @@ import { systemInfo } from "$lib/system-info";
     expect(saveFileInput).toHaveValue("/home/rando/.zshrc");
   });
 ```
+
+#### Calling the API from the form
+
+Now that we have all the elements in place, let's actually make a call to the API when the form gets submitted. We edit `src-svelte/src/lib/controls/Button.svelte` to trigger form submission when it's clicked:
+
+```svelte
+<button ... type="submit">
+  ...
+</button>
+```
+
+We edit `src-svelte/src/routes/components/api-keys/Form.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  import { setApiKey, type Service } from "$lib/bindings";
+  ...
+
+  export let service: Service;
+  ...
+
+  function submitApiKey(e: SubmitEvent) {
+    setApiKey(
+      saveKey ? saveKeyLocation : null,
+      service,
+      apiKey,
+    )
+  }
+</script>
+
+<div ...>
+  <div ...>
+    <form on:submit|preventDefault={submitApiKey}>
+      ...
+    </form>
+  </div>
+</div>
+
+```
+
+Note that we added a `service` argument for the API call. We'll have to pass it in to the form through `src-svelte/src/routes/components/api-keys/Service.svelte`, where we type `name` as `Service` instead of `string` for type checking purposes:
+
+```svelte
+<script lang="ts">
+  ...
+  import type { Service } from "$lib/bindings";
+
+  export let name: Service;
+  ...
+</script>
+
+<div ...>
+  <div ...>
+    <div ...>{service}</div>
+    ...
+  </div>
+
+  {#if editing}
+    <Form service={name} ... />
+  {/if}
+</div>
+```
+
+Now we'll add a new test for this in `src-svelte/src/routes/components/api-keys/Display.test.ts`. We copy most of the setup for the "no API key set" test, except that the shell init file field will be pre-filled with the expected value, and the simulated user will go on to fill out the API key editing form and trigger the expected API call to save the API key.
+
+```ts
+describe("API Keys Display", () => {
+  ...
+
+  test("can edit API key", async () => {
+    systemInfo.set({
+      shell: "Zsh",
+      shell_init_file: "no-newline/.bashrc",
+    });
+    await checkSampleCall(
+      "../src-tauri/api/sample-calls/get_api_keys-empty.yaml",
+      "Inactive",
+    );
+    tauriInvokeMock.mockClear();
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/set_api_key-existing-no-newline.yaml"
+    );
+
+    const openAiCell = screen.getByRole("cell", { name: "OpenAI" });
+    await userEvent.click(openAiCell);
+    const apiKeyInput = screen.getByLabelText("API key:");
+    expect(apiKeyInput).toHaveValue("");
+    await userEvent.type(apiKeyInput, "0p3n41-4p1-k3y");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+  });
+});
+```
+
+We get the error
+
+```
+Error: No matching call found for ["set_api_key",{"filename":"no-newline/.bashrc","service":"OpenAI","apiKey":"0p3n41-4p1-k3y"}].
+Candidates are ["set_api_key",{"filename":"no-newline/.bashrc","service":"OpenAI","api_key":"0p3n41-4p1-k3y"}]
+ ❯ TauriInvokePlayback.mockCall src/lib/sample-call-testing.ts:65:15
+     63|         `Candidates are ${candidates}`;
+     64|       if (typeof process === "object") {
+     65|         throw new Error(errorMessage);
+       |               ^
+     66|       } else {
+     67|         return Promise.reject(errorMessage);      
+```
+
+We see that Tauri automatically adapts the naming convention of each language, which is good, but means that we must now manually adapt how our tests read from the sample file. This also means that the sample files themselves are no longer a completely verbatim reflection of the API calls being made.
+
+We could do this on either the frontend side, by converting snake case to camelcase when reading the sample file, or on the backend side, by converting camelcase to snake case. We choose the former, and install `lodash`:
+
+```bash
+$ yarn add -D lodash
+```
+
+and edit `src-svelte/src/lib/sample-call-testing.ts` to do the camel case conversion for us by replacing the `JSON.parse` with a custom function:
+
+```ts
+...
+import { camelCase } from "lodash";
+
+...
+
+function parseJsonRequest(request: string): Record<string, string> {
+  const jsonRequest = JSON.parse(request);
+  for (const key in jsonRequest) {
+    const camelKey = camelCase(key);
+    if (camelKey !== key) {
+      jsonRequest[camelKey] = jsonRequest[key];
+      delete jsonRequest[key];
+    }
+  }
+  return jsonRequest;
+}
+
+export function parseSampleCall(sampleFile: string): ParsedCall {
+  ...
+  const parsedRequest =
+    ...
+      ? [..., parseJsonRequest(rawSample.request[1])]
+      : ...;
+  ...
+}
+
+...
+```
+
+This test passes, so we add a new one to `src-svelte/src/routes/components/api-keys/Display.test.ts`:
+
+```ts
+  test("can submit with custom file", async () => {
+    const defaultInitFile = "/home/rando/.bashrc";
+    systemInfo.set({
+      shell: "Zsh",
+      shell_init_file: defaultInitFile,
+    });
+    await checkSampleCall(
+      "../src-tauri/api/sample-calls/get_api_keys-empty.yaml",
+      "Inactive",
+    );
+    tauriInvokeMock.mockClear();
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/set_api_key-existing-no-newline.yaml"
+    );
+
+    await userEvent.click(screen.getByRole("cell", { name: "OpenAI" }));
+    const fileInput = screen.getByLabelText("Save key to:");
+    defaultInitFile.split("").forEach(() => userEvent.type(fileInput, "{backspace}"));
+    await userEvent.type(fileInput, "no-newline/.bashrc");
+    await userEvent.type(screen.getByLabelText("API key:"), "0p3n41-4p1-k3y");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+  });
+```
+
+Now we find that the text input update doesn't work. This is because we have to bind values. We edit `src-svelte/src/routes/components/api-keys/Form.svelte` again to bind the text inputs and the checkbox to their respective variables:
+
+```svelte
+<div ...>
+  <div ...>
+    <form ...>
+      <div ...>
+        ...
+        <TextInput name="apiKey" bind:value={apiKey} />
+      </div>
+
+      <div ...>
+        ...
+        <input type="checkbox" ... bind:checked={saveKey} />
+        ...
+        <TextInput name="saveKeyLocation" bind:value={saveKeyLocation} />
+      </div>
+
+      ...
+    </form>
+  </div>
+</div>
+```
+
+and then we edit `src-svelte/src/lib/controls/TextInput.svelte` to bind the value to the actual HTML input element:
+
+```svelte
+<div ...>
+  <input ... bind:value={value} />
+  ...
+</div>
+```
+
+Now this test passes as well, and we add a final one to `src-svelte/src/routes/components/api-keys/Display.test.ts` to check that we can also set the API key without persisting it to disk at all:
+
+```ts
+  test("can submit with no file", async () => {
+    const defaultInitFile = "/home/rando/.bashrc";
+    systemInfo.set({
+      shell: "Zsh",
+      shell_init_file: defaultInitFile,
+    });
+    await checkSampleCall(
+      "../src-tauri/api/sample-calls/get_api_keys-empty.yaml",
+      "Inactive",
+    );
+    tauriInvokeMock.mockClear();
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/set_api_key-no-disk-write.yaml"
+    );
+
+    await userEvent.click(screen.getByRole("cell", { name: "OpenAI" }));
+    await userEvent.click(screen.getByLabelText("Save key to disk?"));
+    await userEvent.type(screen.getByLabelText("API key:"), "0p3n41-4p1-k3y");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+  });
+```
+
+Note that we want a way to refer to the checkbox in an accessible manner without actually changing anything about how we display the component as a whole. We edit `src-svelte/src/routes/components/api-keys/Form.svelte` one more time to allow our test to make use of the hidden "Save key to disk?" label:
+
+```svelte
+<div ...>
+  <div ...>
+    <form ...>
+      ...
+
+      <div ...>
+        <label for="saveKey" class="accessibility-only">Save key to disk?</label>
+        <input type="checkbox" id="saveKey" ... />
+        ...
+      </div>
+
+      ...
+    </form>
+  </div>
+</div>
+
+<style>
+  ...
+
+  .accessibility-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+  }
+
+  ...
+</style>
+```
+
+We double check that the component renders exactly the same, and then check to see that the test passes.
+
+Now, we make it possible to trigger this API call in Storybook by editing `src-svelte/src/routes/components/api-keys/Display.stories.ts`:
+
+```ts
+...
+const writeToFile = "/api/sample-calls/set_api_key-existing-no-newline.yaml";
+const unknownKeys = "/api/sample-calls/get_api_keys-empty.yaml";
+const knownKeys = "/api/sample-calls/get_api_keys-openai.yaml";
+...
+
+Unknown.parameters = {
+  sampleCallFiles: [unknownKeys],
+  ...
+};
+
+...
+Known.parameters = {
+  sampleCallFiles: [knownKeys],
+  ...
+};
+
+...
+Editing.parameters = {
+  sampleCallFiles: [knownKeys, writeToFile],
+  ...
+};
+```
+
+This way, we can confirm with manual testing as well.
+
+#### Hiding the form on API success
+
+If all goes well, we should hide the form again if the call succeeds. We add a callback to the form at `src-svelte/src/routes/components/api-keys/Form.svelte`:
