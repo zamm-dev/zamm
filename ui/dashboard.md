@@ -2708,6 +2708,180 @@ Editing.parameters = {
 
 This way, we can confirm with manual testing as well.
 
+#### Refactoring the form open action in tests
+
+Refactor all the form-related tests in `src-svelte/src/routes/components/api-keys/Display.test.ts` to handle the form opening action as a unit:
+
+```ts
+  async function toggleOpenAIForm() {
+    const openAiCell = screen.getByRole("cell", { name: "OpenAI" });
+    await userEvent.click(openAiCell);
+  }
+
+  ...
+
+  test("some API key set", async () => {
+    ...
+
+    await toggleOpenAIForm();
+    const apiKeyInput = screen.getByLabelText("API key:");
+    ...
+  });
+
+  ...
+
+  test("can edit API key", async () => {
+    ...
+    await toggleOpenAIForm();
+    ...
+  });
+
+  test("can submit with custom file", async () => {
+    ...
+    await toggleOpenAIForm();
+    ...
+  });
+
+  test("can submit with no file", async () => {
+    ...
+    await toggleOpenAIForm();
+    ...
+  });
+```
+
+Now we can test that the form can be toggled opened and closed:
+
+```ts
+  test("can open and close form", async () => {
+    await checkSampleCall(
+      "../src-tauri/api/sample-calls/get_api_keys-openai.yaml",
+      "Active",
+    );
+
+    await toggleOpenAIForm();
+    const apiKeyInput = screen.getByLabelText("API key:");
+    expect(apiKeyInput).toBeInTheDocument();
+    await toggleOpenAIForm();
+    expect(apiKeyInput).not.toBeInTheDocument();
+  });
+```
+
+Unfortunately, despite the functionality working in Storybook, the test itself fails:
+
+```
+Error: expect(element).not.toBeInTheDocument()
+
+expected document not to contain element, found <input
+  class="svelte-tgv6wr"
+  id="apiKey"
+  name="apiKey"
+  type="text"
+/> instead
+```
+
+This is because of the `transition:growY` animation that we introduced in `Form.svelte`, as evidenced by the fact that the test passes if we remove the animation. We see that there is [this thread](https://github.com/testing-library/svelte-testing-library/issues/99) and [this thread](https://github.com/testing-library/svelte-testing-library/issues/206) on the issue. We find that the solution [here](https://github.com/testing-library/svelte-testing-library/issues/206#issuecomment-1470158576) works. Adapted to our code, we edit `src-svelte/src/routes/components/api-keys/Display.test.ts` as such:
+
+```ts
+  beforeEach(() => {
+    ...
+
+    vi.stubGlobal('requestAnimationFrame', (fn: FrameRequestCallback) => {
+      return window.setTimeout(() => fn(Date.now()), 16);
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  ...
+
+  test("can open and close form", async () => {
+    await checkSampleCall(
+      "../src-tauri/api/sample-calls/get_api_keys-openai.yaml",
+      "Active",
+    );
+
+    // closed by default
+    const formExistenceCheck = () => screen.getByLabelText("API key:");
+    expect(formExistenceCheck).toThrow()
+
+    // opens on click
+    await toggleOpenAIForm();
+    expect(formExistenceCheck).not.toThrow();
+
+    // closes again on click
+    await toggleOpenAIForm();
+    await waitFor(() => expect(formExistenceCheck).toThrow());
+  });
+```
+
 #### Hiding the form on API success
 
-If all goes well, we should hide the form again if the call succeeds. We add a callback to the form at `src-svelte/src/routes/components/api-keys/Form.svelte`:
+If all goes well, we should hide the form again if the call succeeds. We add a callback to the form at `src-svelte/src/routes/components/api-keys/Form.svelte`.
+
+```ts
+  ...
+  export let formClose = () => {};
+  ...
+
+  function submitApiKey() {
+    setApiKey(...).finally(() => {
+      formClose();
+    });
+  }
+```
+
+We set it to always close first, and handle the callback in `src-svelte/src/routes/components/api-keys/Service.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  function formClose() {
+    editing = false;
+  }
+  ...
+</script>
+
+...
+    <Form {formClose} ... />
+```
+
+We test this by checking in `src-svelte/src/routes/components/api-keys/Display.test.ts`:
+
+```ts
+  test("can edit API key", async () => {
+    ...
+    await waitFor(() => expect(apiKeyInput).not.toBeInTheDocument());
+  });
+```
+
+When committing, we change
+
+```ts
+export let formClose = () => {};
+```
+
+to
+
+```ts
+export let formClose: () => void = () => undefined;
+```
+
+to avoid both the error
+
+```
+/root/zamm/src-svelte/src/routes/components/api-keys/Form.svelte
+  12:32  error  Unexpected empty arrow function  @typescript-eslint/no-empty-function
+```
+
+and the error
+
+```
+/root/zamm/src-svelte/src/routes/components/api-keys/Service.svelte:34:12
+Error: Type '() => void' is not assignable to type '() => undefined'.
+  Type 'void' is not assignable to type 'undefined'. (ts)
+  {#if editing}
+    <Form {formClose} service={name} apiKey={apiKey ?? ""} />
+  {/if}
+```
