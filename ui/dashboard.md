@@ -2885,3 +2885,366 @@ Error: Type '() => void' is not assignable to type '() => undefined'.
     <Form {formClose} service={name} apiKey={apiKey ?? ""} />
   {/if}
 ```
+
+#### Showing error in snackbar
+
+If there's an error, we'll want to inform the user and show it in the snackbar. To do so, we'll first have to create a snackbar component. There does exist pre-existing snackbar elements from [Svelte Material UI](https://sveltematerialui.com/demo/snackbar/) and [SmelteJS](https://smeltejs.com/components/snackbars/), but neither of these appear to offer the flexibility we want as these components visibly do not support displaying multiple messages simultaneously.
+
+We create `src-svelte/src/lib/Snackbar.svelte`:
+
+```svelte
+<script lang="ts" context="module">
+  import { writable, type Writable } from 'svelte/store';
+  import { fly, fade } from 'svelte/transition';
+  import { flip } from 'svelte/animate';
+  import IconClose from "~icons/ep/close-bold";
+
+  interface SnackbarMessage {
+    id: number;
+    msg: string;
+  }
+
+  export const snackbars: Writable<SnackbarMessage[]> = writable([]);
+  export let durationMs = 5_000;
+  let animateDurationMs = 1_000;
+
+  let nextId = 0;
+
+  // Function to show a new snackbar message
+  export function snackbarError(msg: string) {
+    animateDurationMs = 1_000;
+    const id = nextId++;
+    snackbars.update(current => [...current, { id, msg }]);
+
+    // Auto-dismiss after 'duration'
+    setTimeout(() => {
+      dismiss(id);
+    }, durationMs);
+  }
+
+  // Function to manually dismiss a snackbar
+  function dismiss(id: number) {
+    animateDurationMs = 1_000 * 2;
+    snackbars.update(current =>
+      current.filter(snackbar => snackbar.id !== id)
+    );
+  }
+</script>
+
+<div class="snackbars">
+  {#each $snackbars as snackbar (snackbar.id)}
+    <div class="snackbar"
+      in:fly|global={{ y: "1rem", duration: 1000 }}
+      out:fade|global={{ duration: 1000 }}
+      animate:flip={{ duration: animateDurationMs  }}
+    >
+      {snackbar.msg}
+      <button on:click={() => dismiss(snackbar.id)}>
+        <IconClose />
+      </button>
+    </div>
+  {/each}
+</div>
+
+<style>
+  .snackbars {
+    width: 100%;
+    position: fixed;
+    bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .snackbar {
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    background-color: var(--color-error);
+    color: white;
+    border-radius: 4px;
+    filter: drop-shadow(0px 1px 4px #CC0000);
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin: -0.5rem;
+    align-self: flex-end;
+  }
+</style>
+
+```
+
+and edit `src-svelte/src/routes/styles.css` to define the new CSS variable:
+
+```css
+:root {
+  ...
+  --color-error: #FF0000;
+  ...
+}
+```
+
+We create a component at `src-svelte/src/lib/SnackbarView.svelte` to display this in Storybook with:
+
+```ts
+<script lang="ts">
+  import Snackbar, { snackbarError } from "./Snackbar.svelte";
+
+  let count = 0;
+
+  function showError() {
+    count++;
+    const noun = count === 1 ? "thing" : "things";
+    snackbarError(`${count} ${noun} went wrong!`);
+  }
+</script>
+
+<Snackbar />
+
+<button on:click={showError}>Show Error</button>
+
+```
+
+and we create the stories at `src-svelte/src/lib/Snackbar.stories.ts`:
+
+```ts
+import SnackbarView from "./SnackbarView.svelte";
+import type { StoryObj } from "@storybook/svelte";
+import SvelteStoresDecorator from "$lib/__mocks__/stores";
+
+export default {
+  component: SnackbarView,
+  title: "Layout/Snackbar",
+  argTypes: {},
+  decorators: [SvelteStoresDecorator],
+};
+
+const Template = ({ ...args }) => ({
+  Component: SnackbarView,
+  props: args,
+});
+
+export const Default: StoryObj = Template.bind({}) as any;
+
+export const SlowMotion: StoryObj = Template.bind({}) as any;
+SlowMotion.parameters = {
+  preferences: {
+    animationSpeed: 0.1,
+  },
+};
+
+export const Motionless: StoryObj = Template.bind({}) as any;
+Motionless.parameters = {
+  preferences: {
+    animationsOn: false,
+  },
+};
+
+```
+
+The Storybook stories are where we initially encounter what is a [known problem](https://stackoverflow.com/questions/68273921/svelte-animation-blocks-transition) around doing both Svelte animations and transitions. The problem with the collapsing overlays exists with the proposed solutions as well; it's just less obvious due to the shorter time intervals involved. We take a page from the proposed solutions and mitigate the problem as follows:
+
+- We introduce animations of different durations for incoming and outgoing animations
+- We make the transitions different between incoming and outgoing, as the weirdness only becomes apparent with outgoing animations.
+
+We make the animations and transitions dependent on the animation speed setting. We edit `src-svelte/src/lib/Snackbar.svelte`, keeping in mind that we can't directly access stores from modules, so we have to go about this in a roundabout manner:
+
+```svelte
+<script lang="ts" context="module">
+  ...
+  let baseAnimationDurationMs = 100;
+  let animateDurationMs = baseAnimationDurationMs;
+
+  function setBaseAnimationDurationMs(newDurationMs: number) {
+    baseAnimationDurationMs = newDurationMs;
+  }
+  ...
+  // Function to show a new snackbar message
+  export function snackbarError(msg: string) {
+    animateDurationMs = baseAnimationDurationMs;
+    ...
+  }
+
+  // Function to manually dismiss a snackbar
+  function dismiss(id: number) {
+    animateDurationMs = 2 * baseAnimationDurationMs;
+    ...
+  }
+</script>
+
+<script lang="ts">
+  import { animationSpeed } from "$lib/preferences";
+
+  $: baseDurationMs = 100 / $animationSpeed;
+  $: setBaseAnimationDurationMs(baseDurationMs);
+</script>
+
+...
+    <div
+      ...
+      in:fly|global={{ y: "1rem", duration: baseDurationMs }}
+      out:fade|global={{ duration: baseDurationMs }}
+      ...
+    >
+      ...
+    </div>
+...
+```
+
+We also rename `durationMs` to `messageDurationMs` and avoid making it dependent on animation speed because the length of time to show a message is not a quantity that should be affected by the speed of animations.
+
+Now we refactor out a single message into its own component so that it can be displayed in a Storybook story without needing to be triggered as part of the overall snackbar story. We move everything into the `src-svelte/src/lib/snackbar` folder, and then create `src-svelte/src/lib/snackbar/Message.svelte`:
+
+```svelte
+<script lang="ts">
+  import IconClose from "~icons/ep/close-bold";
+
+  export let dismiss: () => void;
+  export let message: string;
+</script>
+
+<div class="snackbar">
+  {message}
+  <button on:click={dismiss}>
+    <IconClose />
+  </button>
+</div>
+
+<style>
+  .snackbar {
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    background-color: var(--color-error);
+    color: white;
+    border-radius: 4px;
+    filter: drop-shadow(0px 1px 4px #cc0000);
+    width: fit-content;
+    margin: 0 auto;
+  }
+
+  button {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 0.5rem;
+    margin: -0.5rem;
+    margin-top: -0.3rem;
+    align-self: flex-center;
+  }
+</style>
+
+```
+
+The only consequential change we've made here is to change `align-self` to center, because now we realize that if the message content spans multiple lines on a small screen, the close button will no longer be centered properly. To compensate for the vertical offset, we now also override `margin-top` to be slightly smaller than the bottom.
+
+Now we make use of this refactored component in `src-svelte/src/lib/snackbar/Snackbar.svelte`, removing the relevant styles and moving the imports down to the non-module portion of the script:
+
+```svelte
+<script lang="ts">
+  ...
+  import { fly, fade } from "svelte/transition";
+  import { flip } from "svelte/animate";
+  import Message from "./Message.svelte";
+</script>
+
+<div class="snackbars">
+  {#each $snackbars as snackbar (snackbar.id)}
+    <div
+      in:fly|global={{ y: "1rem", duration: baseDurationMs }}
+      out:fade|global={{ duration: baseDurationMs }}
+      animate:flip={{ duration: animateDurationMs }}
+    >
+      <Message
+        dismiss={() => dismiss(snackbar.id)}
+        message={snackbar.msg}
+      />
+    </div>
+  {/each}
+</div>
+```
+
+Note that we can't set the `animate` directive as part of the refactored Message component because then we get:
+
+```
+An element that uses the animate directive must be the immediate child of a keyed each block(invalid-animation)
+```
+
+Finally, we create the single-message story next at `src-svelte/src/lib/snackbar/Message.stories.ts`, constraining it to a small screen for better screenshot comparisons. This is how we discovered the issue with the word wrapping and close button alignment.
+
+```ts
+import MessageComponent from "./Message.svelte";
+import type { StoryObj } from "@storybook/svelte";
+
+export default {
+  component: MessageComponent,
+  title: "Layout/Snackbar",
+  argTypes: {},
+};
+
+const Template = ({ ...args }) => ({
+  Component: MessageComponent,
+  props: args,
+});
+
+export const Message: StoryObj = Template.bind({}) as any;
+Message.args = {
+  message: "Something is wrong.",
+  dismiss: () => { console.log("Dismiss button clicked.") },
+};
+Message.parameters = {
+  viewport: {
+    defaultViewport: "mobile1",
+  },
+};
+
+```
+
+and record this as a new screenshot to be taken in `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+  {
+    path: ["layout", "snackbar"],
+    variants: ["message"],
+  },
+  ...
+];
+```
+
+We realize from our manual testing that the "motionless" story isn't actually working as intended, so we fix that in `src-svelte/src/lib/snackbar/Snackbar.svelte`:
+
+```ts
+  import { animationSpeed, animationsOn } from "$lib/preferences";
+  ...
+
+  $: baseDurationMs = $animationsOn ? 100 / $animationSpeed : 0;
+  ...
+```
+
+Now, we edit `src-svelte/src/routes/components/api-keys/Form.svelte`:
+
+```ts
+  ...
+  import { snackbarError } from "$lib/Snackbar.svelte";
+  ...
+
+  function submitApiKey() {
+    setApiKey(...).then(() => {
+      formClose();
+    }).catch((error) => {
+      snackbarError(`Error: ${error}`);
+    });
+  }
+```
