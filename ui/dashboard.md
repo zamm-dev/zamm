@@ -3349,3 +3349,111 @@ and to make each message more accessible in `src-svelte/src/lib/snackbar/Message
   </button>
 </div>
 ```
+
+#### Triggering snackbar error from form
+
+Now we actually make use of the snackbar we've just created. First, we have to render the snackbar component with the app layout at `src-svelte/src/routes/AppLayout.svelte`, inside the main container but before all of the main content:
+
+```svelte
+<script lang="ts">
+  import Snackbar from "$lib/snackbar/Snackbar.svelte";
+  ...
+</script>
+
+<div
+  id="app"
+  ...
+>
+  ...
+
+  <div class="main-container">
+    ...
+    <Snackbar />
+
+    <main>
+      ...
+    </main>
+  </div>
+</div>
+```
+
+Then, we render the snackbar component in the test app layout as well, at `src-svelte/src/lib/__mocks__/MockAppLayout.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  import Snackbar from "$lib/snackbar/Snackbar.svelte";
+</script>
+
+<div
+  class="storybook-wrapper"
+  ...
+>
+  <Snackbar />
+  <slot />
+</div>
+
+```
+
+We add it to the existing app layout mock component so that we don't need a different component for every single app-wide feature. Now, we edit the Storybook story at `src-svelte/src/routes/components/api-keys/Display.stories.ts` to make use of this new mock functionality:
+
+```ts
+...
+import type { StoryFn, StoryObj } from "@storybook/svelte";
+...
+import MockAppLayout from "$lib/__mocks__/MockAppLayout.svelte";
+
+...
+
+export default {
+  ...,
+  decorators: [
+    TauriInvokeDecorator,
+    (story: StoryFn) => {
+      return {
+        Component: MockAppLayout,
+        slot: story,
+      };
+    },
+  ],
+};
+
+export const Unknown: StoryObj = Template.bind({}) as any;
+Unknown.parameters = {
+  sampleCallFiles: [..., writeToFile],
+  ...
+};
+
+export const Known: StoryObj = Template.bind({}) as any;
+Known.parameters = {
+  sampleCallFiles: [..., writeToFile],
+  ...
+};
+```
+
+Next, we add a line to persist and debug failures in `src-svelte/src/lib/snackbar/Snackbar.svelte`:
+
+```ts
+  export function snackbarError(msg: string) {
+    console.log(`Error reported: ${msg}`);
+    ...
+  }
+```
+
+Finally, we change `src-svelte/src/routes/components/api-keys/Form.svelte` to only trigger the form to close if the API call was successful. If it failed, we leave it open for the user to fix the issue:
+
+```ts
+  ...
+  import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
+  ...
+
+  function submitApiKey() {
+    setApiKey(...)
+    .then(() => {
+      formClose();
+    })
+    .catch((err) => {
+      snackbarError(err);
+    });
+  }
+```
