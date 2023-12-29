@@ -12,6 +12,16 @@ export QT_IM_MODULE=ibus
 
 Install some keyboard in Keyman. Start the ibus daemon, and then in ibus preferences, pick the language for the Keyman keyboard you just installed. It will then ask you to pick from different available keyboards for that language, and the one you just installed on Keyman should be visible.
 
+### Starting ibus automatically
+
+To start ibus on account login, add this line to your `~/.profile``:
+
+```bash
+ibus-daemon --xim &
+```
+
+This will run the ibus daemon in the background during the login process.
+
 ## Increasing swap size
 
 Follow the instructions [here](https://old.reddit.com/r/linuxmint/comments/uhjyir/how_to_increase_swap_size/i76gsi9/):

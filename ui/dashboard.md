@@ -2677,7 +2677,7 @@ Note that we want a way to refer to the checkbox in an accessible manner without
 </style>
 ```
 
-We double check that the component renders exactly the same, and then check to see that the test passes.
+We double check that the component renders exactly the same, and then check to see that the test passes. We could choose to instead put this inside `src-svelte/src/routes/styles.css`, so as to make it accessible from anywhere else in the app.
 
 Now, we make it possible to trigger this API call in Storybook by editing `src-svelte/src/routes/components/api-keys/Display.stories.ts`:
 
@@ -3247,4 +3247,105 @@ Now, we edit `src-svelte/src/routes/components/api-keys/Form.svelte`:
       snackbarError(`Error: ${error}`);
     });
   }
+```
+
+##### Testing the snackbar
+
+We add a test at `src-svelte/src/lib/snackbar/Snackbar.test.ts`:
+
+```ts
+import Snackbar, { snackbarError, clearAllMessages } from "./Snackbar.svelte";
+import "@testing-library/jest-dom";
+import { within, waitFor } from "@testing-library/dom";
+import { render, screen } from "@testing-library/svelte";
+import userEvent from "@testing-library/user-event";
+import { expect, vi } from "vitest";
+import { tickFor } from "$lib/test-helpers";
+
+describe("Snackbar", () => {
+  beforeEach(() => {
+    clearAllMessages();
+
+    vi.stubGlobal("requestAnimationFrame", (fn: FrameRequestCallback) => {
+      return window.setTimeout(() => fn(Date.now()), 16);
+    });
+  });
+
+  it("should not display any messages by default", () => {
+    render(Snackbar, {});
+
+    const alerts = screen.queryAllByRole("alert");
+    expect(alerts).toHaveLength(0);
+  });
+
+  it("should display a message after an alert is triggered", async () => {
+    const message = "This is a test message";
+    render(Snackbar, {});
+    snackbarError(message);
+    await tickFor(3);
+
+    const alerts = screen.queryAllByRole("alertdialog");
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent(message);
+  });
+
+  it("should be able to display multiple messages", async () => {
+    const message1 = "This is a test message";
+    const message2 = "This is another test message";
+    render(Snackbar, {});
+    snackbarError(message1);
+    snackbarError(message2);
+    await tickFor(3);
+
+    const alerts = screen.queryAllByRole("alertdialog");
+    expect(alerts).toHaveLength(2);
+    expect(alerts[0]).toHaveTextContent(message1);
+    expect(alerts[1]).toHaveTextContent(message2);
+  });
+
+  it("should hide a message if the dismiss button is clicked", async () => {
+    const message = "This is a test message";
+    render(Snackbar, {});
+    snackbarError(message);
+    await tickFor(3);
+
+    const alerts = screen.queryAllByRole("alertdialog");
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent(message);
+
+    const dismissButton = within(alerts[0]).getByRole("button", {
+      name: "Dismiss",
+    });
+    await userEvent.click(dismissButton);
+    await waitFor(() => expect(alerts[0]).not.toBeInTheDocument());
+    const alertsAfterDismiss = screen.queryAllByRole("alertdialog");
+    expect(alertsAfterDismiss).toHaveLength(0);
+  });
+});
+
+```
+
+We need to use the `requestAnimationFrame` mock fix, and export a function to clear all outstanding messages in `src-svelte/src/lib/snackbar/Snackbar.svelte`:
+
+```svelte
+<script lang="ts" context="module">
+  ...
+
+  export function clearAllMessages() {
+    snackbars.set([]);
+  }
+
+  ...
+</script>
+```
+
+and to make each message more accessible in `src-svelte/src/lib/snackbar/Message.svelte`:
+
+```svelte
+<div ... role="alertdialog">
+  ...
+  <button ... title="Dismiss">
+    ...
+  </button>
+</div>
 ```
