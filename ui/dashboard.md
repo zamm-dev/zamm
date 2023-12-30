@@ -1488,7 +1488,7 @@ mod tests {
 
 ```
 
-Note that we take much inspiration from `src-tauri/src/commands/preferences/write.rs` for also using a similar pattern of copying files over to a temporary test directory and then comparing file results. Two changes does need to be made to `src-tauri/src/test_helpers.rs` to complete the above refactor:
+Note that we take much inspiration from `src-tauri/src/commands/preferences/write.rs` for also using a similar pattern of copying files over to a temporary test directory and then comparing file results. Two changes do need to be made to `src-tauri/src/test_helpers.rs` to complete the above refactor:
 
 ```rs
 pub fn get_temp_test_dir(test_name: &str) -> PathBuf {
@@ -3610,4 +3610,304 @@ Finally, we write a new test in `src-svelte/src/routes/components/api-keys/Displ
     expect(saveKeyCheckbox).not.toBeChecked();
     expect(fileInput).toHaveValue(customInitFile);
   });
+```
+
+#### Refreshing API key on form close
+
+First, we make sure that things will work on the backend. We edit `src-tauri/src/commands/keys/get.rs` to make the test functions public:
+
+```rs
+...
+
+#[cfg(test)]
+pub mod tests {
+  ...
+  pub fn check_get_api_keys_sample(..., rust_input: &ZammApiKeys) {
+    ...
+  }
+  ...
+}
+```
+
+and then we edit `src-tauri/src/commands/keys/set.rs` to make the test functions public and have matching signatures with a helper function that takes in `ZammApiKeys` instead of `ApiKeys`:
+
+```rs
+...
+use crate::setup::api_keys::Service;
+...
+
+fn set_api_key_helper(
+    zamm_api_keys: &ZammApiKeys,
+    ...
+) -> ZammResult<()> {
+    let api_keys = &mut zamm_api_keys.0.lock().unwrap();
+    ...
+}
+
+#[tauri::command(async)]
+#[specta]
+pub fn set_api_key(
+    api_keys: State<ZammApiKeys>,
+    ...
+) -> ZammResult<()> {
+    set_api_key_helper(&api_keys, ...)
+}
+
+#[cfg(test)]
+pub mod tests {
+    ...
+    use crate::setup::api_keys::ApiKeys;
+    ...
+    use std::sync::Mutex;
+
+    ...
+    pub fn check_set_api_key_sample(
+        ...,
+        existing_zamm_api_keys: &ZammApiKeys,
+    ) {
+      ...
+      let actual_result = set_api_key_helper(
+          existing_zamm_api_keys,
+          ...,
+      );
+      ...
+      // check that the API call actually modified the in-memory API keys
+      let existing_api_keys = existing_zamm_api_keys.0.lock().unwrap();
+      ...
+    }
+
+    #[test]
+    fn test_write_new_init_file() {
+        let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
+        check_set_api_key_sample(
+            "api/sample-calls/set_api_key-no-file.yaml",
+            &api_keys,
+        );
+    }
+
+    ...
+}
+
+```
+
+We do the same for the rest of the tests in that file. We finally put all this together in `src-tauri/src/commands/keys/mod.rs`, making sure that one API call followed by the other will result in the expected API responses:
+
+```rs
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::setup::api_keys::ApiKeys;
+    use crate::ZammApiKeys;
+    use get::tests::check_get_api_keys_sample;
+    use set::tests::check_set_api_key_sample;
+    use std::sync::Mutex;
+
+    #[test]
+    fn test_get_after_set() {
+        let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
+
+        check_set_api_key_sample(
+            "api/sample-calls/set_api_key-existing-no-newline.yaml",
+            &api_keys,
+        );
+
+        check_get_api_keys_sample(
+            "./api/sample-calls/get_api_keys-openai.yaml",
+            &api_keys,
+        );
+    }
+}
+
+```
+
+The tests initially fail, so we add debugging to `src-tauri/src/test_helpers.rs` for greater clarity:
+
+```rs
+pub fn get_temp_test_dir(...) -> PathBuf {
+    ...
+    if test_dir.exists() {
+        fs::remove_dir_all(&test_dir).unwrap_or_else(|_| {
+            panic!("Can't remove temp test dir at {}", test_dir.display())
+        });
+    }
+    fs::create_dir_all(&test_dir).unwrap_or_else(|_| {
+        panic!("Can't create temp test dir at {}", test_dir.display())
+    });
+    ...
+}
+```
+
+The test failures are non-deterministic, and turn out to be caused by cargo's test parallelism. We refactor `src-tauri/src/commands/keys/set.rs` again to allow an external function to set the test name:
+
+```rs
+    pub fn check_set_api_key_sample(
+        sample_file: &str,
+        existing_zamm_api_keys: &ZammApiKeys,
+        test_dir_name: &str,
+    ) {
+      ...
+                  let test_name = format!("{}/{}", test_dir_name, sample_file_directory);
+    }
+
+    fn check_set_api_key_sample_unit(
+        sample_file: &str,
+        existing_zamm_api_keys: &ZammApiKeys,
+    ) {
+        check_set_api_key_sample(sample_file, existing_zamm_api_keys, "set_api_key");
+    }
+```
+
+We replace all calls to `check_set_api_key_sample` in this file with calls to `check_set_api_key_sample_unit` instead. Then, we add the new argument in `src-tauri/src/commands/keys/mod.rs`:
+
+```rs
+    #[test]
+    fn test_get_after_set() {
+        ...
+
+        check_set_api_key_sample(
+            ...,
+            "api_keys_integration_tests",
+        );
+
+        ...
+    }
+```
+
+Only `check_set_api_key_sample` needs this because `check_get_api_keys_sample` does not involve any disk IO.
+
+Now, we have the confidence to make use of this on the frontend. We notice that we need some way of storing and updating the API keys for display on the frontend, so we add a new store to `src-svelte/src/lib/system-info.ts`:
+
+```ts
+...
+import type { SystemInfo, ApiKeys } from "./bindings";
+
+...
+export const apiKeys: Writable<ApiKeys> = writable({
+  openai: null,
+});
+```
+
+We then edit `src-svelte/src/routes/components/api-keys/Form.svelte` to update this store with a call to our source of truth, the backend, whenever the callback finishes, no matter if it failed or not (e.g. it could've failed because there was no way to write the update to disk, even if the API key got successfully set in memory):
+
+```ts
+  ...
+  import { getApiKeys, setApiKey, type Service } from "$lib/bindings";
+  ...
+  import { apiKeys } from "$lib/system-info";
+  ...
+
+  function submitApiKey() {
+    setApiKey(
+      ...
+    )
+      ...
+      .finally(async () => {
+        apiKeys.set(await getApiKeys());
+      });
+  }
+```
+
+We update `src-svelte/src/routes/components/api-keys/Display.svelte` to make use of this store instead of the promise. We preserve the loading display with custom code, and replace the error message with a snackbar notification:
+
+```svelte
+<script lang="ts">
+  ...
+  import { apiKeys as apiKeysStore } from "$lib/system-info";
+  import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
+  ...
+  import { onMount } from "svelte";
+
+  let isLoading = true;
+  ...
+
+  onMount(() => {
+    getApiKeys()
+      .then((keys) => {
+        apiKeysStore.set(keys);
+      })
+      .catch((error) => {
+        snackbarError(error);
+      })
+      .finally(() => {
+        isLoading = false;
+      });
+  });
+
+  $: apiKeys = $apiKeysStore;
+</script>
+
+<InfoBox ...>
+  {#if isLoading}
+    <Loading />
+  {:else}
+    <div ...>
+      <Service name="OpenAI" apiKey={apiKeys.openai} editing={editDemo} />
+    </div>
+  {/if}
+</InfoBox>
+
+```
+
+We update the tests at `src-svelte/src/routes/components/api-keys/Display.test.ts` accordingly:
+
+```ts
+...
+import Snackbar from "$lib/snackbar/Snackbar.svelte";
+...
+
+  async function checkSampleCall(filename: string, expected_display: string) {
+    ...
+
+    render(ApiKeysDisplay, {});
+    await waitFor(() =>
+      expect(screen.getByRole("row", { name: /OpenAI/ })).toBeInTheDocument(),
+    );
+    ...
+  }
+
+  ...
+
+  test("API key error", async () => {
+    const errorMessage = "Testing error message";
+    ...
+    tauriInvokeMock.mockRejectedValueOnce(errorMessage);
+
+    render(ApiKeysDisplay, {});
+    await waitFor(() =>
+      expect(screen.getByRole("row", { name: /OpenAI/ })).toBeInTheDocument(),
+    );
+    expect(spy).toHaveBeenLastCalledWith("get_api_keys");
+
+    render(Snackbar, {});
+    const alerts = screen.queryAllByRole("alertdialog");
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent(errorMessage);
+  });
+
+  ...
+
+  test("can edit API key", async () => {
+    ...
+    playback.addSamples(
+      ...,
+      "../src-tauri/api/sample-calls/get_api_keys-openai.yaml",
+    );
+    ...
+    expect(tauriInvokeMock).toBeCalledTimes(2);
+    ...
+  });
+
+  ...
+```
+
+We add similar playback samples to the "can submit with no file" and "can submit with custom file" tests.
+
+Finally, we add the second callback to the stories at `src-svelte/src/routes/components/api-keys/Display.stories.ts` to simulate the effect of successfully submitting an API call:
+
+```ts
+export const Unknown: StoryObj = Template.bind({}) as any;
+Unknown.parameters = {
+  sampleCallFiles: [unknownKeys, writeToFile, knownKeys],
+  ...
+};
 ```
