@@ -3457,3 +3457,157 @@ Finally, we change `src-svelte/src/routes/components/api-keys/Form.svelte` to on
     });
   }
 ```
+
+#### Persisting form input through open and close
+
+To preserve form state through the showing and hiding of the form, we coalesce all form field data into one convenient data structure and base form controls off of that in `src-svelte/src/routes/components/api-keys/Form.svelte`:
+
+```svelte
+<script lang="ts" context="module">
+  export interface FormFields {
+    apiKey: string;
+    saveKey: boolean;
+    saveKeyLocation: string;
+  }
+</script>
+
+<script lang="ts">
+  ...
+  export let fields: FormFields;
+  ...
+
+  function submitApiKey() {
+    setApiKey(fields.saveKey ? fields.saveKeyLocation : null, service, fields.apiKey)
+      ...;
+  }
+</script>
+
+<div ...>
+  <div ...>
+    <form ...>
+      <div class="form-row">
+        ...
+        <TextInput name="apiKey" bind:value={fields.apiKey} />
+      </div>
+
+      <div class="form-row">
+        ...
+        <input
+          ...
+          name="saveKey"
+          bind:checked={fields.saveKey}
+        />
+        ...
+        <TextInput name="saveKeyLocation" bind:value={fields.saveKeyLocation} />
+      </div>
+
+      ...
+    </form>
+  </div>
+</div>
+
+```
+
+We then instantiate a form with this new field, and also persist it in `src-svelte/src/routes/components/api-keys/Service.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  import { systemInfo } from "$lib/system-info";
+
+  ...
+  let formFields: FormFields = {
+    apiKey: "",
+    saveKey: true,
+    saveKeyLocation: "",
+  };
+
+  function toggleEditing() {
+    ...
+
+    if (formFields.apiKey === "") {
+      formFields.apiKey = apiKey ?? "";
+    }
+    if (formFields.saveKeyLocation === "") {
+      formFields.saveKeyLocation = $systemInfo?.shell_init_file ?? "";
+    }
+  }
+
+  ...
+</script>
+
+<div class="container">
+  ...
+
+  {#if editing}
+    <Form ... bind:fields={formFields} />
+  {/if}
+</div>
+```
+
+Finally, we write a new test in `src-svelte/src/routes/components/api-keys/Display.test.ts` that tests this functionality:
+
+```ts
+  test("preserves unsubmitted changes after opening and closing form", async () => {
+    const defaultInitFile = "/home/rando/.bashrc";
+    systemInfo.set({
+      shell: "Zsh",
+      shell_init_file: defaultInitFile,
+    });
+    const customInitFile = "/home/different/.bashrc";
+    const customApiKey = "0p3n41-4p1-k3y";
+
+    // setup largely copied from "can submit with custom file" test
+    systemInfo.set({
+      shell: "Zsh",
+      shell_init_file: defaultInitFile,
+    });
+    await checkSampleCall(
+      "../src-tauri/api/sample-calls/get_api_keys-empty.yaml",
+      "Inactive",
+    );
+    tauriInvokeMock.mockClear();
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/set_api_key-existing-no-newline.yaml",
+    );
+
+    // open form and type in API key
+    await toggleOpenAIForm();
+    let apiKeyInput = screen.getByLabelText("API key:");
+    let saveKeyCheckbox = screen.getByLabelText("Save key to disk?");
+    let fileInput = screen.getByLabelText("Save key to:");
+
+    expect(apiKeyInput).toHaveValue("");
+    expect(saveKeyCheckbox).toBeChecked();
+    expect(fileInput).toHaveValue(defaultInitFile);
+
+    await userEvent.type(apiKeyInput, customApiKey);
+    await userEvent.click(saveKeyCheckbox);
+    defaultInitFile
+      .split("")
+      .forEach(() => userEvent.type(fileInput, "{backspace}"));
+    await userEvent.type(fileInput, customInitFile);
+    
+    expect(apiKeyInput).toHaveValue(customApiKey);
+    expect(saveKeyCheckbox).not.toBeChecked();
+    expect(fileInput).toHaveValue(customInitFile);
+
+    // close and reopen form
+    await toggleOpenAIForm();
+    await waitFor(() => expect(apiKeyInput).not.toBeInTheDocument());
+    await toggleOpenAIForm();
+    await waitFor(() => {
+      const formExistenceCheck = () => screen.getByLabelText("API key:");
+      expect(formExistenceCheck).not.toThrow();
+    });
+
+    // check that changes to form fields persist
+    // need to obtain references to new form fields
+    apiKeyInput = screen.getByLabelText("API key:");
+    saveKeyCheckbox = screen.getByLabelText("Save key to disk?");
+    fileInput = screen.getByLabelText("Save key to:");
+    expect(apiKeyInput).toHaveValue(customApiKey);
+    expect(saveKeyCheckbox).not.toBeChecked();
+    expect(fileInput).toHaveValue(customInitFile);
+  });
+```
