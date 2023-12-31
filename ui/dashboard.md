@@ -4054,6 +4054,56 @@ FullPage.parameters = {
 };
 ```
 
+#### Adding example placeholder text
+
+To help the user understand what type of file to specify in case we're unable to determine the user's init file ourselves, we will set a placeholder in `src-svelte/src/lib/controls/TextInput.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  export let placeholder: string | undefined = undefined;
+  ...
+</script>
+
+<div class="fancy-input">
+  <input type="text" ... {placeholder} ... />
+  ...
+</div>
+
+<style>
+  ...
+
+  input[type="text"]::placeholder {
+    font-style: italic;
+  }
+
+  ...
+</style>
+```
+
+We can now specify the placeholder in `src-svelte/src/routes/components/api-keys/Form.svelte`:
+
+```svelte
+<div class="container" ...>
+  <div ...>
+    <form ...>
+      ...
+
+      <div class="form-row">
+        ...
+        <TextInput
+          name="saveKeyLocation"
+          placeholder="e.g. /home/user/.bashrc"
+          bind:value={fields.saveKeyLocation}
+        />
+      </div>
+
+      ...
+    </form>
+  </div>
+</div>
+```
+
 ### Handling weird form submissions
 
 We'll want to make sure we can handle various form submission edge cases on the backend. One obvious one is to not return an error if we cannot suggest a default init file for the user to save their API key to, and therefore the init file field is non-null but empty. Another is if the user enters in an invalid file path (for example, `"/"`) that we cannot write to.
