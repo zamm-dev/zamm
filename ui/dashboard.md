@@ -4053,3 +4053,219 @@ FullPage.parameters = {
   ],
 };
 ```
+
+### Handling weird form submissions
+
+We'll want to make sure we can handle various form submission edge cases on the backend. One obvious one is to not return an error if we cannot suggest a default init file for the user to save their API key to, and therefore the init file field is non-null but empty. Another is if the user enters in an invalid file path (for example, `"/"`) that we cannot write to.
+
+We create `src-tauri/api/sample-calls/set_api_key-empty-filename.yaml` to cover the first case:
+
+```yaml
+request:
+  - set_api_key
+  - >
+    {
+      "filename": "",
+      "service": "OpenAI",
+      "api_key": "0p3n41-4p1-k3y"
+    }
+response: "null"
+
+```
+
+and `src-tauri/api/sample-calls/set_api_key-invalid-filename.yaml` to cover the second:
+
+```yaml
+request:
+  - set_api_key
+  - >
+    {
+      "filename": "/",
+      "service": "OpenAI",
+      "api_key": "0p3n41-4p1-k3y"
+    }
+response: "null
+
+```
+
+We add new tests for this in `src-tauri/src/commands/keys/set.rs`:
+
+```rs
+    #[test]
+    fn test_empty_filename() {
+        let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
+        check_set_api_key_sample_unit(
+            "api/sample-calls/set_api_key-empty-filename.yaml",
+            &api_keys,
+        );
+    }
+
+    #[test]
+    fn test_invalid_filename() {
+        let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
+        check_set_api_key_sample_unit(
+            "api/sample-calls/set_api_key-invalid-filename.yaml",
+            &api_keys,
+        );
+    }
+```
+
+These suspiciously pass even though we don't currently have any functionality that would take care of them. Upon further debugging, we find that somehow the invalid path never actually gets passed into the function that we are trying to test. We fix this, including the code needed to filter out performing any actions on invalid filenames:
+
+```rs
+
+fn set_api_key_helper(
+    ...
+) -> ZammResult<()> {
+    ...
+    let init_update_result = || -> ZammResult<()> {
+        if let Some(untrimmed_filename) = filename {
+            let f = untrimmed_filename.trim();
+            if !f.is_empty() {
+                let ends_in_newline = {
+                    if Path::new(f).exists() {
+                        let mut file = OpenOptions::new().read(true).open(f)?;
+                        ...
+                    } ...
+                };
+
+                let mut file = OpenOptions::new()
+                    ...
+                    .open(f)?;
+                ...
+            }
+        }
+        Ok(())
+    }();
+    ...
+}
+
+...
+
+#[cfg(test)]
+pub mod tests {
+  ...
+
+    pub fn check_set_api_key_sample(
+        ...,
+        should_fail: bool,
+        ...
+    ) {
+        ...
+        let request = parse_request(&sample.request[1]);
+        let valid_request_path_specified = request
+            .filename
+            .as_ref()
+            .map(|f| !f.is_empty() && !f.ends_with('/'))
+            .unwrap_or(false);
+        let request_path = request.filename.as_ref().map(|f| PathBuf::from(&f));
+        let test_init_file = if valid_request_path_specified {
+            let p = request_path.as_ref().unwrap();
+            ...
+        } else {
+            request.filename
+        };
+
+        let actual_result = set_api_key_helper(
+            ...,
+            test_init_file.as_deref(),
+            ...,
+        );
+
+        // check that the API call returns the expected success or failure signal
+        if should_fail {
+            assert!(actual_result.is_err(), "API call should have thrown error");
+        } else {
+            assert!(
+                actual_result.is_ok(),
+                "API call failed: {:?}",
+                actual_result
+            );
+        }
+
+        // check that the API call returns the expected JSON
+        let actual_json = match actual_result {
+            Ok(r) => serde_json::to_string_pretty(&r).unwrap(),
+            Err(e) => serde_json::to_string_pretty(&e).unwrap(),
+        };
+        ...
+
+        // check that the API call actually modified the in-memory API keys,
+        // regardless of success or failure
+        ...
+
+        // check that the API call successfully wrote the API keys to disk, if asked to
+        if valid_request_path_specified {
+            let p = request_path.unwrap();
+            ...
+            let resulting_contents =
+                fs::read_to_string(test_init_file.unwrap().as_str())
+                    .expect("Test shell init file doesn't exist");
+            ...
+        }
+    }
+
+    fn check_set_api_key_sample_unit(
+        sample_file: &str,
+        existing_zamm_api_keys: &ZammApiKeys,
+    ) {
+        check_set_api_key_sample(
+            sample_file,
+            existing_zamm_api_keys,
+            false,
+            "set_api_key",
+        );
+    }
+
+    fn check_set_api_key_sample_unit_fails(
+        sample_file: &str,
+        existing_zamm_api_keys: &ZammApiKeys,
+    ) {
+        check_set_api_key_sample(
+            sample_file,
+            existing_zamm_api_keys,
+            true,
+            "set_api_key",
+        );
+    }
+
+    ...
+
+    #[test]
+    fn test_invalid_filename() {
+        ...
+        check_set_api_key_sample_unit_fails(
+            ...,
+        );
+    }
+}
+```
+
+Note that we have also added a `should_fail` argument to specify that this API call is expected to fail with the given message. As such, we also edit the integration test in `src-tauri/src/commands/keys/mod.rs`:
+
+```rs
+    #[test]
+    fn test_get_after_set() {
+        ...
+
+        check_set_api_key_sample(
+            ...,
+            false,
+            ...,
+        );
+
+        ...
+    }
+```
+
+The test finally fails because the error message doesn't match our expectations. We edit `src-tauri/api/sample-calls/set_api_key-invalid-filename.yaml` again:
+
+```yaml
+request:
+  ...
+response: >
+  "Is a directory (os error 21)"
+
+```
+
+and now get the tests to pass properly.
