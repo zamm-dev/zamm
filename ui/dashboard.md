@@ -3911,3 +3911,145 @@ Unknown.parameters = {
   ...
 };
 ```
+
+We notice that the story for the form edit demo is no longer showing the API key in the form. This is because the form field doesn't get updated when new information comes in about the API key. We can try to fix this in `src-svelte/src/routes/components/api-keys/Service.svelte` by moving the default logic out of `toggleEditing`:
+
+```ts
+  function toggleEditing() {
+    editing = !editing;
+  }
+
+  ...
+  $: formFields.apiKey = apiKey ?? "";
+  $: formFields.saveKeyLocation = $systemInfo?.shell_init_file ?? "";
+  ...
+```
+
+However, this prevents the form contents from being edited. We wrap it in a function instead and only trigger it when editing:
+
+```ts
+  function updateFormFields(trigger: boolean) {
+    if (!trigger) {
+      return;
+    }
+
+    if (formFields.apiKey === "") {
+      formFields.apiKey = apiKey ?? "";
+    }
+    if (formFields.saveKeyLocation === "") {
+      formFields.saveKeyLocation = $systemInfo?.shell_init_file ?? "";
+    }
+  }
+
+  ...
+  $: updateFormFields(editing);
+```
+
+#### Styling active button
+
+To emphasize the change in activation status, we add a glow effect and CSS transition to `src-svelte/src/routes/components/api-keys/Service.svelte`:
+
+```css
+  .api-key {
+    ...
+    transition: all calc(0.1s / var(--base-animation-speed)) ease-in;
+  }
+
+  .api-key.active {
+    box-shadow: 0 0 var(--shadow-blur) 0 green;
+    ...
+  }
+```
+
+Then, we add a story with slow-motion in `src-svelte/src/routes/components/api-keys/Display.stories.ts`:
+
+```ts
+...
+import SvelteStoresDecorator from "$lib/__mocks__/stores";
+...
+
+export default {
+  ...,
+  decorators: [
+    SvelteStoresDecorator,
+    ...
+  ],
+};
+
+...
+
+export const SlowMotion: StoryObj = Template.bind({}) as any;
+SlowMotion.parameters = {
+  sampleCallFiles: [unknownKeys, writeToFile, knownKeys],
+  preferences: {
+    animationSpeed: 0.1,
+  },
+  viewport: {
+    defaultViewport: "mobile2",
+  },
+};
+
+```
+
+We notice that the status now transitions incorrectly on page load. It appears, then disappears, then appears again with a heavy delay after everything else has already appeared during the info box reveal animation. We realize that this is due to the `all` transition property, and we change it to be more specific:
+
+```css
+  .api-key {
+    ...
+    transition-property: background-color, box-shadow;
+    transition-duration: calc(0.1s / var(--base-animation-speed));
+    transition-timing-function: ease-in;
+  }
+```
+
+Finally, we want to repeat this effect on initial page load, so that the eye candy isn't confined to just the moments when the API key is set. We add a class to mark elements as transitioning inside `src-svelte/src/lib/InfoBox.svelte`:
+
+```ts
+  class RevealContent extends SubAnimation<void> {
+    constructor(anim: { node: Element; ... }) {
+      ...
+      super({
+        ...,
+        tick: (tLocalFraction: number) => {
+          ...
+
+          if (tLocalFraction < 0.9) {
+            anim.node.classList.add("wait-for-infobox");
+          } else {
+            anim.node.classList.remove("wait-for-infobox");
+          }
+        },
+      });
+    }
+  }
+```
+
+We then make use of this new marker class in `src-svelte/src/routes/components/api-keys/Service.svelte`:
+
+```css
+.api-key {
+    --inactive-color: gray;
+    ...
+    background-color: var(--inactive-color);
+    ...
+  }
+
+  ...
+
+  .container :global(.api-key.active.wait-for-infobox) {
+    background-color: var(--inactive-color);
+    box-shadow: none;
+  }
+```
+
+Finally, we edit `src-svelte/src/routes/Dashboard.stories.ts` to provide a default screenshot where the API key is indeed provided and the OpenAI service activated, so that we can see this in effect:
+
+```ts
+export const FullPage: StoryObj = Template.bind({}) as any;
+FullPage.parameters = {
+  sampleCallFiles: [
+    "/api/sample-calls/get_api_keys-openai.yaml",
+    ...
+  ],
+};
+```
