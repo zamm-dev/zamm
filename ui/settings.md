@@ -2226,6 +2226,29 @@ The "delays click sound" test is still failing. Upon more debugging, we realize 
   );
 ```
 
+#### Standard duration
+
+We eventually notice that we are using logic such as
+
+```ts
+const duration = $animationsOn ? 100 / $animationSpeed : 0;
+```
+
+a lot. To simplify this, we add this to `src-svelte/src/lib/preferences.ts`:
+
+```ts
+import { ..., derived } from "svelte/store";
+...
+
+export const standardDuration = derived(
+  [animationsOn, animationSpeed],
+  ([$animationsOn, $animationSpeed]) =>
+    $animationsOn ? 100 / $animationSpeed : 0,
+);
+```
+
+To do this properly, we should define a CSS variable based on this value as well, and propagate this change throughout the app. However, that is a more extensive refactor that will be left as a TODO instead.
+
 ## Sidebar mock navigation
 
 We notice that the mocked sidebar navigation no longer works in Storybook due to the console error

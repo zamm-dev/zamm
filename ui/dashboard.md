@@ -4024,6 +4024,18 @@ Finally, we want to repeat this effect on initial page load, so that the eye can
   }
 ```
 
+Note that we can instead do
+
+```ts
+          if (tLocalFraction === 0) {
+            anim.node.classList.add("wait-for-infobox");
+          } else if (tLocalFraction >= 0.9) {
+            anim.node.classList.remove("wait-for-infobox");
+          }
+```
+
+to save on the number of times we add the class.
+
 We then make use of this new marker class in `src-svelte/src/routes/components/api-keys/Service.svelte`:
 
 ```css
@@ -4052,6 +4064,73 @@ FullPage.parameters = {
     ...
   ],
 };
+```
+
+After looking further at this, it appears desirable for the CSS transition to also be delayed during form submission, as it is during the info box reveal. We will try delaying it so that it looks like the visual closure of the form causes the service activation to be processed. We avoid doing this with the CSS `transition-delay` attribute because it is a bit weird for the text to change while the transition waits, so we instead try editing `src-svelte/src/routes/components/api-keys/Form.svelte` to delay the entire update:
+
+```ts
+  ...
+  import { standardDuration } from "$lib/preferences";
+  ...
+
+  $: growDuration = 2 * $standardDuration;
+
+  function growY(node: HTMLElement) {
+    ...
+    return {
+      duration: growDuration,
+      ...
+    };
+  }
+
+  function submitApiKey() {
+    setApiKey(
+      ...
+    )
+      ...
+      .finally(() => {
+        setTimeout(async () => {
+          // delay here instead of in CSS transition so that the text updates
+          // simultaneously with the transition
+          apiKeys.set(await getApiKeys());
+        }, 0.75 * growDuration);
+      });
+  }
+```
+
+Some tests fail now because the API update is not called immediately, so we fix them by having them wait until the API call completes. We also shorten the animation duration to facilitate testing. We edit `src-svelte/src/routes/components/api-keys/Display.test.ts` for the fix:
+
+```ts
+...
+import { animationSpeed } from "$lib/preferences";
+
+describe("API Keys Display", () => {
+  ...
+
+  beforeAll(() => {
+    animationSpeed.set(10);
+  });
+
+  ...
+
+  test("can edit API key", async () => {
+    ...
+    await waitFor(() => expect(tauriInvokeMock).toBeCalledTimes(2));
+    ...
+  });
+
+  ...
+
+  test("can submit with custom file", async () => {
+    ...
+    await waitFor(() => expect(tauriInvokeMock).toBeCalledTimes(2));
+  });
+
+  test("can submit with no file", async () => {
+    ...
+    await waitFor(() => expect(tauriInvokeMock).toBeCalledTimes(2));
+  });
+});
 ```
 
 #### Adding example placeholder text
@@ -4319,3 +4398,133 @@ response: >
 ```
 
 and now get the tests to pass properly.
+
+Ideally, we encode the `should_fail` flag as part of the test itself. However, that will require a more extensive refactor to the sample call infrastructure, and as such remains a TODO instead.
+
+#### Unsetting the API key
+
+We should also allow the user to unset the API key. If the submitted API key is empty, then it should be unset. We create `src-tauri/api/sample-calls/set_api_key-unset.yaml` to demonstrate:
+
+```yaml
+request:
+  - set_api_key
+  - >
+    {
+      "filename": "unset/.bashrc",
+      "service": "OpenAI",
+      "api_key": ""
+    }
+response: "null"
+
+```
+
+We create `src-tauri/api/sample-init-files/unset/.bashrc`:
+
+```bash
+# check that if we unset the API key in the app, the local file doesn't change
+export OPENAI_API_KEY="0p3n41-4p1-k3y"
+
+```
+
+We also create `src-tauri/api/sample-init-files/unset/expected.bashrc` to verify that the file should be untouched:
+
+```bash
+# check that if we unset the API key in the app, the local file doesn't change
+export OPENAI_API_KEY="0p3n41-4p1-k3y"
+
+```
+
+We add functionality to unset API keys at `src-tauri/src/setup/api_keys.rs`:
+
+```rs
+impl ApiKeys {
+    ...
+
+    pub fn remove(&mut self, service: &Service) {
+        match service {
+            Service::OpenAI => self.openai = None,
+        }
+    }
+}
+```
+
+Finally, we implement the actual desired functionality and the test for it at `src-tauri/src/commands/keys/set.rs`:
+
+```rs
+fn set_api_key_helper(
+    ...
+) -> ZammResult<()> {
+    ...
+    let init_update_result = || -> ZammResult<()> {
+        if api_key.is_empty() {
+            return Ok(());
+        }
+
+        ...
+    }();
+    // assign ownership of new API key string to in-memory API keys
+    if api_key.is_empty() {
+        api_keys.remove(service);
+    } else {
+        api_keys.update(service, api_key);
+    }
+    ...
+}
+
+...
+
+#[cfg(test)]
+pub mod tests {
+    ...
+
+    pub fn check_set_api_key_sample(
+        ...
+    ) {
+        ...
+        if request.api_key.is_empty() {
+            assert_eq!(existing_api_keys.openai, None);
+        } else {
+            assert_eq!(existing_api_keys.openai, Some(request.api_key));
+        }
+        ...
+    }
+
+    ...
+
+    #[test]
+    fn test_unset() {
+        let api_keys = ZammApiKeys(Mutex::new(ApiKeys {
+            openai: Some("0p3n41-4p1-k3y".to_owned()),
+            ..ApiKeys::default()
+        }));
+        check_set_api_key_sample_unit(
+            "api/sample-calls/set_api_key-unset.yaml",
+            &api_keys,
+        );
+        assert!(api_keys.0.lock().unwrap().openai.is_none());
+    }
+
+    ...
+}
+```
+
+We check that all tests pass on the backend, and then add a Storybook story to the frontend to see the transition for ourselves at `src-svelte/src/routes/components/api-keys/Display.stories.ts`:
+
+```ts
+...
+const unsetKey = "/api/sample-calls/set_api_key-unset.yaml";
+...
+
+export const Unset: StoryObj = Template.bind({}) as any;
+Unset.parameters = {
+  sampleCallFiles: [knownKeys, unsetKey, unknownKeys],
+  preferences: {
+    animationSpeed: 1,
+  },
+  viewport: {
+    defaultViewport: "mobile2",
+  },
+};
+
+...
+```
