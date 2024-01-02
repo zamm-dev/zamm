@@ -943,7 +943,27 @@ mod tests {
 
 Note that we want to test that the predicted shell init file path has successfully had the tilde replaced by the absolute path, but we want the test to pass even on different machines, so we use two separate assertions.
 
-And as usual, edit `src-tauri/src/commands/mod.rs`:
+We realize when this test fails in CI that we want more information, so we edit the print debug statement to:
+
+```rs
+        println!(
+            "Determined shell to be {:?} from env var {:?}",
+            shell,
+            env::var("SHELL")
+        );
+```
+
+We find that this fails in CI because the environment variable is not set there, so we simply `#[ignore]` the test for CI purposes. However, we still edit `src-tauri/Makefile` to make the default test command test everything, as documented [here](https://doc.rust-lang.org/book/ch11-02-running-tests.html):
+
+```Makefile
+test: tests
+tests:
+	cargo test -- --include-ignored
+```
+
+There's no need to edit the GitHub test workflow because it already runs `cargo test` directly instead of through the Makefile.
+
+As usual, edit `src-tauri/src/commands/mod.rs`:
 
 ```rust
 ...
@@ -1724,7 +1744,7 @@ and then we import this new definition in the original file at `src-svelte/src/r
 </InfoBox>
 ```
 
-Now we use this same pattern in `src-svelte/src/routes/components/Metadata.svelte`:
+Now we use this same pattern in `src-svelte/src/routes/components/Metadata.svelte`, now with the actual shell info instead of the mocked value:
 
 ```svelte
 <script lang="ts">
@@ -1742,6 +1762,14 @@ Now we use this same pattern in `src-svelte/src/routes/components/Metadata.svelt
     <table>
       ...
     </table>
+
+    <table class="less-space">
+      ...
+      <tr>
+        <td>Shell</td>
+        <td>{systemInfo.shell}</td>
+      </tr>
+    </table>
   {:catch error}
     <span role="status">error: {error}</span>
   {/await}
@@ -1751,6 +1779,15 @@ Now we use this same pattern in `src-svelte/src/routes/components/Metadata.svelt
 ```
 
 It appears there is not really a better way to cut down on the boilerplate for the pattern here, as evidence by [this question](https://stackoverflow.com/q/64023421).
+
+We notice that the shell displays as "null" when the backend is unable to detect what shell it is, so we set it instead as
+
+```svelte
+      <tr>
+        <td>Shell</td>
+        <td>{systemInfo.shell ?? "Unknown"}</td>
+      </tr>
+```
 
 Next, we update the stories at `src-svelte/src/routes/components/Metadata.stories.ts` to also display the loading page:
 
@@ -3218,6 +3255,7 @@ const components: ComponentTestConfig[] = [
   {
     path: ["layout", "snackbar"],
     variants: ["message"],
+    screenshotEntireBody: true,
   },
   ...
 ];
@@ -3395,7 +3433,9 @@ Then, we render the snackbar component in the test app layout as well, at `src-s
 
 ```
 
-We add it to the existing app layout mock component so that we don't need a different component for every single app-wide feature. Now, we edit the Storybook story at `src-svelte/src/routes/components/api-keys/Display.stories.ts` to make use of this new mock functionality:
+We add it to the existing app layout mock component so that we don't need a different component for every single app-wide feature. However, we find that some of our screenshot tests are failing because the first item being screenshotted is now the empty snackbar, which causes Playwright to timeout waiting for the empty snackbar to become visible. As such, we move the snackbar under the `slot` instead.
+
+Now, we edit the Storybook story at `src-svelte/src/routes/components/api-keys/Display.stories.ts` to make use of this new mock functionality:
 
 ```ts
 ...
@@ -4528,3 +4568,188 @@ Unset.parameters = {
 
 ...
 ```
+
+### End-to-end tests
+
+Finally, we get our end-to-end tests to pass by:
+
+- updating the screenshot for the welcome page, which has now changed
+- removing the test for the presence of the OpenAI row, which is no longer a table row, and should be covered alternately by the screenshot and by the jest-dom component tests
+- adding a wait for the homepage to be updated
+
+We edit `webdriver/test/specs/e2e.test.js` accordingly:
+
+```js
+describe("Welcome screen", function () {
+  it("should render the welcome screen correctly", async function () {
+    ...
+    await $("table"); // ensure page loads before taking screenshot
+    await browser.pause(500); // for CSS transitions to finish
+    expect(
+      ...
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
+
+  it("should allow navigation to the settings page", async function () {
+    ...
+  });
+});
+```
+
+### Using login shell init file
+
+We realize that `.bashrc` just doesn't cut it in the regular case, so we edit the Rust code at `src-tauri/src/commands/system.rs` to return the login shell script:
+
+```rs
+...
+
+fn get_relative_shell_init_file() -> Option<String> {
+    #[cfg(target_os = "linux")]
+    return Some("~/.profile".to_string());
+    #[cfg(target_os = "macos")]
+    return Some("~/.bash_profile".to_string());
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    return None;
+}
+
+fn get_shell_init_file() -> Option<String> {
+    get_relative_shell_init_file().map(|f| shellexpand::tilde(&f).to_string())
+}
+
+#[tauri::command(async)]
+#[specta]
+pub fn get_system_info() -> SystemInfo {
+    ...
+    let shell_init_file = get_shell_init_file();
+
+    SystemInfo {
+        ...,
+        shell_init_file,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    ...
+
+    #[test]
+    fn test_can_predict_shell_init() {
+        let shell_init_file = get_shell_init_file().unwrap();
+        println!("Shell init file is {}", shell_init_file);
+        assert!(shell_init_file.starts_with('/'));
+        assert!(shell_init_file.ends_with("profile"));
+    }
+
+    #[test]
+    fn test_get_linux_system_info() {
+        let system_info = SystemInfo {
+            shell: Some(Shell::Zsh),
+            shell_init_file: Some("/root/.profile".to_string()),
+        };
+
+        check_get_system_info_sample(
+            "./api/sample-calls/get_system_info-linux.yaml",
+            &system_info,
+        );
+    }
+}
+```
+
+Next, we edit the sample response file at `src-tauri/api/sample-calls/get_system_info-linux.yaml` to maintain a proper example of the sort of return value we expect:
+
+```yaml
+request: ["get_system_info"]
+response: >
+  {
+    "shell": "Zsh",
+    "shell_init_file": "/root/.profile"
+  }
+
+```
+
+This means we'll have to edit the corresponding test at `src-svelte/src/routes/components/Metadata.test.ts` as well:
+
+```ts
+  test("linux system info returned", async () => {
+    ...
+    expect(get(systemInfo)?.shell_init_file).toEqual("/root/.profile");
+  });
+```
+
+We should really reflect this change in the screenshots as well, because as it turns out, there is no visual test for whether this gets properly displayed onscreen or not. But to do that, we'll first have to edit `src-svelte/src/lib/__mocks__/stores.ts` to set the store:
+
+```ts
+...
+import { systemInfo } from "$lib/system-info";
+import type { SystemInfo } from "$lib/bindings";
+...
+
+interface Stores {
+  systemInfo?: SystemInfo;
+}
+
+interface StoreArgs {
+  ...
+  stores?: Stores;
+  ...
+}
+
+const SvelteStoresDecorator: Decorator = (
+  ...
+) => {
+  ...
+  const { ..., stores } = parameters as StoreArgs;
+
+  ...
+
+  systemInfo.set(stores?.systemInfo);
+
+  ...
+};
+
+...
+```
+
+We now edit `src-svelte/src/routes/components/api-keys/Display.stories.ts` to more clearly distinguish between an empty and a pre-filled form:
+
+```ts
+export const Editing: StoryObj = Template.bind({}) as any;
+...
+Editing.parameters = {
+  sampleCallFiles: [unknownKeys, ...],
+  ...
+};
+
+export const EditingPreFilled: StoryObj = Template.bind({}) as any;
+EditingPreFilled.args = {
+  editDemo: true,
+};
+EditingPreFilled.parameters = {
+  sampleCallFiles: [knownKeys, writeToFile],
+  stores: {
+    systemInfo: {
+      shell_init_file: "/root/.profile",
+    },
+  },
+  viewport: {
+    defaultViewport: "mobile2",
+  },
+};
+
+```
+
+We add this new story to `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+  {
+    path: ["screens", "dashboard", "api-keys-display"],
+    variants: [..., "editing-pre-filled"],
+    ...
+  },
+  ...
+];
+```
+
+and update the screenshots with new ones from newly failing tests.

@@ -82,7 +82,15 @@ For Python:
         working-directory: src-python
 ```
 
-Note that you could `cd` into subdirectories as needed to install dependencies, or simply use `working-directory`.
+Note that you could `cd` into subdirectories as needed to install dependencies, or simply use `working-directory`. You can also run multiple commands, for example installing dependencies and then testing:
+
+```yaml
+      - name: Run Python Tests
+        run: |
+          poetry install
+          poetry run make test
+        working-directory: src-python
+```
 
 For Rust:
 

@@ -184,3 +184,13 @@ In addition, we should check that, for each type of file edited:
 - the irrelevant checks *don't* run 
 
 That's all! **Don't take any more steps** because the task is now done!
+
+## Updating pre-commit
+
+To update hooks to the latest versions, follow the instructions [here](https://pre-commit.com/) and run
+
+```bash
+$ pre-commit autoupdate
+```
+
+You may need to do this when the CI environment runs on different versions.
