@@ -4753,3 +4753,247 @@ const components: ComponentTestConfig[] = [
 ```
 
 and update the screenshots with new ones from newly failing tests.
+
+## Metadata display
+
+We should now make the rest of the metadata display use real values instead of mocked ones.
+
+### Adding OS
+
+We'll start by add the OS to our desired return value at `src-tauri/api/sample-calls/get_system_info-linux.yaml`:
+
+```yaml
+request: ["get_system_info"]
+response: >
+  {
+    "os": "Linux",
+    ...
+  }
+
+```
+
+We get the backend tests passing again by producing the desired output in `src-tauri/src/commands/system.rs`:
+
+```rs
+...
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
+pub enum OS {
+    MacOS,
+    Linux,
+}
+
+...
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
+pub struct SystemInfo {
+    os: Option<OS>,
+    ...
+}
+
+fn get_os() -> Option<OS> {
+    #[cfg(target_os = "linux")]
+    return Some(OS::Linux);
+    #[cfg(target_os = "macos")]
+    return Some(OS::MacOS);
+    #[cfg(not(any(target_os = "linux", target_os = "macos")))]
+    return None;
+}
+
+...
+
+#[tauri::command(async)]
+#[specta]
+pub fn get_system_info() -> SystemInfo {
+    SystemInfo {
+        os: get_os(),
+        shell: get_shell(),
+        shell_init_file: get_shell_init_file(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    ...
+
+    #[test]
+    fn test_can_determine_os() {
+        let os = get_os();
+        println!("Determined OS to be {:?}", os);
+        assert!(os.is_some());
+    }
+
+    ...
+
+    #[test]
+    fn test_get_linux_system_info() {
+        let system_info = SystemInfo {
+            os: Some(OS::Linux),
+            ...
+        };
+
+        check_get_system_info_sample(
+            "./api/sample-calls/get_system_info-linux.yaml",
+            &system_info,
+        );
+    }
+}
+```
+
+We make sure that `src-svelte/src/lib/bindings.ts` gets updated automatically, as usual.
+
+Next, we get `src-svelte/src/routes/components/Metadata.svelte` to display the dynamic value instead of the hard-coded mock value:
+
+```svelte
+<InfoBox title="System Info" {...$$restProps}>
+  ...
+      <tr>
+        <td>OS</td>
+        <td>{systemInfo.os ?? "Unknown"}</td>
+      </tr>
+  ...
+</InfoBox>
+```
+
+We test that this works in `src-svelte/src/routes/components/Metadata.test.ts`:
+
+```ts
+  test("linux system info returned", async () => {
+    ...
+    const osRow = screen.getByRole("row", { name: /OS/ });
+    const osValueCell = within(osRow).getAllByRole("cell")[1];
+    expect(osValueCell).toHaveTextContent("Linux");
+  });
+```
+
+The screenshot tests are expected to continue passing as before because we're rendering the same thing, just with a real value instead of a dummy one now.
+
+Finally, we edit `src-svelte/src/routes/components/api-keys/Display.test.ts` to provide a properly mocked value:
+
+```ts
+  test("some API key set", async () => {
+    systemInfo.set({
+      os: null,
+      ...
+    });
+    ...
+  });
+```
+
+We do this for each of the tests in that file.
+
+### Adding version
+
+We follow the previous steps and edit `src-tauri/api/sample-calls/get_system_info-linux.yaml` again:
+
+```yaml
+request: ["get_system_info"]
+response: >
+  {
+    "zamm_version": "0.0.0",
+    ...
+  }
+
+```
+
+We'll edit `src-tauri/src/commands/system.rs` as well using an environment variable mentioned [here](https://doc.rust-lang.org/cargo/reference/environment-variables.html):
+
+```rs
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
+pub struct SystemInfo {
+    zamm_version: String,
+    ...
+}
+
+fn get_zamm_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
+...
+
+#[tauri::command(async)]
+#[specta]
+pub fn get_system_info() -> SystemInfo {
+    SystemInfo {
+        zamm_version: get_zamm_version(),
+        ...
+    }
+}
+```
+
+#[cfg(test)]
+mod tests {
+    ...
+
+    #[test]
+    fn test_can_determine_zamm_version() {
+        let zamm_version = get_zamm_version();
+        println!("Determined Zamm version to be {}", zamm_version);
+        assert!(!zamm_version.is_empty());
+    }
+
+    ...
+
+    #[test]
+    fn test_get_linux_system_info() {
+        let system_info = SystemInfo {
+            zamm_version: "0.0.0".to_string(),
+            ...
+        };
+
+        ...
+    }
+}
+```
+
+And `src-svelte/src/routes/components/Metadata.svelte`:
+
+```svelte
+<InfoBox title="System Info" {...$$restProps}>
+  ...
+      <tr>
+        <td>Version</td>
+        <td class="version-value">{systemInfo.zamm_version}</td>
+      </tr>
+  ...
+</InfoBox>
+```
+
+And `src-svelte/src/routes/components/Metadata.test.ts`:
+
+```ts
+  test("linux system info returned", async () => {
+    ...
+    const versionRow = screen.getByRole("row", { name: /Version/ });
+    const versionValueCell = within(versionRow).getAllByRole("cell")[1];
+    expect(versionValueCell).toHaveTextContent("0.0.0");
+    ...
+  });
+```
+
+Before we go on to edit `Display.test.ts`, we first edit `src-svelte/src/lib/system-info.ts` to provide a default test value just like we did in `src-svelte/src/lib/preferences.ts` for user preferences:
+
+```ts
+export const NullSystemInfo: SystemInfo = {
+  zamm_version: "dummy",
+  os: null,
+  shell: null,
+  shell_init_file: null,
+};
+```
+
+Now edit `src-svelte/src/routes/components/api-keys/Display.test.ts` to use this new dummy value in each test:
+
+```ts
+...
+import { systemInfo, NullSystemInfo } from "$lib/system-info";
+...
+
+  test("some API key set", async () => {
+    systemInfo.set({
+      ...NullSystemInfo,
+      shell_init_file: "/home/rando/.zshrc",
+    });
+    ...
+  });
+```
