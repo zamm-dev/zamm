@@ -516,3 +516,25 @@ HOME should point to `/root` instead of `/github/home`. The picture is coming to
 ```
 
 the build finally works. However, this is still the only step that works. Seeing as using the Docker build does not actually save us any time, and even takes more time for some steps such as Python and the Webdriver end-to-end tests, we give up on this endeavor for now.
+
+### Errors
+
+If you get the message
+
+```
+Waiting for a runner to pick up this job
+```
+
+and the job never starts, it may be because you specified the run [incorrectly](https://stackoverflow.com/a/70968478). It should be
+
+```yaml
+runs-on: ubuntu-latest
+container:
+  image: YOUR_IMAGE
+```
+
+instead of
+
+```yaml
+runs-on: YOUR_IMAGE
+```

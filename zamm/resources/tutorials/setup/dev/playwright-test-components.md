@@ -916,3 +916,376 @@ To allow for approximate screenshots to pass, you can use
                   ...
                 });
 ```
+
+## Debugging screenshots
+
+### Opening the Playwright browser
+
+To see how a Playwright browser (e.g. webkit) is rendering the test, you can open the page in the Playwright browser with
+
+```bash
+$ yarn playwright open -b webkit localhost:6006
+```
+
+Note that sometimes, it turns out headed/headful mode renders things differently from headless mode.
+
+### Avoiding closing the browser at test time
+
+We can avoid closing the test browser if the relevant test failed:
+
+```ts
+  afterEach<StorybookTestContext>(
+    async (context: TestContext & StorybookTestContext) => {
+      if (context.task.result?.state === "pass") {
+        await context.page.close();
+      }
+    },
+  );
+```
+
+## Storybook tweaks
+
+If we don't clamp down on non-determinism, we may need to run our tests as many as 5 times before they pass. This wastes a lot of time before we're relatively certain that something is truly broken and not just a fluke of the latest rendering mishap.
+
+After all is said and done in this section, we'll have gone from 5 total tries to just 1 single one.
+
+### Dimensional differences
+
+Sometimes, there are slight pixel-wide size differences between the different screenshots taken. We allow for multiple "variant" screenshots which, if any of them are matched, count as a pass for our tests:
+
+```ts
+...
+import * as fs from "fs/promises";
+...
+
+async function findVariantFiles(directoryPath: string, filePrefix: string): Promise<string[]> {
+  const files = await fs.readdir(directoryPath);
+  return files.filter(file => {
+    return file.startsWith(filePrefix) && file.match(/-variant-\d+\.png$/) !== null;
+}).map(file => `${directoryPath}/${file}`);
+}
+
+async function checkVariants(variantFiles: string[], screenshot: Buffer) {
+  for (const file of variantFiles) {
+    const fileBuffer = await fs.readFile(file);
+    if (Buffer.compare(fileBuffer, screenshot) === 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+...
+
+describe.concurrent("Storybook visual tests", () => {
+  ...
+  for (const config of components) {
+    ...
+          // don't compare dynamic screenshots against baseline
+          if (!variantConfig.assertDynamic) {
+            // look for all files in filesystem with suffix -variant-x.png
+            const variantFiles = await findVariantFiles(`screenshots/baseline/${storybookPath}`, variantConfig.name);
+            const variantsMatch = await checkVariants(variantFiles, screenshot);
+            if (!variantsMatch) {
+               // @ts-ignore
+              expect(screenshot).toMatchImageSnapshot(matchOptions);
+            }
+          }
+    ...
+  }
+});
+```
+
+So for example, if we normally compare against `some/example/foo.png`, we can also set a `some/example/foo-variant-1.png` to be a valid match.
+
+Note that we'll want to make sure that our tests can still fail so that they don't give us false confidence. For example, if we instead do
+
+```ts
+const variantsMatch = checkVariants(variantFiles, screenshot);
+```
+
+then the tests will always trivially pass because `checkVariants` returns a Promise, which will always be truthy.
+
+### Clearing out the screenshot comparisons directory
+
+In the above example, we avoid calling `toMatchImageSnapshot` if there are any variant matches because a mismatch will cause the whole test to fail. However, not calling that function at all means that nothing will remove screenshots that have previously differed but now match up fine. As such, we remove it manually ourselves:
+
+```ts
+describe.concurrent("Storybook visual tests", () => {
+  ...
+
+  beforeAll(async () => {
+    ...
+
+    try {
+      await fs.rmdir("screenshots/testing", { recursive: true });
+    } catch (e) {
+      // ignore, it's okay if the folder already doesn't exist
+    }
+  });
+
+  ...
+});
+```
+
+Since we get the warning
+
+```
+(node:63345) [DEP0147] DeprecationWarning: In future versions of Node.js, fs.rmdir(path, { recursive: true }) will be removed. Use fs.rm(path, { recursive: true }) instead
+(Use `node --trace-deprecation ...` to show where the warning was created)
+```
+
+we follow the suggestion and instead do
+
+```ts
+await fs.rm("screenshots/testing", { recursive: true, force: true });
+```
+
+Note that we can't just remove the `recursive: true` part because the empty folders inside will still exist afterwards.
+
+### Waiting for fonts to load
+
+Non-deterministic tests can be caused by the screenshot being taken before the font has finished loading. We see from [this discussion](https://github.com/microsoft/playwright/issues/18640) that we can do
+
+```ts
+await page.evaluate(() => document.fonts.ready);
+```
+
+but that this doesn't make a difference in Chromium. We'll follow the advice in that issue and use Webkit instead. We will need to check every single one of our screenshots afterwards, as they will all differ noticeably from Chromium:
+
+```ts
+import {
+  ...,
+  webkit,
+  ...
+} from "@playwright/test";
+
+...
+
+describe.concurrent("Storybook visual tests", () => {
+  ...
+
+  beforeAll(async () => {
+    browser = await webkit.launch(...);
+    ...
+  });
+
+  ...
+});
+```
+
+### Running consistently in headed mode
+
+We see that we have one test that consistently fails now. The snackbar messages somehow renders with much more vertical whitespace than expected. We open up the Webkit browser to debug as noted above, just to find that it appears to render just fine in the browser, but not so much in the test. Upon further testing, we find that headless Webkit appears to somehow render things differently than headful Webkit in this particular case. We solve this by always running these tests in headed mode:
+
+```ts
+describe.concurrent("Storybook visual tests", () => {
+  ...
+
+  beforeAll(async () => {
+    browser = await webkit.launch({ headless: false });
+    ...
+  }, 30_000); // webkit takes a little while to start up on headed mode
+
+  ...
+});
+```
+
+If we're running this in CI, then we should also make use of `xvfb` by editing our CI file (say, `.github/workflows/tests.yaml`) to use the Docker image specified [here](https://playwright.dev/docs/docker) (which, as noted [here](https://playwright.dev/docs/ci#running-headed), already contains `xvfb`):
+
+```yaml
+  svelte:
+    ...
+    runs-on: ubuntu-latest
+    container:
+      image: "mcr.microsoft.com/playwright:v1.40.0-jammy"
+    env:
+      PLAYWRIGHT_TIMEOUT: 60000
+    ...
+    steps:
+      - name: Run Svelte Tests
+        run: |
+          xvfb-run yarn workspace gui test
+```
+
+We edit `src-svelte/src/routes/storybook.test.ts` again to dynamically change the overall timeout based on the Playwright timeout:
+
+```ts
+        {
+          retry: 0,
+          timeout: DEFAULT_TIMEOUT * 2.2,
+        },
+```
+
+Our tests fail on CI due to screenshot mismatches. Upon further investigation, we realize that the likely cause behind the failulres on Firefox are due to using a different version of Playwright for the Docker image than is specified in `package.json`. We re-align the two versions in `.github/workflows/tests.yaml`:
+
+```yaml
+  svelte:
+    ...
+    container:
+      image: "mcr.microsoft.com/playwright:v1.38.0-jammy"
+```
+
+This still fails. Even when we put in the line
+
+```ts
+  beforeAll(async () => {
+    browser = await webkit.launch({ headless: false });
+    console.log(`Running tests with Webkit version ${browser.version()}`);
+    ...
+  });
+```
+
+we see that Webkit version 17.0 is being used both locally and remotely.
+
+Unable to reconcile these differences, we add support for alternative local gold files in `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+...
+
+const SCREENSHOTS_BASE_DIR =
+  process.env.SCREENSHOTS_BASE_DIR === undefined
+    ? "screenshots"
+    : process.env.SCREENSHOTS_BASE_DIR;
+
+...
+
+describe.concurrent("Storybook visual tests", () => {
+  ...
+
+  beforeAll(async () => {
+    ...
+
+    try {
+      await fs.rm(`${SCREENSHOTS_BASE_DIR}/testing`, { recursive: true, force: true });
+    } ...
+  }, ...);
+
+  const baseMatchOptions: MatchImageSnapshotOptions = {
+    ...,
+    customSnapshotsDir: `${SCREENSHOTS_BASE_DIR}/baseline`,
+    customDiffDir: `${SCREENSHOTS_BASE_DIR}/testing/diff`,
+    customReceivedDir: `${SCREENSHOTS_BASE_DIR}/testing/actual`,
+    ...
+  };
+
+  ...
+
+          if (!variantConfig.assertDynamic) {
+            // look for all files in filesystem with suffix -variant-x.png
+            const variantFiles = await findVariantFiles(
+              `${SCREENSHOTS_BASE_DIR}/baseline/${storybookPath}`,
+              variantConfig.name,
+            );
+            ...
+          }
+  ...
+```
+
+We edit `src-svelte/Makefile` as well to make it convenient to support this new method:
+
+```Makefile
+local-screenshots:
+	mkdir -p screenshots/local
+	cp -r screenshots/baseline screenshots/local/baseline
+
+update-local-screenshots:
+	cp -r screenshots/local/testing/actual/* screenshots/local/baseline/
+```
+
+and edit `src-svelte/screenshots/.gitignore` to ignore that new folder:
+
+```gitignore
+local/
+```
+
+At this point, we don't need to run it in headed mode anymore, and therefore don't need the extra timeout for the `beforeAll` hook:
+
+```ts
+  beforeAll(async () => {
+    browser = await webkit.launch({ headless: true });
+    ...
+  });
+```
+
+### Using Firefox instead
+
+To try to fix the differences between local and remote test runs, we change `webkit` to `firefox`, and also:
+
+- set `headless` back to true
+- remove the 30s timeout for the `beforeAll` hook
+
+because both of these were workarounds specifically for Webkit, and are no longer needed if we are not using Webkit.
+
+Unfortunately, with Firefox, we sometimes get this error:
+
+```
+Error: locator.click: Target crashed
+=========================== logs ===========================
+waiting for locator('button[title=\'Hide addons [A]\']')
+  locator resolved to <button type="button" class="css-17dxjer" title="Hide ad…>…</button>
+attempting click action
+  waiting for element to be visible, enabled and stable
+  element is visible, enabled and stable
+  scrolling into view if needed
+============================================================
+```
+
+As such, we set the retry back to 1:
+
+```ts
+        {
+          retry: 1,
+          timeout: DEFAULT_TIMEOUT * 2.2,
+        },
+```
+
+On CI this still fails with
+
+```
+ FAIL  src/routes/storybook.test.ts > Storybook visual tests
+Error: browserType.launch: Browser.enable): Browser closed.
+==================== Browser output: ====================
+<launching> /ms-playwright/firefox-1424/firefox/firefox -no-remote -headless -profile /tmp/playwright_firefoxdev_profile-vCYJc9 -juggler-pipe -silent
+<launched> pid=1035
+[pid=1035][err] Running Nightly as root in a regular user's session is not supported.  ($HOME is /github/home which is owned by uid 1001.)
+[pid=1035] <process did exit: exitCode=1, signal=null>
+[pid=1035] starting temporary directories cleanup
+=========================== logs ===========================
+<launching> /ms-playwright/firefox-1424/firefox/firefox -no-remote -headless -profile /tmp/playwright_firefoxdev_profile-vCYJc9 -juggler-pipe -silent
+<launched> pid=1035
+[pid=1035][err] Running Nightly as root in a regular user's session is not supported.  ($HOME is /github/home which is owned by uid 1001.)
+[pid=1035] <process did exit: exitCode=1, signal=null>
+[pid=1035] starting temporary directories cleanup
+============================================================
+```
+
+We see that the [solution](https://github.com/microsoft/playwright/issues/6500) is to set `HOME` to `/root`, so we do that in `.github/workflows/tests.yaml`:
+
+```yaml
+  svelte:
+    ...
+    container:
+      image: "mcr.microsoft.com/playwright:v1.38.0-jammy"
+    env:
+      HOME: /root
+      ...
+```
+
+Now the tests run, and still produce a failure remotely. Because there's no advantage to using Firefox, and because there's the disadvantage of needing to run tests twice due to the flaky target error, we switch back to Webkit.
+
+### Using SSIM
+
+We can do as the Storybook repo maintainers recommend and use SSIM with a failure threshold of 1%:
+
+```ts
+  const baseMatchOptions: MatchImageSnapshotOptions = {
+    ...,
+    comparisonMethod: 'ssim',
+    failureThreshold: 0.01,
+    failureThresholdType: 'percent',
+    ...
+  };
+```
+
+Unfortunately, this strategy results in missing changes to an entire letter, so we undo our changes here.

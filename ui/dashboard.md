@@ -226,6 +226,33 @@ Next, we allow it to wrap on smaller screens, and remove `margin-left: 1rem;` fr
   }
 ```
 
+We no longer need `metadata-container`, so we remove that and put the `InfoBox` directly inside the row:
+
+```svelte
+<section class="homepage-banner">
+  ...
+  <Metadata ... />
+</section>
+```
+
+Now we update `src-svelte/src/routes/components/Metadata.svelte` as well to make the component screenshot there consistent. We wrap things in a new `inline-block` container as noted in the responses to [this question](https://stackoverflow.com/q/5827272):
+
+```svelte
+<div class="container">
+  <InfoBox title="System Info" ...>
+    ...
+  </InfoBox>
+</div>
+
+<style>
+  .container {
+    display: inline-block;
+  }
+
+  ...
+</style>
+```
+
 Since there are now multiple Svelte files for this one component, we move `src-svelte/src/routes/ApiKeysDisplay.svelte` to `src-svelte/src/routes/components/api-keys/Display.svelte`, along with associated Storybook stories and Vitest tests. We move it inside `components` to distinguish complicated components that span multiple files from sub-paths in the app URLs. Storybook may need to be restarted due to indexing problems.
 
 We originally renamed `ApiKeysDisplay.test.ts` to `Display.ts`, which doesn't trigger Vitest tests. Once we fix this by renaming it again to `Display.test.ts`, we find that the tests fail because of the changed HTML structure. First, we refactor the `tickFor` function out of `src-svelte/src/routes/AppLayout.test.ts` and into `src-svelte/src/lib/test-helpers.ts`:
@@ -3479,6 +3506,8 @@ Next, we add a line to persist and debug failures in `src-svelte/src/lib/snackba
     ...
   }
 ```
+
+We end up taking this out because Vitest does not hide stdout even when the tests pass.
 
 Finally, we change `src-svelte/src/routes/components/api-keys/Form.svelte` to only trigger the form to close if the API call was successful. If it failed, we leave it open for the user to fix the issue:
 
