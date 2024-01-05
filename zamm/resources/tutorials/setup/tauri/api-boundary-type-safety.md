@@ -1660,3 +1660,310 @@ zamm/api/greet.py:10: error: "GreetArgs" has no attribute "namef"; maybe "name"?
 ```
 
 There is a tradeoff to be made here between how much assurance we want that the code works, and how readable the code is. For the ZAMM project, we'll choose greater assurance in order to allow LLMs to better be able to self-correct their code.
+
+## Allowing failed responses
+
+While developing across the Tauri-Svelte API boundary, we find that we want these API calls to be able to fail, so that we can test how these failures are handled on the frontend. As such, we edit `src-python/api/sample-calls/schema.json` to turn the response into an object instead of a simple string:
+
+```json
+{
+  ...
+  "definitions": {
+    "SampleCall": {
+      ...
+      "properties": {
+        "response": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": ["message"]
+        }
+      },
+      ...
+    }
+  }
+}
+```
+
+We now use the following command defined in our main `Makefile` to update SampleCall definitions across the project:
+
+```bash
+$ make quicktype
+```
+
+`src-python/tests/api/sample_call.py` got updated automatically as a result of that command. We now edit the Python API sample call at `src-python/api/sample-calls/greet_empty.yaml` to adhere to the new format:
+
+```yaml
+request:
+  ...
+response:
+  message: >
+    {
+      "greeting": "Hello, ! You have been greeted from Python"
+    }
+
+```
+
+We do the same for `src-python/api/sample-calls/greet.yaml`, and update `src-python/tests/api/test_helpers.py` to take in the new format:
+
+```py
+def compare_io(filename: str) -> None:
+    ...
+    assert json.loads(response) == json.loads(sample_call.response.message)
+
+```
+
+We confirm that all the Python tests pass.
+
+Next, we look at the Rust side. `src-tauri/src/sample_call.rs` has been automatically updated as well. We update each of the files in `src-tauri/api/sample-calls` in a similar manner, and use the new failure marker in `src-tauri/api/sample-calls/set_api_key-invalid-filename.yaml`:
+
+```yaml
+request:
+  ...
+response:
+  success: false
+  message: >
+    "Is a directory (os error 21)"
+
+```
+
+We start editing the Rust sample call test parsers, such as `src-tauri/src/commands/system.rs`:
+
+```rs
+    fn check_get_system_info_sample(...) {
+        ...
+
+        let expected_info = parse_system_info(&system_info_sample.response.message);
+        ...
+    }
+```
+
+We apply similar edits to all other tests, replacing `sample.response` with `sample.response.message`. Afterwards, we still have to change the test file that prompted this refactor in the first place, by editing `src-tauri/src/commands/keys/set.rs` to remove the `should_fail` argument, and removing the `check_set_api_key_sample_unit_fails` function because there is no longer anything to differentiate it from the `check_set_api_key_sample_unit` function:
+
+```rs
+    pub fn check_set_api_key_sample(
+        sample_file: &str,
+        existing_zamm_api_keys: &ZammApiKeys,
+        test_dir_name: &str,
+    ) {
+        ...
+        if sample.response.success == Some(false) {
+            assert!(actual_result.is_err(), "API call should have thrown error");
+        } else {
+            ...
+        }
+        ...
+        let expected_json = sample.response.message.trim();
+        ...
+    }
+
+    fn check_set_api_key_sample_unit(
+        ...
+    ) {
+        check_set_api_key_sample(sample_file, existing_zamm_api_keys, "set_api_key");
+    }
+
+    ...
+
+    #[test]
+    fn test_invalid_filename() {
+        let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
+        check_set_api_key_sample_unit(
+            "api/sample-calls/set_api_key-invalid-filename.yaml",
+            &api_keys,
+        );
+    }
+```
+
+We edit the other call to the function in `src-tauri/src/commands/keys/mod.rs`, to use the new signature:
+
+```rs
+    #[test]
+    fn test_get_after_set() {
+        ...
+
+        check_set_api_key_sample(
+            "api/sample-calls/set_api_key-existing-no-newline.yaml",
+            &api_keys,
+            "api_keys_integration_tests",
+        );
+
+        ...
+    }
+```
+
+After checking that all Rust tests pass, we turn our attention to Svelte. Here, we see that `src-svelte/src/lib/sample-call.ts` has been automatically edited. We follow up with changes to `src-svelte/src/lib/sample-call-testing.ts`:
+
+```ts
+...
+
+export interface ParsedCall {
+  ...
+  succeeded: boolean;
+}
+
+...
+
+export function parseSampleCall(sampleFile: string): ParsedCall {
+  ...
+  const parsedSample: ParsedCall = {
+    ...,
+    response: JSON.parse(rawSample.response.message),
+    // if response.success does not exist, then it defaults to true
+    succeeded: rawSample.response.success !== false,
+  };
+  return parsedSample;
+}
+
+export class TauriInvokePlayback {
+  ...
+
+  mockCall(
+    ...
+  ): Promise<Record<string, string>> {
+    ...
+    const matchingCall = this.unmatchedCalls[matchingCallIndex];
+    this.unmatchedCalls.splice(matchingCallIndex, 1);
+
+    if (matchingCall.succeeded) {
+      return Promise.resolve(matchingCall.response);
+    } else {
+      return Promise.reject(matchingCall.response);
+    }
+  }
+}
+```
+
+There are only a couple of tests that have not yet been refactored to use this new playback scheme, so we update them accordingly, starting with `src-svelte/src/lib/Switch.test.ts`:
+
+```ts
+import { ..., type Mock } from "vitest";
+...
+import { TauriInvokePlayback } from "$lib/sample-call-testing";
+
+...
+
+describe("Switch", () => {
+  let tauriInvokeMock: Mock;
+  let playback: TauriInvokePlayback;
+  ...
+
+  beforeEach(() => {
+    tauriInvokeMock = vi.fn();
+    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    playback = new TauriInvokePlayback();
+    tauriInvokeMock.mockImplementation(
+      (...args: (string | Record<string, string>)[]) =>
+        playback.mockCall(...args),
+    );
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/play_sound-switch.yaml",
+    );
+
+    ...
+  });
+
+  ...
+
+  test("plays clicking sound during toggle", async () => {
+    ...
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    ...
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+  });
+
+  test("does not play clicking sound when sound off", async () => {
+    ...
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    ...
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+  });
+
+  ...
+});
+```
+
+We do the same for `src-svelte/src/routes/SidebarUI.test.ts`:
+
+```ts
+import { ..., type Mock } from "vitest";
+...
+import { TauriInvokePlayback } from "$lib/sample-call-testing";
+...
+
+describe("Sidebar", () => {
+  let tauriInvokeMock: Mock;
+  let playback: TauriInvokePlayback;
+  ...
+
+  beforeAll(() => {
+    tauriInvokeMock = vi.fn();
+    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    playback = new TauriInvokePlayback();
+    tauriInvokeMock.mockImplementation(
+      (...args: (string | Record<string, string>)[]) =>
+        playback.mockCall(...args),
+    );
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/play_sound-whoosh.yaml",
+    );
+  });
+
+  beforeEach(() => {
+    ...
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+  });
+
+  ...
+
+  test("plays whoosh sound with right speed and volume", async () => {
+    ...
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+  });
+
+  test("does not play whoosh sound when sound off", async () => {
+    ...
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+  });
+
+  test("does not play whoosh sound when path unchanged", async () => {
+    ...
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+  });
+});
+```
+
+After checking that all the Svelte tests pass as well, we find that the only thing preventing us from committing is mypy complaining about the generated file:
+
+```
+src-python/tests/api/sample_call.py:22: error: Function is missing a type annotation  [no-untyped-def]
+Found 1 error in 1 file (checked 2 source files)
+```
+
+We see that the function in question is:
+
+```py
+def from_union(fs, x):
+    for f in fs:
+        try:
+            return f(x)
+        except:
+            pass
+    assert False
+```
+
+We change the function signature to:
+
+```py
+def from_union(fs: List[Callable], x: Any) -> Any:
+  ...
+```
