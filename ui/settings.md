@@ -2247,7 +2247,7 @@ export const standardDuration = derived(
 );
 ```
 
-To do this properly, we should define a CSS variable based on this value as well, and propagate this change throughout the app. However, that is a more extensive refactor that will be left as a TODO instead.
+To do this properly, we should define a CSS variable based on this value as well, and propagate this change throughout the app. However, that is a more extensive refactor that will be described in the "Updating base animation speed with standard duration" section of [`layout.md`](/ui/layout.md) instead.
 
 ## Sidebar mock navigation
 
