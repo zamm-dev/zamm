@@ -4978,6 +4978,8 @@ update-local-screenshots:
 
 ```
 
+They may need to be updated again anyways after the CI run, but at least they'll be explicitly marked as needing an update.
+
 We now add our new screenshots:
 
 ```bash
@@ -4985,6 +4987,429 @@ $ make update-local-screenshots
 ```
 
 and commit everything.
+
+### Local DB read
+
+We change our minds yet again and decide to use the profile init file only as a fallback in case we can't determine the user's current shell. This is so that the user will have access to their new API keys in a new terminal session without having to log out and back in again. This does mean we'll have to also save the API keys to the local database.
+
+#### Shell init fallback
+
+We edit `src-tauri/src/commands/system.rs`, renaming `get_relative_shell_init_file` to `get_relative_profile_init_file` and modifying the tests to match:
+
+```rs
+...
+
+fn get_relative_profile_init_file() -> Option<String> {
+    #[cfg(target_os = "linux")]
+    return Some("~/.profile".to_string());
+    ...
+}
+
+fn get_shell_init_file(shell: &Option<Shell>) -> Option<String> {
+    let relative_file = match shell {
+        Some(Shell::Bash) => Some("~/.bashrc".to_string()),
+        Some(Shell::Zsh) => Some("~/.zshrc".to_string()),
+        None => get_relative_profile_init_file(),
+    };
+    relative_file.as_ref().map(|f| shellexpand::tilde(f).to_string())
+}
+
+#[tauri::command(async)]
+#[specta]
+pub fn get_system_info() -> SystemInfo {
+    let shell = get_shell();
+    let shell_init_file = get_shell_init_file(&shell);
+
+    SystemInfo {
+        ...,
+        shell,
+        shell_init_file,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+  ...
+
+  #[test]
+    fn test_can_predict_shell_init() {
+        let shell = Shell::Zsh;
+        let shell_init_file = get_shell_init_file(&Some(shell));
+        println!("Shell init file is {:?}", shell_init_file);
+        assert!(shell_init_file.is_some());
+        let file_path = shell_init_file.unwrap();
+        assert!(file_path.starts_with('/'));
+        assert!(file_path.ends_with(".zshrc"));
+    }
+
+    #[test]
+    fn test_can_predict_profile_init() {
+        let shell_init_file = get_shell_init_file(&None).unwrap();
+        println!("Shell init file is {}", shell_init_file);
+        assert!(shell_init_file.starts_with('/'));
+        assert!(shell_init_file.ends_with(".profile"));
+    }
+
+    #[test]
+    fn test_get_linux_system_info() {
+        let system_info = SystemInfo {
+            ...,
+            shell_init_file: Some("/root/.zshrc".to_string()),
+        };
+
+        ...
+    }
+}
+```
+
+We edit `src-tauri/api/sample-calls/get_system_info-linux.yaml` as well:
+
+```yaml
+request: ["get_system_info"]
+response:
+  message: >
+    {
+      ...
+      "shell": "Zsh",
+      "shell_init_file": "/root/.zshrc"
+    }
+
+```
+
+and edit the corresponding frontend test call at `src-svelte/src/routes/components/Metadata.test.ts`:
+
+```ts
+  test("linux system info returned", async () => {
+    ...
+    await waitFor(() => expect(shellValueCell).toHaveTextContent("Zsh"));
+    expect(get(systemInfo)?.shell_init_file).toEqual("/root/.zshrc");
+    ...
+  }
+```
+
+#### Setting up API key persistence in DB
+
+We create a new migration for the files:
+
+```bash
+$ diesel migration generate create_api_keys
+```
+
+Then we edit `src-tauri/migrations/2024-01-07-035038_create_api_keys/up.sql`:
+
+```sql
+CREATE TABLE api_keys (
+  service VARCHAR PRIMARY KEY NOT NULL,
+  api_key VARCHAR NOT NULL
+)
+
+```
+
+and `src-tauri/migrations/2024-01-07-035038_create_api_keys/down.sql`:
+
+```sql
+DROP TABLE api_keys
+
+```
+
+We delete the previous migrations at `src-tauri/migrations/2023-08-17-054802_create_executions`, which were only created for demo purposes, and run these new migrations to regenerate our `schema.rs`:
+
+```bash
+$ rm /root/.local/share/zamm/zamm.sqlite3
+$ diesel migration run --database-url /root/.local/share/zamm/zamm.sqlite3
+Running migration 2024-01-07-035038_create_api_keys
+```
+
+`src-tauri/src/schema.rs` has been automatically edited.
+
+Now we install `strum`, which is mentioned in [this answer](https://stackoverflow.com/a/62711168):
+
+```bash
+$ cargo add strum strum_macros
+```
+
+and edit `src-tauri/src/setup/api_keys.rs` to add a few new derivations to the Service enum (in particular, `EnumString` and `Display` for easy string interop, and `AsExpression` and `FromSqlRow` for Diesel interop):
+
+```rs
+use diesel::deserialize::FromSqlRow;
+use diesel::expression::AsExpression;
+use diesel::sql_types::Text;
+...
+use strum_macros::{Display, EnumString};
+
+#[derive(
+    ...
+    EnumString,
+    Display,
+    AsExpression,
+    FromSqlRow,
+)]
+#[diesel(sql_type = Text)]
+#[strum(serialize_all = "snake_case")]
+pub enum Service {
+    OpenAI,
+}
+
+...
+```
+
+Finally, we rewrite `src-tauri/src/models.rs` like so:
+
+```rs
+use crate::schema::api_keys;
+use crate::setup::api_keys::Service;
+use diesel::backend::Backend;
+use diesel::deserialize::{self, FromSql};
+use diesel::prelude::*;
+use diesel::serialize::{self, IsNull, Output, ToSql};
+use diesel::sql_types::Text;
+use diesel::sqlite::Sqlite;
+use std::str::FromStr;
+
+#[derive(Queryable, Selectable, Debug)]
+pub struct ApiKey {
+    pub service: Service,
+    pub api_key: String,
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = api_keys)]
+pub struct NewApiKey<'a> {
+    pub service: Service,
+    pub api_key: &'a str,
+}
+
+impl ToSql<Text, Sqlite> for Service
+where
+    String: ToSql<Text, Sqlite>,
+{
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Sqlite>) -> serialize::Result {
+        let service_str = self.to_string();
+        out.set_value(service_str);
+        Ok(IsNull::No)
+    }
+}
+
+impl<DB> FromSql<Text, DB> for Service
+where
+    DB: Backend,
+    String: FromSql<Text, DB>,
+{
+    fn from_sql(bytes: DB::RawValue<'_>) -> deserialize::Result<Self> {
+        let service_str = String::from_sql(bytes)?;
+        let parsed_service = Service::from_str(&service_str)?;
+        Ok(parsed_service)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::setup::db::MIGRATIONS;
+
+    use diesel_migrations::MigrationHarness;
+
+    fn setup_database() -> SqliteConnection {
+        let mut conn = SqliteConnection::establish(":memory:").unwrap();
+        conn.run_pending_migrations(MIGRATIONS).unwrap();
+        conn
+    }
+
+    #[test]
+    fn test_uuid_serialization_and_deserialization() {
+        let mut conn = setup_database();
+        let dummy_api_key = "0p3n41-4p1-k3y";
+
+        let openai_api_key = NewApiKey {
+            service: Service::OpenAI,
+            api_key: dummy_api_key,
+        };
+
+        // Insert
+        diesel::insert_into(api_keys::table)
+            .values(&openai_api_key)
+            .execute(&mut conn)
+            .unwrap();
+
+        // Query
+        let results: Vec<ApiKey> = api_keys::table.load(&mut conn).unwrap();
+        assert_eq!(results.len(), 1);
+
+        let retrieved_api_key = &results[0];
+        assert_eq!(retrieved_api_key.service, Service::OpenAI);
+        assert_eq!(retrieved_api_key.api_key.as_str(), dummy_api_key);
+    }
+}
+
+```
+
+All the Tauri tests still pass. We haven't edited the sample API files, so we don't need to worry about Svelte because the API boundary hasn't changed.
+
+#### Using DB for API keys
+
+We'll now use the DB as a fallback if API keys aren't available via the environment. We edit `src-tauri/src/main.rs` to pass the DB connection to the API keys setup function:
+
+```rs
+    let mut possible_db = setup::get_db();
+    let api_keys = setup_api_keys(&mut possible_db);
+
+    tauri::Builder::default()
+        .manage(ZammDatabase(Mutex::new(possible_db)))
+        .manage(ZammApiKeys(Mutex::new(api_keys)))
+        ...;
+```
+
+Now we edit `src-tauri/src/setup/api_keys.rs`:
+
+```rs
+use crate::models::ApiKey;
+use crate::schema::api_keys;
+use diesel;
+...
+use diesel::prelude::*;
+...
+
+pub fn setup_api_keys(possible_db: &mut Option<SqliteConnection>) -> ApiKeys {
+    let mut api_keys = ApiKeys { openai: None };
+
+    if let Some(conn) = possible_db.as_mut() {
+        let load_result: Result<Vec<ApiKey>, diesel::result::Error> =
+            api_keys::table.load(conn);
+        if let Ok(api_keys_rows) = load_result {
+            for api_key in api_keys_rows {
+                api_keys.update(&api_key.service, api_key.api_key);
+            }
+        }
+    }
+
+    // database keys will get overridden by environment keys
+    if let Ok(openai_api_key) = env::var("OPENAI_API_KEY") {
+        api_keys.openai = Some(openai_api_key);
+    }
+
+    api_keys
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::models::NewApiKey;
+    use crate::setup::db::MIGRATIONS;
+    use diesel_migrations::MigrationHarness;
+    use temp_env;
+
+    const DUMMY_API_KEY: &str = "0p3n41-4p1-k3y";
+
+    fn setup_database() -> SqliteConnection {
+        let mut conn = SqliteConnection::establish(":memory:").unwrap();
+        conn.run_pending_migrations(MIGRATIONS).unwrap();
+        conn
+    }
+
+    #[test]
+    fn test_get_empty_api_keys_no_db() {
+        temp_env::with_var("OPENAI_API_KEY", None::<String>, || {
+            let api_keys = setup_api_keys(&mut None);
+            assert!(api_keys.openai.is_none());
+        });
+    }
+
+    #[test]
+    fn test_get_present_api_keys_no_db() {
+        temp_env::with_var("OPENAI_API_KEY", Some(DUMMY_API_KEY), || {
+            let api_keys = setup_api_keys(&mut None);
+            assert_eq!(api_keys.openai, Some(DUMMY_API_KEY.to_string()));
+        });
+    }
+
+    #[test]
+    fn test_get_api_keys_from_db() {
+        let mut conn = setup_database();
+        diesel::insert_into(api_keys::table)
+            .values(&NewApiKey {
+                service: Service::OpenAI,
+                api_key: DUMMY_API_KEY,
+            })
+            .execute(&mut conn)
+            .unwrap();
+
+        temp_env::with_var("OPENAI_API_KEY", None::<String>, || {
+            let some_conn = Some(conn);
+            let api_keys = setup_api_keys(&mut some_conn);
+            assert!(api_keys.openai.is_none());
+        });
+    }
+}
+```
+
+The last function produces the error
+
+```
+error[E0507]: cannot move out of `conn`, a captured variable in an `Fn` closure
+   --> src/setup/api_keys.rs:118:53
+    |
+108 | ...et mut conn = setup_database();
+    |       -------- captured outer variable
+...
+117 | ...emp_env::with_var("OPENAI_API_KEY", None::<String>, || {
+    |                                                        -- captured by this `Fn` closure
+118 | ...   let api_keys = setup_api_keys(&mut Some(conn));
+    |                                               ^^^^ move occurs because `conn` has type `diesel::SqliteConnection`, which does not implement the `Copy` trait
+```
+
+Turns out `temp_env::with_var` expects an Fn instead of an FnOnce, so we change the test to
+
+```rs
+    #[test]
+    fn test_get_api_keys_from_db() {
+        temp_env::with_var("OPENAI_API_KEY", None::<String>, || {
+            let mut conn = setup_database();
+            diesel::insert_into(api_keys::table)
+                .values(&NewApiKey {
+                    service: Service::OpenAI,
+                    api_key: DUMMY_API_KEY,
+                })
+                .execute(&mut conn)
+                .unwrap();
+
+            let api_keys = setup_api_keys(&mut Some(conn));
+            assert_eq!(api_keys.openai, Some(DUMMY_API_KEY.to_string()));
+        });
+    }
+```
+
+We continue on with a couple more tests for edge cases:
+
+```rs
+    #[test]
+    fn test_env_key_overrides_db_key() {
+        let custom_api_key = "c0st0m-4p1-k3y";
+
+        temp_env::with_var("OPENAI_API_KEY", Some(custom_api_key.to_string()), || {
+            let mut conn = setup_database();
+            diesel::insert_into(api_keys::table)
+                .values(&NewApiKey {
+                    service: Service::OpenAI,
+                    api_key: DUMMY_API_KEY,
+                })
+                .execute(&mut conn)
+                .unwrap();
+
+            let api_keys = setup_api_keys(&mut Some(conn));
+            assert_eq!(api_keys.openai, Some(custom_api_key.to_string()));
+        });
+    }
+
+    #[test]
+    fn test_empty_db_doesnt_crash() {
+        temp_env::with_var("OPENAI_API_KEY", None::<String>, || {
+            let conn = setup_database();
+
+            let api_keys = setup_api_keys(&mut Some(conn));
+            assert_eq!(api_keys.openai, None);
+        });
+    }
+```
 
 ## Metadata display
 
