@@ -4783,6 +4783,209 @@ const components: ComponentTestConfig[] = [
 
 and update the screenshots with new ones from newly failing tests.
 
+### Linking to OpenAI API key page
+
+To make things easier for our users, let's link directly to our API key page from the app. This not only saves them a search, but also allow us to provide more up-to-date information, as OpenAI's [own help page](https://help.openai.com/en/articles/4936850-where-do-i-find-my-api-key) refers to the outdated location of `https://beta.openai.com/account/api-keys`.
+
+But before we do that, let's make sure we can indicate external links properly.
+
+#### Adding external link indicator
+
+We follow [this guide](https://christianoliff.com/blog/styling-external-links-with-an-icon-in-css/) and add this to `src-svelte/src/routes/styles.css`:
+
+```css
+
+a {
+  color: #3333FF;
+  text-decoration: none;
+}
+
+a[href^="http://"]::after,
+a[href^="https://"]::after {
+  --size: 1rem;
+  content: "";
+  width: var(--size);
+  height: var(--size);
+  margin-left: 0.25rem;
+  margin-bottom: -0.15rem;
+  /* equivalent of ~icons/tabler/external-link */
+  background-image: url('data:image/svg+xml,%3Csvg xmlns="http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" width="24" height="24" viewBox="0 0 24 24"%3E%3Cpath fill="none" stroke="%233333FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6m-7 1l9-9m-5 0h5v5"%2F%3E%3C%2Fsvg%3E');
+  background-position: bottom;
+  background-repeat: no-repeat;
+  background-size: contain;
+  display: inline-block;
+}
+```
+
+We use the external link icon from the Tabler set, but since there doesn't appear to be a way to use unplugin icons in CSS, we break from the existing usage and use the data URI mentioned under "SVG as data: URI" on [the Iconify page](https://icon-sets.iconify.design/tabler/external-link/). We move the position of the icon down a bit to make the bottom stroke of the box flush with the baseline of the text.
+
+Note that to make the color of the icon the same, we have to use `%23` in the `stroke` property because it is the equivalent of the `#` symbol as encoded in a URL, as demonstrated in [this table](https://www.w3schools.com/tags/ref_urlencode.ASP).
+
+Next, we create `src-svelte/src/lib/ExternalLinkView.svelte` to demonstrate this:
+
+```svelte
+<p>This is a link to <a href="https://www.google.com" target="_blank">Google</a>. Clicking on it will open a new page.</p>
+```
+
+and `src-svelte/src/lib/ExternalLink.stories.ts` to display this in Storybook:
+
+```ts
+import ExternalLinkView from "./ExternalLinkView.svelte";
+import type { StoryObj } from "@storybook/svelte";
+
+export default {
+  component: ExternalLinkView,
+  title: "Reusable/External Link",
+  argTypes: {},
+};
+
+const Template = ({ ...args }) => ({
+  Component: ExternalLinkView,
+  props: args,
+});
+
+export const ExternalLink: StoryObj = Template.bind({}) as any;
+
+```
+
+For once, we don't need to create our own custom component for this functionality, but we do need to still create a custom story and view component for it.
+
+We add this to the Storybook tests at `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+  {
+    path: ["reusable", "external-link"],
+    variants: ["external-link"],
+  },
+  ...
+];
+
+async function findVariantFiles(
+  ...
+): Promise<string[]> {
+  try {
+    await fs.access(directoryPath);
+  } catch (_) {
+    return [];
+  }
+
+  ...
+}
+```
+
+Note that we edit `findVariantFiles` here using the directory checks mentioned [here](https://nodejs.org/en/learn/manipulating-files/working-with-folders-in-nodejs) because otherwise, the test errors out because the directory doesn't even exist yet. If it doesn't exist yet, there are no variants to speak of, and therefore we simply return an empty array instead of having it error out.
+
+We then add the new screenshot at `src-svelte/screenshots/baseline/reusable/external-link/external-link.png`.
+
+#### Linking to OpenAI API key page
+
+Now we can do the actual linking. We edit `src-svelte/src/routes/components/api-keys/Form.svelte` to allow for an optional link to a settings page:
+
+```svelte
+<script lang="ts">
+  ...
+  export let apiKeyUrl: string | undefined = undefined;
+  ...
+  </script>
+
+<div class="container" ...>
+  <div class="inset-container">
+    <form ...>
+      {#if apiKeyUrl}
+        <p>
+          Tip: Get your {service} key <a href={apiKeyUrl} target="_blank">here</a>.
+        </p>
+      {/if}
+
+      ...
+    </form>
+  </div>
+</div>
+
+<style>
+  ...
+
+  form p {
+    margin: 0 0 0.25rem;
+    color: #666666;
+    text-align: center;
+  }
+
+  ...
+</style>
+```
+
+We propagate this up to `src-svelte/src/routes/components/api-keys/Service.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  export let apiKeyUrl: string | undefined = undefined;
+  ...
+</script>
+
+<div class="container">
+  ...
+
+  {#if editing}
+    <Form ... {apiKeyUrl} ... />
+  {/if}
+</div>
+```
+
+and put the source for the URL data in `src-svelte/src/routes/components/api-keys/Display.svelte`:
+
+```svelte
+<InfoBox title="API Keys" ...>
+  ...
+    <div ...>
+      <Service
+        name="OpenAI"
+        apiKeyUrl="https://platform.openai.com/api-keys"
+        ...
+      />
+    </div>
+  ...
+</InfoBox>
+```
+
+We add a test for this propagation in `src-svelte/src/routes/components/api-keys/Display.test.ts`:
+
+```ts
+  test("shows link to API key", async () => {
+    await checkSampleCall(
+      "../src-tauri/api/sample-calls/get_api_keys-openai.yaml",
+      "Active",
+    );
+
+    await toggleOpenAIForm();
+    const apiKeyLink = screen.getByRole("link", { name: "here" });
+    expect(apiKeyLink).toHaveAttribute(
+      "href",
+      "https://platform.openai.com/api-keys",
+    );
+  });
+```
+
+As expected, two of our screenshots have changed: `editing-pre-filled.png` and `editing.png`. We update `src-svelte/Makefile` to also update the gold screenshots when the local ones have been marked as changed:
+
+```Makefile
+update-local-screenshots:
+	...
+	cp -r screenshots/local/testing/actual/* screenshots/baseline/
+
+```
+
+We now add our new screenshots:
+
+```bash
+$ make update-local-screenshots
+```
+
+and commit everything.
+
 ## Metadata display
 
 We should now make the rest of the metadata display use real values instead of mocked ones.
