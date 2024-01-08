@@ -5411,6 +5411,356 @@ We continue on with a couple more tests for edge cases:
     }
 ```
 
+#### Updating DB on API key change
+
+Now we need to actually write to the DB so that we can read from it later. Let's add a new error type to `src-tauri/src/commands/errors.rs`:
+
+```rs
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    ...
+    #[error(transparent)]
+    Diesel {
+        #[from]
+        source: diesel::result::Error,
+    },
+    ...
+}
+```
+
+Now we can edit `src-tauri/src/commands/keys/set.rs` to do the saving while capturing any errors during the save. We copy and modify the logic from writing the API key to disk, and modify our tests to verify the result of the database operation after the fact.
+
+```rs
+...
+use crate::{ZammApiKeys, ZammDatabase};
+...
+use crate::schema::api_keys;
+use diesel::RunQueryDsl;
+
+...
+
+fn set_api_key_helper(
+    ...,
+    zamm_db: &ZammDatabase,
+    ...
+) -> ZammResult<()> {
+    ...
+    let db = &mut zamm_db.0.lock().unwrap();
+    ...
+
+    // write new API key to database before we can no longer borrow it
+    let db_update_result = || -> ZammResult<()> {
+        if api_key.is_empty() {
+            return Ok(());
+        }
+
+        if let Some(conn) = db.as_mut() {
+            diesel::replace_into(api_keys::table)
+                .values(crate::models::NewApiKey {
+                    service: service.clone(),
+                    api_key: &api_key,
+                })
+                .execute(conn)?;
+        }
+        Ok(())
+    }();
+
+    ...
+
+    init_update_result?;
+    db_update_result
+}
+
+#[tauri::command(async)]
+#[specta]
+pub fn set_api_key(
+    ...,
+    database: State<ZammDatabase>,
+    ...
+) -> ZammResult<()> {
+    set_api_key_helper(..., &database, ...)
+}
+
+#[cfg(test)]
+pub mod tests {
+    ...
+    use diesel::prelude::*;
+    use crate::setup::db::MIGRATIONS;
+    use crate::schema;
+    use diesel_migrations::MigrationHarness;
+    ...
+
+    fn setup_database() -> SqliteConnection {
+        let mut conn = SqliteConnection::establish(":memory:").unwrap();
+        conn.run_pending_migrations(MIGRATIONS).unwrap();
+        conn
+    }
+
+    ...
+
+    fn get_openai_api_key_from_db(db: &ZammDatabase) -> Option<String> {
+        use schema::api_keys::dsl::*;
+        let mut conn_mutex = db.0.lock().unwrap();
+        let conn = conn_mutex.as_mut().unwrap();
+        api_keys
+            .filter(service.eq(Service::OpenAI))
+            .select(api_key)
+            .first::<String>(conn)
+            .ok()
+    }
+
+    pub fn check_set_api_key_sample(
+        ...
+    ) {
+        let conn = setup_database();
+        let db = ZammDatabase(Mutex::new(Some(conn)));
+
+        ...
+
+        let actual_result = set_api_key_helper(
+            ...,
+            &db,
+            ...
+        );
+
+        ...
+
+        if request.api_key.is_empty() {
+            ...
+            assert_eq!(get_openai_api_key_from_db(&db), None);
+        } else {
+            assert_eq!(..., Some(request.api_key.clone()));
+            assert_eq!(
+                get_openai_api_key_from_db(&db),
+                Some(request.api_key.clone())
+            );
+        }
+
+        ...
+    }
+
+    ...
+}
+```
+
+We realize that we need to also remove API keys from the DB when they are unset, so we modify the file again to do that and to also test that the database removal actually works:
+
+```rs
+...
+use diesel::{ExpressionMethods, ...};
+...
+
+fn set_api_key_helper(
+    ...
+) -> ZammResult<()> {
+    ...
+
+    // write new API key to database before we can no longer borrow it
+    let db_update_result = || -> ZammResult<()> {
+        if let Some(conn) = db.as_mut() {
+            if api_key.is_empty() {
+                // delete from db
+                diesel::delete(api_keys::table)
+                    .filter(api_keys::service.eq(service))
+                    .execute(conn)?;
+            } else {
+                diesel::replace_into(api_keys::table)
+                    .values(crate::models::NewApiKey {
+                        service: service.clone(),
+                        api_key: &api_key,
+                    })
+                    .execute(conn)?;
+            }
+        }
+        Ok(())
+    }();
+
+    ...
+}
+
+...
+
+#[cfg(test)]
+pub mod tests {
+    ...
+    use crate::models::NewApiKey;
+    ...
+
+    pub fn setup_zamm_db() -> ZammDatabase {
+        ZammDatabase(Mutex::new(Some(setup_database())))
+    }
+
+    pub fn check_set_api_key_sample(
+        db: &ZammDatabase,
+        ...
+    ) {
+      ...
+    }
+
+    fn check_set_api_key_sample_unit(
+        db: &ZammDatabase,
+        ...
+    ) {
+        check_set_api_key_sample(db, ...);
+    }
+
+    #[test]
+    fn test_write_new_init_file() {
+        ...
+        check_set_api_key_sample_unit(
+            &setup_zamm_db(),
+            ...
+        );
+    }
+
+    ...
+
+    #[test]
+    fn test_unset() {
+        let dummy_key = "0p3n41-4p1-k3y";
+        let api_keys = ZammApiKeys(Mutex::new(ApiKeys {
+            openai: Some(dummy_key.to_string()),
+        }));
+        let mut conn = setup_database();
+        diesel::insert_into(api_keys::table)
+            .values(&NewApiKey {
+                service: Service::OpenAI,
+                api_key: dummy_key,
+            })
+            .execute(&mut conn)
+            .unwrap();
+
+        check_set_api_key_sample_unit(
+            &ZammDatabase(Mutex::new(Some(conn))),
+            ...
+        );
+        assert!(api_keys.0.lock().unwrap().openai.is_none());
+    }
+
+    ...
+}
+```
+
+All the other tests other than `test_unset` are modified in the same manner as `test_write_new_init_file`. We need to also edit the test at `src-tauri/src/commands/keys/mod.rs`:
+
+```rs
+...
+
+#[cfg(test)]
+mod tests {
+    ...
+    use set::tests::{..., setup_zamm_db};
+    ...
+
+    #[test]
+    fn test_get_after_set() {
+        ...
+
+        check_set_api_key_sample(
+            &setup_zamm_db(),
+            ...
+        );
+
+        ...
+    }
+```
+
+#### Updating the front-end text
+
+Now that we are saving to and reading from the DB by default, the environment variable export is more optional than before. We should edit the labels, and also explain them for the non-technical user.
+
+We create a component at `src-svelte/src/lib/Explanation.svelte` for standardized tooltips:
+
+```svelte
+<script lang="ts">
+  export let text: string;
+</script>
+
+<sup>
+  <span class="link-like" title={text}>[?]</span>
+</sup>
+
+<style>
+  .link-like {
+    cursor: help;
+  }
+</style>
+
+```
+
+We use a span instead of a link to avoid the Svelte error
+
+```
+A11y: '#' is not a valid href attribute
+```
+
+The solutions [here](https://stackoverflow.com/q/52801051) don't prevent Firefox from actually trying to navigate to the new page from inside the Storybook frame, so we use a span instead. We still make it look like a link by editing `src-svelte/src/routes/styles.css`:
+
+```css
+a, .link-like {
+  ...
+}
+```
+
+We edit `src-svelte/src/routes/components/api-keys/Form.svelte`, splitting `exportExplanation` across two lines to avoid eslint errors and using [this trick](https://stackoverflow.com/a/22561351) to get the newline to show up in the tooltip:
+
+```svelte
+<script lang="ts">
+  ...
+  import Explanation from "$lib/Explanation.svelte";
+
+  ...
+  const exportExplanation =
+    `Exports this API key for use in other programs on your computer.&#10;&#13;` +
+    `Don't worry about this option if you're not a programmer.`;
+  
+  ...
+</script>
+
+<div ...>
+  <div ...>
+    <form ...>
+      ...
+
+      <div class="form-row">
+        <label for="saveKey" class="accessibility-only"
+          >Export as environment variable?</label
+        >
+        <input
+          type="checkbox"
+          ...
+        />
+        <div>
+          <label for="saveKeyLocation">Export from:</label>
+          <Explanation text={exportExplanation} />
+        </div>
+        <TextInput ... />
+      </div>
+
+      ...
+    </form>
+  </div>
+</div>
+```
+
+We do a string replace on all the corresponding tests in `src-svelte/src/routes/components/api-keys/Display.test.ts`. For example:
+
+```ts
+  test("preserves unsubmitted changes after opening and closing form", async () => {
+    ...
+    let saveKeyCheckbox = screen.getByLabelText(
+      "Export as environment variable?",
+    );
+    let fileInput = screen.getByLabelText("Export from:");
+    ...
+    saveKeyCheckbox = screen.getByLabelText("Export as environment variable?");
+    fileInput = screen.getByLabelText("Export from:");
+    ...
+  });
+```
+
+As expected, we have to once again update the `editing-pre-filled.png` and `editing.png` screenshots.
+
 ## Metadata display
 
 We should now make the rest of the metadata display use real values instead of mocked ones.
