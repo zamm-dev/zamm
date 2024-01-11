@@ -114,3 +114,12 @@ Interrupted
 ```
 
 Upgrade to the latest version of `mypy`, say version 1.5.1.
+
+### Forcing a cast
+
+See [this question](https://stackoverflow.com/q/55461519) and do
+
+```py
+y: Any = ...
+x: str = cast(str, y)
+```

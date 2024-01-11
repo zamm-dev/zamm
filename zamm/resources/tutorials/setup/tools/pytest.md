@@ -51,3 +51,11 @@ tests/test_pytest_works.py::test_pytest_works PASSED                     [100%]
 ```
 
 That's all! **Don't take any more steps** because the task is now done!
+
+## Selecting one specific test
+
+To select a specific test to run, do
+
+```bash
+$ pytest -k test_pytest_works
+```

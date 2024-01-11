@@ -92,3 +92,15 @@ warning: `multi-line-summary-first-line` (D212) and `multi-line-summary-second-l
 then you shold edit the `ignore` section in `pyproject.toml` again to ignore whichever conflicting rule you don't prefer.
 
 That's all! **Don't take any more steps** because the task is now done!
+
+## Git ignore
+
+Ruff produces a `.gitignore` file that ignores all the contents of `.ruff_cache`, but the folder itself will still show up in VS Code as an untracked folder until you expand it. To fix this, we can add `.ruff_cache` to `.gitignore`:
+
+```bash
+# ruff
+.ruff_cache/
+
+```
+
+If your `.gitignore` for the Python project is in a subdirectory, such as being located at `src-python/.gitignore`, then add this there instead.

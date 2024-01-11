@@ -1092,6 +1092,27 @@ mod tests {
 }
 ```
 
+We add a fallback in case `SHELL` isn't set:
+
+```rs
+fn get_shell() -> Option<Shell> {
+    if let Ok(shell) = env::var("SHELL") {
+        ...
+    }
+
+    if env::var("ZSH_NAME").is_ok() {
+        return Some(Shell::Zsh);
+    }
+    if env::var("BASH").is_ok() {
+        return Some(Shell::Bash);
+    }
+
+    None
+}
+```
+
+It turns out this does not work either because those environment variables are special ones for the shell that are not passed onto the running program.
+
 #### Simplifying the ApiKeys data structure
 
 In an act of overengineering, we had defined the `ApiKeys` to take in an `ApiKey` struct that included information about the provenance of that API key. Instead, we now edit `src-tauri/src/setup/api_keys.rs` to define it more simply:
@@ -5741,6 +5762,14 @@ We edit `src-svelte/src/routes/components/api-keys/Form.svelte`, splitting `expo
     </form>
   </div>
 </div>
+```
+
+We realize that interestingly enough, setting the title attribute directly works fine, but when passed through a component, Svelte appears to encode the text for us, and the users see the `&#10;&#13;` text as well instead of a newline. We therefore change the line to:
+
+```ts
+  const exportExplanation =
+    `Exports this API key for use in other programs on your computer.\n` +
+    `Don't worry about this option if you're not a programmer.`;
 ```
 
 We do a string replace on all the corresponding tests in `src-svelte/src/routes/components/api-keys/Display.test.ts`. For example:
