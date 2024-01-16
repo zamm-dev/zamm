@@ -190,6 +190,12 @@ If you want to change something about your `up.sql`, do this:
 $ diesel migration redo --database-url /root/.local/share/zamm/zamm.sqlite3
 ```
 
+To just undo the last migration, do:
+
+```bash
+$ diesel migration revert -n 1 --database-url /root/.local/share/zamm/zamm.sqlite3
+```
+
 Add the `uuid` package to enable using UUIDs for IDs:
 
 ```bash
