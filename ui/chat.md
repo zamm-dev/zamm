@@ -2498,3 +2498,1141 @@ mod tests {
 We re-record `src-tauri/api/sample-call-requests/start-conversation.json` to use the new temperature specification.
 
 Now that the tests pass, we can be reasonably confident that database persistence is working.
+
+#### API boundary
+
+Now we can iterate on creating the API boundary. We create `src-tauri/api/sample-calls/chat-start-conversation.yaml` to define how we want the API to look:
+
+```yaml
+request:
+  - chat
+  - >
+    {
+      "provider": "OpenAI",
+      "llm": "gpt-3.5-turbo",
+      "temperature": null,
+      "prompt": {
+        "messages": [
+          {
+            "role": "System",
+            "text": "You are ZAMM, a chat program. Respond in first person."
+          },
+          {
+            "role": "Human",
+            "text": "Hello, does this work?"
+          }
+        ]
+      }
+    }
+response:
+  message: >
+    {
+      "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
+      "timestamp": "2024-01-16T08:50:19.738093890",
+      "llm": {
+        "name": "gpt-3.5-turbo-0613",
+        "requested": "gpt-3.5-turbo",
+        "provider": "OpenAI"
+      },
+      "request": {
+        "prompt": {
+          "messages": [
+            {
+              "role": "System",
+              "text": "You are ZAMM, a chat program. Respond in first person."
+            },
+            {
+              "role": "Human",
+              "text": "Hello, does this work?"
+            }
+          ]
+        },
+        "temperature": 1.0
+      },
+      "response": {
+        "completion": {
+          "role": "AI",
+          "text": "Hello! I'm ZAMM, a chat program. I'm here to assist you. What can I help you with today?"
+        }
+      },
+      "token_metadata": {
+        "prompt_tokens": 32,
+        "response_tokens": 27
+      }
+    }
+
+```
+
+The `request` part in the response is technically redundant as it doesn't need to refer to anything, but we don't need to optimize that away right now.
+
+We need to define some additional conversion functions, so we edit `src-tauri/src/models/llm_calls.rs`:
+
+```rs
+...
+use async_openai::types::{
+    ..., ChatCompletionRequestSystemMessage, ChatCompletionRequestUserMessage,
+    ChatCompletionRequestAssistantMessage
+};
+...
+
+impl Into<ChatCompletionRequestMessage> for ChatMessage {
+    fn into(self) -> ChatCompletionRequestMessage {
+        match self {
+            ChatMessage::System { text } => {
+                ChatCompletionRequestMessage::System(
+                    ChatCompletionRequestSystemMessage {
+                        content: text,
+                        role: Role::System,
+                        ..Default::default()
+                    }
+                )
+            }
+            ChatMessage::Human { text } => {
+                ChatCompletionRequestMessage::User(ChatCompletionRequestUserMessage {
+                    content: ChatCompletionRequestUserMessageContent::Text(
+text
+                    ),
+                    role: Role::User,
+                    ..Default::default()
+                })
+            }
+            ChatMessage::AI { text } => {
+                ChatCompletionRequestMessage::Assistant(
+                    ChatCompletionRequestAssistantMessage {
+                        content: Some(text),
+                        role: Role::Assistant,
+                        ..Default::default()
+                    }
+                )
+            }
+        }
+    }
+}
+
+...
+
+impl Into<Vec<ChatCompletionRequestMessage>> for ChatPrompt {
+    fn into(self) -> Vec<ChatCompletionRequestMessage> {
+        self.messages
+            .into_iter()
+            .map(|message| message.into())
+            .collect()
+    }
+}
+
+...
+
+#[derive(..., Clone, ...)]
+pub struct Request {
+    ...
+}
+
+#[derive(..., Clone, ...)]
+pub struct Response {
+    ...
+}
+
+#[derive(..., Clone, ...)]
+pub struct LlmCall {
+    ...
+}
+```
+
+Finally, we edit `src-tauri/src/commands/llms/chat.rs` to actually handle a real API call instead of the fake one we've hard-coded into it:
+
+```rs
+...
+use crate::models::llm_calls::{
+    ..., ChatPrompt
+};
+...
+use async_openai::types::{
+    CreateChatCompletionRequestArgs, ChatCompletionRequestMessage
+};
+...
+
+async fn chat_helper(
+    ...,
+    provider: Service,
+    llm: String,
+    temperature: Option<f32>,
+    prompt: ChatPrompt,
+    ...,
+) -> ZammResult<LlmCall> {
+    ...
+
+    let config = match provider {
+        Service::OpenAI => {
+            let openai_api_key = api_keys.openai.as_ref().ok_or(Error::MissingApiKey { service: Service::OpenAI })?;
+            OpenAIConfig::new().with_api_key(openai_api_key)
+        },
+    };
+
+    let requested_model = llm;
+    let requested_temperature = temperature.unwrap_or(1.0);
+
+    let openai_client =
+        async_openai::Client::with_config(config).with_http_client(http_client);
+    let messages: Vec<ChatCompletionRequestMessage> = prompt.into();
+    let request = CreateChatCompletionRequestArgs::default()
+        .model(&requested_model)
+        .temperature(requested_temperature)
+        .messages(messages)
+        .build()?;
+
+    ...
+
+    let llm_call = LlmCall {
+        ...
+        request: Request {
+            temperature: requested_temperature,
+            ...
+        },
+        ...
+    }
+
+    ...
+}
+
+#[tauri::command(async)]
+#[specta]
+pub async fn chat(
+    ...,
+    provider: Service,
+    llm: String,
+    temperature: Option<f32>,
+    prompt: ChatPrompt,
+) -> ZammResult<LlmCall> {
+    ...
+    chat_helper(..., provider, llm, temperature, prompt, ...).await
+}
+
+#[cfg(test)]
+mod tests {
+    ...
+    use serde::{Deserialize, Serialize};
+    use crate::sample_call::SampleCall;
+    use std::fs;
+    ...
+
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    struct ChatRequest {
+        provider: Service,
+        llm: String,
+        temperature: Option<f32>,
+        prompt: ChatPrompt,
+    }
+
+    fn parse_request(request_str: &str) -> ChatRequest {
+        serde_json::from_str(request_str).unwrap()
+    }
+
+    fn parse_response(response_str: &str) -> LlmCall {
+        serde_json::from_str(response_str).unwrap()
+    }
+
+    fn read_sample(filename: &str) -> SampleCall {
+        let sample_str = fs::read_to_string(filename)
+            .unwrap_or_else(|_| panic!("No file found at {filename}"));
+        serde_yaml::from_str(&sample_str).unwrap()
+    }
+
+    #[tokio::test]
+    async fn test_start_conversation() {
+        ...
+        let api_keys = if is_recording {
+            ZammApiKeys(Mutex::new(ApiKeys {
+                openai: env::var("OPENAI_API_KEY").ok(),
+            }))
+        } else {
+            ZammApiKeys(Mutex::new(ApiKeys {
+                openai: Some("dummy".to_string()),
+            }))
+        };
+
+        ...
+        // end dependencies setup
+
+        let sample = read_sample("api/sample-calls/chat-start-conversation.yaml");
+        assert_eq!(sample.request.len(), 2);
+        assert_eq!(sample.request[0], "chat");
+
+        let request = parse_request(&sample.request[1]);
+
+        let result = chat_helper(&api_keys, &db, request.provider, request.llm, request.temperature, request.prompt, vcr_client).await;
+        ...
+
+        // check that the API call returns the expected JSON
+        let expected_llm_call = parse_response(&sample.response.message);
+        // swap out non-deterministic parts before JSON comparison
+        let deterministic_llm_call = LlmCall {
+            id: expected_llm_call.id,
+            timestamp: expected_llm_call.timestamp,
+            ..ok_result.clone()
+        };
+        let actual_json = serde_json::to_string_pretty(&deterministic_llm_call).unwrap();
+        let expected_json = sample.response.message.trim();
+        assert_eq!(actual_json, expected_json);
+
+        ...
+    }
+}
+
+```
+
+We make sure the tests pass now, and commit.
+
+##### Flattening the JSON request/response
+
+Since the nested nature of the `ChatPrompt` struct is just an artifact of the Rust type system, we can flatten it out in the JSON request/response. We can also make the `token_metadata` key less verbose. We edit `src-tauri/api/sample-calls/chat-start-conversation.yaml` to reflect what we want:
+
+```yaml
+request:
+  - chat
+  - >
+    {
+      ...,
+      "prompt": [
+        {
+          "role": "System",
+          "text": "You are ZAMM, a chat program. Respond in first person."
+        },
+        {
+          "role": "Human",
+          "text": "Hello, does this work?"
+        }
+      ]
+    }
+response:
+  message: >
+    {
+      ...,
+      "request": {
+        "prompt": [
+          {
+            "role": "System",
+            "text": "You are ZAMM, a chat program. Respond in first person."
+          },
+          {
+            "role": "Human",
+            "text": "Hello, does this work?"
+          }
+        ],
+        ...
+      },
+      ...,
+      "tokens": {
+        "prompt": 32,
+        "response": 27
+      }
+    }
+
+```
+
+We then edit `src-tauri/src/models/llm_calls.rs`:
+
+```rs
+...
+
+#[derive(
+    ...
+)]
+#[diesel(sql_type = Text)]
+pub struct ChatPrompt {
+    pub prompt: Vec<ChatMessage>,
+}
+
+impl Deref for ChatPrompt {
+    ...
+
+    fn deref(&self) -> &Self::Target {
+        &self.prompt
+    }
+}
+
+impl TryFrom<Vec<ChatCompletionRequestMessage>> for ChatPrompt {
+    type Error = Error;
+
+    fn try_from(
+        ...
+    ) -> Result<Self, Self::Error> {
+        ...
+        Ok(ChatPrompt { prompt: messages })
+    }
+}
+
+impl From<ChatPrompt> for Vec<ChatCompletionRequestMessage> {
+    fn from(val: ChatPrompt) -> Self {
+        val.prompt
+            ...
+    }
+}
+
+...
+
+#[derive(...)]
+pub struct Request {
+    #[serde(flatten)]
+    pub prompt: ChatPrompt,
+    ...
+}
+
+...
+
+#[derive(...)]
+pub struct TokenMetadata {
+    pub prompt: Option<i32>,
+    ...
+}
+
+...
+
+#[derive(...)]
+pub struct LlmCall {
+    ...
+    pub tokens: TokenMetadata,
+}
+
+impl LlmCall {
+    pub fn as_sql_row(&self) -> NewLlmCallRow {
+        NewLlmCallRow {
+            ...
+            prompt_tokens: self.tokens.prompt.as_ref(),
+            response_tokens: self.tokens.response.as_ref(),
+            ...
+        }
+    }
+}
+
+impl From<LlmCallRow> for LlmCall {
+    fn from(row: LlmCallRow) -> Self {
+        ...
+        let token_metadata = TokenMetadata {
+            prompt: row.prompt_tokens,
+            response: row.response_tokens,
+        };
+        LlmCall {
+            ...,
+            tokens: token_metadata,
+        }
+    }
+}
+```
+
+and `src-tauri/src/commands/llms/chat.rs`:
+
+```rs
+...
+use crate::models::llm_calls::{
+    ..., ChatMessage, ...
+};
+...
+
+async fn chat_helper(
+    ...,
+    prompt: Vec<ChatMessage>,
+    ...
+) -> ZammResult<LlmCall> {
+    ...
+    let messages: Vec<ChatCompletionRequestMessage> = prompt.clone().into_iter().map(|m| m.into()).collect();
+    ...
+    let token_metadata = TokenMetadata {
+        prompt: response
+            ...,
+        response: response
+            ...,
+    };
+    ...
+    let llm_call = LlmCall {
+        ...
+        request: Request {
+            ...
+            prompt: ChatPrompt { prompt },
+        },
+        ...
+        tokens: token_metadata,
+    };
+    ...
+}
+
+#[tauri::command(async)]
+#[specta]
+pub async fn chat(
+    ...,
+    prompt: Vec<ChatMessage>,
+) -> ZammResult<LlmCall> {
+    ...
+}
+
+#[cfg(test)]
+mod tests {
+    ...
+
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    struct ChatRequest {
+        ...,
+        prompt: Vec<ChatMessage>,
+    }
+
+    ...
+}
+```
+
+##### Fixing the build
+
+While `cargo test` passes, `cargo build` does not. We get errors such as
+
+```
+error[E0277]: the trait bound `NaiveDateTime: Deserialize<'_>` is not satisfied
+    --> src/models/llm_calls.rs:315:20
+     |
+315  |     pub timestamp: NaiveDateTime,
+     |                    ^^^^^^^^^^^^^ the trait `Deserialize<'_>` is not implemented for `NaiveDateTime`
+     |
+     = help: the following other types implement trait `Deserialize<'de>`:
+               <&'a [u8] as Deserialize<'de>>
+               <&'a serde_json::value::RawValue as Deserialize<'de>>
+               <&'a std::path::Path as Deserialize<'de>>
+               <&'a str as Deserialize<'de>>
+               <() as Deserialize<'de>>
+               <(T0, T1) as Deserialize<'de>>
+               <(T0, T1, T2) as Deserialize<'de>>
+               <(T0, T1, T2, T3) as Deserialize<'de>>
+             and 444 others
+note: required by a bound in `next_value`
+    --> /root/.asdf/installs/rust/1.71.1/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.195/src/de/mod.rs:1865:12
+     |
+1863 |     fn next_value<V>(&mut self) -> Result<V, Self::Error>
+     |        ---------- required by a bound in this associated function
+1864 |     where
+1865 |         V: Deserialize<'de>,
+     |            ^^^^^^^^^^^^^^^^ required by this bound in `MapAccess::next_value`
+
+error[E0277]: the trait bound `NaiveDateTime: Deserialize<'_>` is not satisfied
+   --> src/models/llm_calls.rs:315:5
+    |
+315 |     pub timestamp: NaiveDateTime,
+    |     ^^^ the trait `Deserialize<'_>` is not implemented for `NaiveDateTime`
+    |
+    = help: the following other types implement trait `Deserialize<'de>`:
+              <&'a [u8] as Deserialize<'de>>
+              <&'a serde_json::value::RawValue as Deserialize<'de>>
+              <&'a std::path::Path as Deserialize<'de>>
+              <&'a str as Deserialize<'de>>
+              <() as Deserialize<'de>>
+              <(T0, T1) as Deserialize<'de>>
+              <(T0, T1, T2) as Deserialize<'de>>
+              <(T0, T1, T2, T3) as Deserialize<'de>>
+            and 444 others
+note: required by a bound in `python_api::_::_serde::__private::de::missing_field`
+   --> /root/.asdf/installs/rust/1.71.1/registry/src/index.crates.io-6f17d22bba15001f/serde-1.0.195/src/private/de.rs:25:8
+    |
+23  | pub fn missing_field<'de, V, E>(field: &'static str) -> Result<V, E>
+    |        ------------- required by a bound in this function
+24  | where
+25  |     V: Deserialize<'de>,
+    |        ^^^^^^^^^^^^^^^^ required by this bound in `missing_field`
+
+For more information about this error, try `rustc --explain E0277`.
+```
+
+As we see from [this answer](https://stackoverflow.com/a/65379272), we need to enable the `serde` feature in the `chrono` crate. For some reason this doesn't fail on test builds. We edit `src-tauri/Cargo.toml` accordingly:
+
+```toml
+...
+chrono = { ..., features = ["serde"] }
+
+...
+```
+
+and now our build completes successfully.
+
+### Frontend API call
+
+Now that we have the backend API call working, we move over to the frontend side of the API boundary. We have Specta automatically regenerate `src-svelte/src/lib/bindings.ts` as usual. We then create a new page at `src-svelte/src/routes/chat/+page.svelte`:
+
+```svelte
+<script lang="ts">
+  import Chat from "./Chat.svelte";
+</script>
+
+<Chat />
+
+```
+
+and define a skeleton version of the `Chat` component at `src-svelte/src/routes/chat/Chat.svelte`, just enough for us to trigger the API call:
+
+```svelte
+<script lang="ts">
+  import InfoBox from "$lib/InfoBox.svelte";
+  import TextInput from "$lib/controls/TextInput.svelte";
+  import Button from "$lib/controls/Button.svelte";
+  import { type ChatMessage, chat } from "$lib/bindings";
+  import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
+
+  let currentMessage: string;
+  let conversation: ChatMessage[] = [
+    {
+      role: "System",
+      text: "You are ZAMM, a chat program. Respond in first person.",
+    },
+  ];
+
+  async function sendChat() {
+    const message = currentMessage.trim();
+    if (message) {
+      const chatMessage: ChatMessage = {
+        role: "Human",
+        text: message,
+      };
+      conversation.push(chatMessage);
+      currentMessage = "";
+
+      try {
+        let llmCall = await chat("OpenAI", "gpt-3.5-turbo", null, conversation);
+        conversation.push(llmCall.response.completion);
+      } catch (err) {
+        snackbarError(err as string);
+      }
+    }
+  }
+</script>
+
+<InfoBox title="Chat">
+  <form on:submit|preventDefault={sendChat}>
+    <label for="message" class="accessibility-only">Chat with the AI:</label>
+    <TextInput name="message" placeholder="Type your message here..." bind:value={currentMessage} />
+    <Button text="Send" />
+  </form>
+</InfoBox>
+
+<style>
+  form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+</style>
+```
+
+We define a new Storybook story at `src-svelte/src/routes/chat/Chat.stories.ts`:
+
+```ts
+import Chatcomponent from "./Chat.svelte";
+import type { StoryObj } from "@storybook/svelte";
+
+export default {
+  component: Chatcomponent,
+  title: "Screens/Chat/Conversation",
+  argTypes: {},
+};
+
+const Template = ({ ...args }) => ({
+  Component: Chatcomponent,
+  props: args,
+});
+
+export const Tablet: StoryObj = Template.bind({}) as any;
+Tablet.parameters = {
+  viewport: {
+    defaultViewport: "tablet",
+  },
+};
+
+```
+
+and then define a new test at `src-svelte/src/routes/chat/Chat.test.ts`:
+
+```ts
+import { expect, test, vi, type Mock } from "vitest";
+import "@testing-library/jest-dom";
+
+import { render, screen } from "@testing-library/svelte";
+import Chat from "./Chat.svelte";
+import userEvent from "@testing-library/user-event";
+import { TauriInvokePlayback } from "$lib/sample-call-testing";
+import { animationSpeed } from "$lib/preferences";
+
+describe("Chat conversation", () => {
+  let tauriInvokeMock: Mock;
+  let playback: TauriInvokePlayback;
+
+  beforeAll(() => {
+    animationSpeed.set(10);
+  });
+
+  beforeEach(() => {
+    tauriInvokeMock = vi.fn();
+    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    playback = new TauriInvokePlayback();
+    tauriInvokeMock.mockImplementation(
+      (...args: (string | Record<string, string>)[]) =>
+        playback.mockCall(...args),
+    );
+
+    vi.stubGlobal("requestAnimationFrame", (fn: FrameRequestCallback) => {
+      return window.setTimeout(() => fn(Date.now()), 16);
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function sendChatMessage(message: string, correspondingApiCallSample: string) {
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+    playback.addSamples(correspondingApiCallSample);
+
+    const chatInput = screen.getByLabelText("Chat with the AI:");
+    expect(chatInput).toHaveValue("");
+    await userEvent.type(chatInput, message);
+    await userEvent.click(screen.getByRole("button", { name: "Send" }));
+
+    expect(tauriInvokeMock).toBeCalledTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    tauriInvokeMock.mockClear();
+  }
+
+  test("can start a conversation", async () => {
+    render(Chat, {});
+    await sendChatMessage("Hello, does this work?", "../src-tauri/api/sample-calls/chat-start-conversation.yaml");
+  });
+});
+
+```
+
+We have the line
+
+```ts
+expect(tauriInvokeMock).toHaveReturnedTimes(1);
+```
+
+because this test suspicously succeeds even when we don't call it with the right arguments, as we can see when we edit `src-svelte/src/lib/sample-call-testing.ts`:
+
+```ts
+
+export class TauriInvokePlayback {
+  ...
+
+  mockCall(
+    ...
+  ): Promise<Record<string, string>> {
+    ...
+      if (typeof process === "object") {
+        console.error(errorMessage);
+        throw new Error(errorMessage);
+      } else {
+        ...
+      }
+    ...
+  }
+
+  ...
+}
+```
+
+For some the thrown error does not make the test fail in this case. We replace `toBeCalledTimes` with `toHaveReturnedTimes` in the rest of the tests, just in case the same error lurks there. We also replace `toHaveBeenLastCalledWith("get_system_info")` with `toHaveReturnedTimes` in `src-svelte/src/routes/components/Metadata.test.ts`, but not in:
+
+- `src-svelte/src/lib/Switch.test.ts` because `recordSoundDelaySpy` is not an API call
+- `src-svelte/src/routes/components/api-keys/Display.test.ts` because the `API key error` test is mocking a hypothetical error because we haven't triggered an actual error call
+
+In `Display.test.ts`, we realize that we haven't tested the return method, and so we instead do a bit of refactoring by introducing `getOpenAiStatus` and then using that to check the result of the API call with the invalid filename:
+
+```ts
+describe("API Keys Display", () => {
+  ...
+
+  beforeEach(() => {
+    ...
+    clearAllMessages();
+  });
+
+  function getOpenAiStatus() {
+    const openAiRow = screen.getByRole("row", { name: /OpenAI/ });
+    const openAiKeyCell = within(openAiRow).getAllByRole("cell")[1];
+    return openAiKeyCell.textContent;
+  }
+
+  async function checkSampleCall(filename: string, expected_display: string) {
+    ...
+    expect(getOpenAiStatus()).toBe(expected_display);
+  }
+
+  ...
+
+  test("can submit with invalid file", async () => {
+    systemInfo.set({
+      ...NullSystemInfo,
+    });
+    await checkSampleCall(
+      "../src-tauri/api/sample-calls/get_api_keys-empty.yaml",
+      "Inactive",
+    );
+    tauriInvokeMock.mockClear();
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/set_api_key-invalid-filename.yaml",
+      "../src-tauri/api/sample-calls/get_api_keys-openai.yaml",
+    );
+
+    await toggleOpenAIForm();
+    await userEvent.type(screen.getByLabelText("Export from:"), "/");
+    await userEvent.type(screen.getByLabelText("API key:"), "0p3n41-4p1-k3y");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(tauriInvokeMock).toHaveBeenCalledTimes(2));
+    expect(getOpenAiStatus()).toBe("Active");
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+
+    render(Snackbar, {});
+    const alerts = screen.queryAllByRole("alertdialog");
+    expect(alerts).toHaveLength(1);
+    expect(alerts[0]).toHaveTextContent("Is a directory (os error 21)");
+  });
+});
+```
+
+All our tests pass after all, so it appears the same error is not lurking around secretly. We continue by creating a second API request that continues the conversation:
+
+```yaml
+request:
+  - chat
+  - >
+    {
+      "provider": "OpenAI",
+      "llm": "gpt-3.5-turbo",
+      "temperature": null,
+      "prompt": [
+        {
+          "role": "System",
+          "text": "You are ZAMM, a chat program. Respond in first person."
+        },
+        {
+          "role": "Human",
+          "text": "Hello, does this work?"
+        },
+        {
+          "role": "AI",
+          "text": "Hello! I'm ZAMM, a chat program. I'm here to assist you. What can I help you with today?"
+        },
+        {
+          "role": "Human",
+          "text": "Tell me something funny."
+        }
+      ]
+    }
+response:
+  message: >
+    {
+      "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
+      "timestamp": "2024-01-16T08:50:19.738093890",
+      "llm": {
+        "name": "gpt-3.5-turbo-0613",
+        "requested": "gpt-3.5-turbo",
+        "provider": "OpenAI"
+      },
+      "request": {
+        "prompt": [
+          {
+            "role": "System",
+            "text": "You are ZAMM, a chat program. Respond in first person."
+          },
+          {
+            "role": "Human",
+            "text": "Hello, does this work?"
+          },
+          {
+            "role": "AI",
+            "text": "Hello! I'm ZAMM, a chat program. I'm here to assist you. What can I help you with today?"
+          },
+          {
+            "role": "Human",
+            "text": "Tell me something funny."
+          }
+        ],
+        "temperature": 1.0
+      },
+      "response": {
+        "completion": {
+          "role": "AI",
+          "text": "Sure, here's a light-hearted joke for you:\n\nWhy don't scientists trust atoms?\n\nBecause they make up everything!"
+        }
+      },
+      "tokens": {
+        "prompt": 72,
+        "response": 24
+      }
+    }
+
+```
+
+We refactor the existing test at `src-tauri/src/commands/llms/chat.rs` to generalize to other API calls and network requests, and apply the new function to our new API call sample:
+
+```rs
+...
+
+#[cfg(test)]
+mod tests {
+    ...
+
+    async fn test_llm_api_call(recording_path: &str, sample_path: &str) {
+        let recording_path = PathBuf::from(recording_path);
+        ...
+        let sample = read_sample(sample_path);
+        ...
+    }
+
+    #[tokio::test]
+    async fn test_start_conversation() {
+        test_llm_api_call(
+            "api/sample-call-requests/start-conversation.json",
+            "api/sample-calls/chat-start-conversation.yaml",
+        ).await;        
+    }
+
+    #[tokio::test]
+    async fn test_continue_conversation() {
+        test_llm_api_call(
+            "api/sample-call-requests/continue-conversation.json",
+            "api/sample-calls/chat-continue-conversation.yaml",
+        ).await;        
+    }
+}
+
+```
+
+The file at `src-tauri/api/sample-call-requests/continue-conversation.json` gets automatically created with the first run of the test, and we update the `yaml` file based on that.
+
+We can now modify `src-svelte/src/routes/chat/Chat.test.ts` to continue the conversation:
+
+```ts
+  test("can start and continue a conversation", async () => {
+    ...
+    await sendChatMessage(
+      "Tell me something funny.",
+      "../src-tauri/api/sample-calls/chat-continue-conversation.yaml",
+    );
+  });
+```
+
+This works, but note that nothing is displayed onscreen. We edit `src-svelte/src/routes/chat/Chat.svelte` to show the chat message bubbles as well:
+
+```svelte
+<script lang="ts">
+  ...
+  export let conversation: ChatMessage[] = [
+    ...
+  ];
+
+  async function sendChat() {
+    const message = currentMessage.trim();
+    if (message) {
+      ...
+      conversation = [...conversation, chatMessage];
+      ...
+
+      try {
+        ...
+        conversation = [...conversation, llmCall.response.completion];
+      } ...
+    }
+  }
+</script>
+
+<InfoBox title="Chat">
+  <div class="conversation" role="list">
+    {#if conversation.length > 1}
+      {#each conversation.slice(1) as message}
+        <div class:message class={message.role.toLowerCase()} role="listitem">
+          <div class="arrow"></div>
+          <div class="text">
+            {message.text}
+          </div>
+        </div>
+      {/each}
+    {/if}
+  </div>
+
+  ...
+</InfoBox>
+
+<style>
+  .conversation {
+    margin-bottom: 1rem;
+  }
+
+  .message {
+    --message-color: gray;
+    --arrow-size: 0.5rem;
+    position: relative;
+  }
+
+  .message .text {
+    margin: 0.5rem var(--arrow-size);
+    border-radius: var(--corner-roundness);
+    width: fit-content;
+    max-width: 60%;
+    padding: 0.75rem;
+    box-sizing: border-box;
+    background-color: var(--message-color);
+    white-space: pre-line;
+  }
+
+  .message .arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    bottom: var(--arrow-size);
+    border: var(--arrow-size) solid transparent;
+  }
+
+  .message.human {
+    --message-color: #E5FFE5;
+  }
+
+  .message.human .text {
+    margin-left: auto;
+  }
+
+  .message.human .arrow {
+    float: right;
+    right: calc(-1 * var(--arrow-size));
+    border-left-color: var(--message-color); 
+  }
+
+  .message.ai {
+    --message-color: #E5E5FF;
+  }
+
+  .message.ai .text {
+    margin-right: auto;
+  }
+
+  .message.ai .arrow {
+    float: left;
+    left: calc(-1 * var(--arrow-size));
+    border-right-color: var(--message-color); 
+  }
+
+  ...
+</style>
+
+```
+
+Note that we need to change the messages update code from `conversation.push` to `conversation = [...]` because otherwise, Svelte doesn't realize it needs to refresh the DOM.
+
+Also note that we need to set `white-space: pre-line` for the newlines. We make sure to demonstate:
+
+- a long message that requires word wrapping
+- a short message that doesn't require word wrapping but should be flush with the side it's next to
+- a message with multiple lines.
+
+We edit `src-svelte/src/routes/chat/Chat.stories.ts` to make use of the newly exported `conversation` prop:
+
+```ts
+...
+import type { ChatMessage } from "$lib/bindings";
+
+...
+
+
+export const Empty: StoryObj = Template.bind({}) as any;
+Empty.parameters = {
+  viewport: {
+    defaultViewport: "tablet",
+  },
+};
+
+export const NotEmpty: StoryObj = Template.bind({}) as any;
+const conversation: ChatMessage[] = [
+  {
+    role: "System",
+    text: "You are ZAMM, a chat program. Respond in first person.",
+  },
+  {
+    role: "Human",
+    text: "Hello, does this work?",
+  },
+  {
+    role: "AI",
+    text: "Hello! I'm ZAMM, a chat program. I'm here to assist you. What can I help you with today?",
+  },
+  {
+    role: "Human",
+    text: "Tell me something really funny, like really funny. Make me laugh hard.",
+  },
+  {
+    role: "AI",
+    text: "Sure, here's a light-hearted joke for you:\n\nWhy don't scientists trust atoms?\n\nBecause they make up everything!",
+  },
+];
+NotEmpty.args = {
+  conversation,
+};
+...
+
+```
+
+We test these changes in `src-svelte/src/routes/chat/Chat.test.ts`:
+
+```ts
+...
+
+import { render, screen, waitFor } from "@testing-library/svelte";
+...
+import { TauriInvokePlayback, type ParsedCall } from "$lib/sample-call-testing";
+...
+import type { ChatMessage, LlmCall } from "$lib/bindings";
+
+describe("Chat conversation", () => {
+  ...
+
+  async function sendChatMessage(
+    ...
+  ) {
+    ...
+    const nextExpectedApiCall: ParsedCall = playback.unmatchedCalls.slice(-1)[0];
+    const nextExpectedCallArgs = nextExpectedApiCall.request[1] as Record<string, any>;
+    const nextExpectedMessage = nextExpectedCallArgs["prompt"].slice(-1)[0] as ChatMessage;
+    const nextExpectedHumanPrompt = nextExpectedMessage.text;
+
+    ...
+    expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
+
+    ...
+    const lastResult: LlmCall = tauriInvokeMock.mock.results[0].value;
+    const aiResponse = lastResult.response.completion.text;
+    const lastSentence = aiResponse.split("\n").slice(-1)[0];
+    await waitFor(() => {
+      expect(screen.getByText(new RegExp(lastSentence))).toBeInTheDocument();
+    });
+
+    tauriInvokeMock.mockClear();
+  }
+
+  ...
+});
+```
+
+`eslint` complains about the line length in `src-svelte/src/routes/chat/Chat.stories.ts`, so instead we do:
+
+```ts
+const conversation: ChatMessage[] = [
+  ...
+  {
+    role: "AI",
+    text:
+      "Hello! I'm ZAMM, a chat program. I'm here to assist you. " +
+      "What can I help you with today?",
+  },
+  ...
+  {
+    role: "AI",
+    text:
+      "Sure, here's a light-hearted joke for you:\n\n" +
+      "Why don't scientists trust atoms?\n\n" +
+      "Because they make up everything!",
+  },
+];
+```

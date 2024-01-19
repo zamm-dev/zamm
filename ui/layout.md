@@ -631,3 +631,57 @@ We turn this into
 </div>
 
 ```
+
+### Debugging reveal animation regression
+
+At some point, we realize that the reveal animation for the Active/Inactive indicator starts too late. The indicator appears long after everything else has appeared, such that the fade-in to green doen't even appear anymore because the fade has completed by the time the element appears. After digging through our Git history to find the last time this worked, we see that things are still fine on `88fa2e9` but are failing by `4c1ccaf`. We do a git bisect:
+
+```bash
+$ git bisect start 4c1ccaf 88fa2e9
+Bisecting: 2 revisions left to test after this (roughly 1 step)
+[7cc5050a60758f12f64305684ce0fddad75a29e5] Allow sample calls to represent API call failures as well
+$ git bisect good                 
+Bisecting: 0 revisions left to test after this (roughly 1 step)
+[bd22202637df28192a199a451320c2afc53fc177] Merge pull request #41 from amosjyng/refactor/sample-call-failures
+$ git bisect good
+4c1ccaf4dc5a3eacb3f43e8f9db04fbfa5e6ee7f is the first bad commit
+commit 4c1ccaf4dc5a3eacb3f43e8f9db04fbfa5e6ee7f
+Author: Amos Jun-yeung Ng <me@amos.ng>
+Date:   Sat Jan 6 11:15:36 2024 +1100
+
+    Refactor animation settings to use standardDuration
+    ...
+```
+
+Back then we didn't edit `src-svelte/src/lib/InfoBox.svelte` because it uses its own
+
+```ts
+  $: timingScaleFactor = shouldAnimate ? 1 / $animationSpeed : 0;
+```
+
+instead of the usual standardDuration. It appears that file is not the culprit, as the transition timing returned is the same for both elements of the API keys display.
+
+Instead, reverting the files one by one, we see that reverting `src-svelte/src/routes/components/api-keys/Service.svelte` fixes the bug. The change in question is going from
+
+```css
+    transition-property: background-color, box-shadow;
+    transition-duration: calc(0.1s / var(--base-animation-speed));
+    transition-timing-function: ease-in;
+```
+
+to
+
+```css
+    transition-property: background-color, box-shadow;
+    transition: var(--standard-duration) ease-in;
+```
+
+without realizing that the `transition` applies to all properties, not just the properties defiend in `transition-property`. We fix this while keeping the spirit of the refactor by changing the lines to
+
+```css
+    transition-property: background-color, box-shadow;
+    transition-duration: var(--standard-duration);
+    transition-timing-function: ease-in;
+```
+
+This would be a good example of an animation regression that you would ideally be able to write a test for with an animation testing framework. Even without it, this is where the infrastructure we've built, including our Git history, comes through for us.

@@ -794,7 +794,7 @@ Even though we're not using the svelte-typewriter package, we still want to repl
 Note that:
 
 - We refactor `heightDelayFraction` to make use of it later
-- We do the `node.classList.remove` in order to reset the div state in between stories on Storybook, or else the transition would no longe run when we visit the Page Transitions story.
+- We do the `node.classList.remove` in order to reset the div state in between stories on Storybook, or else the transition would no longer run when we visit the Page Transitions story.
 - Because we're now starting with the empty cursor block rather than the first letter of the text, it's more obvious that the empty block overlaps with the border box at the very beginning of the animation. As such, we add an extra 10ms to the title delay effect to keep the two from colliding.
 - Svelte calls our `tick` function with the value `0` at the very beginning of animation setup, then waits for the delay, and then incrementally increases `t` until it reaches `1`. We take advantage of this to change the classes of the h2 accordingly at each stage of the animation.
 - Because we use CSS transitions in conjunction with the Svelte ones, we have to edit `src-svelte/src/lib/InfoBoxView.svelte` as well:

@@ -778,3 +778,37 @@ tauri = { ..., features = [..., "devtools"] }
 Follow the instructions at
 
 - [`e2e-testing.md`](./e2e-testing.md)
+
+## Metadata
+
+Edit the `[package]` section of your `src-tauri/Cargo.toml` to customize your app:
+
+```toml
+[package]
+name = "zamm"
+version = "0.0.0"
+description = "Yet another AI chat app"
+authors = ["Amos Ng <me@amos.ng>"]
+license = "GPL-2.0-or-later"
+repository = "https://github.com/amosjyng/zamm"
+edition = "2021"
+
+```
+
+When writing the license, you may also wish to create a `LICENSE` file in the root directory of your project, and add the license text there. You can use [this tool](https://github.com/nishanths/license) to generate the text, following the suggestion [here](https://softwareengineering.stackexchange.com/a/371435) to use multiple `LICENSE` files for multiple licensing:
+
+```bash
+$ go install github.com/nishanths/license/v5@latest
+go: downloading github.com/nishanths/license v1.0.0
+go: downloading github.com/nishanths/license/v5 v5.0.4
+go: downloading github.com/tcnksm/go-gitconfig v0.1.2
+go: downloading github.com/nishanths/go-hgconfig v1.0.1
+$ asdf reshim golang
+$ license -list 
+...
+gpl-2.0       (GNU General Public License v2.0)
+gpl-3.0       (GNU General Public License v3.0)
+...
+$ license gpl-2.0 > LICENSE
+$ license gpl-3.0 > LICENSE.GPL-3.0
+```
