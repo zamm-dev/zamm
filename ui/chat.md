@@ -3636,3 +3636,730 @@ const conversation: ChatMessage[] = [
   },
 ];
 ```
+
+Now that we have the basic functionality down, we tweak the look of the page further. We add some placeholder text for new empty conversations at `src-svelte/src/routes/chat/Chat.svelte`:
+
+```svelte
+<InfoBox title="Chat">
+  <div class="conversation" role="list">
+    {#if conversation.length > 1}
+      ...
+    {:else}
+      <p class="empty-conversation">This conversation is currently empty.<br>Get it started by typing a message below.</p>
+    {/if}
+  </div>
+
+  ...
+</InfoBox>
+
+<style>
+  ...
+
+  .empty-conversation {
+    color: var(--color-faded);
+    font-size: 0.85rem;
+    font-style: italic;
+    text-align: center;
+  }
+
+  ...
+</style>
+```
+
+We can also try to wrap things in a bigger container, which we'll need eventually to grow the conversation panel:
+
+```svelte
+<InfoBox title="Chat">
+  <div class="chat-container">
+    <div class="conversation" role="list">
+      ...
+    </div>
+
+    ...
+  </div>
+</InfoBox>
+
+<style>
+  .chat-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .conversation {
+    flex: 1;
+  }
+
+  ...
+</style>
+```
+
+We refactor the message display out into `src-svelte/src/routes/chat/Message.svelte`:
+
+```svelte
+<script lang="ts">
+  import type { ChatMessage } from "$lib/bindings";
+  export let message: ChatMessage;
+</script>
+
+<div class:message class={message.role.toLowerCase()} role="listitem">
+  <div class="arrow"></div>
+  <div class="text">
+    {message.text}
+  </div>
+</div>
+
+<style>
+  .message {
+    --message-color: gray;
+    --arrow-size: 0.5rem;
+    position: relative;
+  }
+
+  .message .text {
+    margin: 0.5rem var(--arrow-size);
+    border-radius: var(--corner-roundness);
+    width: fit-content;
+    max-width: 60%;
+    padding: 0.75rem;
+    box-sizing: border-box;
+    background-color: var(--message-color);
+    white-space: pre-line;
+  }
+
+  .message .arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    bottom: var(--arrow-size);
+    border: var(--arrow-size) solid transparent;
+  }
+
+  .message.human {
+    --message-color: #e5ffe5;
+  }
+
+  .message.human .text {
+    margin-left: auto;
+  }
+
+  .message.human .arrow {
+    float: right;
+    right: calc(-1 * var(--arrow-size));
+    border-left-color: var(--message-color);
+  }
+
+  .message.ai {
+    --message-color: #e5e5ff;
+  }
+
+  .message.ai .text {
+    margin-right: auto;
+  }
+
+  .message.ai .arrow {
+    float: left;
+    left: calc(-1 * var(--arrow-size));
+    border-right-color: var(--message-color);
+  }
+</style>
+
+```
+
+so that `src-svelte/src/routes/chat/Chat.svelte` will start looking like:
+
+```svelte
+<script lang="ts">
+  ...
+  import Message from "./Message.svelte";
+  ...
+</script>
+
+<InfoBox title="Chat">
+  ...
+        {#each conversation.slice(1) as message}
+          <Message message={message} />
+        {/each}
+  ...
+</InfoBox>
+
+<style>
+  ... message-specific styles snipped ...
+</style>
+```
+
+We create stories for individual messages at `src-svelte/src/routes/chat/Message.stories.ts`:
+
+```ts
+import Message from "./Message.svelte";
+import type { StoryObj } from "@storybook/svelte";
+
+export default {
+  component: Message,
+  title: "Screens/Chat/Message",
+  argTypes: {},
+};
+
+const Template = ({ ...args }) => ({
+  Component: Message,
+  props: args,
+});
+
+export const Human: StoryObj = Template.bind({}) as any;
+Human.args = {
+  message: {
+    role: "Human",
+    text: "Hello, does this work?",
+  },
+};
+Human.parameters = {
+  viewport: {
+    defaultViewport: "tablet",
+  },
+};
+
+export const AI: StoryObj = Template.bind({}) as any;
+AI.args = {
+  message: {
+    role: "AI",
+    text:
+      "Hello! I'm ZAMM, a chat program. I'm here to assist you. " +
+      "What can I help you with today?",
+  },
+};
+AI.parameters = {
+  viewport: {
+    defaultViewport: "tablet",
+  },
+};
+
+export const AIMultiline: StoryObj = Template.bind({}) as any;
+AIMultiline.args = {
+  message: {
+    role: "AI",
+    text:
+      "Sure, here's a light-hearted joke for you:\n\n" +
+      "Why don't scientists trust atoms?\n\n" +
+      "Because they make up everything!",
+  },
+};
+AIMultiline.parameters = {
+  viewport: {
+    defaultViewport: "tablet",
+  },
+};
+
+```
+
+and record these in `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+    {
+    path: ["screens", "chat", "message"],
+    variants: ["human", "ai", "ai-multiline"],
+  },
+];
+```
+
+and add the new screenshots at `src-svelte/screenshots/baseline/screens/chat/message`.
+
+Now, we'll try to make the conversation span the entire viewport. We repeatedly run into problems here, so we try a test with demo CSS [here](https://jsfiddle.net/x237gqsz/):
+
+```html
+<div class="A">
+    <p>This is the prescript.</p>
+    <div class="B">
+        <div class="C">
+            <p>This is C content.</p>
+            <p>It keeps going and going.</p>
+            <p>It overflows B.</p>
+            <p>It just doesn't stop.</p>
+            <p>Eventually, it should scroll.</p>
+            <p>We're not quite there yet.</p>
+            <p>But we will be soon.</p>
+            <p>Ah finally, we have arrived at our destination.</p>
+        </div>
+    </div>
+    <p>This is the postscript.</p>
+</div>
+
+```
+
+```css
+.A {
+    display: flex;
+    flex-direction: column;
+    height: 95vh; /* or a specific height */
+    background-color: red;
+    padding: 1rem;
+    box-sizing: border-box;
+}
+
+.B {
+    flex: 1; /* This makes B take up all available space */
+    overflow-y: scroll; /* Scrollbar if content overflows */
+    background-color: blue;
+    padding: 1rem;
+}
+
+.C {
+    background-color: green;
+}
+```
+
+This looks as we expect, but doesn't reproduce the problem in our code. We try again and reproduce *and* fix it [here](https://jsfiddle.net/gpxmde2s/):
+
+```html
+<div class="page">
+  <div class="info-box">
+    <p>This is the info box title.</p>
+    <div class="chat">
+        <div class="conversation-container">
+            <div class="conversation">
+                <p>This is conversational content.</p>
+                <p>It keeps going and going.</p>
+                <p>It overflows B.</p>
+                <p>It just doesn't stop.</p>
+                <p>Eventually, it should scroll.</p>
+                <p>We're not quite there yet.</p>
+                <p>But we will be soon.</p>
+                <p>Very soon.</p>
+                <p>Ah finally, we have arrived at our destination.</p>
+            </div>
+        </div>
+        <p>This is where you enter in new chat messages.</p>
+    </div>
+  </div>
+</div>
+
+```
+
+```css
+p:first-child {
+  margin-top: 0;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+.page {
+  height: 95vh;
+  background-color: black;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+.info-box {
+  background-color: purple;
+  color: white;
+  padding: 1rem;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: red;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.conversation-container {
+  flex: 1;
+  background-color: blue;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+.conversation {
+  background-color: green;
+  padding: 1rem;
+  max-height: 10rem;
+  overflow-y: scroll;
+}
+```
+
+The fix involves explicitly setting the `max-height` of the conversation container. Take that one line out, and no scrollbar appears. We will have to do this with JavaScript after the component gets mounted. We edit `src-svelte/src/routes/chat/Chat.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  import { onMount } from "svelte";
+
+  ...
+  let conversationContainer: HTMLDivElement;
+  let conversationView: HTMLDivElement;
+
+  onMount(() => {
+    conversationView.style.maxHeight = `${conversationContainer.clientHeight}px`;
+    // scroll to last element
+    conversationView.scrollTop = conversationView.scrollHeight;
+  });
+  ...
+</script>
+
+</script>
+
+<InfoBox title="Chat" fullHeight>
+  <div class="chat-container">
+    <div class="conversation-container" bind:this={conversationContainer}>
+      <div class="conversation" role="list" bind:this={conversationView}>
+        ...
+      </div>
+    </div>
+
+    ...
+  </div>
+</InfoBox>
+
+<style>
+  .chat-container {
+    height: 100%;
+    ...
+  }
+
+  .conversation-container {
+    flex-grow: 1;
+  }
+
+  .conversation {
+    max-height: 8rem;
+    overflow-y: scroll;
+  }
+
+  ...
+</style>
+
+```
+
+where we set an initial `max-height` of `8rem` to make it possible to view some of the conversation even if the JavaScript fails for some reason. We use the code mentioned [here](https://stackoverflow.com/a/270628) to scroll; we don't use the more "modern" `scrollIntoView` because that requires identifying the specific message element we want to scroll into the view.
+
+We now have to set all the parent elements to take up the full space, starting with `src-svelte/src/lib/InfoBox.svelte` to take in the `fullHeight` prop:
+
+```svelte
+<script lang="ts">
+  ...
+  export let fullHeight: boolean = false;
+  ...
+</script>
+
+<section
+  ...
+  class:full-height={fullHeight}
+  ...
+>
+  ...
+</section>
+
+<style>
+  ...
+
+  .container.full-height, .container.full-height .border-container, .container.full-height .info-box {
+    height: 100%;
+    box-sizing: border-box;
+  }
+
+  .container.full-height .info-box {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .container.full-height .info-content {
+    flex: 1;
+  }
+
+  ...
+</style>
+```
+
+We continue to one of the root files at `src-svelte/src/routes/AppLayout.svelte`:
+
+```css
+  main {
+    ...
+    height: 100%;
+  }
+```
+
+We go down to `src-svelte/src/routes/PageTransition.svelte`:
+
+```css
+  .transition-container {
+    ...
+    height: 100%;
+    ...
+  }
+```
+
+That's it for prod, but we edit `src-svelte/src/lib/__mocks__/MockAppLayout.svelte` as well:
+
+```css
+  .storybook-wrapper {
+    height: calc(100vh - 2rem);
+    ...
+    box-sizing: border-box;
+  }
+```
+
+Note: We find out below that this fails existing screenshot tests, so we copy it and apply these two lines to the copy instead.
+
+We subtract `2rem` here to account for the padding that Storybook puts around the story. Note that `AnimationControl` is in the parent hierarchy here, unlike with the regular prod hierarchy, so we edit it in `src-svelte/src/routes/AnimationControl.svelte` too:
+
+```css
+  .container {
+    height: 100%;
+  }
+```
+
+Horizontal scrollbars are appearing for the messages too, so we edit `src-svelte/src/routes/chat/Message.svelte` to fix the insivible portions of the chat trianges, and also shift them to be more vertically centered for single-line messages:
+
+```css
+  ...
+
+  .message .arrow {
+    ...
+    bottom: 0.75rem;
+    ...
+  }
+
+  ...
+
+  .message.human .arrow {
+    right: 0;
+    border-right: none;
+    ...
+  }
+
+  ...
+
+  .message.ai .arrow {
+    left: 0;
+    border-left: none;
+    ...
+  }
+```
+
+Doing this slightly modifies how the edges of the arrows are rendered, so we update the gold screenshots.
+
+Storybook's default tablet screen size is a bit too vertically large for the chat messages to render nicely for our screenshots, so we follow the instructions [here](https://storybook.js.org/docs/essentials/viewport#add-new-devices) to add new devices to `src-svelte/.storybook/preview.ts`:
+
+```ts
+...
+import { MINIMAL_VIEWPORTS } from '@storybook/addon-viewport';
+
+...
+const preview = {
+  parameters: {
+    ...
+    viewport: {
+      viewports: {
+        ...MINIMAL_VIEWPORTS,
+        smallTablet: {
+          name: "Small Tablet",
+          styles: {
+            width: "834px",
+            height: "800px",
+          },
+        },
+      },
+    },
+  },
+};
+
+...
+```
+
+This is still too large, as Playwright screenshots on Webkit show empty space if the element is larger than the viewport, so we shrink it further to
+
+```ts
+          styles: {
+            width: "834px",
+            height: "650px",
+          },
+```
+
+Finally, we edit `src-svelte/src/routes/chat/Chat.stories.ts` to use the new `MockAppLayout`, which will now span the entire height of the screen (unlike `storybook-root`) and extend the chat conversation history to produce a scrollbar:
+
+```ts
+...
+import MockAppLayout from "$lib/__mocks__/MockAppLayout.svelte";
+import type { StoryFn, ... } from "@storybook/svelte";
+...
+
+export default {
+  ...,
+  decorators: [
+    (story: StoryFn) => {
+      return {
+        Component: MockAppLayout,
+        slot: story,
+      };
+    },
+  ],
+};
+
+...
+
+export const Empty: StoryObj = Template.bind({}) as any;
+...
+Empty.parameters = {
+  viewport: {
+    defaultViewport: "smallTablet",
+  },
+};
+
+export const NotEmpty: StoryObj = Template.bind({}) as any;
+const conversation: ChatMessage[] = [
+  ...
+  {
+    role: "Human",
+    text: "Okay, we need to fill this chat up to produce a scrollbar for Storybook. Say short phrases like \"Yup\" to fill this chat up quickly.",
+  },
+  {
+    role: "AI",
+    text: "Yup",
+  },
+  {
+    role: "Human",
+    text: "Nay",
+  },
+  {
+    role: "AI",
+    text: "Yay",
+  },
+  {
+    role: "Human",
+    text: "Say...",
+  },
+  {
+    role: "AI",
+    text: "AIs don't actually talk like this, you know? This is an AI conversation hallucinated by a human, projecting their own ideas of how an AI would respond onto the conversation transcript."
+  },
+];
+...
+NotEmpty.parameters = {
+  viewport: {
+    defaultViewport: "smallTablet",
+  },
+};
+
+```
+
+We realize that we also want to scroll to the bottom of the chat conversation history every time a new message is sent, so we edit `src-svelte/src/routes/chat/Chat.svelte` to scroll to the bottom every time a new chat message is appended to the conversation view -- but to do so only after a slight delay so that the browser has time to render the new page:
+
+```ts
+  ...
+  let conversationContainer: HTMLDivElement | undefined = undefined;
+  let conversationView: HTMLDivElement | undefined = undefined;
+
+  onMount(() => {
+    if (conversationView && conversationContainer) {
+      conversationView.style.maxHeight = `${conversationContainer.clientHeight}px`;
+    }
+    showChatBottom();
+  });
+
+  function showChatBottom() {
+    if (conversationView) {
+      conversationView.scrollTop = conversationView.scrollHeight;
+    }
+  }
+
+  async function sendChat() {
+    ...
+    if (message) {
+      ...
+      conversation = [...conversation, chatMessage];
+      ...
+      setTimeout(showChatBottom, 50);
+
+      try {
+        ...
+        conversation = [...conversation, llmCall.response.completion];
+        setTimeout(showChatBottom, 50);
+      } ...
+    }
+  }
+```
+
+Unfortunately, editing `MockAppLayout.svelte` causes the existing full-body screenshot tests to fail, so we instead copy it over to `src-svelte/src/lib/__mocks__/MockFullPageLayout.svelte` and restore `MockAppLayout` to its original form. We edit `src-svelte/src/routes/chat/Chat.stories.ts` again to use this instead:
+
+```ts
+...
+import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
+...
+
+export default {
+  ...,
+  decorators: [
+    (story: StoryFn) => {
+      return {
+        Component: MockFullPageLayout,
+        ...
+      };
+    },
+  ],
+};
+```
+
+We've developed the conversation page enough now that we should add this to the Storybook tests, by creating a new entry in `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+    {
+    path: ["screens", "chat", "conversation"],
+    variants: ["empty", "not-empty"],
+    screenshotEntireBody: true,
+  },
+];
+```
+
+From this, we realize that we need to update the conversation view when the window resizes (and therefore changes the info box size as well). We edit `src-svelte/src/routes/chat/Chat.svelte` to take this into account by defining this function to resize the conversation view:
+
+```ts
+  function resizeConversationView() {
+    if (conversationView && conversationContainer) {
+      conversationView.style.maxHeight = "1rem";
+      setTimeout(() => {
+        if (conversationView && conversationContainer) {
+          conversationView.style.maxHeight = `${conversationContainer.clientHeight}px`;
+          showChatBottom();
+        }
+      }, 10);
+    }
+  }
+```
+
+Note that we initially set the `maxHeight` to something small in order to force the browser to recalculate the `clientHeight` of the conversation container. We also automatically scroll to the bottom as well after resetting the height, because otherwise there may be a lot of empty space at the bottom on Webkit.
+
+At first, we try using a ResizeObserver:
+
+```ts
+      const resizeObserver = new ResizeObserver(() => {
+        resizeConversationView();
+      });
+      resizeObserver.observe(conversationContainer);
+```
+
+However, this doesn't work as well as listening for a window resize, because the conversation container will only resize if it has the opportunity to get bigger, but will not automatically get smaller because its size is bounded on the lower end by the conversation view. As such, we use the return value from the lifecycle hook as demonstrated [here](https://blog.sethcorker.com/question/how-do-you-use-the-resize-observer-api-in-svelte/) to do:
+
+```ts
+  onMount(() => {
+    resizeConversationView();
+    window.addEventListener("resize", resizeConversationView);
+
+    return () => {
+      window.removeEventListener("resize", resizeConversationView);
+    };  
+  });
+```
+
+Now we finally have screenshots that are mostly acceptable, except that in Webkit (and only in Webkit) the rendered messages [overlap](/ui/screenshots/02b77e5.png) with the `h2` element. We commit our progress so far before proceeding any further with the fix.
