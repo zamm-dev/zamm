@@ -3415,7 +3415,7 @@ We can now modify `src-svelte/src/routes/chat/Chat.test.ts` to continue the conv
   });
 ```
 
-This works, but note that nothing is displayed onscreen. We edit `src-svelte/src/routes/chat/Chat.svelte` to show the chat message bubbles as well:
+This works, but note that nothing is displayed onscreen. We edit `src-svelte/src/routes/chat/Chat.svelte` to show the chat message bubbles as well, using the strategy documented [here](https://css-tricks.com/snippets/css/css-triangle/):
 
 ```svelte
 <script lang="ts">
@@ -4327,7 +4327,7 @@ From this, we realize that we need to update the conversation view when the wind
 ```ts
   function resizeConversationView() {
     if (conversationView && conversationContainer) {
-      conversationView.style.maxHeight = "1rem";
+      conversationView.style.maxHeight = "8rem";
       setTimeout(() => {
         if (conversationView && conversationContainer) {
           conversationView.style.maxHeight = `${conversationContainer.clientHeight}px`;
@@ -4338,7 +4338,20 @@ From this, we realize that we need to update the conversation view when the wind
   }
 ```
 
-Note that we initially set the `maxHeight` to something small in order to force the browser to recalculate the `clientHeight` of the conversation container. We also automatically scroll to the bottom as well after resetting the height, because otherwise there may be a lot of empty space at the bottom on Webkit.
+Note that we initially set the `maxHeight` to something small in order to force the browser to recalculate the `clientHeight` of the conversation container. We also automatically scroll to the bottom as well after resetting the height, because otherwise there may be a lot of empty space at the bottom on Webkit. We keep the `maxHeight` big enough to still see individual messages, in case there are any problems with the CSS rendering.
+
+We realize that we only need to depend on `conversationView` for the first part, and that we can do `requestAnimationFrame` first to do a smoother repaint that avoids making the whole screen flash for the user:
+
+```ts
+  function resizeConversationView() {
+    if (conversationView) {
+      ...
+      requestAnimationFrame(() => {
+        ...
+      });
+    }
+  }
+```
 
 At first, we try using a ResizeObserver:
 
@@ -4363,3 +4376,995 @@ However, this doesn't work as well as listening for a window resize, because the
 ```
 
 Now we finally have screenshots that are mostly acceptable, except that in Webkit (and only in Webkit) the rendered messages [overlap](/ui/screenshots/02b77e5.png) with the `h2` element. We commit our progress so far before proceeding any further with the fix.
+
+To fix this, we first try editing `src-svelte/src/lib/InfoBox.svelte` to insert a div whose only purpose is to provide the h2 element with a background:
+
+```svelte
+<script lang="ts">
+  ...
+  let h2Background: HTMLDivElement | undefined = undefined;
+  ...
+</script>
+
+<section ...>
+  ...
+    <div class="info-box">
+      <h2 ...>{title}</h2>
+      <div class="h2-background" bind:this={h2Background}></div>
+      ...
+    </div>
+  ...
+</section>
+
+<style>
+  .info-box {
+    --content-padding: 1rem;
+    --h2-top-margin: -0.25rem;
+    --h2-bottom-margin: calc(0.5 * var(--cut));
+    position: relative;
+    z-index: 2;
+    padding: var(--content-padding);
+    ...
+  }
+
+  .info-box .h2-background {
+    --background-height: calc((var(--h2-font-size)) + var(--content-padding) + var(--h2-bottom-margin));
+    z-index: 1;
+    background-color: white;
+    position: absolute;
+    min-height: var(--background-height);
+    left: 0;
+    top: 0;
+    right: 0;
+  }
+
+  .info-box .info-content {
+    position: relative;
+    z-index: 0;
+  }
+
+  ...
+
+  .info-box h2 {
+    ...
+    position: relative;
+    z-index: 2;
+    margin: var(--h2-top-margin) 0 var(--h2-bottom-margin) var(--cut);
+  }
+
+  ...
+</style>
+```
+
+where we now edit `src-svelte/src/routes/styles.css` to define:
+
+```css
+:root {
+  ...
+  --h2-font-size: 1.2rem;
+  ...
+}
+
+...
+
+h2 {
+  ...
+  font-size: var(--h2-font-size);
+  ...
+}
+```
+
+We go back to `src-svelte/src/lib/InfoBox.svelte` and try editing `.info-box` to clip the content box and prevent the h2 background element from overlapping with the border box edges, using `background-color: red` during development to check that we're clipping the edges successfully:
+
+```css
+  .info-box {
+    ...
+
+    --clip-width: 100%;
+    --clip-height: 100%;
+    --clip-cut: calc(2.2 * 0.707 * var(--cut));
+    --rounded-cut: calc(0.5 * 0.707rem);
+    clip-path: polygon(
+      0% var(--clip-cut),
+      var(--clip-cut) 0%,
+
+      calc(var(--clip-width) - var(--rounded-cut)) 0%,
+      var(--clip-width) var(--rounded-cut),
+
+      var(--clip-width) calc(var(--clip-height) - var(--clip-cut)),
+      calc(var(--clip-width) - var(--clip-cut)) var(--clip-height),
+
+      var(--rounded-cut) var(--clip-height),
+      0% calc(var(--clip-height) - var(--rounded-cut))
+    );
+  }
+```
+
+This presents problems with overlapping with the info box grow animations. We tried to get the clip to grow at the same exact rate as the border box animation by copying their `PropertyAnimation` definitions, but this made the animation lag by too much:
+
+```ts
+  function revealOutline(
+    ...
+  ): TransitionConfig {
+    ...
+
+    const growClipWidth = new PropertyAnimation({
+      timing: timing.growX(),
+      property: "--clip-width",
+      min: minWidth,
+      max: actualWidth,
+      unit: "px",
+      easingFunction: titleIsMultiline ? cubicOut : linear,
+    });
+
+    const growClipHeight = new PropertyAnimation({
+      timing: timing.growY(),
+      property: "--clip-height",
+      min: minHeight,
+      max: actualHeight,
+      unit: "px",
+      easingFunction: cubicInOut,
+    });
+
+    return {
+      ...,
+      tick: (tGlobalFraction: number) => {
+        ...
+
+        if (h2Background) {
+          const clipWidth = growClipWidth.tickForGlobalTime(tGlobalFraction);
+          const clipHeight = growClipHeight.tickForGlobalTime(tGlobalFraction);
+          h2Background.setAttribute(
+            "style",
+            clipWidth + clipHeight,
+          );
+        }
+
+        ...
+      },
+    };
+  }
+```
+
+Instead, we try simply making it appear at the very end, when animations are finished:
+
+```svelte
+<script lang="ts">
+  ...
+
+  function revealOutline(
+    ...
+  ): TransitionConfig {
+    ...
+
+    return {
+      ...,
+      tick: (tGlobalFraction: number) => {
+        ...
+        if (tGlobalFraction === 0) {
+          if (h2Background) {
+            h2Background.classList.add("wait-for-infobox");
+          }
+        }
+        else if (tGlobalFraction === 1) {
+          ...
+          if (h2Background) {
+            h2Background.classList.remove("wait-for-infobox");
+            h2Background.removeAttribute("style");
+          }
+        }
+      },
+    };
+  }
+
+  ...
+</script>
+
+...
+
+<style>
+  ...
+
+  .info-box :global(.h2-background.wait-for-infobox) {
+    display: none;
+  }
+
+  ...
+</style>
+```
+
+In the process of fixing this, we notice that we have inadvertently placed `h2` styles in two separate places in `src-svelte/src/routes/styles.css`, so we merge the two, from:
+
+```css
+h2 {
+  ...
+}
+
+h2 {
+  margin-bottom: 0;
+}
+```
+
+to
+
+```css
+h2 {
+  ...
+  margin-bottom: 0;
+  ...
+}
+```
+
+We also merge the two `.info-box h2` definitions in `src-svelte/src/lib/InfoBox.svelte`:
+
+```css
+  .info-box h2 {
+    --cursor-opacity: 0;
+    margin: -0.25rem 0 0.5rem var(--cut);
+    text-align: left;
+  }
+```
+
+The screenshot for the chat conversation now looks a lot better, but the ones for the API keys displays are now off. This is complicated enough that we try to produce a minimal reproduction, and eventually do so at [https://jsfiddle.net/e7os0xpu/](https://jsfiddle.net/e7os0xpu/):
+
+```html
+<div class="border-container">
+  <div class="info-box">
+    <h2>Chat</h2>
+    <div class="conversation">
+      <div class="human message">I'm trying to create a chat component</div>
+      
+      <div class="ai message">There's two participants</div>
+      
+      <div class="human message">Blah blah blah</div>
+      
+      <div class="ai message">And blabbly blabbly blah. Blah blah blah. Really long messages seem to do it.</div>
+      
+      <div class="human message">Okay, let's try even longer messages. Even longer. And longer. And longer. And longer. And longer. And longer. And longer. And longer. And longer.</div>
+      
+      <div class="ai message">Yup</div>
+      
+      <div class="human message">Nay</div>
+      
+      <div class="ai message">Yay</div>
+      
+      <div class="human message">Say...</div>
+      
+      <div class="ai message">Let's cap this off with a really long message. It will span multiple lines. Many lines. It just keeps going and going and going and going and going and going and now it's done.</div>
+    </div>
+  </div>
+</div>
+
+```
+
+with the corresponding CSS that produces a similar effect on Webkit:
+
+```css
+body {
+  font-family: sans-serif;
+}
+
+.border-container {
+  filter: drop-shadow(0px 1px 4px rgba(26, 58, 58, 0.4));
+}
+
+.info-box {
+  padding: 1rem;
+}
+
+.conversation {
+  max-height: 41px;
+  overflow-y: scroll;
+  background-color: pink;
+}
+
+.message {
+  position: relative;
+  margin: 0.5rem;
+  max-width: 60%;
+  padding: 0.75rem;
+  background-color: #e5ffe5;
+}
+
+.message.human {
+  margin-left: auto;
+}
+
+.message.ai {
+  margin-right: auto;
+}
+
+```
+
+While this bug does not exist on Firefox or Chrome, we should still care about supporting Webkit browsers because Tauri depends on Webkit, and this bug reproduces on the development version of Tauri. As such, we follow [these instructions](https://webkit.org/reporting-bugs/) and [these guidelines](https://webkit.org/bug-report-guidelines/) to report [this bug](https://bugs.webkit.org/show_bug.cgi?id=267972) to the Webkit team.
+
+Given that it is triggered by the drop-shadow filter, we try applying the filter only to the border box in `src-svelte/src/lib/InfoBox.svelte`:
+
+```css
+  .border-box {
+    ...
+    filter: url(#round) drop-shadow(0px 1px 4px rgba(26, 58, 58, 0.4));;
+    ...
+  }
+```
+
+Incidentally, this also fixes the problem caused by the "Save" button appearing too early in the form open/close animation on Tauri, which therefore appears to be caused by the same Webkit bug. In retrospect, we should have created the minimal repro and then applied this minimal fix, instead of going straight for the workaround.
+
+#### Nits
+
+Disable autocomplete on the chat form at `src-svelte/src/routes/chat/Chat.svelte`:
+
+```svelte
+    <form autocomplete="off" ...>
+      ...
+    </form>
+```
+
+#### Stylizing the form as a single button group
+
+We can try to stylize the elements separately, for example by editing `src-svelte/src/lib/controls/Button.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  export let rightEnd: boolean = false;
+</script>
+
+<button class="outer" class:right-end={rightEnd} ...>
+  <div class="inner" class:right-end={rightEnd}>{text}</div>
+</button>
+
+<style>
+  .outer,
+  .inner {
+    --cut: var(--controls-corner-cut);
+    ...
+  }
+
+  .outer.right-end, .inner.right-end {
+    background:
+      linear-gradient(
+        -45deg,
+        var(--border-color) 0 calc(var(--cut) + var(--diagonal-border)),
+        var(--background-color) 0
+      )
+      bottom right;
+    background-origin: border-box;
+    background-repeat: no-repeat;
+    -webkit-mask:
+      linear-gradient(-45deg, transparent 0 var(--cut), #fff 0) bottom right;
+    mask:
+      linear-gradient(-45deg, transparent 0 var(--cut), #fff 0) bottom right;
+    mask-size: 100%;
+    mask-repeat: no-repeat;
+  }
+
+  ...
+</style>
+```
+
+while defining the new CSS variable in `src-svelte/src/routes/styles.css`:
+
+```css
+  :root {
+    ...
+    --controls-corner-cut: 7px;
+    ...
+  }
+```
+
+And we also edit `src-svelte/src/lib/controls/TextInput.svelte` in a similar manner:
+
+```svelte
+<script lang="ts">
+  ...
+  export let leftEnd = false;
+</script>
+
+<div class="fancy-input" class:left-end={leftEnd}>
+  ...
+</div>
+
+<style>
+  ...
+
+  .fancy-input.left-end {
+    --cut: var(--controls-corner-cut);
+    --background-color: var(--color-background);
+    --border-color: #ccc;
+    --border: 0.15rem;
+    --diagonal-border: 0.001rem;
+    padding: 0.375rem 0.75rem;
+    margin-right: -1px;
+    border: var(--border) solid var(--border-color);
+    background:
+    linear-gradient(
+          135deg,
+          var(--border-color) 0 calc(var(--cut) + var(--diagonal-border)),
+          var(--background-color) 0
+        )
+        top left;
+    background-origin: border-box;
+    background-repeat: no-repeat;
+    -webkit-mask:
+      linear-gradient(135deg, transparent 0 var(--cut), #fff 0) top left;
+    mask:
+      linear-gradient(135deg, transparent 0 var(--cut), #fff 0) top left;
+    mask-size: 100%;
+    mask-repeat: no-repeat;
+
+    transition-property: filter;
+    transition: calc(0.5 * var(--standard-duration)) ease-out;
+  }
+
+  .fancy-input.left-end:hover {
+    filter: brightness(1.05);
+  }
+
+  .fancy-input.left-end input[type="text"] {
+    font-family: var(--font-body);
+    font-weight: normal;
+    border-bottom: none;
+  }
+
+  .fancy-input.left-end input[type="text"] + .focus-border {
+    display: none;
+  }
+</style>
+```
+
+And `src-svelte/src/routes/chat/Chat.svelte`, removing the gap from the form and setting the new boolean prompts on the text input and button:
+
+```svelte
+    <form ...>
+      ...
+      <TextInput
+        leftEnd
+        ...
+      />
+      <Button rightEnd ... />
+    </form>
+```
+
+Unfortunately this way of aligning the two elements works only on one browser at a time, as different browsers will calculate ever so slightly different pixel height values. We therefore do a larger refactor. We start off by editing `src-svelte/src/lib/controls/Button.svelte` to allow for showing just the inner part of the button for us:
+
+```svelte
+<script lang="ts">
+  ...
+  export let unwrapped = false;
+  export let rightEnd = false;
+</script>
+
+{#if unwrapped}
+  <button class="cut-corners inner" class:right-end={rightEnd} type="submit">
+    {text}
+  </button>
+{:else}
+  <button class="cut-corners outer" class:right-end={rightEnd} type="submit">
+    <div class="cut-corners inner" class:right-end={rightEnd}>{text}</div>
+  </button>
+{/if}
+
+<style>
+  ...
+
+  .outer.right-end,
+  .inner.right-end {
+    --cut-top-left: 0.01rem;
+    height: 100%;
+  }
+
+  ...
+</style>
+```
+
+Note that the `height: 100%;` will be used to make the button grow in height along with the textarea later on when we implement the form.
+
+We add options to this component instead of creating a new one because the two buttons share a lot of similar code. We refactor out the inner and outer css so that it just looks like
+
+```css
+  .outer,
+  .inner {
+    --cut: var(--controls-corner-cut);
+    font-size: 0.9rem;
+    font-family: var(--font-body);
+    text-transform: uppercase;
+    transition-property: filter, transform;
+    transition: calc(0.5 * var(--standard-duration)) ease-out;
+  }
+```
+
+with the rest of it in `src-svelte/src/routes/styles.css`:
+
+```css
+.cut-corners {
+  --cut-top-left: var(--controls-corner-cut);
+  --cut-bottom-right: var(--controls-corner-cut);
+  --border: 0.15rem;
+  --diagonal-border: calc(var(--border) * 0.8);
+  --border-color: var(--color-border);
+  --background-color: var(--color-background);
+
+  border: var(--border) solid var(--border-color);
+  background:
+    linear-gradient(
+        -45deg,
+        var(--border-color) 0 calc(var(--cut-bottom-right) + var(--diagonal-border)),
+        var(--background-color) 0
+      )
+      bottom right / 50% 100%,
+    linear-gradient(
+        135deg,
+        var(--border-color) 0 calc(var(--cut-top-left) + var(--diagonal-border)),
+        var(--background-color) 0
+      )
+      top left / 50% 100%;
+  background-origin: border-box;
+  background-repeat: no-repeat;
+  -webkit-mask:
+    linear-gradient(-45deg, transparent 0 var(--cut-bottom-right), #fff 0) bottom right,
+    linear-gradient(135deg, transparent 0 var(--cut-top-left), #fff 0) top left;
+  -webkit-mask-size: 51% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask:
+    linear-gradient(-45deg, transparent 0 var(--cut-bottom-right), #fff 0) bottom right,
+    linear-gradient(135deg, transparent 0 var(--cut-top-left), #fff 0) top left;
+  mask-size: 51% 100%;
+  mask-repeat: no-repeat;
+}
+
+.cut-corners.outer {
+  padding: 1px;
+  --background-color: var(--color-background);
+  --border: 2px;
+  --diagonal-border: 2.5px;
+  --cut-top-left: 8px;
+  --cut-bottom-right: 8px;
+}
+```
+
+because we will want to reuse that logic for the form component. We also edit `src-svelte/src/lib/controls/TextInput.svelte` to refactor out most of the CSS that applies to generic form elements for this app, so that the remaining CSS for the input element is simply:
+
+```css
+  input[type="text"] {
+    min-width: 1rem;
+    width: 100%;
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-background);
+    font-family: var(--font-mono);
+    font-weight: bold;
+    font-size: 1rem;
+  }
+```
+
+The rest, we once again copy into `src-svelte/src/routes/styles.css`:
+
+```css
+input[type="text"], textarea {
+  border: none;
+}
+
+input[type="text"]:focus, textarea:focus {
+  outline: none;
+}
+
+input[type="text"]::placeholder, textarea::placeholder {
+  font-style: italic;
+}
+```
+
+We create our new form component at `src-svelte/src/routes/chat/Form.svelte`, making use of the previous refactors we just did:
+
+```svelte
+<script lang="ts">
+  import autosize from "autosize";
+  import Button from "$lib/controls/Button.svelte";
+  import { onMount } from "svelte";
+
+  export let sendChatMessage: (message: string) => void;
+  let currentMessage = "";
+  let textareaInput: HTMLTextAreaElement;
+
+  onMount(() => {
+    autosize(textareaInput);
+
+    return () => {
+      autosize.destroy(textareaInput);
+    };
+  });
+
+  function handleKeydown(event: KeyboardEvent) {
+    if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey) {
+      event.preventDefault(); // Prevent newline insertion
+      submitChat();
+    }
+  }
+
+  function submitChat() {
+    const message = currentMessage.trim();
+    if (message) {
+      sendChatMessage(currentMessage);
+      currentMessage = "";
+      requestAnimationFrame(() => {
+        autosize.update(textareaInput);
+      });
+    }
+  }
+</script>
+
+<form
+  class="cut-corners outer"
+  autocomplete="off"
+  on:submit|preventDefault={submitChat}
+>
+  <label for="message" class="accessibility-only">Chat with the AI:</label>
+  <textarea
+    id="message"
+    name="message"
+    placeholder="Type your message here..."
+    rows="1"
+    on:keydown={handleKeydown}
+    bind:this={textareaInput}
+    bind:value={currentMessage}
+  />
+  <Button unwrapped rightEnd text="Send" />
+</form>
+
+<style>
+  form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  textarea {
+    margin: 0 0.75rem;
+    flex: 1;
+    background-color: transparent;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    width: 100%;
+    min-height: 1.2rem;
+    resize: none;
+  }
+</style>
+
+```
+
+We want the input to grow as the user types in enough text for the text to wrap around. As it turns out, this is a somewhat non-trivial problem that appears to be best solved by the [`autosize`](http://www.jacklmoore.com/autosize/) package. The Svelte-specific [`svelte-autoresize-textarea`](https://github.com/ankurrsinghal/svelte-autoresize-textarea) project appears to not handle our textarea correctly. We add the types for `autosize` too:
+
+```bash
+$ yarn add -D @types/autosize
+```
+
+As mentioned earlier, we ensure that the send button also grows as the textarea grows, so that it doesn't remain at an awkwardly small size. However, it is a bit awkward for the relevant CSS to be in a different component's code.
+
+We use this new form in `src-svelte/src/routes/chat/Chat.svelte`, rewriting the `sendChat` function to fit the new expected form and removing all form-related logic that are now in the form component:
+
+```svelte
+<script lang="ts">
+  ...
+  import Form from "./Form.svelte";
+  ...
+
+  async function sendChatMessage(message: string) {
+    const chatMessage: ChatMessage = {
+      role: "Human",
+      text: message,
+    };
+    conversation = [...conversation, chatMessage];
+    setTimeout(showChatBottom, 50);
+
+    try {
+      let llmCall = await chat("OpenAI", "gpt-3.5-turbo", null, conversation);
+      conversation = [...conversation, llmCall.response.completion];
+      setTimeout(showChatBottom, 50);
+    } catch (err) {
+      snackbarError(err as string);
+    }
+  }
+</script>
+
+<InfoBox ...>
+  <div ...>
+    ...
+
+    <Form {sendChatMessage} />
+  </div>
+</InfoBox>
+```
+
+We update the chat screenshots and commit.
+
+Of course, if we let the text area grow, we should screenshot that. We edit `src-svelte/src/routes/chat/Form.svelte` to allow parent components to set an initial `currentMessage`:
+
+```ts
+  ...
+  export let currentMessage = "";
+  ...
+```
+
+We edit `src-svelte/src/routes/chat/Chat.svelte` to do the same:
+
+```svelte
+<script lang="ts">
+  ...
+  export let initialMessage: string = "";
+  ...
+</script>
+
+<InfoBox ...>
+  <div ...>
+    ...
+
+    <Form ... currentMessage={initialMessage} />
+  </div>
+</InfoBox>
+```
+
+and add the new story to `src-svelte/src/routes/chat/Chat.stories.ts`
+
+```ts
+export const MultilineChat: StoryObj = Template.bind({}) as any;
+MultilineChat.args = {
+  conversation,
+  initialMessage: "This is what happens when the user types in so much text, it wraps around and turns the text input area into a multiline input. The send button's height should grow in line with the overall text area height.",
+};
+MultilineChat.parameters = {
+  viewport: {
+    defaultViewport: "smallTablet",
+  },
+};
+```
+
+We make sure to test this in our Storybook screenshots at `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+  {
+    path: ["screens", "chat", "conversation"],
+    variants: [..., "multiline-chat"],
+    ...
+  },
+```
+
+We realize upon interacting with this new story that the textarea actually grows downwards. We need to also resize the chat conversation display whenever an autosize event gets kicked off. We edit `src-svelte/src/routes/chat/Form.svelte`:
+
+```ts
+  ...
+  export let onTextInputResize: () => void = () => undefined;
+  ...
+
+  onMount(() => {
+    ...
+    textareaInput.addEventListener("autosize:resized", onTextInputResize);
+
+    ...
+  });
+```
+
+and then we make use of this in `src-svelte/src/routes/chat/Chat.svelte`:
+
+```svelte
+<InfoBox ...>
+  ...
+  <Form ... onTextInputResize={resizeConversationView} />
+</InfoBox>
+```
+
+Doing a screenshot test of this fix will be left as a TODO, as it requires an interaction before the screenshot takes place, so we simply test this manually.
+
+#### Stylizing top and bottom shadows
+
+There appears to be a [pure CSS](https://lea.verou.me/blog/2012/04/background-attachment-local/) solution to adding top and bottom shadows to the scrollable div. We see from [this question](https://stackoverflow.com/questions/71658855/horizontall-scrolling-div-shadow-does-not-cover-the-child-background) that this strategy is known to not work for div's; even the second proposed answer does not work. As such, we resort to using some JavaScript after all.
+
+We find [this resource](https://css-tricks.com/scroll-shadows-with-javascript/) on implementing scroll shadows, which links to [this page](https://cushionapp.com/journal/overflow-shadows-using-the-intersection-observer-api) on doing it with the `IntersectionObserver` API, which is a slightly more efficient way of checking if scroll shadows should be shown than the usual way of checking the scroll height, such as in [this example](https://codepen.io/mindstorm/pen/PoqxXN). We see that this API is [supported](https://caniuse.com/?search=intersectionobserver) across 97% of browsers, and read [the documentation](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API) on it.
+
+We implement it in `src-svelte/src/routes/chat/Chat.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  let topIndicator: HTMLDivElement;
+  let bottomIndicator: HTMLDivElement;
+  let topShadow: HTMLDivElement;
+  let bottomShadow: HTMLDivElement;
+
+  onMount(() => {
+    ...
+    let topScrollObserver = new IntersectionObserver(
+      intersectionCallback(topShadow),
+    );
+    topScrollObserver.observe(topIndicator);
+    let bottomScrollObserver = new IntersectionObserver(
+      intersectionCallback(bottomShadow),
+    );
+    bottomScrollObserver.observe(bottomIndicator);
+
+    return () => {
+      ...
+      topScrollObserver.disconnect();
+      bottomScrollObserver.disconnect();
+    };
+  });
+
+  function intersectionCallback(shadow: HTMLDivElement) {
+    return (entries: IntersectionObserverEntry[]) => {
+      let indicator = entries[0];
+      if (indicator.isIntersecting) {
+        shadow.classList.remove("visible");
+      } else {
+        shadow.classList.add("visible");
+      }
+    };
+  }
+
+  ...
+</script>
+
+<InfoBox ...>
+  ...
+    <div class="conversation-container" ...>
+      <div class="shadow top" bind:this={topShadow}></div>
+      <div class="conversation" ...>
+        <div class="indicator top" bind:this={topIndicator}></div>
+        ...
+        <div class="indicator bottom" bind:this={bottomIndicator}></div>
+      </div>
+      <div class="shadow bottom" bind:this={bottomShadow}></div>
+    </div>
+  ...
+</InfoBox>
+
+<style>
+  ...
+
+  .conversation-container {
+    ...
+    position: relative;
+  }
+
+  .conversation {
+    ...
+    position: relative;
+  }
+
+  ...
+
+  .shadow {
+    z-index: 1;
+    height: 0.375rem;
+    width: 100%;
+    position: absolute;
+    display: none;
+  }
+
+  .conversation-container :global(.shadow.visible) {
+    display: block;
+  }
+
+  .shadow.top {
+    top: 0;
+    background-image: radial-gradient(
+      farthest-side at 50% 0%,
+      rgba(150, 150, 150, 0.4) 0%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+
+  .shadow.bottom {
+    bottom: 0;
+    background-image: radial-gradient(
+      farthest-side at 50% 100%,
+      rgba(150, 150, 150, 0.4) 0%,
+      rgba(0, 0, 0, 0) 100%
+    );
+  }
+
+  .indicator {
+    height: 1px;
+    width: 100%;
+  }
+
+  .indicator.top {
+    margin-bottom: -1px;
+  }
+
+  .indicator.bottom {
+    margin-top: -1px;
+  }
+</style>
+```
+
+Note that:
+
+- we make sure that the top and bottom indicators have negative margins so as to preserve the original layout
+- we set `position: relative;` on the conversation container so as to ensure that the shadows `z-index` and absolute positioning work with respect to the conversation container and not any parent elements
+
+Now our Vitest tests are failing because Vitest/Jest does not mock the `IntersectionObserver` API, so we mock it ourselves in `src-svelte/src/routes/chat/Chat.test.ts`:
+
+```ts
+  beforeEach(() => {
+    ...
+    window.IntersectionObserver = vi.fn(() => {
+      return {
+        observe: vi.fn(),
+        unobserve: vi.fn(),
+        disconnect: vi.fn(),
+      };
+    });
+  });
+```
+
+However, this produces the TypeScript error of:
+
+```
+/root/zamm/src-svelte/src/routes/chat/Chat.test.ts:31:5
+Error: Type 'Mock<[], { observe: Mock<[target: Element], void>; unobserve: Mock<[target: Element], void>; disconnect: Mock<[], void>; }>' is not assignable to type '{ new (callback: IntersectionObserverCallback, options?: IntersectionObserverInit | undefined): IntersectionObserver; prototype: IntersectionObserver; }'.
+  Type '{ observe: Mock<[target: Element], void>; unobserve: Mock<[target: Element], void>; disconnect: Mock<[], void>; }' is missing the following properties from type 'IntersectionObserver': root, rootMargin, thresholds, takeRecords
+    });
+    window.IntersectionObserver = vi.fn(() => {
+      return {
+```
+
+We do a quick fix by forcibly overriding the type checker:
+
+```ts
+    window.IntersectionObserver = vi.fn(() => {
+      ...
+    }) as unknown as typeof IntersectionObserver;
+```
+
+As expected, the only screenshots that change are for the `multiline chat` and `not empty` conversations; the empty conversation has no scrollbars and therefore renders exactly the same.
+
+For completeness' sake, we should add a screenshot for the top shadow as well. We edit `src-svelte/src/routes/chat/Chat.svelte` for an additional option not to scroll to the bottom on initial render:
+
+```ts
+  ...
+  export let showMostRecentMessage = true;
+  ...
+
+  function resizeConversationView() {
+    if (conversationView) {
+      ...
+      requestAnimationFrame(() => {
+        if (conversationView && conversationContainer) {
+          ...
+          if (showMostRecentMessage) {
+            showChatBottom();
+          }
+        }
+      });
+    }
+  }
+```
+
+We add a story at `src-svelte/src/routes/chat/Chat.stories.ts`:
+
+```ts
+export const BottomScrollIndicator: StoryObj = Template.bind({}) as any;
+BottomScrollIndicator.args = {
+  conversation,
+  showMostRecentMessage: false,
+};
+BottomScrollIndicator.parameters = {
+  viewport: {
+    defaultViewport: "smallTablet",
+  },
+};
+```
+
+and register it at `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+  {
+    path: ["screens", "chat", "conversation"],
+    variants: [..., "bottom-scroll-indicator"],
+    screenshotEntireBody: true,
+  },
+];
+```
+
+We check the new screenshot at `src-svelte/screenshots/baseline/screens/chat/conversation/bottom-scroll-indicator.png` to see that it looks as expected, and commit everything.
