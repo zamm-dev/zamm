@@ -944,6 +944,8 @@ describe("Switch drag test", () => {
 
 ```
 
+We realize that we should change it to `"Slider drag test"` instead, which would be something that an LLM would probably be better at automatically doing.
+
 Because we can no longer mock the input target event directly, we instead mock a key press event in `src-svelte/src/routes/settings/Settings.test.ts`:
 
 ```ts
@@ -1017,3 +1019,93 @@ As with the [switch](./switch.md), we use CSS transforms rather than positioning
 ```
 
 Note that we can also go [further](https://blog.teamtreehouse.com/increase-your-sites-performance-with-hardware-accelerated-css) with hardware acceleration by asking for GPU usage, but as that article notes, that comes with a lot of caveats.
+
+## Null elements
+
+Before the component is mounted, some variables will not be bound to their HTML elements. We avoid the console errors by editing `src-svelte/src/lib/Slider.svelte` to type this correctly, and to also disconnect the observer on unmount:
+
+```ts
+  ...
+  let track: HTMLDivElement | null;
+  let toggleBound: HTMLDivElement | null;
+  let toggleLabel: HTMLDivElement | null;
+  ...
+
+  let toggleDragOptions: DragOptions = {
+    ...,
+    bounds: () => {
+      if (!toggleBound) {
+        throw new Error("Toggle bound not mounted");
+      }
+      return toggleBound;
+    },
+    ...
+  };
+
+  ...
+
+  function calculatePosition(value: number) {
+    if (!track || !toggleLabel) {
+      return toggleDragOptions;
+    }
+
+    ...
+  }
+
+  function onClick(e: MouseEvent) {
+    ...
+
+    if (!track || !toggleLabel) {
+      console.warn("Click event fired on non-existing track or toggle");
+      return;
+    }
+
+    ...
+  }
+
+  ...
+
+  onMount(() => {
+    ...
+
+    if (track) {
+      let observer = new ResizeObserver(handleResize);
+      observer.observe(track);
+
+      return () => observer.disconnect();
+    }
+  });
+```
+
+## Info box reveal animation
+
+We realize that the slider doesn't get hidden initially during the info box reveal on the settings page. We edit the code at `src-svelte/src/lib/InfoBox.svelte` to allow for manually specifying that an element should be revealed together as a unit:
+
+```ts
+function revealInfoBox(node: Element, timing: InfoBoxTiming) {
+  ...
+  const isAtomicNode = currentNode.children.length === 0 ||
+    currentNode.children.length === currentNode.childNodes.length ||
+    currentNode.classList.contains("atomic-reveal");
+  if (isAtomicNode) {
+    ...
+  }
+  ...
+}
+```
+
+We then edit `src-svelte/src/lib/Slider.svelte` to make use of this new class:
+
+```svelte
+<div class="container">
+  ...
+  <div
+    class="slider atomic-reveal"
+    ...
+  >
+    ...
+  </div>
+</div>
+```
+
+We also find that the `--leeway` variable gets overwritten during the info box reveal animation. We address this in the "Preserving original styles" part of [`infobox.md`](/ui/infobox.md).

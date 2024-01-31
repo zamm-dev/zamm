@@ -1289,3 +1289,62 @@ We can do as the Storybook repo maintainers recommend and use SSIM with a failur
 ```
 
 Unfortunately, this strategy results in missing changes to an entire letter, so we undo our changes here.
+
+### Buffer error
+
+If you get
+
+```
+TypeError: invalid invocation. input should be a Uint8Array
+ ❯ Proxy.imageSize ../node_modules/image-size/dist/index.js:102:15
+ ❯ test.retry src/routes/storybook.test.ts:261:34
+    259| 
+    260|           console.log(screenshot);
+    261|           const screenshotSize = sizeOf(screenshot);
+       |                                  ^
+```
+
+despite `screenshot` being logged as the expected form of
+
+```
+<Buffer 89 50 4e 47 0d 0a 1a 0a 00 00 00 0d 49 48 44 52 00 00 03 f6 00 00 00 16 08 02 00 00 00 e5 d6 90 1c 00 00 00 06 62 4b 47 44 00 ff 00 ff 00 ff a0 bd a7 ... 4473 more bytes>
+```
+
+then one possible solution appears to be cleaning and reinstalling node modules with
+
+```bash
+$ rm -rf node_modules
+$ yarn
+```
+
+However, we find that the test only fails with a new error message because we failed to restart the Storybook server. Once we do so, it fails again with the same old message. We try again with the specific dependencies we have from the lock file, as mentioned [here](https://stackoverflow.com/a/58223363):
+
+```bash
+$ yarn install --frozen-lockfile
+```
+
+and find that it actually works now after a Storybook server restart. Unfortunately, it stops working again after another `playwright install`
+ browser update. Upon further debugging,
+
+```ts
+console.log(screenshot instanceof Buffer);
+```
+
+shows as true, but
+
+```ts
+console.log(screenshot instanceof Uint8Array);
+```
+
+shows as false. This is weird because `Buffer` extends `Uint8Array` in NodeJS. We manually recreate the Buffer:
+
+```ts
+          const uint8ArrayWorkaround = new Uint8Array(
+            screenshot.buffer,
+            screenshot.byteOffset,
+            screenshot.byteLength,
+          );
+          const screenshotSize = sizeOf(uint8ArrayWorkaround);
+```
+
+Oddly enough, now the test passes.

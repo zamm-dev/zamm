@@ -920,3 +920,39 @@ it is because `getText` returns a promise. You should instead do
     expect(await openAiCell.getText()).toMatch(/^not set$/);
   });
 ```
+
+### Failed to initialize launcher service
+
+If you get this error (with the mispelled "initilialise"):
+
+```
+Error: Error: Failed to initilialise launcher service unknown: Error: Couldn't initialise "wdio-image-comparison-service".
+Error: Cannot find module '../build/Release/canvas.node'
+Require stack:
+- /root/zamm/node_modules/canvas/lib/bindings.js
+- /root/zamm/node_modules/canvas/lib/canvas.js
+- /root/zamm/node_modules/canvas/index.js
+```
+
+it appears to be due to the latest version of Webdriver no longer requiring the standalone service, as documented [here](https://github.com/webdriverio/webdriverio/discussions/11364) and [here](https://stackoverflow.com/questions/76968105/issue-with-selenium-standalone-service-in-webdriverio). (Ironically, the misspelling actually helps with finding references to this specific problem.)
+
+For our purposes, simply updating our dependencies:
+
+```bash
+$ cd webdriver
+$ yarn upgrade
+```
+
+and editing `webdriver/wdio.conf.ts` appears to work:
+
+```ts
+import { type ChildProcess, spawn, spawnSync } from "child_process";
+import { join } from "path";
+
+// keep track of the `tauri-driver` child process
+let tauriDriver: ChildProcess;
+
+...
+```
+
+Note that this appears to also update our `package.json` with unwanted new dependencies. Move these back into `devDependencies`.

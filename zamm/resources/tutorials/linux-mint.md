@@ -36,6 +36,21 @@ no label, UUID=1d12c995-fbfc-4947-b8a5-067a0a9e3721
 $ sudo swapon /swapfile
 ```
 
+If you get a warning such as
+
+```bash
+$ sudo mkswap /swapfile
+mkswap: /swapfile: insecure permissions 0644, fix with: chmod 0600 /swapfile
+Setting up swapspace version 1, size = 4 GiB (4294963200 bytes)
+no label, UUID=a13674ee-2f92-496d-8bbc-342a159d7501
+```
+
+then follow the instructions and do
+
+```bash
+$ chmod 0600 /swapfile
+```
+
 To verify the change:
 
 ```bash

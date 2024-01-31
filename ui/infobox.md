@@ -2330,6 +2330,57 @@ Finally, we once again update the test `src-svelte/src/lib/InfoBox.test.ts` to r
   });
 ```
 
+##### Preserving original styles
+
+We originally did
+
+```ts
+anim.node.setAttribute("style", `opacity: ${opacity};`);
+```
+
+in order to avoid the error
+
+```
+Property 'style' does not exist on type 'Element'.
+```
+
+However, as discovered in [`slider.md`](/ui/slider.md), this problematically overwrites all other styles. We can fix this by casting to `HTMLElement`:
+
+```ts
+  class RevealContent extends SubAnimation<void> {
+    constructor(anim: { node: HTMLElement; ... }) {
+      ...
+      super({
+        ...,
+        tick: (tLocalFraction: number) => {
+          ...
+          anim.node.style.opacity = opacity;
+          ...
+        },
+      });
+    }
+  }
+
+  function revealInfoBox(node: Element, timing: InfoBoxTiming) {
+    ...
+    const getNodeAnimations = (
+      ...
+    ): RevealContent[] => {
+      ...
+      if (isAtomicNode) {
+        return [
+          new RevealContent({
+            node: currentNode as HTMLElement,
+            ...
+          }),
+        ];
+      }
+      ...
+    }
+    ...
+  }
+```
+
 ##### Refactoring generic timing code
 
 We realize that we should refactor the non-trivial portions of the code referring to generic timing logic into a new file at `src-svelte/src/lib/animation-timing.ts`, along with the corresponding generic tests at `src-svelte/src/lib/animation-timing.test.ts`.

@@ -685,3 +685,72 @@ without realizing that the `transition` applies to all properties, not just the 
 ```
 
 This would be a good example of an animation regression that you would ideally be able to write a test for with an animation testing framework. Even without it, this is where the infrastructure we've built, including our Git history, comes through for us.
+
+## Positioning the snackbar
+
+We notice that sometimes the snackbar is covered by other things. We edit `src-svelte/src/lib/snackbar/Snackbar.svelte`:
+
+```css
+  .snackbars {
+    z-index: 100;
+    ...
+  }
+```
+
+Because `src-svelte/src/lib/__mocks__/MockAppLayout.svelte` looks like this:
+
+```svelte
+...
+
+<div class="storybook-wrapper">
+  <AnimationControl>
+    <slot />
+    <Snackbar />
+  </AnimationControl>
+</div>
+
+...
+```
+
+we make sure to mark `src-svelte/src/routes/AnimationControl.svelte` as a positioned element:
+
+```css
+  .container {
+    ...
+    position: relative;
+  }
+```
+
+We check the same for prod, and we see that `src-svelte/src/routes/AppLayout.svelte` looks like this:
+
+```svelte
+<div id="app">
+  <AnimationControl>
+    <Sidebar />
+
+    <div class="main-container">
+      <div class="background-layout">
+        <Background />
+      </div>
+      <Snackbar />
+
+      <main>
+        ...
+      </main>
+    </div>
+  </AnimationControl>
+</div>
+
+```
+
+We edit the CSS for the parent element accordingly:
+
+```css
+  .main-container {
+    ...
+    position: relative;
+    ...
+  }
+```
+
+However, we find out from our end-to-end tests that the sidebar now appears under the main content. We realize we should undo this last change, because the `div` created by `AnimationControl` will now be the one that the snackbar's `z-index` applies to.

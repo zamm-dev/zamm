@@ -3047,6 +3047,111 @@ chrono = { ..., features = ["serde"] }
 
 and now our build completes successfully.
 
+#### Storing total tokens
+
+We decide to store the total tokens in the response as well, for convenience querying the database. We edit `src-tauri/migrations/2024-01-13-023144_create_llm_calls/up.sql` directly since we haven't done a commit yet, so there's no need for a new migration:
+
+```sql
+CREATE TABLE llm_calls (
+  ...
+  total_tokens INTEGER,
+  ...
+)
+
+```
+
+Redoing the diesel migration updates `src-tauri/src/schema.rs` for us. We update `src-tauri/src/models/llm_calls.rs` to match:
+
+```rs
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+pub struct TokenMetadata {
+    ...,
+    pub total: Option<i32>,
+}
+
+#[derive(Debug, Queryable, Selectable, Clone)]
+#[diesel(table_name = llm_calls)]
+pub struct LlmCallRow {
+    ...,
+    pub total_tokens: Option<i32>,
+    ...
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = llm_calls)]
+pub struct NewLlmCallRow<'a> {
+    ...,
+    pub total_tokens: Option<&'a i32>,
+    ...
+}
+
+...
+
+impl LlmCall {
+    pub fn as_sql_row(&self) -> NewLlmCallRow {
+        NewLlmCallRow {
+            ...,
+            total_tokens: self.tokens.total.as_ref(),
+            ...
+        }
+    }
+}
+
+impl From<LlmCallRow> for LlmCall {
+    fn from(row: LlmCallRow) -> Self {
+        ...
+        let token_metadata = TokenMetadata {
+            ...,
+            total: row.total_tokens,
+        };
+        ...
+    }
+}
+```
+
+We edit `src-tauri/src/commands/llms/chat.rs` next to build our response:
+
+```rs
+async fn chat_helper(
+    zamm_api_keys: &ZammApiKeys,
+    zamm_db: &ZammDatabase,
+    provider: Service,
+    llm: String,
+    temperature: Option<f32>,
+    prompt: Vec<ChatMessage>,
+    http_client: reqwest_middleware::ClientWithMiddleware,
+) -> ZammResult<LlmCall> {
+    ...
+    let token_metadata = TokenMetadata {
+        ...,
+        total: response
+            .usage
+            .as_ref()
+            .map(|usage| usage.total_tokens as i32),
+    };
+    ...
+}
+```
+
+We update our sample calls, such as `src-tauri/api/sample-calls/chat-start-conversation.yaml`:
+
+```yaml
+...
+response:
+  message: >
+    {
+      ...
+      "tokens": {
+        "prompt": 32,
+        "response": 27,
+        "total": 59
+      }
+    }
+
+```
+
+Finally, `src-svelte/src/lib/bindings.ts` is automatically updated by Specta.
+
 ### Frontend API call
 
 Now that we have the backend API call working, we move over to the frontend side of the API boundary. We have Specta automatically regenerate `src-svelte/src/lib/bindings.ts` as usual. We then create a new page at `src-svelte/src/routes/chat/+page.svelte`:
@@ -4700,6 +4805,16 @@ Disable autocomplete on the chat form at `src-svelte/src/routes/chat/Chat.svelte
     </form>
 ```
 
+On Chrome, the scrollbars actually appear on the conversation window. This is when we find out the difference between `overflow: scroll;` and `overflow: auto;`. We therefore edit `src-svelte/src/routes/chat/Chat.svelte` as such:
+
+```css
+  .conversation {
+    ...
+    overflow-y: auto;
+    ...
+  }
+```
+
 #### Stylizing the form as a single button group
 
 We can try to stylize the elements separately, for example by editing `src-svelte/src/lib/controls/Button.svelte`:
@@ -5281,7 +5396,7 @@ Note that:
 - we make sure that the top and bottom indicators have negative margins so as to preserve the original layout
 - we set `position: relative;` on the conversation container so as to ensure that the shadows `z-index` and absolute positioning work with respect to the conversation container and not any parent elements
 
-Now our Vitest tests are failing because Vitest/Jest does not mock the `IntersectionObserver` API, so we mock it ourselves in `src-svelte/src/routes/chat/Chat.test.ts`:
+Now our Vitest tests are failing because Vitest/Jest does not mock the `IntersectionObserver` API, so we mock it ourselves in `src-svelte/src/routes/chat/Chat.test.ts` by looking at the examples [here](https://stackoverflow.com/questions/58884397/jest-mock-intersectionobserver) and [here](https://stackoverflow.com/questions/63665377/mock-for-intersection-observer-in-jest-and-typescript):
 
 ```ts
   beforeEach(() => {
@@ -5368,3 +5483,790 @@ const components: ComponentTestConfig[] = [
 ```
 
 We check the new screenshot at `src-svelte/screenshots/baseline/screens/chat/conversation/bottom-scroll-indicator.png` to see that it looks as expected, and commit everything.
+
+#### Adding chat bubbles
+
+We should make this more like a regular chat interface and add chat bubbles. We see that there is a great tutorial already [here](https://phuoc.ng/collection/css-animation/typing-indicator/), which makes use of the single-keyframe technique mentioned [here](https://lea.verou.me/blog/2012/12/animations-with-one-keyframe/).
+
+We start off by refactoring the previous `Message` component into `src-svelte/src/routes/chat/MessageUI.svelte`:
+
+```svelte
+<script lang="ts">
+  export let role: "System" | "Human" | "AI";
+</script>
+
+<div class:message={true} class={role.toLowerCase()} role="listitem">
+  <div class="arrow"></div>
+  <div class="text">
+    <slot />
+  </div>
+</div>
+
+<style>
+  ...
+</style>
+```
+
+We then edit the original `src-svelte/src/routes/chat/Message.svelte` to make use of this:
+
+```svelte
+<script lang="ts">
+  import type { ChatMessage } from "$lib/bindings";
+  import MessageUI from "./MessageUI.svelte";
+  export let message: ChatMessage;
+</script>
+
+<MessageUI role={message.role}>
+  {message.text}
+</MessageUI>
+
+```
+
+Now we can create our typing indicator chat bubble that makes use of our existing chat bubble styling. We create `src-svelte/src/routes/chat/TypingIndicator.svelte`:
+
+```svelte
+<script lang="ts">
+  import MessageUI from "./MessageUI.svelte";
+  import { animationsOn } from "$lib/preferences";
+
+  $: animationState = $animationsOn ? "running" : "paused";
+</script>
+
+<MessageUI role="AI">
+  <div class="typing-indicator" style="--animation-state: {animationState};">
+    <div class="dot"></div>
+    <div class="dot"></div>
+    <div class="dot"></div>
+  </div>
+</MessageUI>
+
+<style>
+  .typing-indicator {
+    --animation-state: running;
+    --dot-speed: 0.5s;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+    min-height: 22px;
+  }
+
+  .dot {
+    --initial-animation-progress: 0;
+    border-radius: 9999px;
+    height: 0.5rem;
+    width: 0.5rem;
+
+    background: rgba(148 163 184 / 1);
+    opacity: 1;
+    animation: blink var(--dot-speed) infinite alternate;
+    animation-delay: calc(
+      (-2 + var(--initial-animation-progress)) * var(--dot-speed)
+    );
+    animation-play-state: var(--animation-state);
+  }
+
+  .dot:nth-child(1) {
+    --initial-animation-progress: 0;
+  }
+
+  .dot:nth-child(2) {
+    --initial-animation-progress: 0.25;
+  }
+
+  .dot:nth-child(3) {
+    --initial-animation-progress: 0.5;
+  }
+
+  @keyframes blink {
+    100% {
+      opacity: 0;
+    }
+  }
+</style>
+
+```
+
+Note that we have modified the original CSS to make our interactions with the `--animation-state` variable more understandable:
+
+- We start the animation from full opacity to zero, and then make sure that each successive dot is further along in the animation than the previous one, so that it looks like the chat animation is going towards the right rather than the left
+- We make the animation delay negative so that even in the animation disabled state, the different dots still appear in different amounts of opacity
+- We make it so that the dots still look good even when animations are disabled; we could customize the animated state to display them at different points in the animation than they would appear in the animation-disabled state, but we avoid adding such complexity in order to keep the screenshot tests highly correlated with the working state of the animated versions
+- We set the keyframe to 100% instead of 50% for easier reasoning, and set the animation to alternate so that we get the same effect as before
+- We separate overall animation speed from how far along in the animation each dot should appear as
+
+Now we can make use of this in `src-svelte/src/routes/chat/Chat.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  import TypingIndicator from "./TypingIndicator.svelte";
+  ...
+  export let expectingResponse = false;
+  ...
+
+  async function sendChatMessage(message: string) {
+    ...
+    conversation = [...conversation, chatMessage];
+    expectingResponse = true;
+    ...
+
+    try {
+      let llmCall = await chat(...);
+      ...
+    } catch (err) {
+      ...
+    } finally {
+      expectingResponse = false;
+    }
+  }
+</script>
+
+<InfoBox ...>
+  ...
+        {#if conversation.length > 1}
+          {#each ... as message}
+            ...
+          {/each}
+          {#if expectingResponse}
+            <TypingIndicator />
+          {/if}
+        {:else}
+          ...
+        {/if}
+  ...
+</InfoBox>
+```
+
+Finally, we add two stories, one with animations on and one with animations off, to `src-svelte/src/routes/chat/Chat.stories.ts`, making sure to also add in the Svelte stores decorator:
+
+```ts
+...
+import SvelteStoresDecorator from "$lib/__mocks__/stores";
+...
+
+export default {
+  ...,
+  decorators: [
+    SvelteStoresDecorator,
+    ...
+  ],
+};
+
+...
+
+const shortConversation: ChatMessage[] = [
+  {
+    role: "System",
+    text: "You are ZAMM, a chat program. Respond in first person.",
+  },
+  {
+    role: "Human",
+    text: "Hello, does this work?",
+  },
+];
+
+...
+
+export const TypingIndicator: StoryObj = Template.bind({}) as any;
+TypingIndicator.args = {
+  conversation: shortConversation,
+  expectingResponse: true,
+};
+TypingIndicator.parameters = {
+  viewport: {
+    defaultViewport: "smallTablet",
+  },
+};
+
+export const TypingIndicatorStatic: StoryObj = Template.bind({}) as any;
+TypingIndicatorStatic.args = {
+  conversation: shortConversation,
+  expectingResponse: true,
+};
+TypingIndicatorStatic.parameters = {
+  preferences: {
+    animationsOn: false,
+  },
+  viewport: {
+    defaultViewport: "smallTablet",
+  },
+};
+
+```
+
+We register the second one at `src-svelte/src/routes/storybook.test.ts`:
+
+```ts
+const components: ComponentTestConfig[] = [
+  ...
+  {
+    path: ["screens", "chat", "conversation"],
+    variants: [
+      ...
+      "typing-indicator-static",
+    ],
+    ...
+  },
+];
+```
+
+and increase the retries because Webkit is unreliably slow at resizing the component frame:
+
+```ts
+        {
+          retry: 1,
+          timeout: ...,
+        },
+```
+
+We add the new screenshot at `src-svelte/screenshots/baseline/screens/chat/conversation/typing-indicator-static.png`.
+
+#### End-to-end screenshot
+
+We edit `webdriver/test/specs/e2e.test.js`:
+
+```js
+describe("Welcome screen", function () {
+  ...
+
+  it("should allow navigation to the chat page", async function () {
+    findAndClick('a[title="Chat"]');
+    await browser.pause(500); // for CSS transitions to finish
+    expect(
+      await browser.checkFullPageScreen("chat-screen", {}),
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
+
+  ...
+});
+```
+
+to produce a new screenshot at `webdriver/screenshots/baseline/desktop_wry/chat-screen-800x600.png`.
+
+#### Initial info box reveal
+
+We check that the chat conversation page does the info box reveal in a way that we expect. We add a new story to `src-svelte/src/routes/chat/Chat.stories.ts`:
+
+```ts
+...
+import MockPageTransitions from "$lib/__mocks__/MockPageTransitions.svelte";
+...
+
+export const FullPage: StoryObj = Template.bind({}) as any;
+FullPage.args = {
+  conversation,
+};
+FullPage.decorators = [
+  (story: StoryFn) => {
+    return {
+      Component: MockPageTransitions,
+      slot: story,
+    };
+  },
+];
+```
+
+The info box actually shrinks into nothingness instead of expanding to cover the entire content. We realize that this is because `src-svelte/src/lib/__mocks__/MockPageTransitions.svelte` should use `MockFullPageLayout` instead of `MockAppLayout`, because the info box is made to use the full height of the parent div but the parent div here has zero height by default:
+
+```ts
+<script lang="ts">
+  import MockFullPageLayout from "./MockFullPageLayout.svelte";
+  ...
+</script>
+
+<MockFullPageLayout>
+  ...
+</MockFullPageLayout>
+
+```
+
+We add a similar story to `src-svelte/src/routes/settings/Settings.stories.ts`, which doesn't have a full page story yet:
+
+```ts
+...
+import MockPageTransitions from "$lib/__mocks__/MockPageTransitions.svelte";
+import type { ..., StoryFn } from "@storybook/svelte";
+
+...
+
+export const FullPage: StoryObj = Template.bind({}) as any;
+FullPage.decorators = [
+  (story: StoryFn) => {
+    return {
+      Component: MockPageTransitions,
+      slot: story,
+    };
+  },
+];
+```
+
+This will allow us to make sure that any changes to the info box reveal animation doesn't impact the settings page, either.
+
+#### Persistent chat
+
+We're not persisting chat across sessions just yet, but we should still persist chat for the duration the app is open. We create `src-svelte/src/routes/chat/PersistentChat.svelte` as such:
+
+```svelte
+<script lang="ts" context="module">
+  import type { ChatMessage } from "$lib/bindings";
+
+  let persistentConversation: ChatMessage[] = [
+    {
+      role: "System",
+      text: "You are ZAMM, a chat program. Respond in first person.",
+    },
+  ];
+</script>
+
+<script lang="ts">
+  import Chat from "./Chat.svelte";
+</script>
+
+<Chat bind:conversation={persistentConversation} />
+
+```
+
+We create `src-svelte/src/routes/chat/PersistentChatView.svelte` for purely testing purposes:
+
+```svelte
+<script lang="ts">
+  import PersistentChat from "./PersistentChat.svelte";
+
+  let visible = true;
+
+  function remount() {
+    visible = false;
+    setTimeout(() => (visible = true), 50);
+  }
+</script>
+
+<button on:click={remount}>Remount</button>
+
+{#if visible}
+  <PersistentChat />
+{/if}
+
+```
+
+Then we create `src-svelte/src/routes/chat/PersistentChat.test.ts` as largely a copy of the regular chat test, except that we remount the component and check that the chat is still there:
+
+```ts
+import { expect, test, vi, type Mock } from "vitest";
+import "@testing-library/jest-dom";
+
+import { render, screen, waitFor } from "@testing-library/svelte";
+import PersistentChatView from "./PersistentChatView.svelte";
+import userEvent from "@testing-library/user-event";
+import { TauriInvokePlayback, type ParsedCall } from "$lib/sample-call-testing";
+import { animationSpeed } from "$lib/preferences";
+import type { ChatMessage, LlmCall } from "$lib/bindings";
+
+describe("Chat conversation", () => {
+  let tauriInvokeMock: Mock;
+  let playback: TauriInvokePlayback;
+
+  beforeAll(() => {
+    animationSpeed.set(10);
+  });
+
+  beforeEach(() => {
+    tauriInvokeMock = vi.fn();
+    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    playback = new TauriInvokePlayback();
+    tauriInvokeMock.mockImplementation(
+      (...args: (string | Record<string, string>)[]) =>
+        playback.mockCall(...args),
+    );
+
+    vi.stubGlobal("requestAnimationFrame", (fn: FrameRequestCallback) => {
+      return window.setTimeout(() => fn(Date.now()), 16);
+    });
+    window.IntersectionObserver = vi.fn(() => {
+      return {
+        observe: vi.fn(),
+        unobserve: vi.fn(),
+        disconnect: vi.fn(),
+      };
+    }) as unknown as typeof IntersectionObserver;
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  async function sendChatMessage(
+    message: string,
+    correspondingApiCallSample: string,
+  ) {
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+    playback.addSamples(correspondingApiCallSample);
+    const nextExpectedApiCall: ParsedCall =
+      playback.unmatchedCalls.slice(-1)[0];
+    const nextExpectedCallArgs = nextExpectedApiCall.request[1] as Record<
+      string,
+      any
+    >;
+    const nextExpectedMessage = nextExpectedCallArgs["prompt"].slice(
+      -1,
+    )[0] as ChatMessage;
+    const nextExpectedHumanPrompt = nextExpectedMessage.text;
+
+    const chatInput = screen.getByLabelText("Chat with the AI:");
+    expect(chatInput).toHaveValue("");
+    await userEvent.type(chatInput, message);
+    await userEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
+
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    const lastResult: LlmCall = tauriInvokeMock.mock.results[0].value;
+    const aiResponse = lastResult.response.completion.text;
+    const lastSentence = aiResponse.split("\n").slice(-1)[0];
+    await waitFor(() => {
+      expect(screen.getByText(new RegExp(lastSentence))).toBeInTheDocument();
+    });
+
+    tauriInvokeMock.mockClear();
+  }
+
+  test("persists a conversation after returning to it", async () => {
+    render(PersistentChatView, {});
+    await sendChatMessage(
+      "Hello, does this work?",
+      "../src-tauri/api/sample-calls/chat-start-conversation.yaml",
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Remount" }));
+    await waitFor(() => {
+      expect(screen.getByText("Hello, does this work?")).toBeInTheDocument();
+    });
+  });
+});
+
+```
+
+To make sure that our test works as expected, we check that it fails if the `bind:` is removed from the `PersistentChat` component.
+
+Finally, we edit `src-svelte/src/routes/chat/+page.svelte` to point to this new component:
+
+```svelte
+<script lang="ts">
+  import PersistentChat from "./PersistentChat.svelte";
+</script>
+
+<PersistentChat />
+
+```
+
+### CI run
+
+#### Fixing the build
+
+Our build step is now failing on CI. This is not the first time dependencies have changed during CI build, so we try adding `--frozen-lockfile` to all the steps that involve yarn installation. We start with `.github/workflows/tests.yaml`:
+
+```yaml
+...
+  pre-commit:
+    ...
+    steps:
+      ...
+      - name: Install Node dependencies
+        ...
+        run: |
+          yarn install --frozen-lockfile
+      ...
+  svelte:
+    ...
+    steps:
+      ...
+      - name: Install Node dependencies
+        ...
+        run: |
+          yarn install --frozen-lockfile
+          cd src-svelte && yarn install --frozen-lockfile && yarn svelte-kit sync
+          cd ../webdriver && yarn install --frozen-lockfile
+  e2e:
+    ...
+    steps:
+      ...
+      - name: Install Node dependencies
+        ...
+        run: |
+          yarn install --frozen-lockfile
+          cd src-svelte && yarn svelte-kit sync
+```
+
+We also visit `src-svelte/Makefile`:
+
+```Makefile
+build: ...
+	yarn install --frozen-lockfile && yarn svelte-kit sync && yarn build
+```
+
+This still doesn't work, so we look deeper at the problem and see that it is because:
+
+```
+error vite@5.0.12: The engine "node" is incompatible with this module. Expected version "^18.0.0 || >=20.0.0". Got "16.20.2"
+error Found incompatible module.
+info Visit https://yarnpkg.com/en/docs/cli/install for documentation about this command.
+```
+
+We see that `vite` did indeed get upgraded when we asked to upgrade everything earlier. To preserve the build on older versions of GLIBC, we try adding resolutions to `package.json`:
+
+```json
+{
+  ...,
+  "resolutions": {
+    "vite": "4.5.2"
+  }
+}
+```
+
+This time, `yarn install` updates `yarn.lock` to look like this:
+
+```lock
+vite@4.5.2, "vite@^3.0.0 || ^4.0.0 || ^5.0.0-0", "vite@^3.1.0 || ^4.0.0 || ^5.0.0-0", vite@^4.4.4:
+  version "4.5.2"
+  resolved "https://registry.yarnpkg.com/vite/-/vite-4.5.2.tgz#d6ea8610e099851dad8c7371599969e0f8b97e82"
+  ...
+```
+
+We could do this more properly by building the frontend on newer versions of GLIBC, and only building the Rust app on an older operating system. However, that method is too involved for us right now.
+
+#### Fixing Python tests
+
+Next, our Python tests fail.
+
+```
+poetry run pytest -v
+ERROR: while parsing the following warning configuration:
+
+  ignore::pydantic.warnings.PydanticDeprecatedSince20
+
+This error occurred:
+
+Traceback (most recent call last):
+  File "/home/runner/.cache/pypoetry/virtualenvs/zamm-2r_Pdn8S-py3.11/lib/python3.11/site-packages/_pytest/config/__init__.py", line 1761, in parse_warning_filter
+Warning: ory: Type[Warning] = _resolve_warning_category(category_)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/.cache/pypoetry/virtualenvs/zamm-2r_Pdn8S-py3.11/lib/python3.11/site-packages/_pytest/config/__init__.py", line 1799, in _resolve_warning_category
+    m = __import__(module, None, None, [klass])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ModuleNotFoundError: No module named 'pydantic'
+```
+
+We remove the `ignore::pydantic.warnings.PydanticDeprecatedSince20` from `src-python/pyproject.toml` that we had forgotten to remove when ripping the langchain stuff back out.
+
+#### Fixing Svelte tests
+
+The Svelte screenshot tests are failing as expected, so we update those after manually checking that they look as expected. The only Svelte test failing now is
+
+```
+ FAIL  src/routes/storybook.test.ts > Storybook visual tests > layout/app/static.png should render the same
+ FAIL  src/routes/storybook.test.ts > Storybook visual tests > layout/app/static.png should render the same
+TimeoutError: locator.getAttribute: Timeout 60000ms exceeded.
+Call log:
+  - waiting for locator('#storybook-root > :first-child')
+```
+
+We check to see if this is a fluke. Testing locally, we find that we run into an issue at the same URL:
+
+```
+$page is undefined
+
+instance/$$self.$$.update@http://localhost:6006/src/routes/Sidebar.svelte?t=1706616164007:98:7
+init@http://localhost:6006/node_modules/.cache/sb-vite/deps/chunk-AJUXQLVD.js?v=c0d94ec1:2200:6
+Sidebar@http://localhost:6006/src/routes/Sidebar.svelte?t=1706616164007:108:7
+```
+
+We try editing `src-svelte/src/routes/Sidebar.svelte` from
+
+```ts
+  $: currentRoute = $page.url?.pathname || "/";
+```
+
+to
+
+```ts
+  $: currentRoute = $page?.url?.pathname || "/";
+```
+
+The story renders again and the screenshot test now passes locally and on CI, leaving us to wonder what had changed and how this would've worked before.
+
+#### Fixing pre-commit checks
+
+The pre-commit hook made changes:
+
+```
+pre-commit hook(s) made changes.
+If you are seeing this message in CI, reproduce locally with: `pre-commit run --all-files`.
+To run `pre-commit` as part of git workflow, use `pre-commit install`.
+All changes made by hooks:
+diff --git a/src-svelte/tsconfig.json b/src-svelte/tsconfig.json
+index 5c56cee..fd4595a 100644
+--- a/src-svelte/tsconfig.json
++++ b/src-svelte/tsconfig.json
+@@ -8,6 +8,6 @@
+     "resolveJsonModule": true,
+     "skipLibCheck": true,
+     "sourceMap": true,
+-    "strict": true
+-  }
++    "strict": true,
++  },
+ }
+```
+
+This is not reproducible locally, even after upgrading the versions of the pre-commit hooks used locally. (Nor is it clear why the local and CI versions would diverge despite the exact revisions being specified.) The fix doesn't even make sense because the `json` file most definitely shouldn't have trailing commas. We look at what version of pre-commit is running locally:
+
+```bash
+$ pre-commit --version
+pre-commit 3.6.0
+```
+
+and try to see if updating `PRE_COMMIT_VERSION` to `3.6.0` in `.github/workflows/tests.yaml` helps in making pre-commit output consistent between CI and the local build. This doesn't help after all.
+
+We find that there is [an existing issue](https://github.com/prettier/prettier/issues/15942) around this, but this doesn't help how the run is inconsistent between the local machine and CI.
+
+Weirdly enough, the version on CI says it is installed using Python 3.10.12 despite all Python locations pointing to 3.11.4:
+
+```
+  pipx install pre-commit==$PRE_COMMIT_VERSION
+  shell: /usr/bin/bash -e {0}
+  env:
+    POETRY_VERSION: 1.5.1
+    PYTHON_VERSION: 3.11.4
+    NODEJS_VERSION: 20.5.1
+    RUST_VERSION: 1.71.1
+    PRE_COMMIT_VERSION: 3.6.0
+    CACHE_ON_FAILURE: false
+    CARGO_INCREMENTAL: 0
+    pythonLocation: /opt/hostedtoolcache/Python/3.11.4/x64
+    PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.4/x64/lib/pkgconfig
+    Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.4/x64
+    Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.4/x64
+    Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.4/x64
+    LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.4/x64/lib
+creating virtual environment...
+installing pre-commit from spec 'pre-commit==3.6.0'...
+done! ✨ 🌟 ✨
+  installed package pre-commit 3.6.0, installed using Python 3.10.12
+  These apps are now globally available
+    - pre-commit
+```
+
+However, this seems unlikely to matter, so we first try clearing the local cache:
+
+```bash
+$ rm -rf ~/.cache/pre-commit
+```
+
+Now when we run `pre-commit run --show-diff-on-failure --color=always --all-files`, we finally recreate the same output as on CI.
+
+#### Fixing end to end tests
+
+The end-to-end screenshots are somehow missing the bottom half of the info box border on the settings and chat pages. We see if that's just a fluke. A second run causes all tests except for the new chat page screenshot to pass, so we see that this is indeed a fluke, but we must also grab a proper correct render of the page at least once to serve as a gold screenshot. We try upping the timeout in `webdriver/test/specs/e2e.test.js`:
+
+```js
+  it("should allow navigation to the chat page", async function () {
+    ...
+    await browser.pause(2500); // for page to finish rendering
+    ...
+  });
+```
+
+This doesn't appear to help, and in fact the settings page is also flaky, so we edit the test to make it possible to retry twice:
+
+```ts
+  it("should allow navigation to the settings page", async function () {
+    this.retries(2);
+    findAndClick('a[title="Settings"]');
+    // check if sound is toggled on first
+    const soundToggle = await $("aria/Sounds");
+    const soundToggleState = await soundToggle.getAttribute("aria-checked");
+    if (soundToggleState === "true") {
+      findAndClick("aria/Sounds");
+    }
+    await browser.pause(2500); // for page to finish rendering
+    expect(
+      await browser.checkFullPageScreen("settings-screen", {}),
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
+```
+
+Upon further inspection, it appears that `aria/Sounds` has never been clicked successfully, and the only reason we don't realize this is because we didn't `await` on it. We change our tests to await on the initial page navigation click, and to await on . Because it appears that some level of mismatch is inevitable here, we also make the default `maxMismatch` non-zero:
+
+```ts
+const maxMismatch =
+  process.env.MISMATCH_TOLERANCE === undefined
+    ? 0.6
+    : parseFloat(process.env.MISMATCH_TOLERANCE);
+
+...
+
+describe("App", function () {
+  ...
+
+  it("should allow navigation to the chat page", async function () {
+    this.retries(2);
+    await findAndClick('a[title="Chat"]');
+    await $("button");
+    await browser.pause(2500); // for page to finish rendering
+    expect(
+      await browser.checkFullPageScreen("chat-screen", {}),
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
+
+  it("should allow navigation to the settings page", async function () {
+    this.retries(2);
+    await findAndClick('a[title="Settings"]');
+    await $("label");
+    await browser.pause(2500); // for page to finish rendering
+    expect(
+      await browser.checkFullPageScreen("settings-screen", {}),
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
+});
+```
+
+It is at this point that we finally get a complete match for the screenshot, so we commit that and are able to set the `maxMismatch` back to zero.
+
+#### Speeding up the CI build
+
+The build step on CI now takes much longer than before, so we try to update the Docker container to have our new dependencies pre-installed to see if that makes it faster. We edit the `Dockerfile` to clone the new Rust forks before doing some initial Rust compilation:
+
+```Dockerfile
+...
+COPY src-tauri/Cargo.lock Cargo.lock
+RUN git clone --depth 1 --branch zamm/v0.0.0 https://github.com/amosjyng/async-openai.git /tmp/forks/async-openai && \
+  git clone --depth 1 --branch zamm/v0.0.0 https://github.com/amosjyng/rvcr.git /tmp/forks/rvcr && \
+  mkdir src && \
+  ...
+```
+
+Then we edit `Makefile` because it appears we were incorrectly nesting folders inside of existing ones. We change it from
+
+```Makefile
+copy-docker-deps:
+	mv -n /tmp/dependencies/src-svelte/forks/neodrag/packages/svelte/dist ./src-svelte/forks/neodrag/packages/svelte/dist
+	mv -n /tmp/dependencies/node_modules ./node_modules
+	mv -n /tmp/dependencies/src-svelte/node_modules ./src-svelte/node_modules
+	mv -n /tmp/dependencies/target ./src-tauri/target
+```
+
+to
+
+```Makefile
+copy-docker-deps:
+	mv -n /tmp/forks/async-openai/* ./forks/async-openai/
+	mv -n /tmp/forks/rvcr/* ./forks/rvcr/
+	mv -n /tmp/dependencies/src-svelte/forks/neodrag/packages/svelte/dist ./src-svelte/forks/neodrag/packages/svelte/
+	mv -n /tmp/dependencies/node_modules ./
+	mv -n /tmp/dependencies/src-svelte/node_modules ./src-svelte/
+	mv -n /tmp/dependencies/target ./src-tauri/
+```
+
+and check that there is no longer an erroneously nested `src-tauri/target/target` directory.
+
+We have now successfully cut down the "Build Artifacts" step from 10 minutes 24 seconds down to 4 minutes 48 seconds.

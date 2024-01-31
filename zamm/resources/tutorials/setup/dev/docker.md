@@ -249,7 +249,7 @@ You may want the `-n` option as shown [here](https://unix.stackexchange.com/a/24
 
 ### GitHub
 
-Create a PAT as mentioned [here](/zamm/resources/tutorials/coding/frameworks/sveltekit.md) that has permissions to read, write, and delete packages. Put the key in an environmental variable such as `GHCR_PAT`. Now suppose your GitHub username is `amosjyng` and you have a local image `zamm-build` that you want to push to the repo at `github.com/amosjyng/zamm`. Then do
+Create a classic PAT as mentioned [here](/zamm/resources/tutorials/coding/frameworks/sveltekit.md) that has permissions to read, write, and delete packages. Put the key in an environmental variable such as `GHCR_PAT`. Now suppose your GitHub username is `amosjyng` and you have a local image `zamm-build` that you want to push to the repo at `github.com/amosjyng/zamm`. Then do
 
 ```bash
 $ docker login ghcr.io -u amosjyng -p $GHCR_PAT
@@ -264,6 +264,26 @@ $ docker push ghcr.io/amosjyng/zamm:v0.0.0-build
 ```
 
 You'll want to now visit https://github.com/users/amosjyng/packages/container/zamm/settings and set its visibility to public if it's an open-source project, and allow your repos to access it in GitHub actions.
+
+If you get the error
+
+```bash
+$ docker login ghcr.io -u amosjyng -p $GHCR_PAT
+WARNING! Using --password via the CLI is insecure. Use --password-stdin.
+Error response from daemon: Get "https://ghcr.io/v2/": denied: denied#
+```
+
+It is likely because it is time for you to make a new PAT. When you do so, it should succeed as such:
+
+```bash
+$ docker login ghcr.io -u amosjyng -p $GHCR_PAT
+WARNING! Using --password via the CLI is insecure. Use --password-stdin.
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+```
 
 #### Makefile
 

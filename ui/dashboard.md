@@ -5790,6 +5790,23 @@ We do a string replace on all the corresponding tests in `src-svelte/src/routes/
 
 As expected, we have to once again update the `editing-pre-filled.png` and `editing.png` screenshots.
 
+### Taking inspiration from pipx
+
+We see that `pipx` does something similar:
+
+```bash
+$ pipx ensurepath               
+Success! Added /root/.local/bin to the PATH environment variable.
+
+Consider adding shell completions for pipx. Run 'pipx completions' for instructions.
+
+You will need to open a new terminal or re-login for the PATH changes to take effect.
+
+Otherwise pipx is ready to go! ✨ 🌟 ✨
+```
+
+We'll leave it as a TODO to copy any unique features of their implementation, hopefully with automation support enabled.
+
 ## Metadata display
 
 We should now make the rest of the metadata display use real values instead of mocked ones.
