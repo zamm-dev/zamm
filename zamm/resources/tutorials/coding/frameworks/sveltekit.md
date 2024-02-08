@@ -167,7 +167,7 @@ to this:
 
 Note that this requires a personal access token (PAT) to grant one repo access to another private repo. Go [here](https://github.com/settings/tokens/new). Select "repo" permissions. Click "Generate".
 
-Now go [here](https://github.com/amosjyng/zamm-ui/settings/secrets/actions) and add that under `FONTS_PAT`.
+Now go [here](https://github.com/amosjyng/zamm/settings/secrets/actions) and add that under `FONTS_PAT`.
 
 #### Fine-grained PAT
 

@@ -77,6 +77,50 @@ then follow the instructions and choose one of the options. It's recommended to 
 $ git config pull.rebase --global true
 ```
 
+## Automatic remote branch setup
+
+If you get errors such as
+
+```bash
+$ git push
+fatal: The current branch asdf has no upstream branch.
+To push the current branch and set the remote as upstream, use
+
+    git push --set-upstream origin asdf
+
+```
+
+and you usually resolve them by following the instructions:
+
+```bash
+$ git push --set-upstream origin asdf
+```
+
+you can set this to happen automatically with:
+
+```bash
+$ git config --global push.autoSetupRemote true
+```
+
+Note that according to [this page](https://medium.com/@anjusha.khandavalli/auto-setup-remote-branch-with-push-autosetupremote-892ddd7644), you need Git version `2.37.0` and later in order to do this. If your distro doesn't support that yet, follow the instructions [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) to install it from source:
+
+```bash
+$ sudo apt-get install dh-autoreconf libcurl4-gnutls-dev libexpat1-dev gettext libz-dev libssl-dev install-info
+$ git clone --depth 1 --branch v2.43.0 https://github.com/git/git.git
+$ make configure
+$ make all
+```
+
+and then add the directory to your path.
+
+If you're on Ubuntu, you can instead do
+
+```bash
+$ add-apt-repository ppa:git-core/ppa
+$ apt update
+$ apt install git
+```
+
 ## Merge conflicts
 
 Let's say you're doing a rebase. If you have two commits that both add a new Makefile rule, for example:

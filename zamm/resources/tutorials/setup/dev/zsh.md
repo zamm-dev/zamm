@@ -76,6 +76,12 @@ Before you scream Oh My Zsh! look over the `.zshrc` file to select plugins, them
 • Get stickers, t-shirts, coffee mugs and more: https://shop.planetargon.com/collections/oh-my-zsh
 ```
 
+If `wget` doesn't exist yet (for example, because you're on a Mac), you can do
+
+```bash
+$ brew install wget
+```
+
 If the default shell prompt doesn't pop up, or you say no to it, you can change it manually later:
 
 ```bash

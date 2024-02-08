@@ -2602,3 +2602,110 @@ Now, we actually use this newly computed timing:
   ...
 </section>
 ```
+
+### Composite and atomic markers
+
+We initially implemented atomic animation markers in [`slider.md`](/ui/slider.md). However, when implementing [`chat.md`](/ui/chat.md), we find that we also want a composite animation marker for when we want the node's children to fade-in separately.
+
+We start off by adding support for this new marker in `src-svelte/src/lib/InfoBox.svelte`:
+
+```svelte
+<script lang="ts">
+  ...
+  function revealInfoBox(node: Element, timing: InfoBoxTiming) {
+    ...
+    const getNodeAnimations = (
+      ...
+    ): RevealContent[] => {
+      ...
+      const isAtomicNode =
+        currentNode.classList.contains("atomic-reveal")
+        || (!currentNode.classList.contains("composite-reveal") && (currentNode.children.length === 0 ||
+        currentNode.children.length === currentNode.childNodes.length));
+      ...
+    }
+    ...
+  }
+  ...
+</script>
+
+<section
+  ...
+>
+  ...
+
+  <div class="border-container">
+    ...
+    <div class="info-box">
+      ...
+      <div class="info-content composite-reveal" ...>
+        ...
+      </div>
+    </div>
+  </div>
+</section>
+
+```
+
+Next, we edit the entire DOM hierarchy in `src-svelte/src/routes/chat/Chat.svelte` to pipe this attribute through to the child elements:
+
+```svelte
+<InfoBox ...>
+  <div class="chat-container composite-reveal">
+    <div class="conversation-container composite-reveal" ...>
+      ...
+      <div class="conversation composite-reveal" ...>
+        ...
+            <Message {message} />
+        ...
+            <TypingIndicator />
+        ...
+          <p class="empty-conversation atomic-reveal">
+            ...
+          </p>
+        ...
+      </div>
+      ...
+    </div>
+
+    <Form
+      ...
+    />
+  </div>
+</InfoBox>
+
+```
+
+Note that we made sure the `p` leaf node is marked as `atomic-reveal`, or else the `<br />` there would cause the different elements of that node to fade in separately. We do this for the other leaf nodes as well, namely `src-svelte/src/routes/chat/Form.svelte`:
+
+```svelte
+<form
+  class="atomic-reveal ..."
+  ...
+>
+  ...
+</form>
+```
+
+and `src-svelte/src/routes/chat/MessageUI.svelte`, which covers both `Message` and `TypingIndicator`:
+
+```svelte
+<script lang="ts">
+  ...
+
+  const classList = `message atomic-reveal ${role.toLowerCase()}`;
+</script>
+
+<div class={classList} ...>
+  ...
+</div>
+
+```
+
+This allows us to do a staggered fade-in for a new chat, but fading in an entire existing chat will require more modifications:
+
+- fading in the scroll indicators gradually
+- hiding the scrollbars during the reveal
+- recalculating fade timing when chat messages are long enough to require scrolling
+
+We leave this for the future, and just edit `src-svelte/src/routes/chat/Chat.stories.ts` in the meantime to take out the args from the `FullPage` story.

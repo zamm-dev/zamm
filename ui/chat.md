@@ -5959,6 +5959,10 @@ Finally, we edit `src-svelte/src/routes/chat/+page.svelte` to point to this new 
 
 ```
 
+#### Conversation reveal
+
+We make the info box reveal animation smoother for the empty new conversation view. The steps are recorded at [`infobox.md`](/ui/infobox.md).
+
 ### CI run
 
 #### Fixing the build
@@ -6230,7 +6234,89 @@ describe("App", function () {
 });
 ```
 
-It is at this point that we finally get a complete match for the screenshot, so we commit that and are able to set the `maxMismatch` back to zero.
+It is at this point that we finally get a complete match for the screenshot, so we commit that and are able to set the `maxMismatch` back to zero for the chat page. The settings page still produces a diff, but given that we were able to remove the flakiness for the chat page, we wonder if we can't do the same for the settings page with a longer timeout. We increase the pause to 5 seconds and remove the `await $("label");`, as it turns out that simply awaiting on an element returns immediately if the element isn't visible anyways.
+
+Even this is ultimately unable to reduce the flakiness, so we finally set the `maxMismatch` to 1.0 because the settings page is otherwise flaky, but only for this specific test:
+
+```ts
+const maxMismatch = getEnvMismatchTolerance() ?? 0.0;
+
+function getEnvMismatchTolerance() {
+  return process.env.MISMATCH_TOLERANCE === undefined
+    ? undefined
+    : parseFloat(process.env.MISMATCH_TOLERANCE);
+}
+
+...
+
+describe("App", function () {
+  ...
+
+  it("should allow navigation to the settings page", async function () {
+    ...
+    const customMaxMismatch = getEnvMismatchTolerance() ?? 1.0;
+    ...
+    expect(
+      ...
+    ).toBeLessThanOrEqual(customMaxMismatch);
+  });
+});
+```
+
+Note that we use `??` here because we want it to be possible to set the mismatch to 0 if so desired.
+
+Even after merging, we find that new PRs are blocked due to the flakiness here. We try instead to see if we can tamp down on the flakiness by navigating between the pages a few times so that the full animation no longer plays, as it appears the initial animation render doesn't display shadows properly on Webkit on Linux:
+
+```ts
+  it("should allow navigation to the chat page", async function () {
+    ...
+    await findAndClick('a[title="Chat"]');
+    await findAndClick('a[title="Dashboard"]');
+    await findAndClick('a[title="Chat"]');
+    ...
+  });
+```
+
+We realize we've renamed the component to `Dashboard`, but haven't updated the link name, so we edit `src-svelte/src/routes/SidebarUI.svelte` accordingly:
+
+```ts
+  const routes: App.Route[] = [
+    {
+      name: "Dashboard",
+      path: "/",
+      icon: IconDashboard,
+    },
+    ...
+  ];
+```
+
+We also set a default timeout so that our tests don't take forever to fail if we don't specify the right element to click on:
+
+```ts
+const DEFAULT_TIMEOUT = 5_000;
+
+...
+
+async function findAndClick(selector, timeout) {
+  ...
+  await button.waitForClickable({
+    timeout: timeout ?? DEFAULT_TIMEOUT,
+  });
+  ...
+}
+```
+
+When our Svelte screenshot tests fail, we realize we should change the selector in `src-svelte/src/routes/SidebarUI.test.ts` as well:
+
+```ts
+  beforeEach(() => {
+    ...
+    homeLink = screen.getByTitle("Dashboard");
+    ...
+  });
+```
+
+This finally brings the flakiness down to zero, and we are able to set the `maxMismatch` back to zero for all pages. We remove the code we added for a custom mismatch, but keep the refactor we made to make such a change easy.
 
 #### Speeding up the CI build
 
@@ -6270,3 +6356,21 @@ copy-docker-deps:
 and check that there is no longer an erroneously nested `src-tauri/target/target` directory.
 
 We have now successfully cut down the "Build Artifacts" step from 10 minutes 24 seconds down to 4 minutes 48 seconds.
+
+## Persisting and resuming conversations
+
+We create a new migration to introduce the concept of *conversations* that LLM calls are related to:
+
+```bash
+$ diesel migration generate create_conversation
+Creating migrations/2024-01-31-051556_create_conversation/up.sql
+Creating migrations/2024-01-31-051556_create_conversation/down.sql
+```
+
+As usual, we edit
+
+and then run
+
+```bash
+$ diesel migration run --database-url /root/.local/share/zamm/zamm.sqlite3
+```
