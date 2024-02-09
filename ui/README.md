@@ -1,6 +1,233 @@
 # ZAMM
 
-## Dev setup
+## Setting up a dev environment for the existing project
+
+### Building the project
+
+Clone the repo with its submodules. If you forgot to do that on the initial clone, you can initialize submodules with
+
+```bash
+$ git submodule update --init --recursive
+```
+
+Install `yarn` and `pnpm` with
+
+```bash
+$ npm install -g yarn pnpm
+```
+
+If you have `make` installed, you should be able to simply run
+
+```bash
+$ make
+```
+
+and get a fully built project. On the Mac, you can do
+
+```bash
+$ make mac
+```
+
+instead to bundle the DMG.
+
+If you don't have `make` installed (for example, on Windows), run
+
+```bash
+$ cd src-svelte/forks/neodrag
+$ pnpm install
+$ pnpm compile
+```
+
+Then, inside `src-svelte`:
+
+```bash
+$ yarn svelte-kit sync
+$ yarn build
+```
+
+If you get an issue such as
+
+```
+[commonjs--resolver] Failed to resolve entry for package "@neodrag/svelte". The package may have incorrect main/module/exports specified in its package.json.
+```
+
+then you may have done the above steps in the wrong order. Try clearing your `node_modules`, which on Windows would be
+
+```
+$ rmdir /s /q node_modules
+$ rmdir /s /q src-svelte/node_modules
+```
+
+Next, inside `src-tauri`, make sure that everything compiles:
+
+```bash
+$ cargo build
+```
+
+If you get an error such as
+
+```
+  = note: LINK : fatal error LNK1181: cannot open input file 'sqlite3.lib'
+```
+
+you can try to follow the instructions [here](https://gist.github.com/zeljic/d8b542788b225b1bcb5fce169ee28c55) or [here](https://stackoverflow.com/a/76427629). Since that does not always work, we follow the instructions [here](https://users.rust-lang.org/t/struggling-with-diesel-sqlite-on-windows/73336/3) to find the version of `libsqlite3-sys` currently used in `src-tauri/Cargo.lock`:
+
+```
+[[package]]
+name = "libsqlite3-sys"
+version = "0.27.0"
+...
+```
+
+and install that version with the `bundled` feature enabled:
+
+```bash
+$ cargo add libsqlite3-sys@0.27.0 --features bundled
+```
+
+Now, we should be able to launch the whole project using
+
+```bash
+$ yarn tauri dev
+```
+
+### Additional dev setup
+
+#### Pre-commit hooks
+
+To set up a proper dev environment with pre-commit hooks, run
+
+```bash
+$ pip install pipx
+$ pipx install pre-commit==3.6.0
+```
+
+If there are any warnings about the PATH, for example:
+
+```
+$ pipx install pre-commit==3.6.0
+  installed package pre-commit 3.6.0, installed using Python 3.12.2
+  These apps are now globally available
+    - pre-commit.exe
+⚠️  Note: 'C:\Users\Amos Ng\.local\bin' is not on your PATH environment variable. These apps will not be globally
+    accessible until your PATH is updated. Run `pipx ensurepath` to automatically add it, or manually modify your PATH
+    in your shell's config file (i.e. ~/.bashrc).
+done! ✨ 🌟 ✨
+```
+
+then you should add them to your PATH as suggested. Afterwards,
+
+```bash
+$ pre-commit install
+pre-commit installed at .git\hooks\pre-commit
+```
+
+To check that the install works properly, you can run
+
+```bash
+$ pre-commit run --show-diff-on-failure --color=always --all-files
+```
+
+There should be no required changes. On Windows, you may want to run
+
+```bash
+$ git config core.autocrlf false
+```
+
+to avoid issues around `prettier` and line endings. If you see the message
+
+```
+All changes made by hooks:
+diff --git a/src-svelte/tsconfig.json b/src-svelte/tsconfig.json
+index fd4595a..5c56cee 100644
+--- a/src-svelte/tsconfig.json
++++ b/src-svelte/tsconfig.json
+@@ -8,6 +8,6 @@
+     "resolveJsonModule": true,
+     "skipLibCheck": true,
+     "sourceMap": true,
+-    "strict": true,
+-  },
++    "strict": true
++  }
+ }
+```
+
+that means that your pre-commit hook is likely on the wrong version, because [recent versions](https://github.com/prettier/prettier/issues/15942) of prettier will format `tsconfig.json` with a dangling comma. You can try to out which repos are being used, even though this is made [intentionally difficult](https://github.com/pre-commit/pre-commit/issues/1468):
+
+```bash
+$ grep prettier ~/.cache/pre-commit/repo*/README.md
+/root/.cache/pre-commit/reponhiycg0r/README.md:prettier mirror
+...
+/root/.cache/pre-commit/repouwlpjuso/README.md:prettier mirror
+...
+$ cd /root/.cache/pre-commit/repouwlpjuso
+$ git rev-parse --short HEAD             
+f12edd9
+```
+
+Surprisingly, the exact same commit ID can be checked out on different machines, and still appear to generate different results. It is unclear how to remove this sort of variance from the pre-commit hook.
+
+Unfortunately, the `cargo-clippy` pre-commit check runs a Bash script that is not available on Windows, so you will get the message
+
+```
+Executable `/usr/bin/bash` not found
+```
+
+#### Tests
+
+`cargo test` may fail on Windows for various reasons. If you see
+
+```
+---- commands::keys::set::tests::test_overwrite_existing_init_file_no_newline stdout ----
+Test will be performed on shell init file at C:\Users\AMOSNG~1\AppData\Local\Temp\zamm/tests\set_api_key/no-newline\.bashrc
+thread 'commands::keys::set::tests::test_overwrite_existing_init_file_no_newline' panicked at src\commands\keys\set.rs:252:13:
+assertion `left == right` failed
+  left: "# dummy initial bashrc file\r\nexport SOME_ENV_VAR=\"some value\"\r\n# no newline at end of file to check that it still works\nexport OPENAI_API_KEY=\"0p3n41-4p1-k3y\""
+ right: "# dummy initial bashrc file\r\nexport SOME_ENV_VAR=\"some value\"\r\n# no newline at end of file to check that it still works\r\nexport OPENAI_API_KEY=\"0p3n41-4p1-k3y\""
+```
+
+this is due to line ending comparisons. If this happens, follow the instructions [here](https://stackoverflow.com/a/33424884) to reset the repo to a state with only LF endings.
+
+For the test
+
+```
+---- commands::system::tests::test_can_determine_os stdout ----
+Determined OS to be None
+thread 'commands::system::tests::test_can_determine_os' panicked at src\commands\system.rs:129:9:
+assertion failed: os.is_some()
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+```
+
+we edit `src-tauri\src\commands\system.rs`:
+
+```rs
+...
+
+#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
+pub enum OS {
+    ...
+    Windows,
+}
+
+...
+
+fn get_os() -> Option<OS> {
+    ...
+    #[cfg(target_os = "windows")]
+    return Some(OS::Windows);
+    #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+    return None;
+}
+
+...
+```
+
+`src-svelte/src/lib/bindings.ts` gets regenerated automatically, but because it appears Specta on Windows generates the definitions in a completely different order, we regenerate the file again on Linux for a cleaner diff compared to previous versions.
+
+Unfortunately, other failing tests on Windows require further work.
+
+## Developing the project from scratch
 
 Follow the instructions in [`tauri.md`](/zamm/resources/tutorials/setup/dev/tauri.md) to set up Tauri.
 

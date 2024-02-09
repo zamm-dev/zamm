@@ -44,3 +44,7 @@ npm notice Run npm install -g npm@9.8.1 to update!
 npm notice 
 Reshimming asdf nodejs...
 ```
+
+# Setting up NodeJS on Windows
+
+Go [here](https://nodejs.org/en/download) and download the installer. During installation, check the box that also installs Chocolatey for an easy install.

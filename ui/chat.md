@@ -6357,6 +6357,323 @@ and check that there is no longer an erroneously nested `src-tauri/target/target
 
 We have now successfully cut down the "Build Artifacts" step from 10 minutes 24 seconds down to 4 minutes 48 seconds.
 
+## UX nits
+
+### Left-aligned text
+
+The inter-word spacing of the chat messages gets a little too much sometimes. We try to edit `src-svelte/src/routes/chat/MessageUI.svelte` to change the text alignment to `left` instead of `justify`:
+
+```css
+  .message .text {
+    ...
+    text-align: left;
+  }
+```
+
+Unfortunately, the text shifts left but the `<p>` elements stay at exactly the same width, causing the chat bubbles to appear as if they have heavy right padding. We follow the solution mentioned [here](https://stackoverflow.com/a/73198785):
+
+```svelte
+<script lang="ts">
+  import { onMount } from "svelte";
+
+  ...
+  let textElement: HTMLDivElement;
+
+  onMount(() => {
+    setTimeout(() => {
+      const range = document.createRange();
+      range.selectNodeContents(textElement);
+      const textRect = range.getBoundingClientRect();
+      textElement.style.width = `${textRect.width}px`;
+    }, 10);
+  });
+</script>
+
+<div ...>
+  ...
+  <div class="text-container">
+    <div class="text" bind:this={textElement}>
+      <slot />
+    </div>
+  </div>
+</div>
+
+<style>
+  ...
+
+  .message .text-container {
+    ...
+  }
+
+  .text-element {
+    box-sizing: content-box;
+  }
+
+  ...
+
+  .message.human .text-container {
+    ...
+  }
+
+  ...
+
+  .message.ai .text-container {
+    ...
+  }
+
+  ...
+</style>
+```
+
+Note that:
+
+1. This requires us to rename the `text` div to `text-container`, and insert another `text` div inside that will have `box-sizing: content-box;` so that we can set the width directly on that.
+2. The `requestAnimationFrame` trick does not work here, so we have to wait a bit for the browser to render the content properly before resizing it with JS.
+
+We now get this test error:
+
+```
+TypeError: range.getBoundingClientRect is not a function
+ ❯ Timeout._onTimeout src/routes/chat/MessageUI.svelte:12:30
+     10|       const range = document.createRange();
+     11|       range.selectNodeContents(textElement);
+     12|       const textRect = range.getBoundingClientRect();
+       |                              ^
+     13|       textElement.style.width = `${textRect.width}px`;
+     14|     }, 10);
+ ❯ listOnTimeout node:internal/timers:573:17
+ ❯ processTimers node:internal/timers:514:7
+```
+
+We edit `src-svelte/src/routes/chat/Chat.test.ts` to mock the range:
+
+```ts
+  beforeEach(() => {
+    ...
+    window.document.createRange = vi.fn(() => {
+      return {
+        selectNodeContents: vi.fn(),
+        getBoundingClientRect: vi.fn(() => {
+          return {
+            width: 10,
+            height: 10,
+            top: 0,
+            left: 0,
+            right: 10,
+            bottom: 10,
+          };
+        }),
+      };
+    });
+  });
+```
+
+This works, but results in the type error
+
+```
+/root/zamm/src-svelte/src/routes/chat/Chat.test.ts:38:5
+Error: Type 'Mock<[], { new (): Range; prototype: Range; readonly START_TO_START: 0; readonly START_TO_END: 1; readonly END_TO_END: 2; readonly END_TO_START: 3; }>' is not assignable to type '() => Range'.
+  Type '{ new (): Range; prototype: Range; readonly START_TO_START: 0; readonly START_TO_END: 1; readonly END_TO_END: 2; readonly END_TO_START: 3; }' is missing the following properties from type 'Range': commonAncestorContainer, cloneContents, cloneRange, collapse, and 25 more.
+    }) as unknown as typeof IntersectionObserver;
+    window.document.createRange = vi.fn(() => {
+      return {
+```
+
+We fix this by doing a manual cast:
+
+```ts
+    window.document.createRange = vi.fn(() => {
+      ...
+    }) as unknown as Mock<[], Range>;
+```
+
+Now we encounter the error
+
+```
+TypeError: Cannot read properties of null (reading 'style')
+ ❯ Timeout._onTimeout src/routes/chat/MessageUI.svelte:14:21
+     12|         range.selectNodeContents(textElement);
+     13|         const textRect = range.getBoundingClientRect();
+     14|         textElement.style.width = `${textRect.width}px`;
+       |                     ^
+     15|       }
+     16|     }, 10);
+ ❯ listOnTimeout node:internal/timers:573:17
+ ❯ processTimers node:internal/timers:514:7
+
+This error originated in "src/routes/chat/Chat.test.ts" test file. It doesn't mean the error was thrown inside the file itself, but while it was running.
+```
+
+We edit `src-svelte/src/routes/chat/MessageUI.svelte` to guard our new code with a null check:
+
+```ts
+  let textElement: HTMLDivElement | null;
+
+  onMount(() => {
+    setTimeout(() => {
+      if (textElement) {
+        ...
+      }
+    }, ...);
+  });
+```
+
+For some reason, the above range mock fix does not work on CI. We still get the same "range.getBoundingClientRect is not a function" error. We discover that this is a known issue and try the workaround mentioned [here](https://github.com/jsdom/jsdom/issues/3002#issuecomment-1118039915) by mocking the function in `src-svelte/src/routes/chat/Chat.test.ts` directly on the prototype:
+
+```ts
+  beforeEach(() => {
+    ...
+    Range.prototype.getBoundingClientRect =  vi.fn(() => {
+      return {
+        x: 0,
+        y: 0,
+        width: 10,
+        height: 10,
+        top: 0,
+        left: 0,
+        right: 10,
+        bottom: 10,
+        toJSON: vi.fn(),
+      };
+    });
+  });
+```
+
+This still doesn't work in CI. Because this concerns styling rather than essential functionality, and because this is already covered by the screenshot tests, we edit `src-svelte/src/routes/chat/MessageUI.svelte` to simply log and warn if the resizing isn't working:
+
+```ts
+  onMount(() => {
+    setTimeout(() => {
+      if (textElement) {
+        try {
+          ...
+        } catch (err) {
+          console.warn("Cannot resize chat message bubble: ", err);
+        }
+      }
+    }, ...);
+  });
+```
+
+### Chat arrow gap
+
+On Firefox on Windows, we notice a gap between the arrow and the chat bubble. We close this gap in `src-svelte/src/routes/chat/MessageUI.svelte`:
+
+```css
+  ...
+
+  .message.human .arrow {
+    right: 1px;
+    ...
+  }
+
+  ...
+
+  .message.ai .arrow {
+    left: 1px;
+    ...
+  }
+```
+
+### GPT 4 by default
+
+So long as the user is unable to choose which model they would like to speak to, we should pick a good default for them. The current best model appears to be `GPT-4`, so we edit `src-svelte/src/routes/chat/Chat.svelte` to change the default:
+
+```ts
+  ...
+
+  async function sendChatMessage(message: string) {
+    ...
+
+    try {
+      let llmCall = await chat("OpenAI", "gpt-4", null, conversation);
+      ...
+    }
+  }
+```
+
+The backend *code* doesn't need to change for this one. Instead, we just remove `src-tauri/api/sample-call-requests/continue-conversation.json` and `src-tauri/api/sample-call-requests/start-conversation.json` for a re-recording of the API calls, and update `src-tauri/api/sample-calls/chat-continue-conversation.yaml` and `src-tauri/api/sample-calls/chat-start-conversation.yaml` for the backend's own API calls.
+
+Now the frontend test fails as well because the new response from GPT4
+
+> Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!
+
+contains special regex characters and therefore cannot be converted directly into a regex. Instead, we use the regex escape code mentioned in [this answer](https://stackoverflow.com/a/6969486) to edit `src-svelte/src/routes/chat/Chat.test.ts` to escape the special characters first before regex conversion:
+
+```ts
+  async function sendChatMessage(
+    ...
+  ) {
+    ...
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(
+          new RegExp(lastSentence.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+        ),
+      ).toBeInTheDocument();
+    });
+
+    ...
+  }
+```
+
+### Webdriver error
+
+We now run into an error with the end-to-end tests when trying to merge.
+
+```
+[0-0] 2024-02-09T00:27:21.459Z ERROR @wdio/runner: Error: Failed to create session.
+[0-0] Failed to match capabilities
+[0-0]     at startWebDriverSession (file:///home/runner/work/zamm-ui/zamm-ui/node_modules/webdriverio/node_modules/webdriver/build/utils.js:69:15)
+[0-0]     at processTicksAndRejections (node:internal/process/task_queues:95:5)
+[0-0]     at async Function.newSession (file:///home/runner/work/zamm-ui/zamm-ui/node_modules/webdriverio/node_modules/webdriver/build/index.js:19:45)
+[0-0]     at async remote (file:///home/runner/work/zamm-ui/zamm-ui/node_modules/webdriverio/build/index.js:45:22)
+[0-0]     at async Runner._startSession (file:///home/runner/work/zamm-ui/zamm-ui/node_modules/@wdio/runner/build/index.js:238:29)
+[0-0]     at async Runner._initSession (file:///home/runner/work/zamm-ui/zamm-ui/node_modules/@wdio/runner/build/index.js:204:25)
+[0-0]     at async Runner.run (file:///home/runner/work/zamm-ui/zamm-ui/node_modules/@wdio/runner/build/index.js:85:19)
+[0-0] FAILED in wry - file:///test/specs/e2e.test.js
+```
+
+This is not reproducible locally. Even clearing the CI cache to ensure that the `yarn.lock` is respected with our new `--frozen-lockfile` settings doesn't help, nor does doing `yarn upgrade` help us reproduce the issue locally. We find that there is a more informative stack trace in the logs:
+
+```
+[0-0] 2024-02-09T02:56:58.452Z ERROR webdriver: Request failed with status 500 due to session not created: Failed to match capabilities
+[0-0] 2024-02-09T02:56:58.454Z ERROR webdriver: session not created: Failed to match capabilities
+[0-0]     at getErrorFromResponseBody (file:///home/runner/work/zamm-ui/zamm-ui/node_modules/webdriverio/node_modules/webdriver/build/utils.js:195:12)
+[0-0]     at NodeJSRequest._request (file:///home/runner/work/zamm-ui/zamm-ui/node_modules/webdriverio/node_modules/webdriver/build/request/index.js:193:23)
+[0-0]     at processTicksAndRejections (node:internal/process/task_queues:95:5)
+```
+
+Based on this, we find our local file at `node_modules/webdriverio/node_modules/webdriver/build/request/index.js` and see that the relevant line is:
+
+```js
+        const error = getErrorFromResponseBody(response.body, fullRequestOptions.json);
+```
+
+It appears that the problem may be coming from the Tauri driver. Looking at the [latest versions](https://crates.io/crates/tauri-driver/versions) of `tauri-driver`, we see that version 0.1.4 was released just 5 days ago. We try locking the installed version to `0.1.3` to see if that fixes things. We edit the `tauri-driver` installation step in `.github/workflows/tests.yaml`, making sure to declare the newly pinned version at the top of the file for better visibility, even if it isn't used anywhere else:
+
+```yaml
+...
+
+env:
+  ...
+  TAURI_DRIVER_VERSION: "0.1.3"
+
+jobs:
+  ...
+  e2e:
+    ...
+    - name: Install tauri-driver
+      uses: actions-rs/cargo@v1
+      with:
+        command: install
+        args: tauri-driver@${{ env.TAURI_DRIVER_VERSION }}
+    ...
+```
+
+The CI tests finally pass, and we inform the `tauri-driver` maintainers by creating a [new issue](https://github.com/tauri-apps/tauri/issues/8828) on their repo.
+
 ## Persisting and resuming conversations
 
 We create a new migration to introduce the concept of *conversations* that LLM calls are related to:

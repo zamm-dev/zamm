@@ -125,3 +125,46 @@ to
 # *~
 .vscode/settings.json
 ```
+
+# Setting up Rust on Windows
+
+Go [here](https://www.rust-lang.org/tools/install) and download the `rustup-init.exe` executable for your platform. Run it and follow the instructions. For example, a command prompt should pop up with a screen like this:
+
+```
+Rust Visual C++ prerequisites
+
+Rust requires a linker and Windows API libraries but they don't seem to be
+available.
+
+These components can be acquired through a Visual Studio installer.
+
+1) Quick install via the Visual Studio Community installer
+   (free for individuals, academic uses, and open source).
+
+2) Manually install the prerequisites
+   (for enterprise and advanced users).
+
+3) Don't install the prerequisites
+   (if you're targeting the GNU ABI).
+
+>
+```
+
+Press `1` for an easy install, and click through the various screens of the Visual Studio installer. Afterwards, you may see another screen such as
+
+```
+...
+Current installation options:
+
+
+   default host triple: x86_64-pc-windows-msvc
+     default toolchain: stable (default)
+               profile: default
+  modify PATH variable: yes
+
+1) Proceed with installation (default)
+2) Customize installation
+3) Cancel installation
+```
+
+Once again, press `1` to proceed with an easy installation.

@@ -1,3 +1,9 @@
+# Installing Git
+
+## Windows
+
+Since Git isn't installed by default on Windows, you can download the installer for it [here](https://git-scm.com/download/win).
+
 # Setting up Git
 
 Git probably exists but is not yet configured. To do so, ask the user for their name and email, and run the commands accordingly:
