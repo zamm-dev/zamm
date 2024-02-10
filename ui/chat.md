@@ -6651,7 +6651,7 @@ Based on this, we find our local file at `node_modules/webdriverio/node_modules/
         const error = getErrorFromResponseBody(response.body, fullRequestOptions.json);
 ```
 
-It appears that the problem may be coming from the Tauri driver. Looking at the [latest versions](https://crates.io/crates/tauri-driver/versions) of `tauri-driver`, we see that version 0.1.4 was released just 5 days ago. We try locking the installed version to `0.1.3` to see if that fixes things. We edit the `tauri-driver` installation step in `.github/workflows/tests.yaml`, making sure to declare the newly pinned version at the top of the file for better visibility, even if it isn't used anywhere else:
+It appears that the problem may be coming from the Tauri driver instead. Looking at the [latest versions](https://crates.io/crates/tauri-driver/versions) of `tauri-driver`, we see that version 0.1.4 was released just 5 days ago. We try locking the installed version to `0.1.3` to see if that fixes things. We edit the `tauri-driver` installation step in `.github/workflows/tests.yaml`, making sure to declare the newly pinned version at the top of the file for better visibility, even if it isn't used anywhere else:
 
 ```yaml
 ...
@@ -6672,7 +6672,7 @@ jobs:
     ...
 ```
 
-The CI tests finally pass, and we inform the `tauri-driver` maintainers by creating a [new issue](https://github.com/tauri-apps/tauri/issues/8828) on their repo.
+The CI tests finally pass, and we inform the `tauri-driver` maintainers by creating a [new issue](https://github.com/tauri-apps/tauri/issues/8828) on their repo. (Incidentally, Cargo itself [does not](https://github.com/rust-lang/cargo/issues/7169#issuecomment-539226733) make use of the dependency lock by default. This does not appear to affect us for now, but we should still specify `--locked` to prevent such a problem from ever occuring.)
 
 ## Persisting and resuming conversations
 

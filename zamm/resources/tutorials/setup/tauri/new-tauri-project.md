@@ -1228,7 +1228,7 @@ We see that the fault does indeed lie with Apple and not Tauri, and that the pro
 
 #### App Store distribution
 
-Although certainly [doable](https://jeannot.hashnode.dev/publishing-a-tauri-app-to-mac-app-store), there are [known](https://github.com/tauri-apps/tauri/issues/4415) [difficulties](https://github.com/tauri-apps/tauri/issues/3716) with publishing Tauri apps to the Mac app store. Seeing as app store apps don't seem to be [allowed](https://developer.apple.com/forums/thread/681647) to execute [arbitrary](https://developer.apple.com/forums/thread/685544) terminal commands, which we'll eventually want, we will skip this part. After all, even VS Code is not available on the Mac app store, presumably for this reason.
+Although certainly [doable](https://jeannot.hashnode.dev/publishing-a-tauri-app-to-mac-app-store), there are [known](https://github.com/tauri-apps/tauri/issues/4415) [difficulties](https://github.com/tauri-apps/tauri/issues/3716) with [publishing](https://github.com/tauri-apps/tauri-docs/issues/691) Tauri apps to the Mac app store. Seeing as app store apps don't seem to be [allowed](https://developer.apple.com/forums/thread/681647) to execute [arbitrary](https://developer.apple.com/forums/thread/685544) terminal commands, which we'll eventually want, we will skip this part. After all, even VS Code is not available on the Mac app store, presumably for this reason.
 
 ### Building on Linux
 

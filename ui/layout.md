@@ -754,3 +754,17 @@ We edit the CSS for the parent element accordingly:
 ```
 
 However, we find out from our end-to-end tests that the sidebar now appears under the main content. We realize we should undo this last change, because the `div` created by `AnimationControl` will now be the one that the snackbar's `z-index` applies to.
+
+## Scrollbars
+
+On Windows, we notice that the scrollbar appears in the y direction even when it is not needed. Furthermore, the page transition animation makes a scrollbar temporarily flicker into existence in the x direction as well. We edit the CSS for each of the elements in `src-svelte\src\routes\AppLayout.svelte` until we find the one that makes a difference:
+
+```css
+  .main-container {
+    ...
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+```
+
+We confirm that curiously enough, the Webkit install on Linux Mint does not have this problem.
