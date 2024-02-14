@@ -1,7 +1,7 @@
-# Tauri + Svelte + Typescript
+# ZAMM
 
-This template should help get you started developing with Tauri, Svelte and TypeScript in Vite.
+![Dashboard](/webdriver/screenshots/baseline/desktop_wry/welcome-screen-800x600.png)
 
-## Recommended IDE Setup
+This is an incomplete, experimental AI chat app.
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+You can learn more about it on [the website](http://zamm.dev).
