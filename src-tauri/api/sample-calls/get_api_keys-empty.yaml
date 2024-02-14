@@ -1,0 +1,6 @@
+request: ["get_api_keys"]
+response:
+  message: >
+    {
+      "openai": null
+    }

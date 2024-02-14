@@ -1,0 +1,56 @@
+[package]
+name = "zamm"
+version = "0.1.0"
+description = "Yet another AI chat app"
+authors = ["Amos Ng <me@amos.ng>"]
+license = "GPL-2.0-or-later"
+repository = "https://github.com/amosjyng/zamm"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[build-dependencies]
+tauri-build = { version = "1.4", features = [] }
+
+[dependencies]
+tauri = { version = "1.4", features = [ "shell-open", "process-command-api" ] }
+diesel = { version = "2.1.0", features = ["sqlite", "uuid", "chrono"] }
+directories = "5.0.1"
+diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
+uuid = { version = "1.4.1", features = ["v4", "fast-rng", "macro-diagnostics", "serde"] }
+specta = { version = "1.0.5", features = ["uuid", "chrono"] }
+tauri-specta = { version = "1.0.2", features = ["javascript", "typescript"] }
+futures = "0.3.28"
+tauri-utils = "1.4.0"
+thiserror = "1.0.47"
+anyhow = "1.0.75"
+mockall = "0.11.4"
+serde = { version = "1.0.185", features = ["derive"] }
+serde_json = "1.0.105"
+rodio = "0.17.1"
+path-absolutize = "3.1.1"
+toml = "0.8.2"
+shellexpand = "3.1.0"
+strum = "0.25.0"
+strum_macros = "0.25.3"
+async-openai = "0.18.0"
+reqwest = "0.11.23"
+reqwest-middleware = "0.1.6"
+tokio = { version = "1.35.1", features = ["macros"] }
+chrono = { version = "0.4.31", features = ["serde"] }
+libsqlite3-sys = { version = "0.27.0", features = ["bundled"] }
+
+[features]
+# this feature is used for production builds or when `devPath` points to the filesystem
+# DO NOT REMOVE!!
+custom-protocol = ["tauri/custom-protocol"]
+
+[dev-dependencies]
+rvcr = "0.1.5"
+serde_yaml = "0.9.25"
+temp-env = "0.3.4"
+vcr-cassette = "2.0.1"
+
+[patch.crates-io]
+async-openai = { path = "../forks/async-openai/async-openai" }
+rvcr = { path = "../forks/rvcr" }

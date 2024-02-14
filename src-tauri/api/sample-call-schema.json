@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "$ref": "#/definitions/SampleCall",
+  "definitions": {
+    "SampleCall": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "request": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "response": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "success": {
+              "type": "boolean"
+            },
+            "message": {
+              "type": "string"
+            }
+          },
+          "required": ["message"]
+        }
+      },
+      "required": ["request", "response"],
+      "title": "SampleCall"
+    }
+  }
+}

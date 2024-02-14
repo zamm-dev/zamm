@@ -1,0 +1,10 @@
+request:
+  - play_sound
+  - >
+    {
+      "sound": "Whoosh",
+      "volume": 0.5,
+      "speed": 0.25
+    }
+response:
+  message: "null"

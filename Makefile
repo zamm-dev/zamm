@@ -1,40 +1,62 @@
-.PHONY: format lint test tests
+.PHONY: rust-format rust-lint quicktype
 
-all: format lint test
+BUILD_IMAGE = ghcr.io/amosjyng/zamm:v0.0.0-build
+CURRENT_DIR = $(shell pwd)
 
-format:
-	poetry run autoflake .
-	poetry run black .
-	poetry run isort .
+build: svelte rust
+	cargo tauri build $(ARGS)
 
-lint:
-	poetry run mypy .
-	poetry run black . --check
-	poetry run isort . --check
-	poetry run flake8 .
+mac: svelte rust
+	cargo tauri build --target universal-apple-darwin --verbose
 
-test: tests
-tests:
-	poetry run pytest -v
+copy-docker-deps:
+	mv -n /tmp/forks/async-openai/* ./forks/async-openai/
+	mv -n /tmp/forks/rvcr/* ./forks/rvcr/
+	mv -n /tmp/dependencies/src-svelte/forks/neodrag/packages/svelte/dist ./src-svelte/forks/neodrag/packages/svelte/
+	mv -n /tmp/dependencies/node_modules ./
+	mv -n /tmp/dependencies/src-svelte/node_modules ./src-svelte/
+	mv -n /tmp/dependencies/target ./src-tauri/
+
+build-docker:
+	docker run --rm -v $(CURRENT_DIR):/zamm -w /zamm $(BUILD_IMAGE) make copy-docker-deps build ARGS=$(ARGS)
+
+icon:
+	yarn tauri icon src-tauri/icons/icon.png
+
+docker:
+	docker build . -t $(BUILD_IMAGE)
+	docker push $(BUILD_IMAGE)
+
+e2e-test: svelte rust
+	yarn e2e-test
+
+test: svelte rust
+	cd src-svelte && make test
+	cd src-tauri && make test
+	yarn e2e-test
+
+quicktype:
+	yarn quicktype src-tauri/api/sample-call-schema.json -s schema -o src-tauri/src/sample_call.rs --visibility public --derive-debug
+	yarn quicktype src-tauri/api/sample-call-schema.json -s schema -o src-svelte/src/lib/sample-call.ts
+
+rust-format:
+	cd src-tauri && make format
+
+rust-lint:
+	cd src-tauri && make lint
+
+rust:
+	cd src-tauri && make
+
+svelte-format:
+	cd src-svelte && make format
+
+svelte-lint:
+	cd src-svelte && make lint
+
+svelte:
+	cd src-svelte && make
 
 clean:
-# from https://stackoverflow.com/a/41386937
-	find . -type f -name '*.py[co]' -delete -o -type d -name __pycache__ -delete
-	rm -rf /tmp/zamm/scratch/
-
-clean-tests:
-	find . -name "*.yaml" -type f | xargs rm -f
-
-release:
-	test -z "$$(git status --porcelain)"
-	git checkout main
-	git pull
-	poetry version patch
-	git checkout -b "release/v$$(poetry version -s)"
-	git commit -am "Releasing version v$$(poetry version -s)"
-	git tag -a -m "Releasing version v$$(poetry version -s)" "v$$(poetry version -s)"
-	poetry publish --build --username $$PYPI_USERNAME --password $$PYPI_PASSWORD
-# git push at the very end to get Github PR link
-	git push --set-upstream origin "release/v$$(poetry version -s)"
-# --follow-tags seems to suppress Github message output
-	git push --follow-tags
+	cd src-svelte && make clean
+	cd src-tauri && make clean

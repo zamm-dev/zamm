@@ -1,0 +1,265 @@
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+env:
+  POETRY_VERSION: "1.5.1"
+  NODEJS_VERSION: "20.5.1"
+  RUST_VERSION: "1.71.1"
+  PRE_COMMIT_VERSION: "3.6.0"
+  TAURI_CLI_VERSION: "1.5.9"
+  TAURI_DRIVER_VERSION: "0.1.3"
+
+jobs:
+  build:
+    name: Build entire program
+    runs-on: ubuntu-latest
+    container:
+      image: "ghcr.io/amosjyng/zamm:v0.0.0-build"
+      options: --user root
+    env:
+      HOME: /root
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FONTS_PAT }}
+          submodules: "recursive"
+      - name: Build artifacts
+        run: make copy-docker-deps build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: builds
+          path: |
+            src-svelte/.svelte-kit/
+            src-svelte/build/
+            src-svelte/forks/neodrag/packages/core/dist/
+            src-svelte/forks/neodrag/packages/svelte/dist/
+            src-tauri/target/release/zamm
+          retention-days: 1
+      - name: Upload .deb
+        uses: actions/upload-artifact@v3
+        with:
+          name: zamm.deb
+          path: src-tauri/target/release/bundle/deb/zamm_*.deb
+          retention-days: 1
+      - name: Upload AppImage
+        uses: actions/upload-artifact@v3
+        with:
+          name: zamm.AppImage
+          path: src-tauri/target/release/bundle/appimage/zamm_*.AppImage
+          retention-days: 1
+  pre-commit:
+    name: Check pre-commit hooks
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FONTS_PAT }}
+          submodules: "recursive"
+      - name: Install Tauri dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev
+      - name: Set up Yarn cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            **/node_modules
+            **/.eslintcache
+
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: Set up cargo cache
+        uses: Swatinem/rust-cache@v2
+        continue-on-error: false
+        with:
+          workspaces: "src-tauri -> target"
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+          components: rustfmt, clippy
+      - uses: actions/download-artifact@v3
+        with:
+          name: builds
+      - name: Install Node dependencies
+        # this step must run after the download-artifact step because yarn only installs
+        # the dependencies once, and won't update them if the underlying file on disk
+        # change
+        run: |
+          yarn install --frozen-lockfile
+          cd src-svelte && yarn svelte-kit sync
+      # end of common dependency setup with downloaded artifacts
+      - name: Install pre-commit
+        run: |
+          pipx install pre-commit==$PRE_COMMIT_VERSION
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pre-commit/
+          key: pre-commit-4|${{ hashFiles('.pre-commit-config.yaml') }}
+      - run: pre-commit run --show-diff-on-failure --color=always --all-files
+  rust:
+    name: Run Rust tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FONTS_PAT }}
+          submodules: "recursive"
+      - name: Install Tauri dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libasound2-dev
+      - name: Set up cargo cache
+        uses: Swatinem/rust-cache@v2
+        continue-on-error: false
+        with:
+          workspaces: "src-tauri -> target"
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+          components: rustfmt, clippy
+      - uses: actions/download-artifact@v3
+        with:
+          name: builds
+      # end of common dependency setup with downloaded artifacts
+
+      - name: Run Rust Tests
+        run: cargo test
+        working-directory: src-tauri
+  svelte:
+    name: Run Svelte tests
+    runs-on: ubuntu-latest
+    container:
+      image: "mcr.microsoft.com/playwright:v1.38.0-jammy"
+    env:
+      PLAYWRIGHT_TIMEOUT: 60000
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FONTS_PAT }}
+          submodules: "recursive"
+      - name: Set up Yarn cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            **/node_modules
+            **/.eslintcache
+
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - uses: actions/download-artifact@v3
+        with:
+          name: builds
+      - name: Install Node dependencies
+        run: |
+          yarn install --frozen-lockfile
+          cd src-svelte && yarn install --frozen-lockfile && yarn svelte-kit sync
+          cd ../webdriver && yarn install --frozen-lockfile
+      # end of common dependency setup with downloaded artifacts
+      - name: Update Playwright browsers
+        run: yarn playwright install
+      - name: Run Svelte Tests
+        run: |
+          xvfb-run yarn workspace gui test
+      - name: Upload final app
+        if: always() # run even if tests fail
+        uses: actions/upload-artifact@v3
+        with:
+          name: storybook-screenshots
+          path: |
+            src-svelte/screenshots/testing/**/*.png
+          retention-days: 1
+  e2e:
+    name: Run end-to-end tests
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.FONTS_PAT }}
+          submodules: "recursive"
+      - name: Install Tauri dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential curl wget file libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
+      - name: Set up Yarn cache
+        uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            **/node_modules
+            **/.eslintcache
+
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+      - name: Set up cargo cache
+        uses: Swatinem/rust-cache@v2
+        continue-on-error: false
+        with:
+          workspaces: "src-tauri -> target"
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODEJS_VERSION }}
+      - name: Install Node dependencies
+        run: |
+          yarn install --frozen-lockfile
+          cd src-svelte && yarn svelte-kit sync
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+          components: rustfmt, clippy
+      - uses: actions/download-artifact@v3
+        with:
+          name: builds
+      # end of common dependency setup with downloaded artifacts
+
+      - name: Install webdriver dependencies
+        run: sudo apt-get install -y webkit2gtk-driver xvfb
+      - name: Install tauri-cli
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --locked tauri-cli@${{ env.TAURI_CLI_VERSION }}
+      - name: Install tauri-driver
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --locked tauri-driver@${{ env.TAURI_DRIVER_VERSION }}
+      - name: Try creating directories
+        run: |
+          mkdir -p /home/runner/.local/share/zamm/
+          chmod -R 777 /home/runner/.local/share/zamm/
+          mkdir -p /home/runner/.config/dev.zamm/
+          echo "background_animation = false" > /home/runner/.config/dev.zamm/preferences.toml
+          chmod +x src-tauri/target/release/zamm
+      - name: Run headless WebdriverIO tests
+        run: xvfb-run yarn e2e-test
+      - name: Upload test screenshots as artifacts
+        if: always() # run even if tests fail
+        uses: actions/upload-artifact@v3
+        with:
+          name: webdriver-screenshots
+          path: webdriver/screenshots/testing/**/*.png
