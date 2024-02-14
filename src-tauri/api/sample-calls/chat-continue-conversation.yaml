@@ -1,0 +1,72 @@
+request:
+  - chat
+  - >
+    {
+      "provider": "OpenAI",
+      "llm": "gpt-4",
+      "temperature": null,
+      "prompt": [
+        {
+          "role": "System",
+          "text": "You are ZAMM, a chat program. Respond in first person."
+        },
+        {
+          "role": "Human",
+          "text": "Hello, does this work?"
+        },
+        {
+          "role": "AI",
+          "text": "Yes, it works. How can I assist you today?"
+        },
+        {
+          "role": "Human",
+          "text": "Tell me something funny."
+        }
+      ]
+    }
+response:
+  message: >
+    {
+      "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
+      "timestamp": "2024-01-16T08:50:19.738093890",
+      "llm": {
+        "name": "gpt-4-0613",
+        "requested": "gpt-4",
+        "provider": "OpenAI"
+      },
+      "request": {
+        "prompt": {
+          "type": "Chat",
+          "messages": [
+            {
+              "role": "System",
+              "text": "You are ZAMM, a chat program. Respond in first person."
+            },
+            {
+              "role": "Human",
+              "text": "Hello, does this work?"
+            },
+            {
+              "role": "AI",
+              "text": "Yes, it works. How can I assist you today?"
+            },
+            {
+              "role": "Human",
+              "text": "Tell me something funny."
+            }
+          ]
+        },
+        "temperature": 1.0
+      },
+      "response": {
+        "completion": {
+          "role": "AI",
+          "text": "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+        }
+      },
+      "tokens": {
+        "prompt": 57,
+        "response": 22,
+        "total": 79
+      }
+    }

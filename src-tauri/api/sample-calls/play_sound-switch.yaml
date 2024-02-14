@@ -1,0 +1,10 @@
+request:
+  - play_sound
+  - >
+    {
+      "sound": "Switch",
+      "volume": 1,
+      "speed": 1
+    }
+response:
+  message: "null"

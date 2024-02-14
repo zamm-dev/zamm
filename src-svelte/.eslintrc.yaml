@@ -1,0 +1,16 @@
+# https://github.com/janosh/awesome-sveltekit/blob/main/site/.eslintrc.yml
+extends:
+  - plugin:svelte/recommended
+overrides:
+  - files: ["*.svelte"]
+    parser: svelte-eslint-parser
+    parserOptions:
+      parser: "@typescript-eslint/parser"
+rules:
+  no-inner-declarations: off
+  no-undef: off
+ignorePatterns:
+  - build/
+  - dist/
+  - "!.storybook"
+  - src/lib/sample-call.ts

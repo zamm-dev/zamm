@@ -1,0 +1,187 @@
+@import "@fontsource/jetbrains-mono";
+
+@font-face {
+  font-family: 'Nasalization';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/nasalization-rg.otf') format("opentype");
+}
+
+@font-face {
+  font-family: 'Nasalization';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/nasalization-bd.otf') format("opentype");
+}
+
+@font-face {
+  font-family: 'Nasalization';
+  font-style: normal;
+  font-weight: 800;
+  src: url('/fonts/nasalization-hv.otf') format("opentype");
+}
+
+@font-face {
+  font-family: 'Good Timing';
+  font-style: italic;
+  font-weight: 400;
+  src: url('/fonts/good_timing_rg_it.otf') format("opentype");
+}
+
+@font-face {
+  font-family: 'Good Timing';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/good_timing_rg.otf') format("opentype");
+}
+
+@font-face {
+  font-family: 'Good Timing';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/good_timing_bd.otf') format("opentype");
+}
+
+:root {
+  --font-body: "Good Timing", sans-serif;
+  --font-header: "Nasalization", sans-serif;
+  --font-mono: "Jetbrains Mono", monospace;
+  --color-text: rgba(0, 0, 0, 1);
+  --color-header: rgba(255, 0, 0, 1);
+  --color-faded: rgba(0, 0, 0, 0.5);
+  --color-error: #FF0000;
+  --color-caution: #FF8C00;
+  --color-border: #CCC;
+  --color-foreground: #FFF;
+  --color-background: #F4F4F4;
+  --color-offwhite: #FAF9F6;
+  --sidebar-width: 3.75rem;
+  --shadow-offset: 4px;
+  --shadow-blur: 8px;
+  --corner-roundness: 0.375rem;
+  --controls-corner-cut: 7px;
+  --base-animation-speed: 1;
+  --standard-duration: 100ms;
+  font-family: var(--font-body);
+  color: var(--color-text);
+  font-weight: 400;
+  font-size: 18px;
+}
+
+td, th {
+  padding: 0;
+}
+
+h2 {
+  margin-top: 0;
+  font-family: var(--font-header);
+  font-weight: 400;
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--color-header);
+  text-transform: uppercase;
+  font-weight: 400;
+  margin-bottom: 0;
+  filter: drop-shadow(0px 1px 1px rgba(255, 0, 0, 0.7));
+}
+
+h3, th {
+  font-family: var(--font-header);
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 400;
+  filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.7));
+}
+
+input[type="text"], textarea {
+  border: none;
+}
+
+input[type="text"]:focus, textarea:focus {
+  outline: none;
+}
+
+input[type="text"]::placeholder, textarea::placeholder {
+  font-style: italic;
+}
+
+body {
+  background-color: white;
+}
+
+.accessibility-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.cut-corners {
+  --cut-top-left: var(--controls-corner-cut);
+  --cut-bottom-right: var(--controls-corner-cut);
+  --border: 0.15rem;
+  --diagonal-border: calc(var(--border) * 0.8);
+  --border-color: var(--color-border);
+  --background-color: var(--color-background);
+
+  border: var(--border) solid var(--border-color);
+  background:
+    linear-gradient(
+        -45deg,
+        var(--border-color) 0 calc(var(--cut-bottom-right) + var(--diagonal-border)),
+        var(--background-color) 0
+      )
+      bottom right / 50% 100%,
+    linear-gradient(
+        135deg,
+        var(--border-color) 0 calc(var(--cut-top-left) + var(--diagonal-border)),
+        var(--background-color) 0
+      )
+      top left / 50% 100%;
+  background-origin: border-box;
+  background-repeat: no-repeat;
+  -webkit-mask:
+    linear-gradient(-45deg, transparent 0 var(--cut-bottom-right), #fff 0) bottom right,
+    linear-gradient(135deg, transparent 0 var(--cut-top-left), #fff 0) top left;
+  -webkit-mask-size: 51% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask:
+    linear-gradient(-45deg, transparent 0 var(--cut-bottom-right), #fff 0) bottom right,
+    linear-gradient(135deg, transparent 0 var(--cut-top-left), #fff 0) top left;
+  mask-size: 51% 100%;
+  mask-repeat: no-repeat;
+}
+
+.cut-corners.outer {
+  padding: 1px;
+  --background-color: var(--color-background);
+  --border: 2px;
+  --diagonal-border: 2.5px;
+  --cut-top-left: 8px;
+  --cut-bottom-right: 8px;
+}
+
+a, .link-like {
+  color: #3333FF;
+  text-decoration: none;
+}
+
+a[href^="http://"]::after,
+a[href^="https://"]::after {
+  --size: 1rem;
+  content: "";
+  width: var(--size);
+  height: var(--size);
+  margin-left: 0.25rem;
+  margin-bottom: -0.15rem;
+  /* equivalent of ~icons/tabler/external-link */
+  background-image: url('data:image/svg+xml,%3Csvg xmlns="http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg" width="24" height="24" viewBox="0 0 24 24"%3E%3Cpath fill="none" stroke="%233333FF" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6m-7 1l9-9m-5 0h5v5"%2F%3E%3C%2Fsvg%3E');
+  background-position: bottom;
+  background-repeat: no-repeat;
+  background-size: contain;
+  display: inline-block;
+}

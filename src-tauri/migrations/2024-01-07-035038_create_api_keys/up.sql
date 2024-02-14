@@ -1,0 +1,4 @@
+CREATE TABLE api_keys (
+  service VARCHAR PRIMARY KEY NOT NULL,
+  api_key VARCHAR NOT NULL
+)

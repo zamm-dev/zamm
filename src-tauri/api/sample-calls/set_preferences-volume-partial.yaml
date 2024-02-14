@@ -1,0 +1,14 @@
+request:
+  - set_preferences
+  - >
+    {
+      "preferences": {
+        "animations_on": null,
+        "background_animation": null,
+        "animation_speed": null,
+        "sound_on": null,
+        "volume": 0.8
+      }
+    }
+response:
+  message: "null"
