@@ -17,9 +17,7 @@ import {
   toMatchImageSnapshot,
   type MatchImageSnapshotOptions,
 } from "jest-image-snapshot";
-import type { ChildProcess } from "child_process";
 import * as fs from "fs/promises";
-import { ensureStorybookRunning, killStorybook } from "$lib/test-helpers";
 import sizeOf from "image-size";
 
 const DEFAULT_TIMEOUT =
@@ -168,7 +166,6 @@ interface StorybookTestContext {
 }
 
 describe.concurrent("Storybook visual tests", () => {
-  let storybookProcess: ChildProcess | undefined;
   let browser: Browser;
   let browserContext: BrowserContext;
 
@@ -177,7 +174,6 @@ describe.concurrent("Storybook visual tests", () => {
     console.log(`Running tests with Webkit version ${browser.version()}`);
     browserContext = await browser.newContext();
     browserContext.setDefaultTimeout(DEFAULT_TIMEOUT);
-    storybookProcess = await ensureStorybookRunning();
 
     try {
       await fs.rm(`${SCREENSHOTS_BASE_DIR}/testing`, {
@@ -192,7 +188,6 @@ describe.concurrent("Storybook visual tests", () => {
   afterAll(async () => {
     await browserContext.close();
     await browser.close();
-    await killStorybook(storybookProcess);
   });
 
   beforeEach<StorybookTestContext>(

@@ -21,5 +21,6 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     alias: [{ find: /^svelte$/, replacement: "svelte/internal" }],
+    globalSetup: "src/testSetup.ts",
   },
 });
