@@ -11,7 +11,6 @@ import {
   beforeEach,
   describe,
   test,
-  type TestContext,
 } from "vitest";
 import {
   toMatchImageSnapshot,
@@ -190,20 +189,16 @@ describe.concurrent("Storybook visual tests", () => {
     await browser.close();
   });
 
-  beforeEach<StorybookTestContext>(
-    async (context: TestContext & StorybookTestContext) => {
-      context.page = await browserContext.newPage();
-      context.expect.extend({ toMatchImageSnapshot });
-    },
-  );
+  beforeEach<StorybookTestContext>(async (context) => {
+    context.page = await browserContext.newPage();
+    context.expect.extend({ toMatchImageSnapshot });
+  });
 
-  afterEach<StorybookTestContext>(
-    async (context: TestContext & StorybookTestContext) => {
-      if (context.task.result?.state === "pass") {
-        await context.page.close();
-      }
-    },
-  );
+  afterEach<StorybookTestContext>(async (context) => {
+    if (context.task.result?.state === "pass") {
+      await context.page.close();
+    }
+  });
 
   const takeScreenshot = async (page: Page, screenshotEntireBody?: boolean) => {
     const frame = page.frame({ name: "storybook-preview-iframe" });
@@ -240,9 +235,9 @@ describe.concurrent("Storybook visual tests", () => {
             }
           : variant;
       const testName = `${storybookPath}/${variantConfig.name}.png`;
-      test(
+      test<StorybookTestContext>(
         `${testName} should render the same`,
-        async ({ expect, page }: TestContext & StorybookTestContext) => {
+        async ({ expect, page }) => {
           const variantPrefix = `--${variantConfig.name}`;
 
           await page.goto(
