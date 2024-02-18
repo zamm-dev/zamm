@@ -243,8 +243,21 @@ describe.concurrent("Storybook visual tests", () => {
           await page.goto(
             `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
           );
+          // wait for fonts to load
           await page.locator("button[title='Hide addons [A]']").click();
           await page.evaluate(() => document.fonts.ready);
+          // wait for images to load
+          const imagesLocator = page.locator("//img");
+          const images = await imagesLocator.evaluateAll((images) => {
+            return images.map((i) => {
+              i.scrollIntoView();
+              return i as HTMLImageElement;
+            });
+          });
+          const imagePromises = images.map(
+            (i) => i.complete || new Promise((f) => (i.onload = f)),
+          );
+          await Promise.all(imagePromises);
 
           const screenshot = await takeScreenshot(
             page,
