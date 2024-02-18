@@ -18,7 +18,7 @@ jobs:
     name: Build entire program
     runs-on: ubuntu-latest
     container:
-      image: "ghcr.io/amosjyng/zamm:v0.0.0-build"
+      image: "ghcr.io/amosjyng/zamm:v0.1.1-build"
       options: --user root
     env:
       HOME: /root
