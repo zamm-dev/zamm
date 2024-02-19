@@ -46,6 +46,7 @@ libsqlite3-sys = { version = "0.27.0", features = ["bundled"] }
 custom-protocol = ["tauri/custom-protocol"]
 
 [dev-dependencies]
+cfg-if = "1.0.0"
 rvcr = "0.1.5"
 serde_yaml = "0.9.25"
 temp-env = "0.3.4"
