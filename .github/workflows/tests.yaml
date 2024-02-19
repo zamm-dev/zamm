@@ -94,6 +94,10 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           name: builds
+      - name: Build Neodrag fork
+        run: |
+          npm install -g pnpm
+          cd src-svelte/forks/neodrag && pnpm install && pnpm compile
       - name: Install Node dependencies
         # this step must run after the download-artifact step because yarn only installs
         # the dependencies once, and won't update them if the underlying file on disk
