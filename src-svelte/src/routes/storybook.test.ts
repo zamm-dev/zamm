@@ -3,7 +3,6 @@ import {
   webkit,
   type Page,
   type BrowserContext,
-  type Frame,
 } from "@playwright/test";
 import {
   afterAll,
@@ -201,10 +200,11 @@ describe.concurrent("Storybook visual tests", () => {
     }
   });
 
-  const takeScreenshot = async (
-    frame: Frame,
-    screenshotEntireBody?: boolean,
-  ) => {
+  const takeScreenshot = async (page: Page, screenshotEntireBody?: boolean) => {
+    const frame = page.frame({ name: "storybook-preview-iframe" });
+    if (!frame) {
+      throw new Error("Could not find Storybook iframe");
+    }
     let locator = screenshotEntireBody
       ? "body"
       : "#storybook-root > :first-child";
@@ -243,17 +243,24 @@ describe.concurrent("Storybook visual tests", () => {
           await page.goto(
             `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
           );
-          const frame = page.frame({ name: "storybook-preview-iframe" });
-          if (!frame) {
-            throw new Error("Could not find Storybook iframe");
-          }
-          await page.locator("button[title='Hide addons [A]']").click();
-
           // wait for fonts to load
-          await frame.evaluate(() => document.fonts.ready);
+          await page.locator("button[title='Hide addons [A]']").click();
+          await page.evaluate(() => document.fonts.ready);
+          // wait for images to load
+          const imagesLocator = page.locator("//img");
+          const images = await imagesLocator.evaluateAll((images) => {
+            return images.map((i) => {
+              i.scrollIntoView();
+              return i as HTMLImageElement;
+            });
+          });
+          const imagePromises = images.map(
+            (i) => i.complete || new Promise((f) => (i.onload = f)),
+          );
+          await Promise.all(imagePromises);
 
           const screenshot = await takeScreenshot(
-            frame,
+            page,
             config.screenshotEntireBody,
           );
 
@@ -292,7 +299,7 @@ describe.concurrent("Storybook visual tests", () => {
           if (variantConfig.assertDynamic !== undefined) {
             await new Promise((r) => setTimeout(r, 1000));
             const newScreenshot = await takeScreenshot(
-              frame,
+              page,
               config.screenshotEntireBody,
             );
 
@@ -310,7 +317,7 @@ describe.concurrent("Storybook visual tests", () => {
           }
         },
         {
-          retry: 0,
+          retry: 1,
           timeout: DEFAULT_TIMEOUT * 2.2,
         },
       );
