@@ -15,6 +15,8 @@ pub enum OS {
 pub enum Shell {
     Bash,
     Zsh,
+    #[allow(clippy::enum_variant_names)]
+    PowerShell,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
@@ -61,6 +63,9 @@ fn get_shell() -> Option<Shell> {
         return Some(Shell::Bash);
     }
 
+    #[cfg(target_os = "windows")]
+    return Some(Shell::PowerShell);
+
     None
 }
 
@@ -77,6 +82,7 @@ fn get_shell_init_file(shell: &Option<Shell>) -> Option<String> {
     let relative_file = match shell {
         Some(Shell::Bash) => Some("~/.bashrc".to_string()),
         Some(Shell::Zsh) => Some("~/.zshrc".to_string()),
+        Some(Shell::PowerShell) => None,
         None => get_relative_profile_init_file(),
     };
     relative_file
