@@ -7,13 +7,10 @@ import {
   type Frame,
 } from "@playwright/test";
 import { afterAll, beforeAll, describe, test } from "vitest";
-import type { ChildProcess } from "child_process";
-import { ensureStorybookRunning, killStorybook } from "$lib/test-helpers";
 
 const DEBUG_LOGGING = false;
 
 describe("Slider drag test", () => {
-  let storybookProcess: ChildProcess | undefined;
   let page: Page;
   let frame: Frame;
   let browser: Browser;
@@ -21,8 +18,6 @@ describe("Slider drag test", () => {
   let numSoundsPlayed: number;
 
   beforeAll(async () => {
-    storybookProcess = await ensureStorybookRunning();
-
     browser = await chromium.launch({ headless: true });
     context = await browser.newContext();
     await context.exposeFunction(
@@ -40,7 +35,6 @@ describe("Slider drag test", () => {
 
   afterAll(async () => {
     await browser.close();
-    await killStorybook(storybookProcess);
   });
 
   beforeEach(() => {

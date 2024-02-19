@@ -21,6 +21,6 @@ GithubContributor.args = {
 export const DependencyWithIcon: StoryObj = Template.bind({}) as any;
 DependencyWithIcon.args = {
   name: "Tauri",
-  logo: "tauri",
+  logo: "tauri.png",
   url: "https://tauri.app/",
 };

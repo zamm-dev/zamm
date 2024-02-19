@@ -11,15 +11,12 @@ import {
   beforeEach,
   describe,
   test,
-  type TestContext,
 } from "vitest";
 import {
   toMatchImageSnapshot,
   type MatchImageSnapshotOptions,
 } from "jest-image-snapshot";
-import type { ChildProcess } from "child_process";
 import * as fs from "fs/promises";
-import { ensureStorybookRunning, killStorybook } from "$lib/test-helpers";
 import sizeOf from "image-size";
 
 const DEFAULT_TIMEOUT =
@@ -168,7 +165,6 @@ interface StorybookTestContext {
 }
 
 describe.concurrent("Storybook visual tests", () => {
-  let storybookProcess: ChildProcess | undefined;
   let browser: Browser;
   let browserContext: BrowserContext;
 
@@ -177,7 +173,6 @@ describe.concurrent("Storybook visual tests", () => {
     console.log(`Running tests with Webkit version ${browser.version()}`);
     browserContext = await browser.newContext();
     browserContext.setDefaultTimeout(DEFAULT_TIMEOUT);
-    storybookProcess = await ensureStorybookRunning();
 
     try {
       await fs.rm(`${SCREENSHOTS_BASE_DIR}/testing`, {
@@ -192,23 +187,18 @@ describe.concurrent("Storybook visual tests", () => {
   afterAll(async () => {
     await browserContext.close();
     await browser.close();
-    await killStorybook(storybookProcess);
   });
 
-  beforeEach<StorybookTestContext>(
-    async (context: TestContext & StorybookTestContext) => {
-      context.page = await browserContext.newPage();
-      context.expect.extend({ toMatchImageSnapshot });
-    },
-  );
+  beforeEach<StorybookTestContext>(async (context) => {
+    context.page = await browserContext.newPage();
+    context.expect.extend({ toMatchImageSnapshot });
+  });
 
-  afterEach<StorybookTestContext>(
-    async (context: TestContext & StorybookTestContext) => {
-      if (context.task.result?.state === "pass") {
-        await context.page.close();
-      }
-    },
-  );
+  afterEach<StorybookTestContext>(async (context) => {
+    if (context.task.result?.state === "pass") {
+      await context.page.close();
+    }
+  });
 
   const takeScreenshot = async (page: Page, screenshotEntireBody?: boolean) => {
     const frame = page.frame({ name: "storybook-preview-iframe" });
@@ -245,16 +235,29 @@ describe.concurrent("Storybook visual tests", () => {
             }
           : variant;
       const testName = `${storybookPath}/${variantConfig.name}.png`;
-      test(
+      test<StorybookTestContext>(
         `${testName} should render the same`,
-        async ({ expect, page }: TestContext & StorybookTestContext) => {
+        async ({ expect, page }) => {
           const variantPrefix = `--${variantConfig.name}`;
 
           await page.goto(
             `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
           );
+          // wait for fonts to load
           await page.locator("button[title='Hide addons [A]']").click();
           await page.evaluate(() => document.fonts.ready);
+          // wait for images to load
+          const imagesLocator = page.locator("//img");
+          const images = await imagesLocator.evaluateAll((images) => {
+            return images.map((i) => {
+              i.scrollIntoView();
+              return i as HTMLImageElement;
+            });
+          });
+          const imagePromises = images.map(
+            (i) => i.complete || new Promise((f) => (i.onload = f)),
+          );
+          await Promise.all(imagePromises);
 
           const screenshot = await takeScreenshot(
             page,

@@ -30,8 +30,5 @@
   },
   "optionalDependencies": {
     "quicktype": "^23.0.71"
-  },
-  "resolutions": {
-    "vite": "4.5.2"
   }
 }

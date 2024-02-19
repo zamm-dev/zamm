@@ -1,6 +1,6 @@
 .PHONY: rust-format rust-lint quicktype
 
-BUILD_IMAGE = ghcr.io/amosjyng/zamm:v0.0.0-build
+BUILD_IMAGE = ghcr.io/amosjyng/zamm:v0.1.1-build
 CURRENT_DIR = $(shell pwd)
 
 build: svelte rust
