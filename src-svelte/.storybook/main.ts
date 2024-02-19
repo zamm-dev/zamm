@@ -44,7 +44,7 @@ const config: StorybookConfig = {
     getAbsolutePath("@storybook/addon-viewport"),
   ],
   framework: {
-    name: getAbsolutePath("@storybook/sveltekit"),
+    name: "@storybook/sveltekit",
     options: {},
   },
   core: {
