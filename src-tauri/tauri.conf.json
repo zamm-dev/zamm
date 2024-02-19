@@ -35,6 +35,14 @@
       ],
       "macOS": {
         "license": "../LICENSE"
+      },
+      "windows": {
+        "nsis": {
+          "license": "../LICENSE"
+        },
+        "wix": {
+          "license": "../LICENSE.rtf"
+        }
       }
     },
     "security": {
