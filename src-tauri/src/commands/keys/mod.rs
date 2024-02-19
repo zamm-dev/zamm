@@ -11,6 +11,7 @@ mod tests {
     use crate::ZammApiKeys;
     use get::tests::check_get_api_keys_sample;
     use set::tests::{check_set_api_key_sample, setup_zamm_db};
+    use std::collections::HashMap;
     use tokio::sync::Mutex;
 
     #[tokio::test]
@@ -22,6 +23,7 @@ mod tests {
             "api/sample-calls/set_api_key-existing-no-newline.yaml",
             &api_keys,
             "api_keys_integration_tests",
+            HashMap::new(),
         )
         .await;
 

@@ -110,6 +110,7 @@ pub mod tests {
     use diesel::prelude::*;
     use diesel_migrations::MigrationHarness;
     use serde::{Deserialize, Serialize};
+    use std::collections::HashMap;
     use std::fs;
     use std::path::{Path, PathBuf};
     use tokio::sync::Mutex;
@@ -157,6 +158,7 @@ pub mod tests {
         sample_file: &str,
         existing_zamm_api_keys: &ZammApiKeys,
         test_dir_name: &str,
+        json_replacements: HashMap<String, String>,
     ) {
         let sample = read_sample(sample_file);
         assert_eq!(sample.request.len(), 2);
@@ -215,8 +217,11 @@ pub mod tests {
             Ok(r) => serde_json::to_string_pretty(&r).unwrap(),
             Err(e) => serde_json::to_string_pretty(&e).unwrap(),
         };
+        let actual_edited_json = json_replacements
+            .iter()
+            .fold(actual_json, |acc, (k, v)| acc.replace(k, v));
         let expected_json = sample.response.message.trim();
-        assert_eq!(actual_json, expected_json);
+        assert_eq!(actual_edited_json, expected_json);
 
         // check that the API call actually modified the in-memory API keys,
         // regardless of success or failure
@@ -263,6 +268,7 @@ pub mod tests {
             sample_file,
             existing_zamm_api_keys,
             "set_api_key",
+            HashMap::new(),
         )
         .await;
     }
@@ -349,10 +355,18 @@ pub mod tests {
     #[tokio::test]
     async fn test_invalid_filename() {
         let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
-        check_set_api_key_sample_unit(
+        check_set_api_key_sample(
             &setup_zamm_db(),
             "api/sample-calls/set_api_key-invalid-filename.yaml",
             &api_keys,
+            "set_api_key",
+            HashMap::from([(
+                // error on Windows
+                "\"The system cannot find the path specified. (os error 3)\""
+                    .to_string(),
+                // should be replaced by equivalent error on Linux
+                "\"Is a directory (os error 21)\"".to_string(),
+            )]),
         )
         .await;
     }

@@ -15,6 +15,8 @@ pub enum OS {
 pub enum Shell {
     Bash,
     Zsh,
+    #[allow(clippy::enum_variant_names)]
+    PowerShell,
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
@@ -61,7 +63,10 @@ fn get_shell() -> Option<Shell> {
         return Some(Shell::Bash);
     }
 
-    None
+    #[cfg(target_os = "windows")]
+    return Some(Shell::PowerShell);
+    #[cfg(not(target_os = "windows"))]
+    return None;
 }
 
 fn get_relative_profile_init_file() -> Option<String> {
@@ -77,6 +82,7 @@ fn get_shell_init_file(shell: &Option<Shell>) -> Option<String> {
     let relative_file = match shell {
         Some(Shell::Bash) => Some("~/.bashrc".to_string()),
         Some(Shell::Zsh) => Some("~/.zshrc".to_string()),
+        Some(Shell::PowerShell) => None,
         None => get_relative_profile_init_file(),
     };
     relative_file
@@ -102,6 +108,7 @@ pub fn get_system_info() -> SystemInfo {
 mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
+    use cfg_if::cfg_if;
     use std::fs;
 
     fn parse_system_info(response_str: &str) -> SystemInfo {
@@ -148,8 +155,9 @@ mod tests {
         assert!(shell.is_some());
     }
 
+    #[cfg(not(target_os = "windows"))]
     #[test]
-    fn test_can_predict_shell_init() {
+    fn test_can_predict_shell_init_for_zsh() {
         let shell = Shell::Zsh;
         let shell_init_file = get_shell_init_file(&Some(shell));
         println!("Shell init file is {:?}", shell_init_file);
@@ -161,10 +169,18 @@ mod tests {
 
     #[test]
     fn test_can_predict_profile_init() {
-        let shell_init_file = get_shell_init_file(&None).unwrap();
-        println!("Shell init file is {}", shell_init_file);
-        assert!(shell_init_file.starts_with('/'));
-        assert!(shell_init_file.ends_with(".profile"));
+        let shell_init_file = get_shell_init_file(&None);
+        println!("Shell init file is {:?}", shell_init_file);
+
+        cfg_if! {
+            if #[cfg(target_os = "windows")] {
+                assert!(shell_init_file.is_none());
+            } else {
+                let file_path = shell_init_file.unwrap();
+                assert!(file_path.starts_with('/'));
+                assert!(file_path.ends_with(".profile"));
+            }
+        }
     }
 
     #[test]

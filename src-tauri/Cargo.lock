@@ -5329,6 +5329,7 @@ version = "0.1.1"
 dependencies = [
  "anyhow",
  "async-openai",
+ "cfg-if",
  "chrono",
  "diesel",
  "diesel_migrations",
