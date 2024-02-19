@@ -4,10 +4,10 @@
 use diesel::sqlite::SqliteConnection;
 
 use setup::api_keys::{setup_api_keys, ApiKeys};
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, not(target_os = "windows")))]
 use specta::collect_types;
 
-#[cfg(debug_assertions)]
+#[cfg(all(debug_assertions, not(target_os = "windows")))]
 use tauri_specta::ts;
 
 use std::env;
@@ -30,7 +30,7 @@ pub struct ZammDatabase(Mutex<Option<SqliteConnection>>);
 pub struct ZammApiKeys(Mutex<ApiKeys>);
 
 fn main() {
-    #[cfg(debug_assertions)]
+    #[cfg(all(debug_assertions, not(target_os = "windows")))]
     ts::export(
         collect_types![
             get_api_keys,
