@@ -140,9 +140,8 @@ mod tests {
     use crate::models::llm_calls::{ChatMessage, LlmCallRow};
     use crate::sample_call::SampleCall;
     use crate::setup::api_keys::ApiKeys;
-    use crate::setup::db::MIGRATIONS;
+    use crate::test_helpers::setup_zamm_db;
     use diesel::prelude::*;
-    use diesel_migrations::MigrationHarness;
     use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
     use rvcr::{VCRMiddleware, VCRMode};
     use serde::{Deserialize, Serialize};
@@ -166,16 +165,6 @@ mod tests {
                 }
             })
             .collect();
-    }
-
-    fn setup_database() -> SqliteConnection {
-        let mut conn = SqliteConnection::establish(":memory:").unwrap();
-        conn.run_pending_migrations(MIGRATIONS).unwrap();
-        conn
-    }
-
-    pub fn setup_zamm_db() -> ZammDatabase {
-        ZammDatabase(Mutex::new(Some(setup_database())))
     }
 
     async fn get_llm_call(db: &ZammDatabase, call_id: &EntityId) -> LlmCall {

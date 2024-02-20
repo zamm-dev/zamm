@@ -8,9 +8,10 @@ pub use set::set_api_key;
 mod tests {
     use super::*;
     use crate::setup::api_keys::ApiKeys;
+    use crate::test_helpers::setup_zamm_db;
     use crate::ZammApiKeys;
     use get::tests::check_get_api_keys_sample;
-    use set::tests::{check_set_api_key_sample, setup_zamm_db};
+    use set::tests::check_set_api_key_sample;
     use std::collections::HashMap;
     use tokio::sync::Mutex;
 

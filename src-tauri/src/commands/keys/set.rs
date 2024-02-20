@@ -105,25 +105,13 @@ pub mod tests {
     use crate::sample_call::SampleCall;
     use crate::schema;
     use crate::setup::api_keys::ApiKeys;
-    use crate::setup::db::MIGRATIONS;
-    use crate::test_helpers::get_temp_test_dir;
+    use crate::test_helpers::{get_temp_test_dir, setup_database, setup_zamm_db};
     use diesel::prelude::*;
-    use diesel_migrations::MigrationHarness;
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
     use std::fs;
     use std::path::{Path, PathBuf};
     use tokio::sync::Mutex;
-
-    fn setup_database() -> SqliteConnection {
-        let mut conn = SqliteConnection::establish(":memory:").unwrap();
-        conn.run_pending_migrations(MIGRATIONS).unwrap();
-        conn
-    }
-
-    pub fn setup_zamm_db() -> ZammDatabase {
-        ZammDatabase(Mutex::new(Some(setup_database())))
-    }
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct SetApiKeyRequest {
