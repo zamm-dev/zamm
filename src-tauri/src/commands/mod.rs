@@ -5,7 +5,7 @@ mod preferences;
 mod sounds;
 mod system;
 
-pub use errors::Error;
+pub use errors::{Error, ZammResult};
 pub use keys::{get_api_keys, set_api_key};
 pub use llms::chat;
 pub use preferences::{get_preferences, set_preferences};

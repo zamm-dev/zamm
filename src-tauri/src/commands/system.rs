@@ -107,12 +107,9 @@ pub fn get_system_info() -> SystemInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::SampleCallTestCase;
+    use crate::sample_call::SampleCall;
+    use crate::test_helpers::{DirectReturn, SampleCallTestCase};
     use cfg_if::cfg_if;
-
-    fn parse_system_info(response_str: &str) -> SystemInfo {
-        serde_json::from_str(response_str).unwrap()
-    }
 
     struct GetSystemInfoTestCase {
         pub system_info: SystemInfo,
@@ -125,17 +122,17 @@ mod tests {
         async fn make_request(&mut self, _args: &Option<()>) -> SystemInfo {
             self.system_info.clone()
         }
+
+        fn serialize_result(&self, sample: &SampleCall, result: &SystemInfo) -> String {
+            DirectReturn::serialize_result(self, sample, result)
+        }
+
+        fn check_result(&self, sample: &SampleCall, result: &SystemInfo) {
+            DirectReturn::check_result(self, sample, result)
+        }
     }
 
-    async fn check_get_system_info_sample(file_prefix: &str, actual_info: &SystemInfo) {
-        let mut test_case = GetSystemInfoTestCase {
-            system_info: actual_info.clone(),
-        };
-        let call = test_case.check_sample_call(file_prefix).await;
-
-        let expected_info = parse_system_info(&call.sample.response.message);
-        assert_eq!(&test_case.system_info, &expected_info);
-    }
+    impl DirectReturn<SystemInfo> for GetSystemInfoTestCase {}
 
     #[test]
     fn test_can_determine_zamm_version() {
@@ -193,17 +190,16 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_linux_system_info() {
-        let system_info = SystemInfo {
-            zamm_version: "0.0.0".to_string(),
-            os: Some(OS::Linux),
-            shell: Some(Shell::Zsh),
-            shell_init_file: Some("/root/.zshrc".to_string()),
+        let mut test_case = GetSystemInfoTestCase {
+            system_info: SystemInfo {
+                zamm_version: "0.0.0".to_string(),
+                os: Some(OS::Linux),
+                shell: Some(Shell::Zsh),
+                shell_init_file: Some("/root/.zshrc".to_string()),
+            },
         };
-
-        check_get_system_info_sample(
-            "./api/sample-calls/get_system_info-linux.yaml",
-            &system_info,
-        )
-        .await;
+        test_case
+            .check_sample_call("./api/sample-calls/get_system_info-linux.yaml")
+            .await;
     }
 }

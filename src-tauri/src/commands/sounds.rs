@@ -42,7 +42,8 @@ fn play_sound_async(sound: Sound, volume: f32, speed: f32) -> ZammResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::SampleCallTestCase;
+    use crate::sample_call::SampleCall;
+    use crate::test_helpers::{DirectReturn, SampleCallTestCase};
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct PlaySoundRequest {
@@ -63,14 +64,21 @@ mod tests {
             let actual_args = args.as_ref().unwrap().clone();
             play_sound(actual_args.sound, actual_args.volume, actual_args.speed);
         }
+
+        fn serialize_result(&self, sample: &SampleCall, result: &()) -> String {
+            DirectReturn::serialize_result(self, sample, result)
+        }
+
+        fn check_result(&self, sample: &SampleCall, result: &()) {
+            DirectReturn::check_result(self, sample, result)
+        }
     }
+
+    impl DirectReturn<()> for PlaySoundTestCase {}
 
     async fn check_play_sound_sample(file_prefix: &str) {
         let mut test_case = PlaySoundTestCase {};
-        let call = test_case.check_sample_call(file_prefix).await;
-        let actual_json = serde_json::to_string(&call.result).unwrap();
-        let expected_json = call.sample.response.message;
-        assert_eq!(actual_json, expected_json);
+        test_case.check_sample_call(file_prefix).await;
     }
 
     #[tokio::test]

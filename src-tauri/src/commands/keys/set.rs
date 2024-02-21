@@ -102,10 +102,13 @@ pub async fn set_api_key(
 pub mod tests {
     use super::*;
     use crate::models::NewApiKey;
+    use crate::sample_call::SampleCall;
     use crate::schema;
     use crate::setup::api_keys::ApiKeys;
+    use crate::test_helpers::api_testing::serialize_zamm_result;
     use crate::test_helpers::{
         get_temp_test_dir, setup_database, setup_zamm_db, SampleCallTestCase,
+        ZammResultReturn,
     };
     use diesel::prelude::*;
     use serde::{Deserialize, Serialize};
@@ -125,6 +128,7 @@ pub mod tests {
         api_keys: &'a ZammApiKeys,
         db: &'a ZammDatabase,
         test_dir_name: &'a str,
+        json_replacements: HashMap<String, String>,
         valid_request_path_specified: Option<bool>,
         request_path: Option<PathBuf>,
         test_init_file: Option<String>,
@@ -182,6 +186,31 @@ pub mod tests {
             )
             .await
         }
+
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<()>,
+        ) -> String {
+            ZammResultReturn::serialize_result(self, sample, result)
+        }
+
+        fn check_result(&self, sample: &SampleCall, result: &ZammResult<()>) {
+            ZammResultReturn::check_result(self, sample, result)
+        }
+    }
+
+    impl<'a> ZammResultReturn<()> for SetApiKeyTestCase<'a> {
+        fn serialize_result(
+            &self,
+            _sample: &SampleCall,
+            result: &ZammResult<()>,
+        ) -> String {
+            let actual_json = serialize_zamm_result(result);
+            self.json_replacements
+                .iter()
+                .fold(actual_json, |acc, (k, v)| acc.replace(k, v))
+        }
     }
 
     async fn get_openai_api_key_from_db(db: &ZammDatabase) -> Option<String> {
@@ -206,30 +235,13 @@ pub mod tests {
             api_keys: existing_zamm_api_keys,
             db,
             test_dir_name,
+            json_replacements,
             valid_request_path_specified: None,
             request_path: None,
             test_init_file: None,
         };
         let call = test_case.check_sample_call(sample_file).await;
         let request = call.args.unwrap();
-
-        // check that the API call returns the expected success or failure signal
-        if call.sample.response.success == Some(false) {
-            assert!(call.result.is_err(), "API call should have thrown error");
-        } else {
-            assert!(call.result.is_ok(), "API call failed: {:?}", call.result);
-        }
-
-        // check that the API call returns the expected JSON
-        let actual_json = match call.result {
-            Ok(r) => serde_json::to_string_pretty(&r).unwrap(),
-            Err(e) => serde_json::to_string_pretty(&e).unwrap(),
-        };
-        let actual_edited_json = json_replacements
-            .iter()
-            .fold(actual_json, |acc, (k, v)| acc.replace(k, v));
-        let expected_json = call.sample.response.message.trim();
-        assert_eq!(actual_edited_json, expected_json);
 
         // check that the API call actually modified the in-memory API keys,
         // regardless of success or failure

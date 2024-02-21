@@ -18,7 +18,8 @@ pub async fn get_api_keys(api_keys: State<'_, ZammApiKeys>) -> ZammResult<ApiKey
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::test_helpers::SampleCallTestCase;
+    use crate::sample_call::SampleCall;
+    use crate::test_helpers::{SampleCallTestCase, ZammResultReturn};
     use tokio::sync::Mutex;
 
     struct GetApiKeysTestCase<'a> {
@@ -32,7 +33,21 @@ pub mod tests {
         async fn make_request(&mut self, _args: &Option<()>) -> ZammResult<ApiKeys> {
             Ok(get_api_keys_helper(&self.api_keys).await)
         }
+
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<ApiKeys>,
+        ) -> String {
+            ZammResultReturn::serialize_result(self, sample, result)
+        }
+
+        fn check_result(&self, sample: &SampleCall, result: &ZammResult<ApiKeys>) {
+            ZammResultReturn::check_result(self, sample, result)
+        }
     }
+
+    impl<'a> ZammResultReturn<ApiKeys> for GetApiKeysTestCase<'a> {}
 
     pub async fn check_get_api_keys_sample<'a>(
         file_prefix: &str,
@@ -41,10 +56,7 @@ pub mod tests {
         let mut test_case = GetApiKeysTestCase {
             api_keys: rust_input,
         };
-        let call = test_case.check_sample_call(file_prefix).await;
-        let actual_json = serde_json::to_string_pretty(&call.result.unwrap()).unwrap();
-        let expected_json = call.sample.response.message.trim();
-        assert_eq!(actual_json, expected_json);
+        test_case.check_sample_call(file_prefix).await;
     }
 
     #[tokio::test]

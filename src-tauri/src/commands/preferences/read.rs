@@ -42,7 +42,8 @@ pub fn get_preferences(app_handle: tauri::AppHandle) -> Preferences {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::SampleCallTestCase;
+    use crate::sample_call::SampleCall;
+    use crate::test_helpers::{DirectReturn, SampleCallTestCase};
 
     struct GetPreferencesTestCase<'a> {
         preferences_dir: &'a str,
@@ -55,18 +56,28 @@ mod tests {
         async fn make_request(&mut self, _args: &Option<()>) -> Preferences {
             get_preferences_helper(&Some(self.preferences_dir.into()))
         }
+
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &Preferences,
+        ) -> String {
+            DirectReturn::serialize_result(self, sample, result)
+        }
+
+        fn check_result(&self, sample: &SampleCall, result: &Preferences) {
+            DirectReturn::check_result(self, sample, result)
+        }
     }
+
+    impl<'a> DirectReturn<Preferences> for GetPreferencesTestCase<'a> {}
 
     async fn check_get_preferences_sample<'a>(
         file_prefix: &str,
         preferences_dir: &'a str,
     ) {
         let mut test_case = GetPreferencesTestCase { preferences_dir };
-        let call = test_case.check_sample_call(file_prefix).await;
-
-        let actual_json = serde_json::to_string_pretty(&call.result).unwrap();
-        let expected_json = call.sample.response.message.trim();
-        assert_eq!(actual_json, expected_json);
+        test_case.check_sample_call(file_prefix).await;
     }
 
     #[tokio::test]

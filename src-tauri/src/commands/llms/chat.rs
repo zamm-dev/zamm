@@ -138,8 +138,9 @@ pub async fn chat(
 mod tests {
     use super::*;
     use crate::models::llm_calls::{ChatMessage, LlmCallRow};
+    use crate::sample_call::SampleCall;
     use crate::setup::api_keys::ApiKeys;
-    use crate::test_helpers::{setup_zamm_db, SampleCallTestCase};
+    use crate::test_helpers::{setup_zamm_db, SampleCallTestCase, ZammResultReturn};
     use diesel::prelude::*;
     use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
     use rvcr::{VCRMiddleware, VCRMode};
@@ -210,6 +211,35 @@ mod tests {
             )
             .await
         }
+
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<LlmCall>,
+        ) -> String {
+            ZammResultReturn::serialize_result(self, sample, result)
+        }
+
+        fn check_result(&self, sample: &SampleCall, result: &ZammResult<LlmCall>) {
+            ZammResultReturn::check_result(self, sample, result)
+        }
+    }
+
+    impl ZammResultReturn<LlmCall> for ChatTestCase {
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<LlmCall>,
+        ) -> String {
+            let expected_llm_call = parse_response(&sample.response.message);
+            // swap out non-deterministic parts before JSON comparison
+            let deterministic_llm_call = LlmCall {
+                id: expected_llm_call.id,
+                timestamp: expected_llm_call.timestamp,
+                ..result.as_ref().unwrap().clone()
+            };
+            serde_json::to_string_pretty(&deterministic_llm_call).unwrap()
+        }
     }
 
     fn parse_response(response_str: &str) -> LlmCall {
@@ -258,23 +288,7 @@ mod tests {
             vcr_client,
         };
         let call = test_case.check_sample_call(sample_path).await;
-
-        let result = call.result;
-        assert!(result.is_ok(), "Error: {:?}", result.err());
-        let ok_result = result.unwrap();
-
-        // check that the API call returns the expected JSON
-        let expected_llm_call = parse_response(&call.sample.response.message);
-        // swap out non-deterministic parts before JSON comparison
-        let deterministic_llm_call = LlmCall {
-            id: expected_llm_call.id,
-            timestamp: expected_llm_call.timestamp,
-            ..ok_result.clone()
-        };
-        let actual_json =
-            serde_json::to_string_pretty(&deterministic_llm_call).unwrap();
-        let expected_json = call.sample.response.message.trim();
-        assert_eq!(actual_json, expected_json);
+        let ok_result = call.result.unwrap();
 
         // check that it made it into the database
         let stored_llm_call = get_llm_call(&test_case.db, &ok_result.id).await;

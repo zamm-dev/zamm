@@ -72,7 +72,10 @@ pub fn set_preferences(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::{get_temp_test_dir, SampleCallTestCase};
+    use crate::sample_call::SampleCall;
+    use crate::test_helpers::{
+        get_temp_test_dir, SampleCallTestCase, ZammResultReturn,
+    };
     use serde::{Deserialize, Serialize};
 
     use std::fs;
@@ -101,7 +104,21 @@ mod tests {
                 &args.as_ref().unwrap().preferences.clone(),
             )
         }
+
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<()>,
+        ) -> String {
+            ZammResultReturn::serialize_result(self, sample, result)
+        }
+
+        fn check_result(&self, sample: &SampleCall, result: &ZammResult<()>) {
+            ZammResultReturn::check_result(self, sample, result)
+        }
     }
+
+    impl ZammResultReturn<()> for SetPreferencesTestCase {}
 
     async fn check_set_preferences_sample(
         file_prefix: &str,
@@ -137,12 +154,7 @@ mod tests {
         let mut test_case = SetPreferencesTestCase {
             test_preferences_dir: test_preferences_dir.clone(),
         };
-        let call = test_case.check_sample_call(file_prefix).await;
-
-        assert!(call.result.is_ok());
-        let actual_json = serde_json::to_string_pretty(&call.result.unwrap()).unwrap();
-        let expected_json = call.sample.response.message.trim();
-        assert_eq!(actual_json, expected_json);
+        test_case.check_sample_call(file_prefix).await;
 
         let resulting_contents = fs::read_to_string(test_preferences_file)
             .expect("Test preferences file doesn't exist");
