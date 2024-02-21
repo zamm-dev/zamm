@@ -18,27 +18,28 @@ pub async fn get_api_keys(api_keys: State<'_, ZammApiKeys>) -> ZammResult<ApiKey
 #[cfg(test)]
 pub mod tests {
     use super::*;
-    use crate::sample_call::SampleCall;
+    use crate::test_helpers::SampleCallTestCase;
     use tokio::sync::Mutex;
 
-    use std::fs;
+    struct GetApiKeysTestCase {
+        // pass
+    }
 
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
+    impl SampleCallTestCase<()> for GetApiKeysTestCase {
+        const EXPECTED_API_CALL: &'static str = "get_api_keys";
+        const CALL_HAS_ARGS: bool = false;
     }
 
     pub async fn check_get_api_keys_sample(
         file_prefix: &str,
         rust_input: &ZammApiKeys,
     ) {
-        let greet_sample = read_sample(file_prefix);
-        assert_eq!(greet_sample.request, vec!["get_api_keys"]);
+        let test_case = GetApiKeysTestCase {};
+        let result = test_case.check_sample_call(file_prefix);
 
         let actual_result = get_api_keys_helper(rust_input).await;
         let actual_json = serde_json::to_string_pretty(&actual_result).unwrap();
-        let expected_json = greet_sample.response.message.trim();
+        let expected_json = result.sample.response.message.trim();
         assert_eq!(actual_json, expected_json);
     }
 

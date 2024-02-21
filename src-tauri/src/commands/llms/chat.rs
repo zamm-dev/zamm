@@ -138,15 +138,13 @@ pub async fn chat(
 mod tests {
     use super::*;
     use crate::models::llm_calls::{ChatMessage, LlmCallRow};
-    use crate::sample_call::SampleCall;
     use crate::setup::api_keys::ApiKeys;
-    use crate::test_helpers::setup_zamm_db;
+    use crate::test_helpers::{setup_zamm_db, SampleCallTestCase};
     use diesel::prelude::*;
     use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
     use rvcr::{VCRMiddleware, VCRMode};
     use serde::{Deserialize, Serialize};
     use std::env;
-    use std::fs;
     use std::path::PathBuf;
     use tokio::sync::Mutex;
     use vcr_cassette::Headers;
@@ -186,18 +184,17 @@ mod tests {
         prompt: Vec<ChatMessage>,
     }
 
-    fn parse_request(request_str: &str) -> ChatRequest {
-        serde_json::from_str(request_str).unwrap()
+    struct ChatTestCase {
+        // pass
+    }
+
+    impl SampleCallTestCase<ChatRequest> for ChatTestCase {
+        const EXPECTED_API_CALL: &'static str = "chat";
+        const CALL_HAS_ARGS: bool = true;
     }
 
     fn parse_response(response_str: &str) -> LlmCall {
         serde_json::from_str(response_str).unwrap()
-    }
-
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
     }
 
     async fn test_llm_api_call(recording_path: &str, sample_path: &str) {
@@ -236,11 +233,9 @@ mod tests {
         let db = setup_zamm_db();
         // end dependencies setup
 
-        let sample = read_sample(sample_path);
-        assert_eq!(sample.request.len(), 2);
-        assert_eq!(sample.request[0], "chat");
-
-        let request = parse_request(&sample.request[1]);
+        let test_case = ChatTestCase {};
+        let sample_result = test_case.check_sample_call(sample_path);
+        let request = sample_result.args.unwrap();
 
         let result = chat_helper(
             &api_keys,
@@ -256,7 +251,7 @@ mod tests {
         let ok_result = result.unwrap();
 
         // check that the API call returns the expected JSON
-        let expected_llm_call = parse_response(&sample.response.message);
+        let expected_llm_call = parse_response(&sample_result.sample.response.message);
         // swap out non-deterministic parts before JSON comparison
         let deterministic_llm_call = LlmCall {
             id: expected_llm_call.id,
@@ -265,7 +260,7 @@ mod tests {
         };
         let actual_json =
             serde_json::to_string_pretty(&deterministic_llm_call).unwrap();
-        let expected_json = sample.response.message.trim();
+        let expected_json = sample_result.sample.response.message.trim();
         assert_eq!(actual_json, expected_json);
 
         // check that it made it into the database

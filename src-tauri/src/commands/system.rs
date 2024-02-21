@@ -107,25 +107,27 @@ pub fn get_system_info() -> SystemInfo {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sample_call::SampleCall;
+    use crate::test_helpers::SampleCallTestCase;
     use cfg_if::cfg_if;
-    use std::fs;
 
     fn parse_system_info(response_str: &str) -> SystemInfo {
         serde_json::from_str(response_str).unwrap()
     }
 
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
+    struct GetSystemInfoTestCase {
+        // pass
+    }
+
+    impl SampleCallTestCase<()> for GetSystemInfoTestCase {
+        const EXPECTED_API_CALL: &'static str = "get_system_info";
+        const CALL_HAS_ARGS: bool = false;
     }
 
     fn check_get_system_info_sample(file_prefix: &str, actual_info: &SystemInfo) {
-        let system_info_sample = read_sample(file_prefix);
-        assert_eq!(system_info_sample.request, vec!["get_system_info"]);
+        let test_case = GetSystemInfoTestCase {};
+        let result = test_case.check_sample_call(file_prefix);
 
-        let expected_info = parse_system_info(&system_info_sample.response.message);
+        let expected_info = parse_system_info(&result.sample.response.message);
         assert_eq!(actual_info, &expected_info);
     }
 

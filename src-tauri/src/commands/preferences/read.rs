@@ -42,23 +42,24 @@ pub fn get_preferences(app_handle: tauri::AppHandle) -> Preferences {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sample_call::SampleCall;
+    use crate::test_helpers::SampleCallTestCase;
 
-    use std::fs;
+    struct GetPreferencesTestCase {
+        // pass
+    }
 
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
+    impl SampleCallTestCase<()> for GetPreferencesTestCase {
+        const EXPECTED_API_CALL: &'static str = "get_preferences";
+        const CALL_HAS_ARGS: bool = false;
     }
 
     fn check_get_preferences_sample(file_prefix: &str, preferences_dir: &str) {
-        let sample = read_sample(file_prefix);
-        assert_eq!(sample.request, vec!["get_preferences"]);
+        let test_case = GetPreferencesTestCase {};
+        let result = test_case.check_sample_call(file_prefix);
 
         let actual_result = get_preferences_helper(&Some(preferences_dir.into()));
         let actual_json = serde_json::to_string_pretty(&actual_result).unwrap();
-        let expected_json = sample.response.message.trim();
+        let expected_json = result.sample.response.message.trim();
         assert_eq!(actual_json, expected_json);
     }
 

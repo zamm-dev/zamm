@@ -102,10 +102,11 @@ pub async fn set_api_key(
 pub mod tests {
     use super::*;
     use crate::models::NewApiKey;
-    use crate::sample_call::SampleCall;
     use crate::schema;
     use crate::setup::api_keys::ApiKeys;
-    use crate::test_helpers::{get_temp_test_dir, setup_database, setup_zamm_db};
+    use crate::test_helpers::{
+        get_temp_test_dir, setup_database, setup_zamm_db, SampleCallTestCase,
+    };
     use diesel::prelude::*;
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
@@ -120,14 +121,13 @@ pub mod tests {
         api_key: String,
     }
 
-    fn parse_request(request_str: &str) -> SetApiKeyRequest {
-        serde_json::from_str(request_str).unwrap()
+    struct SetApiKeyTestCase {
+        // pass
     }
 
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
+    impl SampleCallTestCase<SetApiKeyRequest> for SetApiKeyTestCase {
+        const EXPECTED_API_CALL: &'static str = "set_api_key";
+        const CALL_HAS_ARGS: bool = true;
     }
 
     async fn get_openai_api_key_from_db(db: &ZammDatabase) -> Option<String> {
@@ -148,11 +148,10 @@ pub mod tests {
         test_dir_name: &str,
         json_replacements: HashMap<String, String>,
     ) {
-        let sample = read_sample(sample_file);
-        assert_eq!(sample.request.len(), 2);
-        assert_eq!(sample.request[0], "set_api_key");
+        let test_case = SetApiKeyTestCase {};
+        let result = test_case.check_sample_call(sample_file);
+        let request = result.args.unwrap();
 
-        let request = parse_request(&sample.request[1]);
         let valid_request_path_specified = request
             .filename
             .as_ref()
@@ -190,7 +189,7 @@ pub mod tests {
         .await;
 
         // check that the API call returns the expected success or failure signal
-        if sample.response.success == Some(false) {
+        if result.sample.response.success == Some(false) {
             assert!(actual_result.is_err(), "API call should have thrown error");
         } else {
             assert!(
@@ -208,7 +207,7 @@ pub mod tests {
         let actual_edited_json = json_replacements
             .iter()
             .fold(actual_json, |acc, (k, v)| acc.replace(k, v));
-        let expected_json = sample.response.message.trim();
+        let expected_json = result.sample.response.message.trim();
         assert_eq!(actual_edited_json, expected_json);
 
         // check that the API call actually modified the in-memory API keys,

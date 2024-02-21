@@ -72,8 +72,7 @@ pub fn set_preferences(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sample_call::SampleCall;
-    use crate::test_helpers::get_temp_test_dir;
+    use crate::test_helpers::{get_temp_test_dir, SampleCallTestCase};
     use serde::{Deserialize, Serialize};
 
     use std::fs;
@@ -83,14 +82,13 @@ mod tests {
         preferences: Preferences,
     }
 
-    fn parse_request(request_str: &str) -> SetPreferencesRequest {
-        serde_json::from_str(request_str).unwrap()
+    struct SetPreferencesTestCase {
+        // pass
     }
 
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
+    impl SampleCallTestCase<SetPreferencesRequest> for SetPreferencesTestCase {
+        const EXPECTED_API_CALL: &'static str = "set_preferences";
+        const CALL_HAS_ARGS: bool = true;
     }
 
     fn check_set_preferences_sample(
@@ -98,9 +96,8 @@ mod tests {
         existing_preferences_file: Option<&str>,
         expected_preferences_file: &str,
     ) {
-        let sample = read_sample(file_prefix);
-        assert_eq!(sample.request.len(), 2);
-        assert_eq!(sample.request[0], "set_preferences");
+        let test_case = SetPreferencesTestCase {};
+        let result = test_case.check_sample_call(file_prefix);
 
         let test_preferences_dir = get_temp_test_dir(
             PathBuf::from(file_prefix)
@@ -128,7 +125,7 @@ mod tests {
             });
         }
 
-        let actual_request = parse_request(&sample.request[1]);
+        let actual_request = result.args.unwrap();
         let actual_result = set_preferences_helper(
             &Some(test_preferences_dir),
             &actual_request.preferences,
@@ -136,7 +133,7 @@ mod tests {
         assert!(actual_result.is_ok());
         let actual_json =
             serde_json::to_string_pretty(&actual_result.unwrap()).unwrap();
-        let expected_json = sample.response.message.trim();
+        let expected_json = result.sample.response.message.trim();
         assert_eq!(actual_json, expected_json);
 
         let resulting_contents = fs::read_to_string(test_preferences_file)
