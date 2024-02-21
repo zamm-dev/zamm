@@ -105,7 +105,7 @@ pub mod tests {
     use crate::sample_call::SampleCall;
     use crate::schema;
     use crate::setup::api_keys::ApiKeys;
-    use crate::test_helpers::api_testing::serialize_zamm_result;
+    use crate::test_helpers::api_testing::{check_zamm_result, serialize_zamm_result};
     use crate::test_helpers::{
         get_temp_test_dir, setup_database, setup_zamm_db, SampleCallTestCase,
         ZammResultReturn,
@@ -195,12 +195,30 @@ pub mod tests {
             ZammResultReturn::serialize_result(self, sample, result)
         }
 
-        fn check_result(&self, sample: &SampleCall, result: &ZammResult<()>) {
-            ZammResultReturn::check_result(self, sample, result)
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&SetApiKeyRequest>,
+            result: &ZammResult<()>,
+        ) {
+            check_zamm_result(sample, result);
+
+            // check that the API call actually modified the in-memory API keys,
+            // regardless of success or failure. check the database as well
+            let existing_api_keys = &self.api_keys.0.lock().await;
+            let actual_args = args.unwrap();
+            if actual_args.api_key.is_empty() {
+                assert_eq!(existing_api_keys.openai, None);
+                assert_eq!(get_openai_api_key_from_db(self.db).await, None);
+            } else {
+                let arg_api_key = Some(actual_args.api_key.clone());
+                assert_eq!(existing_api_keys.openai, arg_api_key);
+                assert_eq!(get_openai_api_key_from_db(self.db).await, arg_api_key,);
+            }
         }
     }
 
-    impl<'a> ZammResultReturn<()> for SetApiKeyTestCase<'a> {
+    impl<'a> ZammResultReturn<SetApiKeyRequest, ()> for SetApiKeyTestCase<'a> {
         fn serialize_result(
             &self,
             _sample: &SampleCall,
@@ -240,22 +258,7 @@ pub mod tests {
             request_path: None,
             test_init_file: None,
         };
-        let call = test_case.check_sample_call(sample_file).await;
-        let request = call.args.unwrap();
-
-        // check that the API call actually modified the in-memory API keys,
-        // regardless of success or failure
-        let existing_api_keys = existing_zamm_api_keys.0.lock().await;
-        if request.api_key.is_empty() {
-            assert_eq!(existing_api_keys.openai, None);
-            assert_eq!(get_openai_api_key_from_db(db).await, None);
-        } else {
-            assert_eq!(existing_api_keys.openai, Some(request.api_key.clone()));
-            assert_eq!(
-                get_openai_api_key_from_db(db).await,
-                Some(request.api_key.clone())
-            );
-        }
+        test_case.check_sample_call(sample_file).await;
 
         // check that the API call successfully wrote the API keys to disk, if asked to
         if test_case.valid_request_path_specified.unwrap() {

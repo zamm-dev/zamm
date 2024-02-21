@@ -35,7 +35,7 @@ where
 
     fn serialize_result(&self, sample: &SampleCall, result: &U) -> String;
 
-    fn check_result(&self, sample: &SampleCall, result: &U);
+    async fn check_result(&self, sample: &SampleCall, args: Option<&T>, result: &U);
 
     async fn check_sample_call(&mut self, sample_file: &str) -> SampleCallResult<T, U> {
         // sanity check that sample inputs are as expected
@@ -59,7 +59,7 @@ where
         let actual_json = self.serialize_result(&sample, &result);
         let expected_json = sample.response.message.trim();
         assert_eq!(actual_json, expected_json);
-        self.check_result(&sample, &result);
+        self.check_result(&sample, args.as_ref(), &result).await;
 
         SampleCallResult {
             sample,
@@ -69,15 +69,17 @@ where
     }
 }
 
-pub trait DirectReturn<U>
+pub trait DirectReturn<T, U>
 where
+    T: Serialize + for<'de> Deserialize<'de>,
     U: Serialize,
 {
     fn serialize_result(&self, _sample: &SampleCall, result: &U) -> String {
         serde_json::to_string_pretty(result).unwrap()
     }
 
-    fn check_result(&self, _sample: &SampleCall, _result: &U) {}
+    async fn check_result(&self, _sample: &SampleCall, _args: Option<&T>, _result: &U) {
+    }
 }
 
 pub fn serialize_zamm_result<T>(result: &ZammResult<T>) -> String
@@ -90,19 +92,32 @@ where
     }
 }
 
-pub trait ZammResultReturn<U>
+pub fn check_zamm_result<T>(sample: &SampleCall, result: &ZammResult<T>)
 where
+    T: std::fmt::Debug,
+{
+    if sample.response.success == Some(false) {
+        assert!(result.is_err(), "API call should have thrown error");
+    } else {
+        assert!(result.is_ok(), "API call failed: {:?}", result);
+    }
+}
+
+pub trait ZammResultReturn<T, U>
+where
+    T: Serialize + for<'de> Deserialize<'de>,
     U: Serialize + std::fmt::Debug,
 {
     fn serialize_result(&self, _sample: &SampleCall, result: &ZammResult<U>) -> String {
         serialize_zamm_result(result)
     }
 
-    fn check_result(&self, sample: &SampleCall, result: &ZammResult<U>) {
-        if sample.response.success == Some(false) {
-            assert!(result.is_err(), "API call should have thrown error");
-        } else {
-            assert!(result.is_ok(), "API call failed: {:?}", result);
-        }
+    async fn check_result(
+        &self,
+        sample: &SampleCall,
+        _args: Option<&T>,
+        result: &ZammResult<U>,
+    ) {
+        check_zamm_result(sample, result)
     }
 }

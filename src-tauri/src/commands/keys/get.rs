@@ -42,12 +42,17 @@ pub mod tests {
             ZammResultReturn::serialize_result(self, sample, result)
         }
 
-        fn check_result(&self, sample: &SampleCall, result: &ZammResult<ApiKeys>) {
-            ZammResultReturn::check_result(self, sample, result)
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&()>,
+            result: &ZammResult<ApiKeys>,
+        ) {
+            ZammResultReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl<'a> ZammResultReturn<ApiKeys> for GetApiKeysTestCase<'a> {}
+    impl<'a> ZammResultReturn<(), ApiKeys> for GetApiKeysTestCase<'a> {}
 
     pub async fn check_get_api_keys_sample<'a>(
         file_prefix: &str,

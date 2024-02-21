@@ -65,12 +65,17 @@ mod tests {
             DirectReturn::serialize_result(self, sample, result)
         }
 
-        fn check_result(&self, sample: &SampleCall, result: &Preferences) {
-            DirectReturn::check_result(self, sample, result)
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&()>,
+            result: &Preferences,
+        ) {
+            DirectReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl<'a> DirectReturn<Preferences> for GetPreferencesTestCase<'a> {}
+    impl<'a> DirectReturn<(), Preferences> for GetPreferencesTestCase<'a> {}
 
     async fn check_get_preferences_sample<'a>(
         file_prefix: &str,

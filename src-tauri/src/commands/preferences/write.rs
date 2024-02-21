@@ -113,12 +113,17 @@ mod tests {
             ZammResultReturn::serialize_result(self, sample, result)
         }
 
-        fn check_result(&self, sample: &SampleCall, result: &ZammResult<()>) {
-            ZammResultReturn::check_result(self, sample, result)
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&SetPreferencesRequest>,
+            result: &ZammResult<()>,
+        ) {
+            ZammResultReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl ZammResultReturn<()> for SetPreferencesTestCase {}
+    impl ZammResultReturn<SetPreferencesRequest, ()> for SetPreferencesTestCase {}
 
     async fn check_set_preferences_sample(
         file_prefix: &str,

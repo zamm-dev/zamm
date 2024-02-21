@@ -69,12 +69,17 @@ mod tests {
             DirectReturn::serialize_result(self, sample, result)
         }
 
-        fn check_result(&self, sample: &SampleCall, result: &()) {
-            DirectReturn::check_result(self, sample, result)
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&PlaySoundRequest>,
+            result: &(),
+        ) {
+            DirectReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl DirectReturn<()> for PlaySoundTestCase {}
+    impl DirectReturn<PlaySoundRequest, ()> for PlaySoundTestCase {}
 
     async fn check_play_sound_sample(file_prefix: &str) {
         let mut test_case = PlaySoundTestCase {};

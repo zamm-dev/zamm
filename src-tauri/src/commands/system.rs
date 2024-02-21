@@ -127,12 +127,17 @@ mod tests {
             DirectReturn::serialize_result(self, sample, result)
         }
 
-        fn check_result(&self, sample: &SampleCall, result: &SystemInfo) {
-            DirectReturn::check_result(self, sample, result)
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&()>,
+            result: &SystemInfo,
+        ) {
+            DirectReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl DirectReturn<SystemInfo> for GetSystemInfoTestCase {}
+    impl DirectReturn<(), SystemInfo> for GetSystemInfoTestCase {}
 
     #[test]
     fn test_can_determine_zamm_version() {

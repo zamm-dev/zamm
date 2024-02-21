@@ -220,12 +220,17 @@ mod tests {
             ZammResultReturn::serialize_result(self, sample, result)
         }
 
-        fn check_result(&self, sample: &SampleCall, result: &ZammResult<LlmCall>) {
-            ZammResultReturn::check_result(self, sample, result)
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&ChatRequest>,
+            result: &ZammResult<LlmCall>,
+        ) {
+            ZammResultReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl ZammResultReturn<LlmCall> for ChatTestCase {
+    impl ZammResultReturn<ChatRequest, LlmCall> for ChatTestCase {
         fn serialize_result(
             &self,
             sample: &SampleCall,
