@@ -44,62 +44,64 @@ mod tests {
     use super::*;
     use crate::test_helpers::SampleCallTestCase;
 
-    struct GetPreferencesTestCase {
-        // pass
+    struct GetPreferencesTestCase<'a> {
+        preferences_dir: &'a str,
     }
 
-    impl SampleCallTestCase<()> for GetPreferencesTestCase {
+    impl<'a> SampleCallTestCase<(), Preferences> for GetPreferencesTestCase<'a> {
         const EXPECTED_API_CALL: &'static str = "get_preferences";
         const CALL_HAS_ARGS: bool = false;
+
+        async fn make_request(&mut self, _args: &Option<()>) -> Preferences {
+            get_preferences_helper(&Some(self.preferences_dir.into()))
+        }
     }
 
-    fn check_get_preferences_sample(file_prefix: &str, preferences_dir: &str) {
-        let test_case = GetPreferencesTestCase {};
-        let result = test_case.check_sample_call(file_prefix);
+    async fn check_get_preferences_sample<'a>(
+        file_prefix: &str,
+        preferences_dir: &'a str,
+    ) {
+        let mut test_case = GetPreferencesTestCase { preferences_dir };
+        let call = test_case.check_sample_call(file_prefix).await;
 
-        let actual_result = get_preferences_helper(&Some(preferences_dir.into()));
-        let actual_json = serde_json::to_string_pretty(&actual_result).unwrap();
-        let expected_json = result.sample.response.message.trim();
+        let actual_json = serde_json::to_string_pretty(&call.result).unwrap();
+        let expected_json = call.sample.response.message.trim();
         assert_eq!(actual_json, expected_json);
     }
 
-    #[test]
-    fn test_get_preferences_without_file() {
+    #[tokio::test]
+    async fn test_get_preferences_without_file() {
         check_get_preferences_sample(
             "./api/sample-calls/get_preferences-no-file.yaml",
             "./non-existent/path",
-        );
+        )
+        .await;
     }
 
-    #[test]
-    fn test_get_preferences_happy_path_without_file() {
-        let non_existent_path = PathBuf::from("./non-existent/path");
-        let happy_path_result = get_preferences_happy_path(&Some(non_existent_path));
-        assert!(happy_path_result.is_ok());
-        assert_eq!(happy_path_result.unwrap(), Preferences::default());
-    }
-
-    #[test]
-    fn test_get_preferences_with_sound_override() {
+    #[tokio::test]
+    async fn test_get_preferences_with_sound_override() {
         check_get_preferences_sample(
             "./api/sample-calls/get_preferences-sound-override.yaml",
             "./api/sample-settings/sound-override",
-        );
+        )
+        .await;
     }
 
-    #[test]
-    fn test_get_preferences_with_volume_override() {
+    #[tokio::test]
+    async fn test_get_preferences_with_volume_override() {
         check_get_preferences_sample(
             "./api/sample-calls/get_preferences-volume-override.yaml",
             "./api/sample-settings/volume-override",
-        );
+        )
+        .await;
     }
 
-    #[test]
-    fn test_get_preferences_with_extra_settings() {
+    #[tokio::test]
+    async fn test_get_preferences_with_extra_settings() {
         check_get_preferences_sample(
             "./api/sample-calls/get_preferences-extra-settings.yaml",
             "./api/sample-settings/extra-settings",
-        );
+        )
+        .await;
     }
 }

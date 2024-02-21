@@ -8,26 +8,32 @@ fn read_sample(filename: &str) -> SampleCall {
     serde_yaml::from_str(&sample_str).unwrap()
 }
 
-pub struct SampleCallResult<T>
+pub struct SampleCallResult<T, U>
 where
     T: Serialize + for<'de> Deserialize<'de>,
+    U: Serialize,
 {
     pub sample: SampleCall,
     pub args: Option<T>,
+    pub result: U,
 }
 
-pub trait SampleCallTestCase<T>
+pub trait SampleCallTestCase<T, U>
 where
     T: Serialize + for<'de> Deserialize<'de>,
+    U: Serialize,
 {
     const EXPECTED_API_CALL: &'static str;
     const CALL_HAS_ARGS: bool;
 
-    fn parse_request(&self, request_str: &str) -> T {
+    fn parse_args(&self, request_str: &str) -> T {
         serde_json::from_str(request_str).unwrap()
     }
 
-    fn check_sample_call(&self, sample_file: &str) -> SampleCallResult<T> {
+    async fn make_request(&mut self, args: &Option<T>) -> U;
+
+    async fn check_sample_call(&mut self, sample_file: &str) -> SampleCallResult<T, U> {
+        // sanity check that sample inputs are as expected
         let sample = read_sample(sample_file);
         if Self::CALL_HAS_ARGS {
             assert_eq!(sample.request.len(), 2);
@@ -36,14 +42,18 @@ where
         }
         assert_eq!(sample.request[0], Self::EXPECTED_API_CALL);
 
-        let request = if Self::CALL_HAS_ARGS {
-            Some(self.parse_request(&sample.request[1]))
+        // make the call
+        let args = if Self::CALL_HAS_ARGS {
+            Some(self.parse_args(&sample.request[1]))
         } else {
             None
         };
+        let result = self.make_request(&args).await;
+
         SampleCallResult {
             sample,
-            args: request,
+            args,
+            result,
         }
     }
 }

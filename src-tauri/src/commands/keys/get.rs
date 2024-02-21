@@ -21,25 +21,29 @@ pub mod tests {
     use crate::test_helpers::SampleCallTestCase;
     use tokio::sync::Mutex;
 
-    struct GetApiKeysTestCase {
-        // pass
+    struct GetApiKeysTestCase<'a> {
+        api_keys: &'a ZammApiKeys,
     }
 
-    impl SampleCallTestCase<()> for GetApiKeysTestCase {
+    impl<'a> SampleCallTestCase<(), ZammResult<ApiKeys>> for GetApiKeysTestCase<'a> {
         const EXPECTED_API_CALL: &'static str = "get_api_keys";
         const CALL_HAS_ARGS: bool = false;
+
+        async fn make_request(&mut self, _args: &Option<()>) -> ZammResult<ApiKeys> {
+            Ok(get_api_keys_helper(&self.api_keys).await)
+        }
     }
 
-    pub async fn check_get_api_keys_sample(
+    pub async fn check_get_api_keys_sample<'a>(
         file_prefix: &str,
-        rust_input: &ZammApiKeys,
+        rust_input: &'a ZammApiKeys,
     ) {
-        let test_case = GetApiKeysTestCase {};
-        let result = test_case.check_sample_call(file_prefix);
-
-        let actual_result = get_api_keys_helper(rust_input).await;
-        let actual_json = serde_json::to_string_pretty(&actual_result).unwrap();
-        let expected_json = result.sample.response.message.trim();
+        let mut test_case = GetApiKeysTestCase {
+            api_keys: rust_input,
+        };
+        let call = test_case.check_sample_call(file_prefix).await;
+        let actual_json = serde_json::to_string_pretty(&call.result.unwrap()).unwrap();
+        let expected_json = call.sample.response.message.trim();
         assert_eq!(actual_json, expected_json);
     }
 

@@ -83,22 +83,31 @@ mod tests {
     }
 
     struct SetPreferencesTestCase {
-        // pass
+        test_preferences_dir: PathBuf,
     }
 
-    impl SampleCallTestCase<SetPreferencesRequest> for SetPreferencesTestCase {
+    impl SampleCallTestCase<SetPreferencesRequest, ZammResult<()>>
+        for SetPreferencesTestCase
+    {
         const EXPECTED_API_CALL: &'static str = "set_preferences";
         const CALL_HAS_ARGS: bool = true;
+
+        async fn make_request(
+            &mut self,
+            args: &Option<SetPreferencesRequest>,
+        ) -> ZammResult<()> {
+            set_preferences_helper(
+                &Some(self.test_preferences_dir.clone()),
+                &args.as_ref().unwrap().preferences.clone(),
+            )
+        }
     }
 
-    fn check_set_preferences_sample(
+    async fn check_set_preferences_sample(
         file_prefix: &str,
         existing_preferences_file: Option<&str>,
         expected_preferences_file: &str,
     ) {
-        let test_case = SetPreferencesTestCase {};
-        let result = test_case.check_sample_call(file_prefix);
-
         let test_preferences_dir = get_temp_test_dir(
             PathBuf::from(file_prefix)
                 .file_stem()
@@ -125,15 +134,14 @@ mod tests {
             });
         }
 
-        let actual_request = result.args.unwrap();
-        let actual_result = set_preferences_helper(
-            &Some(test_preferences_dir),
-            &actual_request.preferences,
-        );
-        assert!(actual_result.is_ok());
-        let actual_json =
-            serde_json::to_string_pretty(&actual_result.unwrap()).unwrap();
-        let expected_json = result.sample.response.message.trim();
+        let mut test_case = SetPreferencesTestCase {
+            test_preferences_dir: test_preferences_dir.clone(),
+        };
+        let call = test_case.check_sample_call(file_prefix).await;
+
+        assert!(call.result.is_ok());
+        let actual_json = serde_json::to_string_pretty(&call.result.unwrap()).unwrap();
+        let expected_json = call.sample.response.message.trim();
         assert_eq!(actual_json, expected_json);
 
         let resulting_contents = fs::read_to_string(test_preferences_file)
@@ -145,30 +153,33 @@ mod tests {
         assert_eq!(resulting_contents.trim(), expected_contents.trim());
     }
 
-    #[test]
-    fn test_set_preferences_sound_off_without_file() {
+    #[tokio::test]
+    async fn test_set_preferences_sound_off_without_file() {
         check_set_preferences_sample(
             "./api/sample-calls/set_preferences-sound-off.yaml",
             None,
             "./api/sample-settings/sound-override/preferences.toml",
-        );
+        )
+        .await;
     }
 
-    #[test]
-    fn test_set_preferences_sound_on_with_extra_settings() {
+    #[tokio::test]
+    async fn test_set_preferences_sound_on_with_extra_settings() {
         check_set_preferences_sample(
             "./api/sample-calls/set_preferences-sound-on.yaml",
             Some("./api/sample-settings/extra-settings/preferences.toml"),
             "./api/sample-settings/extra-settings/sound-on.toml",
-        );
+        )
+        .await;
     }
 
-    #[test]
-    fn test_set_preferences_volume_partial() {
+    #[tokio::test]
+    async fn test_set_preferences_volume_partial() {
         check_set_preferences_sample(
             "./api/sample-calls/set_preferences-volume-partial.yaml",
             None,
             "./api/sample-settings/volume-override/preferences.toml",
-        );
+        )
+        .await;
     }
 }

@@ -121,13 +121,67 @@ pub mod tests {
         api_key: String,
     }
 
-    struct SetApiKeyTestCase {
-        // pass
+    struct SetApiKeyTestCase<'a> {
+        api_keys: &'a ZammApiKeys,
+        db: &'a ZammDatabase,
+        test_dir_name: &'a str,
+        valid_request_path_specified: Option<bool>,
+        request_path: Option<PathBuf>,
+        test_init_file: Option<String>,
     }
 
-    impl SampleCallTestCase<SetApiKeyRequest> for SetApiKeyTestCase {
+    impl<'a> SampleCallTestCase<SetApiKeyRequest, ZammResult<()>>
+        for SetApiKeyTestCase<'a>
+    {
         const EXPECTED_API_CALL: &'static str = "set_api_key";
         const CALL_HAS_ARGS: bool = true;
+
+        async fn make_request(
+            &mut self,
+            args: &Option<SetApiKeyRequest>,
+        ) -> ZammResult<()> {
+            let request = args.as_ref().unwrap();
+            let valid_request_path_specified = request
+                .filename
+                .as_ref()
+                .map(|f| !f.is_empty() && !f.ends_with('/'))
+                .unwrap_or(false);
+            let request_path = request.filename.as_ref().map(|f| PathBuf::from(&f));
+            let test_init_file = if valid_request_path_specified {
+                let p = request_path.as_ref().unwrap();
+                let sample_file_directory = p.parent().unwrap().to_str().unwrap();
+                let test_name =
+                    format!("{}/{}", self.test_dir_name, sample_file_directory);
+                let temp_init_dir = get_temp_test_dir(&test_name);
+                let init_file = temp_init_dir.join(p.file_name().unwrap());
+                println!(
+                    "Test will be performed on shell init file at {}",
+                    init_file.display()
+                );
+
+                let starting_init_file = Path::new("api/sample-init-files").join(p);
+                if PathBuf::from(&starting_init_file).exists() {
+                    fs::copy(&starting_init_file, &init_file).unwrap();
+                }
+
+                Some(init_file.to_str().unwrap().to_owned())
+            } else {
+                request.filename.clone()
+            };
+
+            self.valid_request_path_specified = Some(valid_request_path_specified);
+            self.request_path = request_path;
+            self.test_init_file = test_init_file;
+
+            set_api_key_helper(
+                self.api_keys,
+                self.db,
+                self.test_init_file.as_deref(),
+                &request.service,
+                request.api_key.clone(),
+            )
+            .await
+        }
     }
 
     async fn get_openai_api_key_from_db(db: &ZammDatabase) -> Option<String> {
@@ -141,73 +195,40 @@ pub mod tests {
             .ok()
     }
 
-    pub async fn check_set_api_key_sample(
-        db: &ZammDatabase,
+    pub async fn check_set_api_key_sample<'a>(
+        db: &'a ZammDatabase,
         sample_file: &str,
-        existing_zamm_api_keys: &ZammApiKeys,
-        test_dir_name: &str,
+        existing_zamm_api_keys: &'a ZammApiKeys,
+        test_dir_name: &'a str,
         json_replacements: HashMap<String, String>,
     ) {
-        let test_case = SetApiKeyTestCase {};
-        let result = test_case.check_sample_call(sample_file);
-        let request = result.args.unwrap();
-
-        let valid_request_path_specified = request
-            .filename
-            .as_ref()
-            .map(|f| !f.is_empty() && !f.ends_with('/'))
-            .unwrap_or(false);
-        let request_path = request.filename.as_ref().map(|f| PathBuf::from(&f));
-        let test_init_file = if valid_request_path_specified {
-            let p = request_path.as_ref().unwrap();
-            let sample_file_directory = p.parent().unwrap().to_str().unwrap();
-            let test_name = format!("{}/{}", test_dir_name, sample_file_directory);
-            let temp_init_dir = get_temp_test_dir(&test_name);
-            let init_file = temp_init_dir.join(p.file_name().unwrap());
-            println!(
-                "Test will be performed on shell init file at {}",
-                init_file.display()
-            );
-
-            let starting_init_file = Path::new("api/sample-init-files").join(p);
-            if PathBuf::from(&starting_init_file).exists() {
-                fs::copy(&starting_init_file, &init_file).unwrap();
-            }
-
-            Some(init_file.to_str().unwrap().to_owned())
-        } else {
-            request.filename
-        };
-
-        let actual_result = set_api_key_helper(
-            existing_zamm_api_keys,
+        let mut test_case = SetApiKeyTestCase {
+            api_keys: existing_zamm_api_keys,
             db,
-            test_init_file.as_deref(),
-            &request.service,
-            request.api_key.clone(),
-        )
-        .await;
+            test_dir_name,
+            valid_request_path_specified: None,
+            request_path: None,
+            test_init_file: None,
+        };
+        let call = test_case.check_sample_call(sample_file).await;
+        let request = call.args.unwrap();
 
         // check that the API call returns the expected success or failure signal
-        if result.sample.response.success == Some(false) {
-            assert!(actual_result.is_err(), "API call should have thrown error");
+        if call.sample.response.success == Some(false) {
+            assert!(call.result.is_err(), "API call should have thrown error");
         } else {
-            assert!(
-                actual_result.is_ok(),
-                "API call failed: {:?}",
-                actual_result
-            );
+            assert!(call.result.is_ok(), "API call failed: {:?}", call.result);
         }
 
         // check that the API call returns the expected JSON
-        let actual_json = match actual_result {
+        let actual_json = match call.result {
             Ok(r) => serde_json::to_string_pretty(&r).unwrap(),
             Err(e) => serde_json::to_string_pretty(&e).unwrap(),
         };
         let actual_edited_json = json_replacements
             .iter()
             .fold(actual_json, |acc, (k, v)| acc.replace(k, v));
-        let expected_json = result.sample.response.message.trim();
+        let expected_json = call.sample.response.message.trim();
         assert_eq!(actual_edited_json, expected_json);
 
         // check that the API call actually modified the in-memory API keys,
@@ -225,14 +246,14 @@ pub mod tests {
         }
 
         // check that the API call successfully wrote the API keys to disk, if asked to
-        if valid_request_path_specified {
-            let p = request_path.unwrap();
+        if test_case.valid_request_path_specified.unwrap() {
+            let p = test_case.request_path.unwrap();
             let expected_init_file = Path::new("api/sample-init-files")
                 .join(p)
                 .with_file_name("expected.bashrc");
 
             let resulting_contents =
-                fs::read_to_string(test_init_file.unwrap().as_str())
+                fs::read_to_string(test_case.test_init_file.unwrap().as_str())
                     .expect("Test shell init file doesn't exist");
             let expected_contents = fs::read_to_string(&expected_init_file)
                 .unwrap_or_else(|_| {

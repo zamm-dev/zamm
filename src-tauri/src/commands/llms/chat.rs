@@ -185,12 +185,31 @@ mod tests {
     }
 
     struct ChatTestCase {
-        // pass
+        pub api_keys: ZammApiKeys,
+        pub db: ZammDatabase,
+        pub vcr_client: ClientWithMiddleware,
     }
 
-    impl SampleCallTestCase<ChatRequest> for ChatTestCase {
+    impl SampleCallTestCase<ChatRequest, ZammResult<LlmCall>> for ChatTestCase {
         const EXPECTED_API_CALL: &'static str = "chat";
         const CALL_HAS_ARGS: bool = true;
+
+        async fn make_request(
+            &mut self,
+            args: &Option<ChatRequest>,
+        ) -> ZammResult<LlmCall> {
+            let actual_args = args.as_ref().unwrap().clone();
+            chat_helper(
+                &self.api_keys,
+                &self.db,
+                actual_args.provider,
+                actual_args.llm,
+                actual_args.temperature,
+                actual_args.prompt,
+                self.vcr_client.clone(),
+            )
+            .await
+        }
     }
 
     fn parse_response(response_str: &str) -> LlmCall {
@@ -233,25 +252,19 @@ mod tests {
         let db = setup_zamm_db();
         // end dependencies setup
 
-        let test_case = ChatTestCase {};
-        let sample_result = test_case.check_sample_call(sample_path);
-        let request = sample_result.args.unwrap();
-
-        let result = chat_helper(
-            &api_keys,
-            &db,
-            request.provider,
-            request.llm,
-            request.temperature,
-            request.prompt,
+        let mut test_case = ChatTestCase {
+            api_keys,
+            db,
             vcr_client,
-        )
-        .await;
+        };
+        let call = test_case.check_sample_call(sample_path).await;
+
+        let result = call.result;
         assert!(result.is_ok(), "Error: {:?}", result.err());
         let ok_result = result.unwrap();
 
         // check that the API call returns the expected JSON
-        let expected_llm_call = parse_response(&sample_result.sample.response.message);
+        let expected_llm_call = parse_response(&call.sample.response.message);
         // swap out non-deterministic parts before JSON comparison
         let deterministic_llm_call = LlmCall {
             id: expected_llm_call.id,
@@ -260,11 +273,11 @@ mod tests {
         };
         let actual_json =
             serde_json::to_string_pretty(&deterministic_llm_call).unwrap();
-        let expected_json = sample_result.sample.response.message.trim();
+        let expected_json = call.sample.response.message.trim();
         assert_eq!(actual_json, expected_json);
 
         // check that it made it into the database
-        let stored_llm_call = get_llm_call(&db, &ok_result.id).await;
+        let stored_llm_call = get_llm_call(&test_case.db, &ok_result.id).await;
         assert_eq!(stored_llm_call.request.prompt, ok_result.request.prompt);
         assert_eq!(
             stored_llm_call.response.completion,

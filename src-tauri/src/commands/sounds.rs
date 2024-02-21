@@ -55,30 +55,31 @@ mod tests {
         // pass
     }
 
-    impl SampleCallTestCase<PlaySoundRequest> for PlaySoundTestCase {
+    impl SampleCallTestCase<PlaySoundRequest, ()> for PlaySoundTestCase {
         const EXPECTED_API_CALL: &'static str = "play_sound";
         const CALL_HAS_ARGS: bool = true;
+
+        async fn make_request(&mut self, args: &Option<PlaySoundRequest>) -> () {
+            let actual_args = args.as_ref().unwrap().clone();
+            play_sound(actual_args.sound, actual_args.volume, actual_args.speed);
+        }
     }
 
-    fn check_play_sound_sample(file_prefix: &str) {
-        let test_case = PlaySoundTestCase {};
-        let result = test_case.check_sample_call(file_prefix);
-
-        let request = result.args.unwrap();
-        #[allow(clippy::let_unit_value)]
-        let actual_result = play_sound(request.sound, request.volume, request.speed);
-        let actual_json = serde_json::to_string(&actual_result).unwrap();
-        let expected_json = result.sample.response.message;
+    async fn check_play_sound_sample(file_prefix: &str) {
+        let mut test_case = PlaySoundTestCase {};
+        let call = test_case.check_sample_call(file_prefix).await;
+        let actual_json = serde_json::to_string(&call.result).unwrap();
+        let expected_json = call.sample.response.message;
         assert_eq!(actual_json, expected_json);
     }
 
-    #[test]
-    fn test_play_switch() {
-        check_play_sound_sample("./api/sample-calls/play_sound-switch.yaml");
+    #[tokio::test]
+    async fn test_play_switch() {
+        check_play_sound_sample("./api/sample-calls/play_sound-switch.yaml").await;
     }
 
-    #[test]
-    fn test_play_whoosh() {
-        check_play_sound_sample("./api/sample-calls/play_sound-whoosh.yaml");
+    #[tokio::test]
+    async fn test_play_whoosh() {
+        check_play_sound_sample("./api/sample-calls/play_sound-whoosh.yaml").await;
     }
 }

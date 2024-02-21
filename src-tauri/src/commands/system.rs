@@ -115,20 +115,26 @@ mod tests {
     }
 
     struct GetSystemInfoTestCase {
-        // pass
+        pub system_info: SystemInfo,
     }
 
-    impl SampleCallTestCase<()> for GetSystemInfoTestCase {
+    impl SampleCallTestCase<(), SystemInfo> for GetSystemInfoTestCase {
         const EXPECTED_API_CALL: &'static str = "get_system_info";
         const CALL_HAS_ARGS: bool = false;
+
+        async fn make_request(&mut self, _args: &Option<()>) -> SystemInfo {
+            self.system_info.clone()
+        }
     }
 
-    fn check_get_system_info_sample(file_prefix: &str, actual_info: &SystemInfo) {
-        let test_case = GetSystemInfoTestCase {};
-        let result = test_case.check_sample_call(file_prefix);
+    async fn check_get_system_info_sample(file_prefix: &str, actual_info: &SystemInfo) {
+        let mut test_case = GetSystemInfoTestCase {
+            system_info: actual_info.clone(),
+        };
+        let call = test_case.check_sample_call(file_prefix).await;
 
-        let expected_info = parse_system_info(&result.sample.response.message);
-        assert_eq!(actual_info, &expected_info);
+        let expected_info = parse_system_info(&call.sample.response.message);
+        assert_eq!(&test_case.system_info, &expected_info);
     }
 
     #[test]
@@ -185,8 +191,8 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_get_linux_system_info() {
+    #[tokio::test]
+    async fn test_get_linux_system_info() {
         let system_info = SystemInfo {
             zamm_version: "0.0.0".to_string(),
             os: Some(OS::Linux),
@@ -197,6 +203,7 @@ mod tests {
         check_get_system_info_sample(
             "./api/sample-calls/get_system_info-linux.yaml",
             &system_info,
-        );
+        )
+        .await;
     }
 }
