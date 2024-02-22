@@ -1,11 +1,11 @@
-mod errors;
+pub mod errors;
 mod keys;
 mod llms;
 mod preferences;
 mod sounds;
 mod system;
 
-pub use errors::{Error, ZammResult};
+pub use errors::Error;
 pub use keys::{get_api_keys, set_api_key};
 pub use llms::chat;
 pub use preferences::{get_preferences, set_preferences};

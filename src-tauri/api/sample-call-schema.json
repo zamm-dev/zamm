@@ -24,6 +24,25 @@
             }
           },
           "required": ["message"]
+        },
+        "sideEffects": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "disk": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "startStateDirectory": {
+                  "type": "string"
+                },
+                "endStateDirectory": {
+                  "type": "string"
+                }
+              },
+              "required": ["endStateDirectory"]
+            }
+          }
         }
       },
       "required": ["request", "response"],

@@ -43,7 +43,7 @@ fn play_sound_async(sound: Sound, volume: f32, speed: f32) -> ZammResult<()> {
 mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
-    use crate::test_helpers::{DirectReturn, SampleCallTestCase};
+    use crate::test_helpers::{DirectReturn, SampleCallTestCase, SideEffectsHelpers};
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct PlaySoundRequest {
@@ -60,7 +60,11 @@ mod tests {
         const EXPECTED_API_CALL: &'static str = "play_sound";
         const CALL_HAS_ARGS: bool = true;
 
-        async fn make_request(&mut self, args: &Option<PlaySoundRequest>) -> () {
+        async fn make_request(
+            &mut self,
+            args: &Option<PlaySoundRequest>,
+            _: &SideEffectsHelpers,
+        ) -> () {
             let actual_args = args.as_ref().unwrap().clone();
             play_sound(actual_args.sound, actual_args.volume, actual_args.speed);
         }

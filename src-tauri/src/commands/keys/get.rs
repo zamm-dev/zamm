@@ -19,7 +19,9 @@ pub async fn get_api_keys(api_keys: State<'_, ZammApiKeys>) -> ZammResult<ApiKey
 pub mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
-    use crate::test_helpers::{SampleCallTestCase, ZammResultReturn};
+    use crate::test_helpers::{
+        SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
+    };
     use tokio::sync::Mutex;
 
     struct GetApiKeysTestCase<'a> {
@@ -30,7 +32,11 @@ pub mod tests {
         const EXPECTED_API_CALL: &'static str = "get_api_keys";
         const CALL_HAS_ARGS: bool = false;
 
-        async fn make_request(&mut self, _args: &Option<()>) -> ZammResult<ApiKeys> {
+        async fn make_request(
+            &mut self,
+            _: &Option<()>,
+            _: &SideEffectsHelpers,
+        ) -> ZammResult<ApiKeys> {
             Ok(get_api_keys_helper(&self.api_keys).await)
         }
 

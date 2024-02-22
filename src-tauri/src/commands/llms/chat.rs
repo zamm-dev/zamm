@@ -140,7 +140,9 @@ mod tests {
     use crate::models::llm_calls::{ChatMessage, LlmCallRow};
     use crate::sample_call::SampleCall;
     use crate::setup::api_keys::ApiKeys;
-    use crate::test_helpers::{setup_zamm_db, SampleCallTestCase, ZammResultReturn};
+    use crate::test_helpers::{
+        setup_zamm_db, SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
+    };
     use diesel::prelude::*;
     use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
     use rvcr::{VCRMiddleware, VCRMode};
@@ -198,6 +200,7 @@ mod tests {
         async fn make_request(
             &mut self,
             args: &Option<ChatRequest>,
+            _: &SideEffectsHelpers,
         ) -> ZammResult<LlmCall> {
             let actual_args = args.as_ref().unwrap().clone();
             chat_helper(

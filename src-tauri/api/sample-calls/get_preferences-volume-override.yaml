@@ -8,3 +8,7 @@ response:
       "sound_on": null,
       "volume": 0.8
     }
+sideEffects:
+  disk:
+    startStateDirectory: volume-override
+    endStateDirectory: volume-override

@@ -108,7 +108,7 @@ pub fn get_system_info() -> SystemInfo {
 mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
-    use crate::test_helpers::{DirectReturn, SampleCallTestCase};
+    use crate::test_helpers::{DirectReturn, SampleCallTestCase, SideEffectsHelpers};
     use cfg_if::cfg_if;
 
     struct GetSystemInfoTestCase {
@@ -119,7 +119,11 @@ mod tests {
         const EXPECTED_API_CALL: &'static str = "get_system_info";
         const CALL_HAS_ARGS: bool = false;
 
-        async fn make_request(&mut self, _args: &Option<()>) -> SystemInfo {
+        async fn make_request(
+            &mut self,
+            _: &Option<()>,
+            _: &SideEffectsHelpers,
+        ) -> SystemInfo {
             self.system_info.clone()
         }
 

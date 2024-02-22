@@ -10,11 +10,21 @@
 export interface SampleCall {
   request: string[];
   response: Response;
+  sideEffects?: SideEffects;
 }
 
 export interface Response {
   message: string;
   success?: boolean;
+}
+
+export interface SideEffects {
+  disk?: Disk;
+}
+
+export interface Disk {
+  endStateDirectory: string;
+  startStateDirectory?: string;
 }
 
 // Converts JSON strings to/from your types
@@ -214,6 +224,11 @@ const typeMap: any = {
     [
       { json: "request", js: "request", typ: a("") },
       { json: "response", js: "response", typ: r("Response") },
+      {
+        json: "sideEffects",
+        js: "sideEffects",
+        typ: u(undefined, r("SideEffects")),
+      },
     ],
     false,
   ),
@@ -221,6 +236,21 @@ const typeMap: any = {
     [
       { json: "message", js: "message", typ: "" },
       { json: "success", js: "success", typ: u(undefined, true) },
+    ],
+    false,
+  ),
+  SideEffects: o(
+    [{ json: "disk", js: "disk", typ: u(undefined, r("Disk")) }],
+    false,
+  ),
+  Disk: o(
+    [
+      { json: "endStateDirectory", js: "endStateDirectory", typ: "" },
+      {
+        json: "startStateDirectory",
+        js: "startStateDirectory",
+        typ: u(undefined, ""),
+      },
     ],
     false,
   ),

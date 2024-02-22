@@ -108,7 +108,7 @@ pub mod tests {
     use crate::test_helpers::api_testing::{check_zamm_result, serialize_zamm_result};
     use crate::test_helpers::{
         get_temp_test_dir, setup_database, setup_zamm_db, SampleCallTestCase,
-        ZammResultReturn,
+        SideEffectsHelpers, ZammResultReturn,
     };
     use diesel::prelude::*;
     use serde::{Deserialize, Serialize};
@@ -143,6 +143,7 @@ pub mod tests {
         async fn make_request(
             &mut self,
             args: &Option<SetApiKeyRequest>,
+            _: &SideEffectsHelpers,
         ) -> ZammResult<()> {
             let request = args.as_ref().unwrap();
             let valid_request_path_specified = request

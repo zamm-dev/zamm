@@ -49,6 +49,7 @@ custom-protocol = ["tauri/custom-protocol"]
 cfg-if = "1.0.0"
 rvcr = "0.1.5"
 serde_yaml = "0.9.25"
+stdext = "0.3.2"
 temp-env = "0.3.4"
 vcr-cassette = "2.0.1"
 

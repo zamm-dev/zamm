@@ -74,11 +74,10 @@ mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
     use crate::test_helpers::{
-        get_temp_test_dir, SampleCallTestCase, ZammResultReturn,
+        SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
     };
     use serde::{Deserialize, Serialize};
-
-    use std::fs;
+    use stdext::function_name;
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct SetPreferencesRequest {
@@ -86,7 +85,7 @@ mod tests {
     }
 
     struct SetPreferencesTestCase {
-        test_preferences_dir: PathBuf,
+        test_fn_name: &'static str,
     }
 
     impl SampleCallTestCase<SetPreferencesRequest, ZammResult<()>>
@@ -95,13 +94,21 @@ mod tests {
         const EXPECTED_API_CALL: &'static str = "set_preferences";
         const CALL_HAS_ARGS: bool = true;
 
+        fn temp_test_subdirectory(&self) -> String {
+            let test_logical_path =
+                self.test_fn_name.split("::").collect::<Vec<&str>>();
+            let test_name = test_logical_path[test_logical_path.len() - 2];
+            format!("{}/{}", Self::EXPECTED_API_CALL, test_name)
+        }
+
         async fn make_request(
             &mut self,
             args: &Option<SetPreferencesRequest>,
+            side_effects: &SideEffectsHelpers,
         ) -> ZammResult<()> {
             set_preferences_helper(
-                &Some(self.test_preferences_dir.clone()),
-                &args.as_ref().unwrap().preferences.clone(),
+                &side_effects.disk,
+                &args.as_ref().unwrap().preferences,
             )
         }
 
@@ -126,56 +133,18 @@ mod tests {
     impl ZammResultReturn<SetPreferencesRequest, ()> for SetPreferencesTestCase {}
 
     async fn check_set_preferences_sample(
+        test_fn_name: &'static str,
         file_prefix: &str,
-        existing_preferences_file: Option<&str>,
-        expected_preferences_file: &str,
     ) {
-        let test_preferences_dir = get_temp_test_dir(
-            PathBuf::from(file_prefix)
-                .file_stem()
-                .unwrap()
-                .to_str()
-                .unwrap(),
-        );
-        let test_preferences_file: PathBuf =
-            get_preferences_file(Some(&test_preferences_dir)).unwrap();
-        println!(
-            "Test will use preference file at {}",
-            test_preferences_file.display()
-        );
-
-        if let Some(existing_preferences) = existing_preferences_file {
-            let test_preferences_path = test_preferences_file.as_path();
-            fs::copy(existing_preferences, test_preferences_path).unwrap_or_else(|e| {
-                panic!(
-                    "Can't copy existing preferences file from {} to {}: {}",
-                    existing_preferences,
-                    test_preferences_path.display(),
-                    e
-                )
-            });
-        }
-
-        let mut test_case = SetPreferencesTestCase {
-            test_preferences_dir: test_preferences_dir.clone(),
-        };
+        let mut test_case = SetPreferencesTestCase { test_fn_name };
         test_case.check_sample_call(file_prefix).await;
-
-        let resulting_contents = fs::read_to_string(test_preferences_file)
-            .expect("Test preferences file doesn't exist");
-        let expected_contents = fs::read_to_string(expected_preferences_file)
-            .unwrap_or_else(|_| {
-                panic!("No file found at {}", expected_preferences_file)
-            });
-        assert_eq!(resulting_contents.trim(), expected_contents.trim());
     }
 
     #[tokio::test]
     async fn test_set_preferences_sound_off_without_file() {
         check_set_preferences_sample(
+            function_name!(),
             "./api/sample-calls/set_preferences-sound-off.yaml",
-            None,
-            "./api/sample-settings/sound-override/preferences.toml",
         )
         .await;
     }
@@ -183,9 +152,8 @@ mod tests {
     #[tokio::test]
     async fn test_set_preferences_sound_on_with_extra_settings() {
         check_set_preferences_sample(
+            function_name!(),
             "./api/sample-calls/set_preferences-sound-on.yaml",
-            Some("./api/sample-settings/extra-settings/preferences.toml"),
-            "./api/sample-settings/extra-settings/sound-on.toml",
         )
         .await;
     }
@@ -193,9 +161,8 @@ mod tests {
     #[tokio::test]
     async fn test_set_preferences_volume_partial() {
         check_set_preferences_sample(
+            function_name!(),
             "./api/sample-calls/set_preferences-volume-partial.yaml",
-            None,
-            "./api/sample-settings/volume-override/preferences.toml",
         )
         .await;
     }
