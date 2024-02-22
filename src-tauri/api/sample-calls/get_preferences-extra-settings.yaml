@@ -10,5 +10,5 @@ response:
     }
 sideEffects:
   disk:
-    startStateDirectory: sound-off-extra-settings
-    endStateDirectory: sound-off-extra-settings
+    startStateDirectory: preferences/sound-off-extra-settings
+    endStateDirectory: preferences/sound-off-extra-settings

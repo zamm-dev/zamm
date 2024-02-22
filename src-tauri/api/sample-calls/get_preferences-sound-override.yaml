@@ -10,5 +10,5 @@ response:
     }
 sideEffects:
   disk:
-    startStateDirectory: sound-override
-    endStateDirectory: sound-override
+    startStateDirectory: preferences/sound-override
+    endStateDirectory: preferences/sound-override

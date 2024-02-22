@@ -14,4 +14,4 @@ response:
   message: "null"
 sideEffects:
   disk:
-    endStateDirectory: volume-override
+    endStateDirectory: preferences/volume-override

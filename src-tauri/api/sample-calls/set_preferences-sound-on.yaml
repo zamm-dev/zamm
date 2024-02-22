@@ -14,5 +14,5 @@ response:
   message: "null"
 sideEffects:
   disk:
-    startStateDirectory: sound-off-extra-settings
-    endStateDirectory: sound-on-extra-settings
+    startStateDirectory: preferences/sound-off-extra-settings
+    endStateDirectory: preferences/sound-on-extra-settings

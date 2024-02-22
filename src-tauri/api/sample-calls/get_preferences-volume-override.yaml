@@ -10,5 +10,5 @@ response:
     }
 sideEffects:
   disk:
-    startStateDirectory: volume-override
-    endStateDirectory: volume-override
+    startStateDirectory: preferences/volume-override
+    endStateDirectory: preferences/volume-override
