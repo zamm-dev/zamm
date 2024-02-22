@@ -2,6 +2,7 @@ use crate::commands::errors::ZammResult;
 use crate::sample_call::{Disk, SampleCall};
 use crate::test_helpers::temp_files::get_temp_test_dir;
 use serde::{Deserialize, Serialize};
+use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::{fs, io};
 
@@ -23,6 +24,49 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
         }
     }
     Ok(())
+}
+
+fn compare_dir_all(
+    expected_output_dir: impl AsRef<Path>,
+    actual_output_dir: impl AsRef<Path>,
+) {
+    let mut expected_outputs = vec![];
+    for entry in fs::read_dir(expected_output_dir).unwrap() {
+        let entry = entry.unwrap();
+        expected_outputs.push(entry);
+    }
+
+    let mut actual_outputs = vec![];
+    for entry in fs::read_dir(actual_output_dir).unwrap() {
+        let entry = entry.unwrap();
+        actual_outputs.push(entry);
+    }
+
+    assert_eq!(
+        expected_outputs
+            .iter()
+            .map(|e| e.file_name())
+            .collect::<Vec<OsString>>(),
+        actual_outputs
+            .iter()
+            .map(|e| e.file_name())
+            .collect::<Vec<OsString>>()
+    );
+    for (expected_output, actual_output) in
+        expected_outputs.iter().zip(actual_outputs.iter())
+    {
+        let file_type = expected_output.file_type().unwrap();
+        if file_type.is_dir() {
+            compare_dir_all(expected_output.path(), actual_output.path());
+        } else {
+            let expected_file = fs::read(expected_output.path()).unwrap();
+            let actual_file = fs::read(actual_output.path()).unwrap();
+
+            let expected_file_str = String::from_utf8(expected_file).unwrap();
+            let actual_file_str = String::from_utf8(actual_file).unwrap();
+            assert_eq!(expected_file_str, actual_file_str);
+        }
+    }
 }
 
 pub struct SampleCallResult<T, U>
@@ -86,27 +130,7 @@ where
             &disk_side_effect.end_state_directory
         );
         let expected_output_dir = Path::new(&relative_expected_output_dir);
-        let mut expected_output_files = vec![];
-        for entry in fs::read_dir(expected_output_dir).unwrap() {
-            let entry = entry.unwrap();
-            expected_output_files.push(entry.file_name());
-        }
-
-        let mut actual_output_files = vec![];
-        for entry in fs::read_dir(actual_output_dir).unwrap() {
-            let entry = entry.unwrap();
-            actual_output_files.push(entry.file_name());
-        }
-
-        assert_eq!(expected_output_files, actual_output_files);
-        for file in expected_output_files {
-            let expected_file = fs::read(expected_output_dir.join(&file)).unwrap();
-            let actual_file = fs::read(actual_output_dir.join(&file)).unwrap();
-
-            let expected_file_str = String::from_utf8(expected_file).unwrap();
-            let actual_file_str = String::from_utf8(actual_file).unwrap();
-            assert_eq!(expected_file_str, actual_file_str);
-        }
+        compare_dir_all(&expected_output_dir, actual_output_dir);
     }
 
     async fn check_sample_call(&mut self, sample_file: &str) -> SampleCallResult<T, U> {

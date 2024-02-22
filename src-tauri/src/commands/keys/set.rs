@@ -107,14 +107,14 @@ pub mod tests {
     use crate::setup::api_keys::ApiKeys;
     use crate::test_helpers::api_testing::{check_zamm_result, serialize_zamm_result};
     use crate::test_helpers::{
-        get_temp_test_dir, setup_database, setup_zamm_db, SampleCallTestCase,
-        SideEffectsHelpers, ZammResultReturn,
+        setup_database, setup_zamm_db, SampleCallTestCase, SideEffectsHelpers,
+        ZammResultReturn,
     };
     use diesel::prelude::*;
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
-    use std::fs;
-    use std::path::{Path, PathBuf};
+    use std::env;
+    use stdext::function_name;
     use tokio::sync::Mutex;
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -127,11 +127,8 @@ pub mod tests {
     struct SetApiKeyTestCase<'a> {
         api_keys: &'a ZammApiKeys,
         db: &'a ZammDatabase,
-        test_dir_name: &'a str,
+        test_fn_name: &'static str,
         json_replacements: HashMap<String, String>,
-        valid_request_path_specified: Option<bool>,
-        request_path: Option<PathBuf>,
-        test_init_file: Option<String>,
     }
 
     impl<'a> SampleCallTestCase<SetApiKeyRequest, ZammResult<()>>
@@ -140,52 +137,33 @@ pub mod tests {
         const EXPECTED_API_CALL: &'static str = "set_api_key";
         const CALL_HAS_ARGS: bool = true;
 
+        fn temp_test_subdirectory(&self) -> String {
+            let test_logical_path =
+                self.test_fn_name.split("::").collect::<Vec<&str>>();
+            let test_name = test_logical_path[test_logical_path.len() - 2];
+            format!("{}/{}", Self::EXPECTED_API_CALL, test_name)
+        }
+
         async fn make_request(
             &mut self,
             args: &Option<SetApiKeyRequest>,
-            _: &SideEffectsHelpers,
+            side_effects: &SideEffectsHelpers,
         ) -> ZammResult<()> {
             let request = args.as_ref().unwrap();
-            let valid_request_path_specified = request
-                .filename
-                .as_ref()
-                .map(|f| !f.is_empty() && !f.ends_with('/'))
-                .unwrap_or(false);
-            let request_path = request.filename.as_ref().map(|f| PathBuf::from(&f));
-            let test_init_file = if valid_request_path_specified {
-                let p = request_path.as_ref().unwrap();
-                let sample_file_directory = p.parent().unwrap().to_str().unwrap();
-                let test_name =
-                    format!("{}/{}", self.test_dir_name, sample_file_directory);
-                let temp_init_dir = get_temp_test_dir(&test_name);
-                let init_file = temp_init_dir.join(p.file_name().unwrap());
-                println!(
-                    "Test will be performed on shell init file at {}",
-                    init_file.display()
-                );
+            let temp_test_dir = side_effects.disk.as_ref().unwrap();
+            let current_dir = env::current_dir().unwrap();
+            env::set_current_dir(temp_test_dir).unwrap();
 
-                let starting_init_file = Path::new("api/sample-init-files").join(p);
-                if PathBuf::from(&starting_init_file).exists() {
-                    fs::copy(&starting_init_file, &init_file).unwrap();
-                }
-
-                Some(init_file.to_str().unwrap().to_owned())
-            } else {
-                request.filename.clone()
-            };
-
-            self.valid_request_path_specified = Some(valid_request_path_specified);
-            self.request_path = request_path;
-            self.test_init_file = test_init_file;
-
-            set_api_key_helper(
+            let result = set_api_key_helper(
                 self.api_keys,
                 self.db,
-                self.test_init_file.as_deref(),
+                request.filename.as_deref(),
                 &request.service,
                 request.api_key.clone(),
             )
-            .await
+            .await;
+            env::set_current_dir(current_dir).unwrap();
+            result
         }
 
         fn serialize_result(
@@ -244,54 +222,32 @@ pub mod tests {
     }
 
     pub async fn check_set_api_key_sample<'a>(
+        test_fn_name: &'static str,
         db: &'a ZammDatabase,
         sample_file: &str,
         existing_zamm_api_keys: &'a ZammApiKeys,
-        test_dir_name: &'a str,
         json_replacements: HashMap<String, String>,
     ) {
         let mut test_case = SetApiKeyTestCase {
             api_keys: existing_zamm_api_keys,
             db,
-            test_dir_name,
+            test_fn_name,
             json_replacements,
-            valid_request_path_specified: None,
-            request_path: None,
-            test_init_file: None,
         };
         test_case.check_sample_call(sample_file).await;
-
-        // check that the API call successfully wrote the API keys to disk, if asked to
-        if test_case.valid_request_path_specified.unwrap() {
-            let p = test_case.request_path.unwrap();
-            let expected_init_file = Path::new("api/sample-init-files")
-                .join(p)
-                .with_file_name("expected.bashrc");
-
-            let resulting_contents =
-                fs::read_to_string(test_case.test_init_file.unwrap().as_str())
-                    .expect("Test shell init file doesn't exist");
-            let expected_contents = fs::read_to_string(&expected_init_file)
-                .unwrap_or_else(|_| {
-                    panic!(
-                        "No gold init file found at {}",
-                        expected_init_file.display()
-                    )
-                });
-            assert_eq!(resulting_contents.trim(), expected_contents.trim());
-        }
     }
 
     async fn check_set_api_key_sample_unit(
+        test_fn_name: &'static str,
         db: &ZammDatabase,
         sample_file: &str,
         existing_zamm_api_keys: &ZammApiKeys,
     ) {
         check_set_api_key_sample(
+            test_fn_name,
             db,
             sample_file,
             existing_zamm_api_keys,
-            "set_api_key",
             HashMap::new(),
         )
         .await;
@@ -301,6 +257,7 @@ pub mod tests {
     async fn test_write_new_init_file() {
         let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
         check_set_api_key_sample_unit(
+            function_name!(),
             &setup_zamm_db(),
             "api/sample-calls/set_api_key-no-file.yaml",
             &api_keys,
@@ -312,6 +269,7 @@ pub mod tests {
     async fn test_overwrite_existing_init_file_with_newline() {
         let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
         check_set_api_key_sample_unit(
+            function_name!(),
             &setup_zamm_db(),
             "api/sample-calls/set_api_key-existing-with-newline.yaml",
             &api_keys,
@@ -323,8 +281,21 @@ pub mod tests {
     async fn test_overwrite_existing_init_file_no_newline() {
         let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
         check_set_api_key_sample_unit(
+            function_name!(),
             &setup_zamm_db(),
             "api/sample-calls/set_api_key-existing-no-newline.yaml",
+            &api_keys,
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_nested_folder() {
+        let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
+        check_set_api_key_sample_unit(
+            function_name!(),
+            &setup_zamm_db(),
+            "api/sample-calls/set_api_key-nested-folder.yaml",
             &api_keys,
         )
         .await;
@@ -334,6 +305,7 @@ pub mod tests {
     async fn test_no_disk_write() {
         let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
         check_set_api_key_sample_unit(
+            function_name!(),
             &setup_zamm_db(),
             "api/sample-calls/set_api_key-no-disk-write.yaml",
             &api_keys,
@@ -357,6 +329,7 @@ pub mod tests {
             .unwrap();
 
         check_set_api_key_sample_unit(
+            function_name!(),
             &ZammDatabase(Mutex::new(Some(conn))),
             "api/sample-calls/set_api_key-unset.yaml",
             &api_keys,
@@ -369,6 +342,7 @@ pub mod tests {
     async fn test_empty_filename() {
         let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
         check_set_api_key_sample_unit(
+            function_name!(),
             &setup_zamm_db(),
             "api/sample-calls/set_api_key-empty-filename.yaml",
             &api_keys,
@@ -380,10 +354,10 @@ pub mod tests {
     async fn test_invalid_filename() {
         let api_keys = ZammApiKeys(Mutex::new(ApiKeys::default()));
         check_set_api_key_sample(
+            function_name!(),
             &setup_zamm_db(),
             "api/sample-calls/set_api_key-invalid-filename.yaml",
             &api_keys,
-            "set_api_key",
             HashMap::from([(
                 // error on Windows
                 "\"The system cannot find the path specified. (os error 3)\""

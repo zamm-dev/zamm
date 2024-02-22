@@ -2,7 +2,7 @@ request:
   - set_api_key
   - >
     {
-      "filename": ".bashrc",
+      "filename": "folder/.bashrc",
       "service": "OpenAI",
       "api_key": "0p3n41-4p1-k3y"
     }
@@ -10,5 +10,5 @@ response:
   message: "null"
 sideEffects:
   disk:
-    startStateDirectory: shell-init/with-newline/start
-    endStateDirectory: shell-init/with-newline/end
+    startStateDirectory: shell-init/nested/start
+    endStateDirectory: shell-init/nested/end

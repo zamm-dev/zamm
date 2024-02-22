@@ -10,3 +10,7 @@ response:
   success: false
   message: >
     "Is a directory (os error 21)"
+sideEffects:
+  disk:
+    startStateDirectory: empty
+    endStateDirectory: empty

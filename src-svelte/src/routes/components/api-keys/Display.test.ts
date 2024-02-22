@@ -149,7 +149,7 @@ describe("API Keys Display", () => {
   test("can edit API key", async () => {
     systemInfo.set({
       ...NullSystemInfo,
-      shell_init_file: "no-newline/.bashrc",
+      shell_init_file: ".bashrc",
     });
     await checkSampleCall(
       "../src-tauri/api/sample-calls/get_api_keys-empty.yaml",
@@ -247,7 +247,7 @@ describe("API Keys Display", () => {
     );
     tauriInvokeMock.mockClear();
     playback.addSamples(
-      "../src-tauri/api/sample-calls/set_api_key-existing-no-newline.yaml",
+      "../src-tauri/api/sample-calls/set_api_key-nested-folder.yaml",
       "../src-tauri/api/sample-calls/get_api_keys-openai.yaml",
     );
 
@@ -256,7 +256,7 @@ describe("API Keys Display", () => {
     defaultInitFile
       .split("")
       .forEach(() => userEvent.type(fileInput, "{backspace}"));
-    await userEvent.type(fileInput, "no-newline/.bashrc");
+    await userEvent.type(fileInput, "folder/.bashrc");
     await userEvent.type(screen.getByLabelText("API key:"), "0p3n41-4p1-k3y");
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     await waitFor(() => expect(tauriInvokeMock).toHaveReturnedTimes(2));
