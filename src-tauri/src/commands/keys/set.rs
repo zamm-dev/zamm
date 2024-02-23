@@ -191,7 +191,7 @@ pub mod tests {
             } else {
                 let arg_api_key = Some(actual_args.api_key.clone());
                 assert_eq!(existing_api_keys.openai, arg_api_key);
-                assert_eq!(get_openai_api_key_from_db(self.db).await, arg_api_key,);
+                assert_eq!(get_openai_api_key_from_db(self.db).await, arg_api_key);
             }
         }
     }
