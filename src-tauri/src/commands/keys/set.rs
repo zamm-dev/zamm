@@ -65,7 +65,7 @@ async fn set_api_key_helper(
             } else {
                 diesel::replace_into(api_keys::table)
                     .values(crate::models::NewApiKey {
-                        service: service.clone(),
+                        service: *service,
                         api_key: &api_key,
                     })
                     .execute(conn)?;

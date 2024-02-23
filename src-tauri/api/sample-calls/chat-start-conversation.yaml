@@ -54,3 +54,6 @@ response:
         "total": 44
       }
     }
+sideEffects:
+  database:
+    endStateDump: conversation-started.yaml

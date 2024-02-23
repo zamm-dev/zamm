@@ -8,10 +8,20 @@ use diesel::sql_types::Text;
 use diesel::sqlite::Sqlite;
 use std::str::FromStr;
 
-#[derive(Queryable, Selectable, Debug)]
+#[derive(Queryable, Selectable, Debug, serde::Serialize, serde::Deserialize)]
 pub struct ApiKey {
     pub service: Service,
     pub api_key: String,
+}
+
+#[cfg(test)]
+impl ApiKey {
+    pub fn as_insertable(&self) -> NewApiKey {
+        NewApiKey {
+            service: self.service,
+            api_key: &self.api_key,
+        }
+    }
 }
 
 #[derive(Insertable)]

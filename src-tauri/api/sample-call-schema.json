@@ -41,6 +41,19 @@
                 }
               },
               "required": ["endStateDirectory"]
+            },
+            "database": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "startStateDump": {
+                  "type": "string"
+                },
+                "endStateDump": {
+                  "type": "string"
+                }
+              },
+              "required": ["endStateDump"]
             }
           }
         }

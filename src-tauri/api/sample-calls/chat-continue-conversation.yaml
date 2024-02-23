@@ -27,8 +27,8 @@ request:
 response:
   message: >
     {
-      "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
-      "timestamp": "2024-01-16T08:50:19.738093890",
+      "id": "c13c1e67-2de3-48de-a34c-a32079c03316",
+      "timestamp": "2024-01-16T09:50:19.738093890",
       "llm": {
         "name": "gpt-4-0613",
         "requested": "gpt-4",
@@ -70,3 +70,7 @@ response:
         "total": 79
       }
     }
+sideEffects:
+  database:
+    startStateDump: conversation-started.yaml
+    endStateDump: conversation-continued.yaml

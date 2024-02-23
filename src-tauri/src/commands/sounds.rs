@@ -64,7 +64,7 @@ mod tests {
             &mut self,
             args: &Option<PlaySoundRequest>,
             _: &SideEffectsHelpers,
-        ) -> () {
+        ) {
             let actual_args = args.as_ref().unwrap().clone();
             play_sound(actual_args.sound, actual_args.volume, actual_args.speed);
         }

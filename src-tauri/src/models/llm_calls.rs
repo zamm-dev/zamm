@@ -21,11 +21,11 @@ use std::ops::Deref;
 use uuid::Uuid;
 
 #[derive(
-    AsExpression, FromSqlRow, Debug, Serialize, Deserialize, Clone, specta::Type,
+    AsExpression, FromSqlRow, Debug, Clone, specta::Type, Serialize, Deserialize,
 )]
 #[diesel(sql_type = Text)]
+#[serde(transparent)]
 pub struct EntityId {
-    #[serde(rename = "id")]
     pub uuid: Uuid,
 }
 
@@ -284,7 +284,7 @@ pub struct TokenMetadata {
     pub total: Option<i32>,
 }
 
-#[derive(Debug, Queryable, Selectable, Clone)]
+#[derive(Debug, Queryable, Selectable, Clone, Serialize, Deserialize)]
 #[diesel(table_name = llm_calls)]
 pub struct LlmCallRow {
     pub id: EntityId,
@@ -318,7 +318,6 @@ pub struct NewLlmCallRow<'a> {
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct LlmCall {
-    #[serde(flatten)]
     pub id: EntityId,
     pub timestamp: NaiveDateTime,
     pub llm: Llm,

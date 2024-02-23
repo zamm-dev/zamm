@@ -19,7 +19,13 @@ export interface Response {
 }
 
 export interface SideEffects {
+  database?: Database;
   disk?: Disk;
+}
+
+export interface Database {
+  endStateDump: string;
+  startStateDump?: string;
 }
 
 export interface Disk {
@@ -240,7 +246,17 @@ const typeMap: any = {
     false,
   ),
   SideEffects: o(
-    [{ json: "disk", js: "disk", typ: u(undefined, r("Disk")) }],
+    [
+      { json: "database", js: "database", typ: u(undefined, r("Database")) },
+      { json: "disk", js: "disk", typ: u(undefined, r("Disk")) },
+    ],
+    false,
+  ),
+  Database: o(
+    [
+      { json: "endStateDump", js: "endStateDump", typ: "" },
+      { json: "startStateDump", js: "startStateDump", typ: u(undefined, "") },
+    ],
     false,
   ),
   Disk: o(

@@ -12,6 +12,7 @@ use strum_macros::{Display, EnumString};
 
 #[derive(
     Debug,
+    Copy,
     Clone,
     Eq,
     PartialEq,

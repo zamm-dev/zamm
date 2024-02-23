@@ -137,18 +137,20 @@ pub async fn chat(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::llm_calls::{ChatMessage, LlmCallRow};
+    use crate::models::llm_calls::ChatMessage;
     use crate::sample_call::SampleCall;
     use crate::setup::api_keys::ApiKeys;
+    use crate::test_helpers::api_testing::standard_test_subdir;
     use crate::test_helpers::{
-        setup_zamm_db, SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
+        SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
     };
-    use diesel::prelude::*;
     use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
     use rvcr::{VCRMiddleware, VCRMode};
     use serde::{Deserialize, Serialize};
+    use std::collections::HashMap;
     use std::env;
     use std::path::PathBuf;
+    use stdext::function_name;
     use tokio::sync::Mutex;
     use vcr_cassette::Headers;
 
@@ -168,15 +170,8 @@ mod tests {
             .collect();
     }
 
-    async fn get_llm_call(db: &ZammDatabase, call_id: &EntityId) -> LlmCall {
-        use crate::schema::llm_calls::dsl::*;
-        let mut conn_mutex = db.0.lock().await;
-        let conn = conn_mutex.as_mut().unwrap();
-        llm_calls
-            .filter(id.eq(call_id))
-            .first::<LlmCallRow>(conn)
-            .unwrap()
-            .into()
+    fn to_yaml_string<T: Serialize>(obj: &T) -> String {
+        serde_yaml::to_string(obj).unwrap().trim().to_string()
     }
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -188,8 +183,8 @@ mod tests {
     }
 
     struct ChatTestCase {
+        test_fn_name: &'static str,
         pub api_keys: ZammApiKeys,
-        pub db: ZammDatabase,
         pub vcr_client: ClientWithMiddleware,
     }
 
@@ -197,15 +192,19 @@ mod tests {
         const EXPECTED_API_CALL: &'static str = "chat";
         const CALL_HAS_ARGS: bool = true;
 
+        fn temp_test_subdirectory(&self) -> String {
+            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
+        }
+
         async fn make_request(
             &mut self,
             args: &Option<ChatRequest>,
-            _: &SideEffectsHelpers,
+            side_effects: &SideEffectsHelpers,
         ) -> ZammResult<LlmCall> {
             let actual_args = args.as_ref().unwrap().clone();
             chat_helper(
                 &self.api_keys,
-                &self.db,
+                side_effects.db.as_ref().unwrap(),
                 actual_args.provider,
                 actual_args.llm,
                 actual_args.temperature,
@@ -213,6 +212,25 @@ mod tests {
                 self.vcr_client.clone(),
             )
             .await
+        }
+
+        fn output_replacements(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<LlmCall>,
+        ) -> HashMap<String, String> {
+            let expected_output = parse_response(&sample.response.message);
+            let actual_output = result.as_ref().unwrap();
+            HashMap::from([
+                (
+                    to_yaml_string(&actual_output.id),
+                    to_yaml_string(&expected_output.id),
+                ),
+                (
+                    to_yaml_string(&actual_output.timestamp),
+                    to_yaml_string(&expected_output.timestamp),
+                ),
+            ])
         }
 
         fn serialize_result(
@@ -254,7 +272,11 @@ mod tests {
         serde_json::from_str(response_str).unwrap()
     }
 
-    async fn test_llm_api_call(recording_path: &str, sample_path: &str) {
+    async fn test_llm_api_call(
+        test_fn_name: &'static str,
+        recording_path: &str,
+        sample_path: &str,
+    ) {
         let recording_path = PathBuf::from(recording_path);
         let is_recording = !recording_path.exists();
         let api_keys = if is_recording {
@@ -286,40 +308,20 @@ mod tests {
             ClientBuilder::new(reqwest::Client::new())
                 .with(middleware)
                 .build();
-
-        let db = setup_zamm_db();
         // end dependencies setup
 
         let mut test_case = ChatTestCase {
+            test_fn_name,
             api_keys,
-            db,
             vcr_client,
         };
-        let call = test_case.check_sample_call(sample_path).await;
-        let ok_result = call.result.unwrap();
-
-        // check that it made it into the database
-        let stored_llm_call = get_llm_call(&test_case.db, &ok_result.id).await;
-        assert_eq!(stored_llm_call.request.prompt, ok_result.request.prompt);
-        assert_eq!(
-            stored_llm_call.response.completion,
-            ok_result.response.completion
-        );
-
-        // do a sanity check that everything is non-empty
-        let prompt = match ok_result.request.prompt {
-            Prompt::Chat(ChatPrompt { messages: prompt }) => prompt,
-        };
-        assert!(!prompt.is_empty());
-        match &ok_result.response.completion {
-            ChatMessage::AI { text } => assert!(!text.is_empty()),
-            _ => panic!("Unexpected response type"),
-        }
+        test_case.check_sample_call(sample_path).await;
     }
 
     #[tokio::test]
     async fn test_start_conversation() {
         test_llm_api_call(
+            function_name!(),
             "api/sample-call-requests/start-conversation.json",
             "api/sample-calls/chat-start-conversation.yaml",
         )
@@ -329,6 +331,7 @@ mod tests {
     #[tokio::test]
     async fn test_continue_conversation() {
         test_llm_api_call(
+            function_name!(),
             "api/sample-call-requests/continue-conversation.json",
             "api/sample-calls/chat-continue-conversation.yaml",
         )

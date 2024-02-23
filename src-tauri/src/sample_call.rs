@@ -32,7 +32,17 @@ pub struct Response {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SideEffects {
+    pub database: Option<Database>,
+
     pub disk: Option<Disk>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Database {
+    pub end_state_dump: String,
+
+    pub start_state_dump: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

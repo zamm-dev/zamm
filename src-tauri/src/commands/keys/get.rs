@@ -37,7 +37,7 @@ pub mod tests {
             _: &Option<()>,
             _: &SideEffectsHelpers,
         ) -> ZammResult<ApiKeys> {
-            Ok(get_api_keys_helper(&self.api_keys).await)
+            Ok(get_api_keys_helper(self.api_keys).await)
         }
 
         fn serialize_result(
