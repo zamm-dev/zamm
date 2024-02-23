@@ -83,6 +83,12 @@ pub struct SideEffectsHelpers {
     pub disk: Option<PathBuf>,
 }
 
+pub fn standard_test_subdir(api_call: &str, test_fn_name: &str) -> String {
+    let test_logical_path = test_fn_name.split("::").collect::<Vec<&str>>();
+    let test_name = test_logical_path[test_logical_path.len() - 2];
+    format!("{}/{}", api_call, test_name)
+}
+
 pub trait SampleCallTestCase<T, U>
 where
     T: Serialize + for<'de> Deserialize<'de>,

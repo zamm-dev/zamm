@@ -105,7 +105,9 @@ pub mod tests {
     use crate::sample_call::SampleCall;
     use crate::schema;
     use crate::setup::api_keys::ApiKeys;
-    use crate::test_helpers::api_testing::{check_zamm_result, serialize_zamm_result};
+    use crate::test_helpers::api_testing::{
+        check_zamm_result, serialize_zamm_result, standard_test_subdir,
+    };
     use crate::test_helpers::{
         setup_database, setup_zamm_db, SampleCallTestCase, SideEffectsHelpers,
         ZammResultReturn,
@@ -138,10 +140,7 @@ pub mod tests {
         const CALL_HAS_ARGS: bool = true;
 
         fn temp_test_subdirectory(&self) -> String {
-            let test_logical_path =
-                self.test_fn_name.split("::").collect::<Vec<&str>>();
-            let test_name = test_logical_path[test_logical_path.len() - 2];
-            format!("{}/{}", Self::EXPECTED_API_CALL, test_name)
+            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
         }
 
         async fn make_request(

@@ -43,6 +43,7 @@ pub fn get_preferences(app_handle: tauri::AppHandle) -> Preferences {
 mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
+    use crate::test_helpers::api_testing::standard_test_subdir;
     use crate::test_helpers::{DirectReturn, SampleCallTestCase, SideEffectsHelpers};
     use stdext::function_name;
 
@@ -55,10 +56,7 @@ mod tests {
         const CALL_HAS_ARGS: bool = false;
 
         fn temp_test_subdirectory(&self) -> String {
-            let test_logical_path =
-                self.test_fn_name.split("::").collect::<Vec<&str>>();
-            let test_name = test_logical_path[test_logical_path.len() - 2];
-            format!("{}/{}", Self::EXPECTED_API_CALL, test_name)
+            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
         }
 
         async fn make_request(
