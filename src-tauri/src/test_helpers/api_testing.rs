@@ -4,7 +4,7 @@ use crate::test_helpers::temp_files::get_temp_test_dir;
 use serde::{Deserialize, Serialize};
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
-use std::{fs, io};
+use std::{env, fs, io};
 
 fn read_sample(filename: &str) -> SampleCall {
     let sample_str = fs::read_to_string(filename)
@@ -150,19 +150,19 @@ where
         assert_eq!(sample.request[0], Self::EXPECTED_API_CALL);
 
         // prepare side-effects
+        let current_dir = env::current_dir().unwrap();
         let mut temp_dir: Option<PathBuf> = None;
         if let Some(side_effects) = &sample.side_effects {
             // prepare disk if necessary
             if let Some(disk_side_effect) = &side_effects.disk {
-                temp_dir = Some(self.get_temp_dir());
-                self.initialize_temp_dir_inputs(
-                    disk_side_effect,
-                    &temp_dir.as_ref().unwrap(),
-                );
+                let test_temp_dir = self.get_temp_dir();
+                self.initialize_temp_dir_inputs(disk_side_effect, &test_temp_dir);
                 println!(
                     "Test will use temp directory at {}",
-                    temp_dir.as_ref().unwrap().display()
+                    &test_temp_dir.display()
                 );
+                env::set_current_dir(&test_temp_dir).unwrap();
+                temp_dir = Some(test_temp_dir);
             }
         }
         let side_effects_helpers = SideEffectsHelpers { disk: temp_dir };
@@ -174,6 +174,7 @@ where
             None
         };
         let result = self.make_request(&args, &side_effects_helpers).await;
+        env::set_current_dir(current_dir).unwrap();
 
         // check the call against sample outputs
         let actual_json = self.serialize_result(&sample, &result);

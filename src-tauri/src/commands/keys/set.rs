@@ -115,7 +115,6 @@ pub mod tests {
     use diesel::prelude::*;
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
-    use std::env;
     use stdext::function_name;
     use tokio::sync::Mutex;
 
@@ -146,23 +145,18 @@ pub mod tests {
         async fn make_request(
             &mut self,
             args: &Option<SetApiKeyRequest>,
-            side_effects: &SideEffectsHelpers,
+            _: &SideEffectsHelpers,
         ) -> ZammResult<()> {
             let request = args.as_ref().unwrap();
-            let temp_test_dir = side_effects.disk.as_ref().unwrap();
-            let current_dir = env::current_dir().unwrap();
-            env::set_current_dir(temp_test_dir).unwrap();
 
-            let result = set_api_key_helper(
+            set_api_key_helper(
                 self.api_keys,
                 self.db,
                 request.filename.as_deref(),
                 &request.service,
                 request.api_key.clone(),
             )
-            .await;
-            env::set_current_dir(current_dir).unwrap();
-            result
+            .await
         }
 
         fn serialize_result(
