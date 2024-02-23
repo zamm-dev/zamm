@@ -12,3 +12,6 @@ sideEffects:
   disk:
     startStateDirectory: empty
     endStateDirectory: empty
+  database:
+    startStateDump: empty.yaml
+    endStateDump: openai-api-key.yaml

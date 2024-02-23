@@ -14,8 +14,10 @@ use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 
 fn read_sample(filename: &str) -> SampleCall {
-    let sample_str = fs::read_to_string(filename)
-        .unwrap_or_else(|_| panic!("No file found at {filename}"));
+    let file_path = Path::new(filename);
+    let abs_file_path = file_path.absolutize().unwrap();
+    let sample_str = fs::read_to_string(&abs_file_path)
+        .unwrap_or_else(|_| panic!("No file found at {}", abs_file_path.display()));
     serde_yaml::from_str(&sample_str).unwrap()
 }
 
@@ -231,16 +233,6 @@ where
                 &temp_test_dir.display()
             );
 
-            // prepare disk if necessary
-            if let Some(disk_side_effect) = &side_effects.disk {
-                let mut test_disk_dir = temp_test_dir.clone();
-                test_disk_dir.push("disk");
-                self.initialize_temp_dir_inputs(disk_side_effect, &test_disk_dir);
-
-                env::set_current_dir(&test_disk_dir).unwrap();
-                side_effects_helpers.disk = Some(test_disk_dir);
-            }
-
             // prepare db if necessary
             if side_effects.database.is_some() {
                 let test_db = setup_zamm_db();
@@ -250,6 +242,16 @@ where
                         .unwrap();
                 }
                 side_effects_helpers.db = Some(test_db);
+            }
+
+            // prepare disk if necessary
+            if let Some(disk_side_effect) = &side_effects.disk {
+                let mut test_disk_dir = temp_test_dir.clone();
+                test_disk_dir.push("disk");
+                self.initialize_temp_dir_inputs(disk_side_effect, &test_disk_dir);
+
+                env::set_current_dir(&test_disk_dir).unwrap();
+                side_effects_helpers.disk = Some(test_disk_dir);
             }
 
             side_effects_helpers.temp_test_dir = Some(temp_test_dir);

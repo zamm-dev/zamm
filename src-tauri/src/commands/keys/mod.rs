@@ -8,7 +8,6 @@ pub use set::set_api_key;
 mod tests {
     use super::*;
     use crate::setup::api_keys::ApiKeys;
-    use crate::test_helpers::setup_zamm_db;
     use crate::ZammApiKeys;
     use get::tests::check_get_api_keys_sample;
     use set::tests::check_set_api_key_sample;
@@ -22,7 +21,6 @@ mod tests {
 
         check_set_api_key_sample(
             function_name!(),
-            &setup_zamm_db(),
             &api_keys,
             "api/sample-calls/set_api_key-existing-no-newline.yaml",
             HashMap::new(),

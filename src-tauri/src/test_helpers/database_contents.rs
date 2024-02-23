@@ -5,6 +5,7 @@ use crate::schema::{api_keys, llm_calls};
 use crate::ZammDatabase;
 use anyhow::anyhow;
 use diesel::prelude::*;
+use path_absolutize::Absolutize;
 use std::fs;
 use std::path::PathBuf;
 use tokio::sync::MutexGuard;
@@ -58,7 +59,11 @@ pub async fn read_database_contents(
         &mut zamm_db.0.lock().await;
     let db = db_mutex.as_mut().ok_or(anyhow!("Error getting db"))?;
 
-    let serialized = fs::read_to_string(file_path)?;
+    let file_path_buf = PathBuf::from(file_path);
+    let file_path_abs = file_path_buf.absolutize()?;
+    let serialized = fs::read_to_string(&file_path_abs).map_err(|e| {
+        anyhow!("Error reading file at {}: {}", &file_path_abs.display(), e)
+    })?;
     let db_contents: DatabaseContents = serde_yaml::from_str(&serialized)?;
     db.transaction::<(), diesel::result::Error, _>(|conn| {
         diesel::insert_into(api_keys::table)

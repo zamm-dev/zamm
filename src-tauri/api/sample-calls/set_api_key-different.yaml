@@ -4,14 +4,13 @@ request:
     {
       "filename": ".bashrc",
       "service": "OpenAI",
-      "api_key": ""
+      "api_key": "4-d1ff3r3n7-k3y"
     }
 response:
   message: "null"
 sideEffects:
   disk:
-    startStateDirectory: shell-init/with-newline/end
-    endStateDirectory: shell-init/with-newline/end
+    endStateDirectory: shell-init/different
   database:
     startStateDump: openai-api-key.yaml
-    endStateDump: empty.yaml
+    endStateDump: different-openai-api-key.yaml
