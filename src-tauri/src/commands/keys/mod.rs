@@ -23,8 +23,8 @@ mod tests {
         check_set_api_key_sample(
             function_name!(),
             &setup_zamm_db(),
-            "api/sample-calls/set_api_key-existing-no-newline.yaml",
             &api_keys,
+            "api/sample-calls/set_api_key-existing-no-newline.yaml",
             HashMap::new(),
         )
         .await;

@@ -127,9 +127,9 @@ pub mod tests {
     }
 
     struct SetApiKeyTestCase<'a> {
+        test_fn_name: &'static str,
         api_keys: &'a ZammApiKeys,
         db: &'a ZammDatabase,
-        test_fn_name: &'static str,
         json_replacements: HashMap<String, String>,
     }
 
@@ -223,14 +223,14 @@ pub mod tests {
     pub async fn check_set_api_key_sample<'a>(
         test_fn_name: &'static str,
         db: &'a ZammDatabase,
-        sample_file: &str,
         existing_zamm_api_keys: &'a ZammApiKeys,
+        sample_file: &str,
         json_replacements: HashMap<String, String>,
     ) {
         let mut test_case = SetApiKeyTestCase {
+            test_fn_name,
             api_keys: existing_zamm_api_keys,
             db,
-            test_fn_name,
             json_replacements,
         };
         test_case.check_sample_call(sample_file).await;
@@ -239,14 +239,14 @@ pub mod tests {
     async fn check_set_api_key_sample_unit(
         test_fn_name: &'static str,
         db: &ZammDatabase,
-        sample_file: &str,
         existing_zamm_api_keys: &ZammApiKeys,
+        sample_file: &str,
     ) {
         check_set_api_key_sample(
             test_fn_name,
             db,
-            sample_file,
             existing_zamm_api_keys,
+            sample_file,
             HashMap::new(),
         )
         .await;
@@ -258,8 +258,8 @@ pub mod tests {
         check_set_api_key_sample_unit(
             function_name!(),
             &setup_zamm_db(),
-            "api/sample-calls/set_api_key-no-file.yaml",
             &api_keys,
+            "api/sample-calls/set_api_key-no-file.yaml",
         )
         .await;
     }
@@ -270,8 +270,8 @@ pub mod tests {
         check_set_api_key_sample_unit(
             function_name!(),
             &setup_zamm_db(),
-            "api/sample-calls/set_api_key-existing-with-newline.yaml",
             &api_keys,
+            "api/sample-calls/set_api_key-existing-with-newline.yaml",
         )
         .await;
     }
@@ -282,8 +282,8 @@ pub mod tests {
         check_set_api_key_sample_unit(
             function_name!(),
             &setup_zamm_db(),
-            "api/sample-calls/set_api_key-existing-no-newline.yaml",
             &api_keys,
+            "api/sample-calls/set_api_key-existing-no-newline.yaml",
         )
         .await;
     }
@@ -294,8 +294,8 @@ pub mod tests {
         check_set_api_key_sample_unit(
             function_name!(),
             &setup_zamm_db(),
-            "api/sample-calls/set_api_key-nested-folder.yaml",
             &api_keys,
+            "api/sample-calls/set_api_key-nested-folder.yaml",
         )
         .await;
     }
@@ -306,8 +306,8 @@ pub mod tests {
         check_set_api_key_sample_unit(
             function_name!(),
             &setup_zamm_db(),
-            "api/sample-calls/set_api_key-no-disk-write.yaml",
             &api_keys,
+            "api/sample-calls/set_api_key-no-disk-write.yaml",
         )
         .await;
     }
@@ -330,8 +330,8 @@ pub mod tests {
         check_set_api_key_sample_unit(
             function_name!(),
             &ZammDatabase(Mutex::new(Some(conn))),
-            "api/sample-calls/set_api_key-unset.yaml",
             &api_keys,
+            "api/sample-calls/set_api_key-unset.yaml",
         )
         .await;
         assert!(api_keys.0.lock().await.openai.is_none());
@@ -343,8 +343,8 @@ pub mod tests {
         check_set_api_key_sample_unit(
             function_name!(),
             &setup_zamm_db(),
-            "api/sample-calls/set_api_key-empty-filename.yaml",
             &api_keys,
+            "api/sample-calls/set_api_key-empty-filename.yaml",
         )
         .await;
     }
@@ -355,8 +355,8 @@ pub mod tests {
         check_set_api_key_sample(
             function_name!(),
             &setup_zamm_db(),
-            "api/sample-calls/set_api_key-invalid-filename.yaml",
             &api_keys,
+            "api/sample-calls/set_api_key-invalid-filename.yaml",
             HashMap::from([(
                 // error on Windows
                 "\"The system cannot find the path specified. (os error 3)\""
