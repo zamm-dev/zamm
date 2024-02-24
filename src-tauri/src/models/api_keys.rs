@@ -58,14 +58,9 @@ where
 mod tests {
     use super::*;
     use crate::setup::db::MIGRATIONS;
+    use crate::test_helpers::database::setup_database;
 
     use diesel_migrations::MigrationHarness;
-
-    fn setup_database() -> SqliteConnection {
-        let mut conn = SqliteConnection::establish(":memory:").unwrap();
-        conn.run_pending_migrations(MIGRATIONS).unwrap();
-        conn
-    }
 
     #[test]
     fn test_uuid_serialization_and_deserialization() {

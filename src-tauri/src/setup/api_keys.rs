@@ -75,16 +75,11 @@ mod tests {
     use super::*;
     use crate::models::NewApiKey;
     use crate::setup::db::MIGRATIONS;
+    use crate::test_helpers::database::setup_database;
     use diesel_migrations::MigrationHarness;
     use temp_env;
 
     const DUMMY_API_KEY: &str = "0p3n41-4p1-k3y";
-
-    fn setup_database() -> SqliteConnection {
-        let mut conn = SqliteConnection::establish(":memory:").unwrap();
-        conn.run_pending_migrations(MIGRATIONS).unwrap();
-        conn
-    }
 
     #[test]
     fn test_get_empty_api_keys_no_db() {
