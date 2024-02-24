@@ -35,6 +35,12 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
     Ok(())
 }
 
+fn apply_replacements(input: &str, replacements: &HashMap<String, String>) -> String {
+    replacements
+        .iter()
+        .fold(input.to_string(), |acc, (k, v)| acc.replace(k, v))
+}
+
 fn compare_files(
     expected_file_path: impl AsRef<Path>,
     actual_file_path: impl AsRef<Path>,
@@ -59,9 +65,7 @@ fn compare_files(
     let expected_file_str = String::from_utf8(expected_file).unwrap();
     let actual_file_str = String::from_utf8(actual_file).unwrap();
 
-    let replaced_actual_str = output_replacements
-        .iter()
-        .fold(actual_file_str, |acc, (k, v)| acc.replace(k, v));
+    let replaced_actual_str = apply_replacements(&actual_file_str, output_replacements);
     assert_eq!(expected_file_str, replaced_actual_str);
 }
 
@@ -296,8 +300,9 @@ where
 
         // check the call against sample outputs
         let actual_json = self.serialize_result(&sample, &result);
+        let replaced_actual_json = apply_replacements(&actual_json, &replacements);
         let expected_json = sample.response.message.trim();
-        assert_eq!(actual_json, expected_json);
+        assert_eq!(replaced_actual_json, expected_json);
         self.check_result(&sample, args.as_ref(), &result).await;
 
         // check the call against disk side-effects

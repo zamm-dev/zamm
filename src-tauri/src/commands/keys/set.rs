@@ -103,9 +103,7 @@ pub mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
     use crate::setup::api_keys::ApiKeys;
-    use crate::test_helpers::api_testing::{
-        check_zamm_result, serialize_zamm_result, standard_test_subdir,
-    };
+    use crate::test_helpers::api_testing::{check_zamm_result, standard_test_subdir};
     use crate::test_helpers::{
         SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
     };
@@ -154,6 +152,14 @@ pub mod tests {
             .await
         }
 
+        fn output_replacements(
+            &self,
+            _: &SampleCall,
+            _: &ZammResult<()>,
+        ) -> HashMap<String, String> {
+            self.json_replacements.clone()
+        }
+
         fn serialize_result(
             &self,
             sample: &SampleCall,
@@ -183,18 +189,7 @@ pub mod tests {
         }
     }
 
-    impl<'a> ZammResultReturn<SetApiKeyRequest, ()> for SetApiKeyTestCase<'a> {
-        fn serialize_result(
-            &self,
-            _sample: &SampleCall,
-            result: &ZammResult<()>,
-        ) -> String {
-            let actual_json = serialize_zamm_result(result);
-            self.json_replacements
-                .iter()
-                .fold(actual_json, |acc, (k, v)| acc.replace(k, v))
-        }
-    }
+    impl<'a> ZammResultReturn<SetApiKeyRequest, ()> for SetApiKeyTestCase<'a> {}
 
     pub async fn check_set_api_key_sample<'a>(
         test_fn_name: &'static str,
@@ -326,10 +321,9 @@ pub mod tests {
             "api/sample-calls/set_api_key-invalid-filename.yaml",
             HashMap::from([(
                 // error on Windows
-                "\"The system cannot find the path specified. (os error 3)\""
-                    .to_string(),
+                "The system cannot find the path specified. (os error 3)".to_string(),
                 // should be replaced by equivalent error on Linux
-                "\"Is a directory (os error 21)\"".to_string(),
+                "Is a directory (os error 21)".to_string(),
             )]),
         )
         .await;
