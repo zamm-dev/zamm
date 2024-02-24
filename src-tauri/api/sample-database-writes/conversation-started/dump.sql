@@ -1,0 +1,1 @@
+INSERT INTO llm_calls VALUES('d5ad1e49-f57f-4481-84fb-4d70ba8a7a74','2024-01-16 08:50:19.738093890','open_ai','gpt-4','gpt-4-0613',1.0,32,12,44,'{"type":"Chat","messages":[{"role":"System","text":"You are ZAMM, a chat program. Respond in first person."},{"role":"Human","text":"Hello, does this work?"}]}','{"role":"AI","text":"Yes, it works. How can I assist you today?"}');

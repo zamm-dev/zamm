@@ -221,15 +221,19 @@ mod tests {
         ) -> HashMap<String, String> {
             let expected_output = parse_response(&sample.response.message);
             let actual_output = result.as_ref().unwrap();
+            let expected_output_timestamp = to_yaml_string(&expected_output.timestamp);
+            let actual_output_timestamp = to_yaml_string(&actual_output.timestamp);
             HashMap::from([
                 (
                     to_yaml_string(&actual_output.id),
                     to_yaml_string(&expected_output.id),
                 ),
                 (
-                    to_yaml_string(&actual_output.timestamp),
-                    to_yaml_string(&expected_output.timestamp),
+                    // sqlite dump produces timestamps with space instead of T
+                    actual_output_timestamp.replace('T', " "),
+                    expected_output_timestamp.replace('T', " "),
                 ),
+                (actual_output_timestamp, expected_output_timestamp),
             ])
         }
 

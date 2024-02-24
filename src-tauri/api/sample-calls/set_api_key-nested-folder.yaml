@@ -13,4 +13,4 @@ sideEffects:
     startStateDirectory: shell-init/nested/start
     endStateDirectory: shell-init/nested/end
   database:
-    endStateDump: openai-api-key.yaml
+    endStateDump: openai-api-key

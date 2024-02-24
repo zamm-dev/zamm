@@ -2,7 +2,7 @@ use crate::commands::errors::ZammResult;
 use crate::sample_call::{Disk, SampleCall};
 use crate::test_helpers::database::setup_zamm_db;
 use crate::test_helpers::database_contents::{
-    read_database_contents, write_database_contents,
+    dump_sqlite_database, read_database_contents, write_database_contents,
 };
 use crate::test_helpers::temp_files::get_temp_test_dir;
 use crate::ZammDatabase;
@@ -141,16 +141,29 @@ impl SampleCall {
             .as_ref()
             .and_then(|se| se.database.as_ref())
             .and_then(|db| db.start_state_dump.as_deref())
-            .map(|p: &str| format!("api/sample-database-writes/{}", p))
+            .map(|p: &str| format!("api/sample-database-writes/{}/dump.yaml", p))
     }
 
-    pub fn db_end_dump(&self) -> Option<String> {
-        self.side_effects
+    pub fn db_end_dump(&self, extension: &str) -> String {
+        let end_state_dump_dir = &self
+            .side_effects
             .as_ref()
-            .and_then(|se| se.database.as_ref())
-            .map(|db| db.end_state_dump.as_ref())
-            .map(|p: &str| format!("api/sample-database-writes/{}", p))
+            .unwrap()
+            .database
+            .as_ref()
+            .unwrap()
+            .end_state_dump;
+
+        format!(
+            "api/sample-database-writes/{}/dump.{}",
+            end_state_dump_dir, extension
+        )
     }
+}
+
+struct TestDatabaseInfo {
+    pub temp_db_dir: PathBuf,
+    pub temp_db_file: PathBuf,
 }
 
 pub trait SampleCallTestCase<T, U>
@@ -226,6 +239,7 @@ where
         // prepare side-effects
         let current_dir = env::current_dir().unwrap();
         let mut side_effects_helpers = SideEffectsHelpers::default();
+        let mut test_db_info: Option<TestDatabaseInfo> = None;
         if let Some(side_effects) = &sample.side_effects {
             let temp_test_dir = self.get_temp_dir();
             println!(
@@ -235,13 +249,22 @@ where
 
             // prepare db if necessary
             if side_effects.database.is_some() {
-                let test_db = setup_zamm_db();
+                let temp_db_dir = temp_test_dir.join("database");
+                fs::create_dir_all(&temp_db_dir).unwrap();
+                let temp_db_file = temp_db_dir.join("db.sqlite3");
+
+                let test_db = setup_zamm_db(Some(&temp_db_file));
                 if let Some(initial_contents) = sample.db_start_dump() {
                     read_database_contents(&test_db, &initial_contents)
                         .await
                         .unwrap();
                 }
+
                 side_effects_helpers.db = Some(test_db);
+                test_db_info = Some(TestDatabaseInfo {
+                    temp_db_dir,
+                    temp_db_file,
+                });
             }
 
             // prepare disk if necessary
@@ -290,13 +313,24 @@ where
 
         // check the call against db side-effects
         if let Some(test_db) = &side_effects_helpers.db {
-            let mut test_db_file = side_effects_helpers.temp_test_dir.unwrap().clone();
-            test_db_file.push("db.yaml");
-            write_database_contents(test_db, &test_db_file)
+            let db_info = test_db_info.unwrap();
+            let actual_db_yaml_dump = db_info.temp_db_dir.join("dump.yaml");
+            let actual_db_sql_dump = db_info.temp_db_dir.join("dump.sql");
+            write_database_contents(test_db, &actual_db_yaml_dump)
                 .await
                 .unwrap();
+            dump_sqlite_database(&db_info.temp_db_file, &actual_db_sql_dump);
 
-            compare_files(sample.db_end_dump().unwrap(), &test_db_file, &replacements);
+            compare_files(
+                sample.db_end_dump("yaml"),
+                &actual_db_yaml_dump,
+                &replacements,
+            );
+            compare_files(
+                sample.db_end_dump("sql"),
+                &actual_db_sql_dump,
+                &replacements,
+            );
         }
 
         SampleCallResult {

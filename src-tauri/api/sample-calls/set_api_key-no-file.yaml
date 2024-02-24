@@ -12,4 +12,4 @@ sideEffects:
   disk:
     endStateDirectory: shell-init/new-file
   database:
-    endStateDump: openai-api-key.yaml
+    endStateDump: openai-api-key

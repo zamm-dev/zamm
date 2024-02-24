@@ -57,14 +57,11 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::setup::db::MIGRATIONS;
     use crate::test_helpers::database::setup_database;
-
-    use diesel_migrations::MigrationHarness;
 
     #[test]
     fn test_uuid_serialization_and_deserialization() {
-        let mut conn = setup_database();
+        let mut conn = setup_database(None);
         let dummy_api_key = "0p3n41-4p1-k3y";
 
         let openai_api_key = NewApiKey {

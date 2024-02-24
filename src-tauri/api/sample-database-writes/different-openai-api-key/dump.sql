@@ -1,0 +1,1 @@
+INSERT INTO api_keys VALUES('open_ai','4-d1ff3r3n7-k3y');

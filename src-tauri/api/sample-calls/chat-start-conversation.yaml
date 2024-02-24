@@ -56,4 +56,4 @@ response:
     }
 sideEffects:
   database:
-    endStateDump: conversation-started.yaml
+    endStateDump: conversation-started

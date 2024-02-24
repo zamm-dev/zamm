@@ -12,5 +12,5 @@ sideEffects:
   disk:
     endStateDirectory: shell-init/different
   database:
-    startStateDump: openai-api-key.yaml
-    endStateDump: different-openai-api-key.yaml
+    startStateDump: openai-api-key
+    endStateDump: different-openai-api-key

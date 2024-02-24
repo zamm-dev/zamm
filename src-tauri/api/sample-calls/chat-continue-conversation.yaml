@@ -72,5 +72,5 @@ response:
     }
 sideEffects:
   database:
-    startStateDump: conversation-started.yaml
-    endStateDump: conversation-continued.yaml
+    startStateDump: conversation-started
+    endStateDump: conversation-continued

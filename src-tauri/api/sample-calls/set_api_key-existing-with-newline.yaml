@@ -13,4 +13,4 @@ sideEffects:
     startStateDirectory: shell-init/with-newline/start
     endStateDirectory: shell-init/with-newline/end
   database:
-    endStateDump: openai-api-key.yaml
+    endStateDump: openai-api-key

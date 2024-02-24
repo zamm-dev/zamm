@@ -15,4 +15,4 @@ sideEffects:
     startStateDirectory: empty
     endStateDirectory: empty
   database:
-    endStateDump: openai-api-key.yaml
+    endStateDump: openai-api-key
