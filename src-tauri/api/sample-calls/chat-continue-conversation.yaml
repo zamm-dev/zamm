@@ -74,3 +74,5 @@ sideEffects:
   database:
     startStateDump: conversation-started
     endStateDump: conversation-continued
+  network:
+    recordingFile: continue-conversation.json

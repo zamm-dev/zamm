@@ -35,6 +35,8 @@ pub struct SideEffects {
     pub database: Option<Database>,
 
     pub disk: Option<Disk>,
+
+    pub network: Option<Network>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -51,4 +53,10 @@ pub struct Disk {
     pub end_state_directory: String,
 
     pub start_state_directory: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Network {
+    pub recording_file: String,
 }

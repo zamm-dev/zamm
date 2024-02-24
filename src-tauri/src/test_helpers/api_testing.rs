@@ -7,11 +7,14 @@ use crate::test_helpers::database_contents::{
 use crate::test_helpers::temp_files::get_temp_test_dir;
 use crate::ZammDatabase;
 use path_absolutize::Absolutize;
+use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
+use rvcr::{VCRMiddleware, VCRMode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
+use vcr_cassette::Headers;
 
 fn read_sample(filename: &str) -> SampleCall {
     let file_path = Path::new(filename);
@@ -126,11 +129,17 @@ where
     pub result: U,
 }
 
+pub struct NetworkHelper {
+    pub network_client: ClientWithMiddleware,
+    pub mode: VCRMode,
+}
+
 #[derive(Default)]
 pub struct SideEffectsHelpers {
     pub temp_test_dir: Option<PathBuf>,
     pub disk: Option<PathBuf>,
     pub db: Option<ZammDatabase>,
+    pub network: Option<NetworkHelper>,
 }
 
 pub fn standard_test_subdir(api_call: &str, test_fn_name: &str) -> String {
@@ -140,6 +149,19 @@ pub fn standard_test_subdir(api_call: &str, test_fn_name: &str) -> String {
 }
 
 impl SampleCall {
+    pub fn network_recording(&self) -> String {
+        let recording_file = &self
+            .side_effects
+            .as_ref()
+            .unwrap()
+            .network
+            .as_ref()
+            .unwrap()
+            .recording_file;
+
+        format!("api/sample-network-requests/{}", recording_file)
+    }
+
     pub fn db_start_dump(&self) -> Option<String> {
         self.side_effects
             .as_ref()
@@ -168,6 +190,22 @@ impl SampleCall {
 struct TestDatabaseInfo {
     pub temp_db_dir: PathBuf,
     pub temp_db_file: PathBuf,
+}
+
+const CENSORED: &str = "<CENSORED>";
+
+fn censor_headers(headers: &Headers, blacklisted_keys: &[&str]) -> Headers {
+    return headers
+        .clone()
+        .iter()
+        .map(|(k, v)| {
+            if blacklisted_keys.contains(&k.as_str()) {
+                (k.clone(), vec![CENSORED.to_string()])
+            } else {
+                (k.clone(), v.clone())
+            }
+        })
+        .collect();
 }
 
 pub trait SampleCallTestCase<T, U>
@@ -250,6 +288,36 @@ where
                 "Test will use temp directory at {}",
                 &temp_test_dir.display()
             );
+
+            // prepare network if necessary
+            if side_effects.network.is_some() {
+                let recording_path = PathBuf::from(sample.network_recording());
+                let vcr_mode = if !recording_path.exists() {
+                    VCRMode::Record
+                } else {
+                    VCRMode::Replay
+                };
+                let middleware = VCRMiddleware::try_from(recording_path)
+                    .unwrap()
+                    .with_mode(vcr_mode.clone())
+                    .with_modify_request(|req| {
+                        req.headers = censor_headers(&req.headers, &["authorization"]);
+                    })
+                    .with_modify_response(|resp| {
+                        resp.headers =
+                            censor_headers(&resp.headers, &["openai-organization"]);
+                    });
+
+                let network_client: ClientWithMiddleware =
+                    ClientBuilder::new(reqwest::Client::new())
+                        .with(middleware)
+                        .build();
+
+                side_effects_helpers.network = Some(NetworkHelper {
+                    network_client,
+                    mode: vcr_mode,
+                });
+            }
 
             // prepare db if necessary
             if side_effects.database.is_some() {

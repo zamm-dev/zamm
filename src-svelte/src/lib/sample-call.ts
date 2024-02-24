@@ -21,6 +21,7 @@ export interface Response {
 export interface SideEffects {
   database?: Database;
   disk?: Disk;
+  network?: Network;
 }
 
 export interface Database {
@@ -31,6 +32,10 @@ export interface Database {
 export interface Disk {
   endStateDirectory: string;
   startStateDirectory?: string;
+}
+
+export interface Network {
+  recordingFile: string;
 }
 
 // Converts JSON strings to/from your types
@@ -249,6 +254,7 @@ const typeMap: any = {
     [
       { json: "database", js: "database", typ: u(undefined, r("Database")) },
       { json: "disk", js: "disk", typ: u(undefined, r("Disk")) },
+      { json: "network", js: "network", typ: u(undefined, r("Network")) },
     ],
     false,
   ),
@@ -270,4 +276,5 @@ const typeMap: any = {
     ],
     false,
   ),
+  Network: o([{ json: "recordingFile", js: "recordingFile", typ: "" }], false),
 };

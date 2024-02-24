@@ -144,31 +144,12 @@ mod tests {
     use crate::test_helpers::{
         SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
     };
-    use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
-    use rvcr::{VCRMiddleware, VCRMode};
+    use rvcr::VCRMode;
     use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
     use std::env;
-    use std::path::PathBuf;
     use stdext::function_name;
     use tokio::sync::Mutex;
-    use vcr_cassette::Headers;
-
-    const CENSORED: &str = "<CENSORED>";
-
-    fn censor_headers(headers: &Headers, blacklisted_keys: &[&str]) -> Headers {
-        return headers
-            .clone()
-            .iter()
-            .map(|(k, v)| {
-                if blacklisted_keys.contains(&k.as_str()) {
-                    (k.clone(), vec![CENSORED.to_string()])
-                } else {
-                    (k.clone(), v.clone())
-                }
-            })
-            .collect();
-    }
 
     fn to_yaml_string<T: Serialize>(obj: &T) -> String {
         serde_yaml::to_string(obj).unwrap().trim().to_string()
@@ -184,8 +165,6 @@ mod tests {
 
     struct ChatTestCase {
         test_fn_name: &'static str,
-        pub api_keys: ZammApiKeys,
-        pub vcr_client: ClientWithMiddleware,
     }
 
     impl SampleCallTestCase<ChatRequest, ZammResult<LlmCall>> for ChatTestCase {
@@ -202,14 +181,25 @@ mod tests {
             side_effects: &SideEffectsHelpers,
         ) -> ZammResult<LlmCall> {
             let actual_args = args.as_ref().unwrap().clone();
+
+            let network_helper = side_effects.network.as_ref().unwrap();
+            let api_keys = match network_helper.mode {
+                VCRMode::Record => ZammApiKeys(Mutex::new(ApiKeys {
+                    openai: env::var("OPENAI_API_KEY").ok(),
+                })),
+                VCRMode::Replay => ZammApiKeys(Mutex::new(ApiKeys {
+                    openai: Some("dummy".to_string()),
+                })),
+            };
+
             chat_helper(
-                &self.api_keys,
+                &api_keys,
                 side_effects.db.as_ref().unwrap(),
                 actual_args.provider,
                 actual_args.llm,
                 actual_args.temperature,
                 actual_args.prompt,
-                self.vcr_client.clone(),
+                network_helper.network_client.clone(),
             )
             .await
         }
@@ -276,49 +266,8 @@ mod tests {
         serde_json::from_str(response_str).unwrap()
     }
 
-    async fn test_llm_api_call(
-        test_fn_name: &'static str,
-        recording_path: &str,
-        sample_path: &str,
-    ) {
-        let recording_path = PathBuf::from(recording_path);
-        let is_recording = !recording_path.exists();
-        let api_keys = if is_recording {
-            ZammApiKeys(Mutex::new(ApiKeys {
-                openai: env::var("OPENAI_API_KEY").ok(),
-            }))
-        } else {
-            ZammApiKeys(Mutex::new(ApiKeys {
-                openai: Some("dummy".to_string()),
-            }))
-        };
-
-        let vcr_mode = if is_recording {
-            VCRMode::Record
-        } else {
-            VCRMode::Replay
-        };
-        let middleware = VCRMiddleware::try_from(recording_path)
-            .unwrap()
-            .with_mode(vcr_mode)
-            .with_modify_request(|req| {
-                req.headers = censor_headers(&req.headers, &["authorization"]);
-            })
-            .with_modify_response(|resp| {
-                resp.headers = censor_headers(&resp.headers, &["openai-organization"]);
-            });
-
-        let vcr_client: ClientWithMiddleware =
-            ClientBuilder::new(reqwest::Client::new())
-                .with(middleware)
-                .build();
-        // end dependencies setup
-
-        let mut test_case = ChatTestCase {
-            test_fn_name,
-            api_keys,
-            vcr_client,
-        };
+    async fn test_llm_api_call(test_fn_name: &'static str, sample_path: &str) {
+        let mut test_case = ChatTestCase { test_fn_name };
         test_case.check_sample_call(sample_path).await;
     }
 
@@ -326,7 +275,6 @@ mod tests {
     async fn test_start_conversation() {
         test_llm_api_call(
             function_name!(),
-            "api/sample-call-requests/start-conversation.json",
             "api/sample-calls/chat-start-conversation.yaml",
         )
         .await;
@@ -336,7 +284,6 @@ mod tests {
     async fn test_continue_conversation() {
         test_llm_api_call(
             function_name!(),
-            "api/sample-call-requests/continue-conversation.json",
             "api/sample-calls/chat-continue-conversation.yaml",
         )
         .await;
