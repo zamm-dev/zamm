@@ -43,62 +43,91 @@ pub fn get_preferences(app_handle: tauri::AppHandle) -> Preferences {
 mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
+    use crate::test_helpers::api_testing::standard_test_subdir;
+    use crate::test_helpers::{DirectReturn, SampleCallTestCase, SideEffectsHelpers};
+    use stdext::function_name;
 
-    use std::fs;
-
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
+    struct GetPreferencesTestCase {
+        test_fn_name: &'static str,
     }
 
-    fn check_get_preferences_sample(file_prefix: &str, preferences_dir: &str) {
-        let sample = read_sample(file_prefix);
-        assert_eq!(sample.request, vec!["get_preferences"]);
+    impl SampleCallTestCase<(), Preferences> for GetPreferencesTestCase {
+        const EXPECTED_API_CALL: &'static str = "get_preferences";
+        const CALL_HAS_ARGS: bool = false;
 
-        let actual_result = get_preferences_helper(&Some(preferences_dir.into()));
-        let actual_json = serde_json::to_string_pretty(&actual_result).unwrap();
-        let expected_json = sample.response.message.trim();
-        assert_eq!(actual_json, expected_json);
+        fn temp_test_subdirectory(&self) -> String {
+            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
+        }
+
+        async fn make_request(
+            &mut self,
+            _: &Option<()>,
+            side_effects: &SideEffectsHelpers,
+        ) -> Preferences {
+            get_preferences_helper(&side_effects.disk)
+        }
+
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &Preferences,
+        ) -> String {
+            DirectReturn::serialize_result(self, sample, result)
+        }
+
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&()>,
+            result: &Preferences,
+        ) {
+            DirectReturn::check_result(self, sample, args, result).await
+        }
     }
 
-    #[test]
-    fn test_get_preferences_without_file() {
+    impl DirectReturn<(), Preferences> for GetPreferencesTestCase {}
+
+    async fn check_get_preferences_sample<'a>(
+        test_fn_name: &'static str,
+        file_prefix: &str,
+    ) {
+        let mut test_case = GetPreferencesTestCase { test_fn_name };
+        test_case.check_sample_call(file_prefix).await;
+    }
+
+    #[tokio::test]
+    async fn test_get_preferences_without_file() {
         check_get_preferences_sample(
+            function_name!(),
             "./api/sample-calls/get_preferences-no-file.yaml",
-            "./non-existent/path",
-        );
+        )
+        .await;
     }
 
-    #[test]
-    fn test_get_preferences_happy_path_without_file() {
-        let non_existent_path = PathBuf::from("./non-existent/path");
-        let happy_path_result = get_preferences_happy_path(&Some(non_existent_path));
-        assert!(happy_path_result.is_ok());
-        assert_eq!(happy_path_result.unwrap(), Preferences::default());
-    }
-
-    #[test]
-    fn test_get_preferences_with_sound_override() {
+    #[tokio::test]
+    async fn test_get_preferences_with_sound_override() {
         check_get_preferences_sample(
+            function_name!(),
             "./api/sample-calls/get_preferences-sound-override.yaml",
-            "./api/sample-settings/sound-override",
-        );
+        )
+        .await;
     }
 
-    #[test]
-    fn test_get_preferences_with_volume_override() {
+    #[tokio::test]
+    async fn test_get_preferences_with_volume_override() {
         check_get_preferences_sample(
+            function_name!(),
             "./api/sample-calls/get_preferences-volume-override.yaml",
-            "./api/sample-settings/volume-override",
-        );
+        )
+        .await;
     }
 
-    #[test]
-    fn test_get_preferences_with_extra_settings() {
+    #[tokio::test]
+    async fn test_get_preferences_with_extra_settings() {
         check_get_preferences_sample(
+            function_name!(),
             "./api/sample-calls/get_preferences-extra-settings.yaml",
-            "./api/sample-settings/extra-settings",
-        );
+        )
+        .await;
     }
 }

@@ -8,10 +8,20 @@ use diesel::sql_types::Text;
 use diesel::sqlite::Sqlite;
 use std::str::FromStr;
 
-#[derive(Queryable, Selectable, Debug)]
+#[derive(Queryable, Selectable, Debug, serde::Serialize, serde::Deserialize)]
 pub struct ApiKey {
     pub service: Service,
     pub api_key: String,
+}
+
+#[cfg(test)]
+impl ApiKey {
+    pub fn as_insertable(&self) -> NewApiKey {
+        NewApiKey {
+            service: self.service,
+            api_key: &self.api_key,
+        }
+    }
 }
 
 #[derive(Insertable)]
@@ -47,19 +57,11 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::setup::db::MIGRATIONS;
-
-    use diesel_migrations::MigrationHarness;
-
-    fn setup_database() -> SqliteConnection {
-        let mut conn = SqliteConnection::establish(":memory:").unwrap();
-        conn.run_pending_migrations(MIGRATIONS).unwrap();
-        conn
-    }
+    use crate::test_helpers::database::setup_database;
 
     #[test]
     fn test_uuid_serialization_and_deserialization() {
-        let mut conn = setup_database();
+        let mut conn = setup_database(None);
         let dummy_api_key = "0p3n41-4p1-k3y";
 
         let openai_api_key = NewApiKey {

@@ -14,7 +14,7 @@ lint:
 
 test: tests
 tests:
-	cargo test -- --include-ignored
+	cargo test -- --include-ignored --test-threads=1
 
 clean:
 	cargo clean

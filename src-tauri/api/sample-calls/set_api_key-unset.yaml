@@ -2,9 +2,16 @@ request:
   - set_api_key
   - >
     {
-      "filename": "unset/.bashrc",
+      "filename": ".bashrc",
       "service": "OpenAI",
       "api_key": ""
     }
 response:
   message: "null"
+sideEffects:
+  disk:
+    startStateDirectory: shell-init/with-newline/end
+    endStateDirectory: shell-init/with-newline/end
+  database:
+    startStateDump: openai-api-key
+    endStateDump: empty

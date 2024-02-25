@@ -19,27 +19,55 @@ pub async fn get_api_keys(api_keys: State<'_, ZammApiKeys>) -> ZammResult<ApiKey
 pub mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
+    use crate::test_helpers::{
+        SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
+    };
     use tokio::sync::Mutex;
 
-    use std::fs;
-
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
+    struct GetApiKeysTestCase<'a> {
+        api_keys: &'a ZammApiKeys,
     }
 
-    pub async fn check_get_api_keys_sample(
-        file_prefix: &str,
-        rust_input: &ZammApiKeys,
-    ) {
-        let greet_sample = read_sample(file_prefix);
-        assert_eq!(greet_sample.request, vec!["get_api_keys"]);
+    impl<'a> SampleCallTestCase<(), ZammResult<ApiKeys>> for GetApiKeysTestCase<'a> {
+        const EXPECTED_API_CALL: &'static str = "get_api_keys";
+        const CALL_HAS_ARGS: bool = false;
 
-        let actual_result = get_api_keys_helper(rust_input).await;
-        let actual_json = serde_json::to_string_pretty(&actual_result).unwrap();
-        let expected_json = greet_sample.response.message.trim();
-        assert_eq!(actual_json, expected_json);
+        async fn make_request(
+            &mut self,
+            _: &Option<()>,
+            _: &SideEffectsHelpers,
+        ) -> ZammResult<ApiKeys> {
+            Ok(get_api_keys_helper(self.api_keys).await)
+        }
+
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<ApiKeys>,
+        ) -> String {
+            ZammResultReturn::serialize_result(self, sample, result)
+        }
+
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&()>,
+            result: &ZammResult<ApiKeys>,
+        ) {
+            ZammResultReturn::check_result(self, sample, args, result).await
+        }
+    }
+
+    impl<'a> ZammResultReturn<(), ApiKeys> for GetApiKeysTestCase<'a> {}
+
+    pub async fn check_get_api_keys_sample<'a>(
+        file_prefix: &str,
+        rust_input: &'a ZammApiKeys,
+    ) {
+        let mut test_case = GetApiKeysTestCase {
+            api_keys: rust_input,
+        };
+        test_case.check_sample_call(file_prefix).await;
     }
 
     #[tokio::test]

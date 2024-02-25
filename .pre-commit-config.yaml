@@ -46,6 +46,7 @@ repos:
         language: system
         types: [file]
         files: \.(json|yaml|html|js|ts|svelte)$
+        exclude: ^src-tauri/api/sample-database-writes/
       - id: cargo-fmt
         name: cargo fmt
         entry: cargo fmt --manifest-path src-tauri/Cargo.toml --

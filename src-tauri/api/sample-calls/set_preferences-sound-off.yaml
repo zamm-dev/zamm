@@ -12,3 +12,6 @@ request:
     }
 response:
   message: "null"
+sideEffects:
+  disk:
+    endStateDirectory: preferences/sound-override

@@ -24,6 +24,48 @@
             }
           },
           "required": ["message"]
+        },
+        "sideEffects": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "disk": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "startStateDirectory": {
+                  "type": "string"
+                },
+                "endStateDirectory": {
+                  "type": "string"
+                }
+              },
+              "required": ["endStateDirectory"]
+            },
+            "database": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "startStateDump": {
+                  "type": "string"
+                },
+                "endStateDump": {
+                  "type": "string"
+                }
+              },
+              "required": ["endStateDump"]
+            },
+            "network": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "recordingFile": {
+                  "type": "string"
+                }
+              },
+              "required": ["recordingFile"]
+            }
+          }
         }
       },
       "required": ["request", "response"],

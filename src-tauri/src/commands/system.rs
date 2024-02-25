@@ -108,26 +108,40 @@ pub fn get_system_info() -> SystemInfo {
 mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
+    use crate::test_helpers::{DirectReturn, SampleCallTestCase, SideEffectsHelpers};
     use cfg_if::cfg_if;
-    use std::fs;
 
-    fn parse_system_info(response_str: &str) -> SystemInfo {
-        serde_json::from_str(response_str).unwrap()
+    struct GetSystemInfoTestCase {
+        pub system_info: SystemInfo,
     }
 
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
+    impl SampleCallTestCase<(), SystemInfo> for GetSystemInfoTestCase {
+        const EXPECTED_API_CALL: &'static str = "get_system_info";
+        const CALL_HAS_ARGS: bool = false;
+
+        async fn make_request(
+            &mut self,
+            _: &Option<()>,
+            _: &SideEffectsHelpers,
+        ) -> SystemInfo {
+            self.system_info.clone()
+        }
+
+        fn serialize_result(&self, sample: &SampleCall, result: &SystemInfo) -> String {
+            DirectReturn::serialize_result(self, sample, result)
+        }
+
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&()>,
+            result: &SystemInfo,
+        ) {
+            DirectReturn::check_result(self, sample, args, result).await
+        }
     }
 
-    fn check_get_system_info_sample(file_prefix: &str, actual_info: &SystemInfo) {
-        let system_info_sample = read_sample(file_prefix);
-        assert_eq!(system_info_sample.request, vec!["get_system_info"]);
-
-        let expected_info = parse_system_info(&system_info_sample.response.message);
-        assert_eq!(actual_info, &expected_info);
-    }
+    impl DirectReturn<(), SystemInfo> for GetSystemInfoTestCase {}
 
     #[test]
     fn test_can_determine_zamm_version() {
@@ -183,18 +197,18 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_get_linux_system_info() {
-        let system_info = SystemInfo {
-            zamm_version: "0.0.0".to_string(),
-            os: Some(OS::Linux),
-            shell: Some(Shell::Zsh),
-            shell_init_file: Some("/root/.zshrc".to_string()),
+    #[tokio::test]
+    async fn test_get_linux_system_info() {
+        let mut test_case = GetSystemInfoTestCase {
+            system_info: SystemInfo {
+                zamm_version: "0.0.0".to_string(),
+                os: Some(OS::Linux),
+                shell: Some(Shell::Zsh),
+                shell_init_file: Some("/root/.zshrc".to_string()),
+            },
         };
-
-        check_get_system_info_sample(
-            "./api/sample-calls/get_system_info-linux.yaml",
-            &system_info,
-        );
+        test_case
+            .check_sample_call("./api/sample-calls/get_system_info-linux.yaml")
+            .await;
     }
 }

@@ -137,56 +137,22 @@ pub async fn chat(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::llm_calls::{ChatMessage, LlmCallRow};
+    use crate::models::llm_calls::ChatMessage;
     use crate::sample_call::SampleCall;
     use crate::setup::api_keys::ApiKeys;
-    use crate::setup::db::MIGRATIONS;
-    use diesel::prelude::*;
-    use diesel_migrations::MigrationHarness;
-    use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
-    use rvcr::{VCRMiddleware, VCRMode};
+    use crate::test_helpers::api_testing::standard_test_subdir;
+    use crate::test_helpers::{
+        SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
+    };
+    use rvcr::VCRMode;
     use serde::{Deserialize, Serialize};
+    use std::collections::HashMap;
     use std::env;
-    use std::fs;
-    use std::path::PathBuf;
+    use stdext::function_name;
     use tokio::sync::Mutex;
-    use vcr_cassette::Headers;
 
-    const CENSORED: &str = "<CENSORED>";
-
-    fn censor_headers(headers: &Headers, blacklisted_keys: &[&str]) -> Headers {
-        return headers
-            .clone()
-            .iter()
-            .map(|(k, v)| {
-                if blacklisted_keys.contains(&k.as_str()) {
-                    (k.clone(), vec![CENSORED.to_string()])
-                } else {
-                    (k.clone(), v.clone())
-                }
-            })
-            .collect();
-    }
-
-    fn setup_database() -> SqliteConnection {
-        let mut conn = SqliteConnection::establish(":memory:").unwrap();
-        conn.run_pending_migrations(MIGRATIONS).unwrap();
-        conn
-    }
-
-    pub fn setup_zamm_db() -> ZammDatabase {
-        ZammDatabase(Mutex::new(Some(setup_database())))
-    }
-
-    async fn get_llm_call(db: &ZammDatabase, call_id: &EntityId) -> LlmCall {
-        use crate::schema::llm_calls::dsl::*;
-        let mut conn_mutex = db.0.lock().await;
-        let conn = conn_mutex.as_mut().unwrap();
-        llm_calls
-            .filter(id.eq(call_id))
-            .first::<LlmCallRow>(conn)
-            .unwrap()
-            .into()
+    fn to_yaml_string<T: Serialize>(obj: &T) -> String {
+        serde_yaml::to_string(obj).unwrap().trim().to_string()
     }
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -197,111 +163,118 @@ mod tests {
         prompt: Vec<ChatMessage>,
     }
 
-    fn parse_request(request_str: &str) -> ChatRequest {
-        serde_json::from_str(request_str).unwrap()
+    struct ChatTestCase {
+        test_fn_name: &'static str,
+    }
+
+    impl SampleCallTestCase<ChatRequest, ZammResult<LlmCall>> for ChatTestCase {
+        const EXPECTED_API_CALL: &'static str = "chat";
+        const CALL_HAS_ARGS: bool = true;
+
+        fn temp_test_subdirectory(&self) -> String {
+            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
+        }
+
+        async fn make_request(
+            &mut self,
+            args: &Option<ChatRequest>,
+            side_effects: &SideEffectsHelpers,
+        ) -> ZammResult<LlmCall> {
+            let actual_args = args.as_ref().unwrap().clone();
+
+            let network_helper = side_effects.network.as_ref().unwrap();
+            let api_keys = match network_helper.mode {
+                VCRMode::Record => ZammApiKeys(Mutex::new(ApiKeys {
+                    openai: env::var("OPENAI_API_KEY").ok(),
+                })),
+                VCRMode::Replay => ZammApiKeys(Mutex::new(ApiKeys {
+                    openai: Some("dummy".to_string()),
+                })),
+            };
+
+            chat_helper(
+                &api_keys,
+                side_effects.db.as_ref().unwrap(),
+                actual_args.provider,
+                actual_args.llm,
+                actual_args.temperature,
+                actual_args.prompt,
+                network_helper.network_client.clone(),
+            )
+            .await
+        }
+
+        fn output_replacements(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<LlmCall>,
+        ) -> HashMap<String, String> {
+            let expected_output = parse_response(&sample.response.message);
+            let actual_output = result.as_ref().unwrap();
+            let expected_output_timestamp = to_yaml_string(&expected_output.timestamp);
+            let actual_output_timestamp = to_yaml_string(&actual_output.timestamp);
+            HashMap::from([
+                (
+                    to_yaml_string(&actual_output.id),
+                    to_yaml_string(&expected_output.id),
+                ),
+                (
+                    // sqlite dump produces timestamps with space instead of T
+                    actual_output_timestamp.replace('T', " "),
+                    expected_output_timestamp.replace('T', " "),
+                ),
+                (actual_output_timestamp, expected_output_timestamp),
+            ])
+        }
+
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<LlmCall>,
+        ) -> String {
+            ZammResultReturn::serialize_result(self, sample, result)
+        }
+
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&ChatRequest>,
+            result: &ZammResult<LlmCall>,
+        ) {
+            ZammResultReturn::check_result(self, sample, args, result).await
+        }
+    }
+
+    impl ZammResultReturn<ChatRequest, LlmCall> for ChatTestCase {
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<LlmCall>,
+        ) -> String {
+            let expected_llm_call = parse_response(&sample.response.message);
+            // swap out non-deterministic parts before JSON comparison
+            let deterministic_llm_call = LlmCall {
+                id: expected_llm_call.id,
+                timestamp: expected_llm_call.timestamp,
+                ..result.as_ref().unwrap().clone()
+            };
+            serde_json::to_string_pretty(&deterministic_llm_call).unwrap()
+        }
     }
 
     fn parse_response(response_str: &str) -> LlmCall {
         serde_json::from_str(response_str).unwrap()
     }
 
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
-    }
-
-    async fn test_llm_api_call(recording_path: &str, sample_path: &str) {
-        let recording_path = PathBuf::from(recording_path);
-        let is_recording = !recording_path.exists();
-        let api_keys = if is_recording {
-            ZammApiKeys(Mutex::new(ApiKeys {
-                openai: env::var("OPENAI_API_KEY").ok(),
-            }))
-        } else {
-            ZammApiKeys(Mutex::new(ApiKeys {
-                openai: Some("dummy".to_string()),
-            }))
-        };
-
-        let vcr_mode = if is_recording {
-            VCRMode::Record
-        } else {
-            VCRMode::Replay
-        };
-        let middleware = VCRMiddleware::try_from(recording_path)
-            .unwrap()
-            .with_mode(vcr_mode)
-            .with_modify_request(|req| {
-                req.headers = censor_headers(&req.headers, &["authorization"]);
-            })
-            .with_modify_response(|resp| {
-                resp.headers = censor_headers(&resp.headers, &["openai-organization"]);
-            });
-
-        let vcr_client: ClientWithMiddleware =
-            ClientBuilder::new(reqwest::Client::new())
-                .with(middleware)
-                .build();
-
-        let db = setup_zamm_db();
-        // end dependencies setup
-
-        let sample = read_sample(sample_path);
-        assert_eq!(sample.request.len(), 2);
-        assert_eq!(sample.request[0], "chat");
-
-        let request = parse_request(&sample.request[1]);
-
-        let result = chat_helper(
-            &api_keys,
-            &db,
-            request.provider,
-            request.llm,
-            request.temperature,
-            request.prompt,
-            vcr_client,
-        )
-        .await;
-        assert!(result.is_ok(), "Error: {:?}", result.err());
-        let ok_result = result.unwrap();
-
-        // check that the API call returns the expected JSON
-        let expected_llm_call = parse_response(&sample.response.message);
-        // swap out non-deterministic parts before JSON comparison
-        let deterministic_llm_call = LlmCall {
-            id: expected_llm_call.id,
-            timestamp: expected_llm_call.timestamp,
-            ..ok_result.clone()
-        };
-        let actual_json =
-            serde_json::to_string_pretty(&deterministic_llm_call).unwrap();
-        let expected_json = sample.response.message.trim();
-        assert_eq!(actual_json, expected_json);
-
-        // check that it made it into the database
-        let stored_llm_call = get_llm_call(&db, &ok_result.id).await;
-        assert_eq!(stored_llm_call.request.prompt, ok_result.request.prompt);
-        assert_eq!(
-            stored_llm_call.response.completion,
-            ok_result.response.completion
-        );
-
-        // do a sanity check that everything is non-empty
-        let prompt = match ok_result.request.prompt {
-            Prompt::Chat(ChatPrompt { messages: prompt }) => prompt,
-        };
-        assert!(!prompt.is_empty());
-        match &ok_result.response.completion {
-            ChatMessage::AI { text } => assert!(!text.is_empty()),
-            _ => panic!("Unexpected response type"),
-        }
+    async fn test_llm_api_call(test_fn_name: &'static str, sample_path: &str) {
+        let mut test_case = ChatTestCase { test_fn_name };
+        test_case.check_sample_call(sample_path).await;
     }
 
     #[tokio::test]
     async fn test_start_conversation() {
         test_llm_api_call(
-            "api/sample-call-requests/start-conversation.json",
+            function_name!(),
             "api/sample-calls/chat-start-conversation.yaml",
         )
         .await;
@@ -310,7 +283,7 @@ mod tests {
     #[tokio::test]
     async fn test_continue_conversation() {
         test_llm_api_call(
-            "api/sample-call-requests/continue-conversation.json",
+            function_name!(),
             "api/sample-calls/chat-continue-conversation.yaml",
         )
         .await;

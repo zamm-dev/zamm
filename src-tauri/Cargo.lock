@@ -3700,6 +3700,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "stdext"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6012f6ef4d674ce7021a8b0f5093f7e339f54d4ba04fc1f9c901659459b4f35b"
+
+[[package]]
 name = "string_cache"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5347,6 +5353,7 @@ dependencies = [
  "serde_yaml",
  "shellexpand",
  "specta",
+ "stdext",
  "strum",
  "strum_macros",
  "tauri",

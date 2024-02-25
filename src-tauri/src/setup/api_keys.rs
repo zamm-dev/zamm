@@ -12,6 +12,7 @@ use strum_macros::{Display, EnumString};
 
 #[derive(
     Debug,
+    Copy,
     Clone,
     Eq,
     PartialEq,
@@ -73,17 +74,10 @@ pub fn setup_api_keys(possible_db: &mut Option<SqliteConnection>) -> ApiKeys {
 mod tests {
     use super::*;
     use crate::models::NewApiKey;
-    use crate::setup::db::MIGRATIONS;
-    use diesel_migrations::MigrationHarness;
+    use crate::test_helpers::database::setup_database;
     use temp_env;
 
     const DUMMY_API_KEY: &str = "0p3n41-4p1-k3y";
-
-    fn setup_database() -> SqliteConnection {
-        let mut conn = SqliteConnection::establish(":memory:").unwrap();
-        conn.run_pending_migrations(MIGRATIONS).unwrap();
-        conn
-    }
 
     #[test]
     fn test_get_empty_api_keys_no_db() {
@@ -104,7 +98,7 @@ mod tests {
     #[test]
     fn test_get_api_keys_from_db() {
         temp_env::with_var("OPENAI_API_KEY", None::<String>, || {
-            let mut conn = setup_database();
+            let mut conn = setup_database(None);
             diesel::insert_into(api_keys::table)
                 .values(&NewApiKey {
                     service: Service::OpenAI,
@@ -123,7 +117,7 @@ mod tests {
         let custom_api_key = "c0st0m-4p1-k3y";
 
         temp_env::with_var("OPENAI_API_KEY", Some(custom_api_key.to_string()), || {
-            let mut conn = setup_database();
+            let mut conn = setup_database(None);
             diesel::insert_into(api_keys::table)
                 .values(&NewApiKey {
                     service: Service::OpenAI,
@@ -140,7 +134,7 @@ mod tests {
     #[test]
     fn test_empty_db_doesnt_crash() {
         temp_env::with_var("OPENAI_API_KEY", None::<String>, || {
-            let conn = setup_database();
+            let conn = setup_database(None);
 
             let api_keys = setup_api_keys(&mut Some(conn));
             assert_eq!(api_keys.openai, None);

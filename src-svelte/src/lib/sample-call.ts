@@ -10,11 +10,32 @@
 export interface SampleCall {
   request: string[];
   response: Response;
+  sideEffects?: SideEffects;
 }
 
 export interface Response {
   message: string;
   success?: boolean;
+}
+
+export interface SideEffects {
+  database?: Database;
+  disk?: Disk;
+  network?: Network;
+}
+
+export interface Database {
+  endStateDump: string;
+  startStateDump?: string;
+}
+
+export interface Disk {
+  endStateDirectory: string;
+  startStateDirectory?: string;
+}
+
+export interface Network {
+  recordingFile: string;
 }
 
 // Converts JSON strings to/from your types
@@ -214,6 +235,11 @@ const typeMap: any = {
     [
       { json: "request", js: "request", typ: a("") },
       { json: "response", js: "response", typ: r("Response") },
+      {
+        json: "sideEffects",
+        js: "sideEffects",
+        typ: u(undefined, r("SideEffects")),
+      },
     ],
     false,
   ),
@@ -224,4 +250,31 @@ const typeMap: any = {
     ],
     false,
   ),
+  SideEffects: o(
+    [
+      { json: "database", js: "database", typ: u(undefined, r("Database")) },
+      { json: "disk", js: "disk", typ: u(undefined, r("Disk")) },
+      { json: "network", js: "network", typ: u(undefined, r("Network")) },
+    ],
+    false,
+  ),
+  Database: o(
+    [
+      { json: "endStateDump", js: "endStateDump", typ: "" },
+      { json: "startStateDump", js: "startStateDump", typ: u(undefined, "") },
+    ],
+    false,
+  ),
+  Disk: o(
+    [
+      { json: "endStateDirectory", js: "endStateDirectory", typ: "" },
+      {
+        json: "startStateDirectory",
+        js: "startStateDirectory",
+        typ: u(undefined, ""),
+      },
+    ],
+    false,
+  ),
+  Network: o([{ json: "recordingFile", js: "recordingFile", typ: "" }], false),
 };

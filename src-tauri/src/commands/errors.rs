@@ -64,6 +64,11 @@ pub enum SerdeError {
         source: serde_json::Error,
     },
     #[error(transparent)]
+    Yaml {
+        #[from]
+        source: serde_yaml::Error,
+    },
+    #[error(transparent)]
     TomlDeserialize {
         #[from]
         source: toml::de::Error,
@@ -168,6 +173,13 @@ impl From<rodio::PlayError> for Error {
 
 impl From<serde_json::Error> for Error {
     fn from(err: serde_json::Error) -> Self {
+        let serde_err: SerdeError = err.into();
+        serde_err.into()
+    }
+}
+
+impl From<serde_yaml::Error> for Error {
+    fn from(err: serde_yaml::Error) -> Self {
         let serde_err: SerdeError = err.into();
         serde_err.into()
     }

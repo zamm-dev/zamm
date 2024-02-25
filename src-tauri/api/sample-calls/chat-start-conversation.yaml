@@ -54,3 +54,8 @@ response:
         "total": 44
       }
     }
+sideEffects:
+  database:
+    endStateDump: conversation-started
+  network:
+    recordingFile: start-conversation.json

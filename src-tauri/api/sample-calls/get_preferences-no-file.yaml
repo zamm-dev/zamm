@@ -8,3 +8,7 @@ response:
       "sound_on": null,
       "volume": null
     }
+sideEffects:
+  disk:
+    startStateDirectory: empty
+    endStateDirectory: empty

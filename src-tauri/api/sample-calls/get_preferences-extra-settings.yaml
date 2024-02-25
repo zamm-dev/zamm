@@ -8,3 +8,7 @@ response:
       "sound_on": false,
       "volume": null
     }
+sideEffects:
+  disk:
+    startStateDirectory: preferences/sound-off-extra-settings
+    endStateDirectory: preferences/sound-off-extra-settings

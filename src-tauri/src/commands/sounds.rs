@@ -43,8 +43,7 @@ fn play_sound_async(sound: Sound, volume: f32, speed: f32) -> ZammResult<()> {
 mod tests {
     use super::*;
     use crate::sample_call::SampleCall;
-
-    use std::fs;
+    use crate::test_helpers::{DirectReturn, SampleCallTestCase, SideEffectsHelpers};
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct PlaySoundRequest {
@@ -53,36 +52,51 @@ mod tests {
         speed: f32,
     }
 
-    fn parse_request(request_str: &str) -> PlaySoundRequest {
-        serde_json::from_str(request_str).unwrap()
+    struct PlaySoundTestCase {
+        // pass
     }
 
-    fn read_sample(filename: &str) -> SampleCall {
-        let sample_str = fs::read_to_string(filename)
-            .unwrap_or_else(|_| panic!("No file found at {filename}"));
-        serde_yaml::from_str(&sample_str).unwrap()
+    impl SampleCallTestCase<PlaySoundRequest, ()> for PlaySoundTestCase {
+        const EXPECTED_API_CALL: &'static str = "play_sound";
+        const CALL_HAS_ARGS: bool = true;
+
+        async fn make_request(
+            &mut self,
+            args: &Option<PlaySoundRequest>,
+            _: &SideEffectsHelpers,
+        ) {
+            let actual_args = args.as_ref().unwrap().clone();
+            play_sound(actual_args.sound, actual_args.volume, actual_args.speed);
+        }
+
+        fn serialize_result(&self, sample: &SampleCall, result: &()) -> String {
+            DirectReturn::serialize_result(self, sample, result)
+        }
+
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: Option<&PlaySoundRequest>,
+            result: &(),
+        ) {
+            DirectReturn::check_result(self, sample, args, result).await
+        }
     }
 
-    fn check_play_sound_sample(file_prefix: &str) {
-        let greet_sample = read_sample(file_prefix);
-        assert_eq!(greet_sample.request.len(), 2);
-        assert_eq!(greet_sample.request[0], "play_sound");
+    impl DirectReturn<PlaySoundRequest, ()> for PlaySoundTestCase {}
 
-        let request = parse_request(&greet_sample.request[1]);
-        #[allow(clippy::let_unit_value)]
-        let actual_result = play_sound(request.sound, request.volume, request.speed);
-        let actual_json = serde_json::to_string(&actual_result).unwrap();
-        let expected_json = greet_sample.response.message;
-        assert_eq!(actual_json, expected_json);
+    async fn check_play_sound_sample(file_prefix: &str) {
+        let mut test_case = PlaySoundTestCase {};
+        test_case.check_sample_call(file_prefix).await;
     }
 
-    #[test]
-    fn test_play_switch() {
-        check_play_sound_sample("./api/sample-calls/play_sound-switch.yaml");
+    #[tokio::test]
+    async fn test_play_switch() {
+        check_play_sound_sample("./api/sample-calls/play_sound-switch.yaml").await;
     }
 
-    #[test]
-    fn test_play_whoosh() {
-        check_play_sound_sample("./api/sample-calls/play_sound-whoosh.yaml");
+    #[tokio::test]
+    async fn test_play_whoosh() {
+        check_play_sound_sample("./api/sample-calls/play_sound-whoosh.yaml").await;
     }
 }

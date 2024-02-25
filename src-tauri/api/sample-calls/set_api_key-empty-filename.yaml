@@ -8,3 +8,10 @@ request:
     }
 response:
   message: "null"
+sideEffects:
+  disk:
+    startStateDirectory: empty
+    endStateDirectory: empty
+  database:
+    startStateDump: empty
+    endStateDump: openai-api-key
