@@ -40,11 +40,7 @@ async fn set_api_key_helper(
                     }
                 };
 
-                let mut file = OpenOptions::new()
-                    .create(true)
-                    .write(true)
-                    .append(true)
-                    .open(f)?;
+                let mut file = OpenOptions::new().create(true).append(true).open(f)?;
                 if !ends_in_newline {
                     writeln!(file)?;
                 }
