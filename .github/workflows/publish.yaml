@@ -100,10 +100,10 @@ jobs:
       - name: Build frontend
         run: |
           npm install -g pnpm
-          cd src-svelte/forks/neodrag
+          cd forks/neodrag
           pnpm install
           pnpm compile
-          cd ../..
+          cd ..
           yarn install
           yarn svelte-kit sync
           yarn build

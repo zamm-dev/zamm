@@ -1,8 +1,8 @@
 [submodule "src-svelte/static/fonts"]
 	path = src-svelte/static/fonts
 	url = https://github.com/amosjyng/zamm-fonts.git
-[submodule "src-svelte/forks/neodrag"]
-	path = src-svelte/forks/neodrag
+[submodule "forks/neodrag"]
+	path = forks/neodrag
 	url = https://github.com/amosjyng/neodrag.git
 [submodule "forks/async-openai"]
 	path = forks/async-openai
