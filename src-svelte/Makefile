@@ -1,6 +1,6 @@
 .PHONY: format lint test
 
-build: forks/neodrag/packages/svelte/dist $(shell find src -type f \( -name "*.svelte" -o -name "*.js" -o -name "*.ts" -o -name "*.css" -o -name "*.html" \) -not -path "*/node_modules/*")
+build: ../forks/neodrag/packages/svelte/dist $(shell find src -type f \( -name "*.svelte" -o -name "*.js" -o -name "*.ts" -o -name "*.css" -o -name "*.html" \) -not -path "*/node_modules/*")
 	yarn install --frozen-lockfile && yarn svelte-kit sync && yarn build
 
 forks/neodrag/packages/core/dist: forks/neodrag/packages/core/src/*

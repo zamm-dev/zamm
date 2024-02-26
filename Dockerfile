@@ -27,9 +27,8 @@ WORKDIR /tmp/dependencies
 COPY package.json yarn.lock ./
 COPY src-svelte/package.json ./src-svelte/package.json
 COPY webdriver/package.json ./webdriver/package.json
-RUN git clone https://github.com/amosjyng/neodrag.git src-svelte/forks/neodrag && \
-  cd src-svelte/forks/neodrag && \
-  git checkout e954f97 && \
+RUN git clone --depth 1 --branch zamm/v0.1.1 https://github.com/amosjyng/neodrag.git forks/neodrag && \
+  cd forks/neodrag && \
   pnpm install && \
   pnpm compile && \
   cd /tmp/dependencies && \

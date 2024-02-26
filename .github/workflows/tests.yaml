@@ -36,8 +36,8 @@ jobs:
           path: |
             src-svelte/.svelte-kit/
             src-svelte/build/
-            src-svelte/forks/neodrag/packages/core/dist/
-            src-svelte/forks/neodrag/packages/svelte/dist/
+            forks/neodrag/packages/core/dist/
+            forks/neodrag/packages/svelte/dist/
             src-tauri/target/release/zamm
           retention-days: 1
       - name: Upload .deb
@@ -97,7 +97,7 @@ jobs:
       - name: Build Neodrag fork
         run: |
           npm install -g pnpm
-          cd src-svelte/forks/neodrag && pnpm install && pnpm compile
+          cd forks/neodrag && pnpm install && pnpm compile
       - name: Install Node dependencies
         # this step must run after the download-artifact step because yarn only installs
         # the dependencies once, and won't update them if the underlying file on disk

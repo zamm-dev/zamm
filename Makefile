@@ -12,7 +12,7 @@ mac: svelte rust
 copy-docker-deps:
 	mv -n /tmp/forks/async-openai/* ./forks/async-openai/
 	mv -n /tmp/forks/rvcr/* ./forks/rvcr/
-	mv -n /tmp/dependencies/src-svelte/forks/neodrag/packages/svelte/dist ./src-svelte/forks/neodrag/packages/svelte/
+	mv -n /tmp/dependencies/forks/neodrag/packages/svelte/dist ./forks/neodrag/packages/svelte/
 	mv -n /tmp/dependencies/node_modules ./
 	mv -n /tmp/dependencies/src-svelte/node_modules ./src-svelte/
 	mv -n /tmp/dependencies/target ./src-tauri/
