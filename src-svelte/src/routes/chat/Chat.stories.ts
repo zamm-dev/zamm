@@ -141,6 +141,17 @@ BottomScrollIndicator.parameters = {
   },
 };
 
+export const FullMessageWidth: StoryObj = Template.bind({}) as any;
+FullMessageWidth.args = {
+  conversation,
+  showMostRecentMessage: false,
+};
+FullMessageWidth.parameters = {
+  viewport: {
+    defaultViewport: "mobile1",
+  },
+};
+
 export const TypingIndicator: StoryObj = Template.bind({}) as any;
 TypingIndicator.args = {
   conversation: shortConversation,

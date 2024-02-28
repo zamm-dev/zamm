@@ -4,6 +4,6 @@
   export let message: ChatMessage;
 </script>
 
-<MessageUI role={message.role}>
+<MessageUI role={message.role} {...$$restProps}>
   {message.text}
 </MessageUI>

@@ -6,6 +6,7 @@
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import Form from "./Form.svelte";
   import { onMount } from "svelte";
+  import { writable } from "svelte/store";
 
   export let initialMessage = "";
   export let conversation: ChatMessage[] = [
@@ -18,6 +19,7 @@
   export let showMostRecentMessage = true;
   let conversationContainer: HTMLDivElement | undefined = undefined;
   let conversationView: HTMLDivElement | undefined = undefined;
+  let conversationWidthPx = writable(0);
   let topIndicator: HTMLDivElement;
   let bottomIndicator: HTMLDivElement;
   let topShadow: HTMLDivElement;
@@ -69,6 +71,10 @@
           if (showMostRecentMessage) {
             showChatBottom();
           }
+
+          const conversationDimensions =
+            conversationView.getBoundingClientRect();
+          conversationWidthPx.set(conversationDimensions.width);
         }
       });
     }
@@ -114,7 +120,7 @@
         <div class="indicator top" bind:this={topIndicator}></div>
         {#if conversation.length > 1}
           {#each conversation.slice(1) as message}
-            <Message {message} />
+            <Message {message} {conversationWidthPx} />
           {/each}
           {#if expectingResponse}
             <TypingIndicator />
