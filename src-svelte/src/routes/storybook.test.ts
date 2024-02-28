@@ -121,6 +121,7 @@ const components: ComponentTestConfig[] = [
       "multiline-chat",
       "bottom-scroll-indicator",
       "typing-indicator-static",
+      "full-message-width",
     ],
     screenshotEntireBody: true,
   },

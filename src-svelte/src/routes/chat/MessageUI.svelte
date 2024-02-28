@@ -1,23 +1,65 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import type { Writable } from "svelte/store";
 
   export let role: "System" | "Human" | "AI";
+  export let conversationWidthPx: Writable<number> | undefined = undefined;
   const classList = `message atomic-reveal ${role.toLowerCase()}`;
   let textElement: HTMLDivElement | null;
 
-  onMount(() => {
-    setTimeout(() => {
-      if (textElement) {
-        try {
-          const range = document.createRange();
-          range.selectNodeContents(textElement);
-          const textRect = range.getBoundingClientRect();
-          textElement.style.width = `${textRect.width}px`;
-        } catch (err) {
-          console.warn("Cannot resize chat message bubble: ", err);
+  let initialResizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
+  let finalResizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  // chat window size at which the message bubble should be full width
+  const MIN_FULL_WIDTH_PX = 400;
+  const MAX_WIDTH_PX = 600;
+
+  function maxMessageWidth(chatWidthPx: number) {
+    if (chatWidthPx <= MIN_FULL_WIDTH_PX) {
+      return chatWidthPx;
+    }
+
+    const fractionalWidth = Math.max(0.8 * chatWidthPx, MIN_FULL_WIDTH_PX);
+    return Math.min(fractionalWidth, MAX_WIDTH_PX);
+  }
+
+  function resizeBubble(chatWidthPx: number) {
+    if (chatWidthPx > 0 && textElement) {
+      try {
+        textElement.style.width = "";
+
+        const maxWidth = maxMessageWidth(chatWidthPx);
+        const currentWidth = textElement.getBoundingClientRect().width;
+        const newWidth = Math.min(currentWidth, maxWidth);
+        textElement.style.width = `${newWidth}px`;
+
+        if (finalResizeTimeoutId) {
+          clearTimeout(finalResizeTimeoutId);
         }
+        finalResizeTimeoutId = setTimeout(() => {
+          if (textElement) {
+            const range = document.createRange();
+            range.selectNodeContents(textElement);
+            const textRect = range.getBoundingClientRect();
+            const actualTextWidth = textRect.width;
+
+            const finalWidth = Math.min(actualTextWidth, newWidth);
+            textElement.style.width = `${finalWidth}px`;
+          }
+        }, 10);
+      } catch (err) {
+        console.warn("Cannot resize chat message bubble: ", err);
       }
-    }, 10);
+    }
+  }
+
+  onMount(() => {
+    conversationWidthPx?.subscribe((chatWidthPx) => {
+      if (initialResizeTimeoutId) {
+        clearTimeout(initialResizeTimeoutId);
+      }
+      initialResizeTimeoutId = setTimeout(() => resizeBubble(chatWidthPx), 100);
+    });
   });
 </script>
 
@@ -41,7 +83,6 @@
     margin: 0.5rem var(--arrow-size);
     border-radius: var(--corner-roundness);
     width: fit-content;
-    max-width: 60%;
     padding: 0.75rem;
     box-sizing: border-box;
     background-color: var(--message-color);
@@ -51,6 +92,20 @@
 
   .text {
     box-sizing: content-box;
+    max-width: 600px;
+  }
+
+  /* this takes sidebar width into account */
+  @media (max-width: 635px) {
+    .text {
+      max-width: 400px;
+    }
+  }
+
+  @media (min-width: 635px) {
+    .message .text-container {
+      max-width: calc(80% + 2.1rem);
+    }
   }
 
   .message .arrow {
