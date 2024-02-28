@@ -41,7 +41,7 @@
     margin: 0.5rem var(--arrow-size);
     border-radius: var(--corner-roundness);
     width: fit-content;
-    max-width: 60%;
+    max-width: 80%;
     padding: 0.75rem;
     box-sizing: border-box;
     background-color: var(--message-color);
