@@ -54,7 +54,7 @@ repos:
         types: [rust]
       - id: cargo-clippy
         name: cargo clippy
-        entry: src-tauri/clippy.sh
+        entry: python src-tauri/clippy.py
         language: system
         types: [rust]
         pass_filenames: false
