@@ -6714,6 +6714,11 @@ he@1.2.0:
   resolved "https://registry.yarnpkg.com/he/-/he-1.2.0.tgz#84ae65fa7eafb165fddb61566ae14baf05664f0f"
   integrity sha512-F/1DnUGPopORZi0ni+CvrCgHQ5FyEAHRLSApuYWMmrbSwoN2Mn/7k+Gl38gJnR7yyDZk6WLXwiGod1JOWNDKGw==
 
+highlight.js@11.9.0:
+  version "11.9.0"
+  resolved "https://registry.yarnpkg.com/highlight.js/-/highlight.js-11.9.0.tgz#04ab9ee43b52a41a047432c8103e2158a1b8b5b0"
+  integrity sha512-fJ7cW7fQGCYAkgv4CPfwFHrfd/cLS4Hau96JuJ+ZTOWhjnhoeN1ub1tFmALm/+lW5z4WCAuAV9bm05AP0mS6Gw==
+
 hosted-git-info@^2.1.4:
   version "2.8.9"
   resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-2.8.9.tgz#dffc0bf9a21c02209090f2aa69429e1414daf3f9"
@@ -10551,6 +10556,13 @@ svelte-eslint-parser@^0.32.2:
     espree "^9.0.0"
     postcss "^8.4.25"
     postcss-scss "^4.0.6"
+
+svelte-highlight@^7.6.0:
+  version "7.6.0"
+  resolved "https://registry.yarnpkg.com/svelte-highlight/-/svelte-highlight-7.6.0.tgz#b811f72c3530fab12f8babeca2363b3fac53f725"
+  integrity sha512-J9X1d07iMIKZMAqNAhlkjLX/FS+7R2lPrqVul7i+EleVZIOYvBhtx7ES62bc661a70nKNOS05yr9JAvyQPPOIA==
+  dependencies:
+    highlight.js "11.9.0"
 
 svelte-hmr@^0.15.3:
   version "0.15.3"
