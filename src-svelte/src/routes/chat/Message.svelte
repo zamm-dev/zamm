@@ -1,9 +1,23 @@
 <script lang="ts">
   import type { ChatMessage } from "$lib/bindings";
   import MessageUI from "./MessageUI.svelte";
+  import SvelteMarkdown from "svelte-markdown";
+
   export let message: ChatMessage;
 </script>
 
 <MessageUI role={message.role} {...$$restProps}>
-  {message.text}
+  <div class="markdown">
+    <SvelteMarkdown source={message.text} />
+  </div>
 </MessageUI>
+
+<style>
+  .markdown :global(:first-child) {
+    margin-top: 0;
+  }
+
+  .markdown :global(:last-child) {
+    margin-bottom: 0;
+  }
+</style>

@@ -86,7 +86,6 @@
     padding: 0.75rem;
     box-sizing: border-box;
     background-color: var(--message-color);
-    white-space: pre-line;
     text-align: left;
   }
 
