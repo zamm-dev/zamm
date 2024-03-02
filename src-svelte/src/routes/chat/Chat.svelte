@@ -26,8 +26,9 @@
   let bottomShadow: HTMLDivElement;
 
   onMount(() => {
-    resizeConversationView();
-    window.addEventListener("resize", resizeConversationView);
+    resizeConversationView(true);
+    const resizeCallback = () => resizeConversationView(false);
+    window.addEventListener("resize", resizeCallback);
 
     let topScrollObserver = new IntersectionObserver(
       intersectionCallback(topShadow),
@@ -39,7 +40,7 @@
     bottomScrollObserver.observe(bottomIndicator);
 
     return () => {
-      window.removeEventListener("resize", resizeConversationView);
+      window.removeEventListener("resize", resizeCallback);
       topScrollObserver.disconnect();
       bottomScrollObserver.disconnect();
     };
@@ -62,19 +63,21 @@
     }
   }
 
-  function resizeConversationView() {
+  function resizeConversationView(initialMount = false) {
     if (conversationView) {
       conversationView.style.maxHeight = "8rem";
       requestAnimationFrame(() => {
         if (conversationView && conversationContainer) {
           conversationView.style.maxHeight = `${conversationContainer.clientHeight}px`;
-          if (showMostRecentMessage) {
-            showChatBottom();
-          }
 
           const conversationDimensions =
             conversationView.getBoundingClientRect();
           conversationWidthPx.set(conversationDimensions.width);
+          if (initialMount && showMostRecentMessage) {
+            showChatBottom();
+            // scroll to bottom again in case resized elements produce greater scroll
+            setTimeout(showChatBottom, 120);
+          }
         }
       });
     }

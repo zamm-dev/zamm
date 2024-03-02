@@ -47,8 +47,21 @@
 </div>
 
 <style>
-  .code :global(code) {
+  .code {
+    overflow-x: auto;
+    box-sizing: border-box;
     border-radius: var(--corner-roundness);
     background-color: #ffffff88;
+  }
+
+  .code :global(code) {
+    padding: var(--internal-spacing) 1rem;
+    background-color: transparent;
+  }
+
+  .code,
+  .code :global(pre),
+  .code :global(code) {
+    width: fit-content;
   }
 </style>

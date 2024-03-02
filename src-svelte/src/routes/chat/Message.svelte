@@ -14,6 +14,14 @@
 </MessageUI>
 
 <style>
+  .markdown {
+    width: fit-content;
+  }
+
+  .markdown :global(p) {
+    margin: var(--internal-spacing) 0;
+  }
+
   .markdown :global(:first-child) {
     margin-top: 0;
   }
