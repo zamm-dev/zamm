@@ -55,3 +55,22 @@ AIMultiline.parameters = {
     defaultViewport: "tablet",
   },
 };
+
+export const Code: StoryObj = Template.bind({}) as any;
+Code.args = {
+  message: {
+    role: "Human",
+    text:
+      "This is some Python code:\n\n" +
+      "```python\n" +
+      "def hello_world():\n" +
+      "    print('Hello, world!')\n" +
+      "```\n\n" +
+      "What do you think?",
+  },
+};
+Code.parameters = {
+  viewport: {
+    defaultViewport: "tablet",
+  },
+};

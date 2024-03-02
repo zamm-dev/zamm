@@ -77,32 +77,18 @@ const conversation: ChatMessage[] = [
   {
     role: "Human",
     text:
-      "Okay, we need to fill this chat up to produce a scrollbar for " +
-      'Storybook. Say short phrases like "Yup" to fill this chat up quickly.',
-  },
-  {
-    role: "AI",
-    text: "Yup",
-  },
-  {
-    role: "Human",
-    text: "Nay",
-  },
-  {
-    role: "AI",
-    text: "Yay",
-  },
-  {
-    role: "Human",
-    text: "Say...",
+      "This is some Python code:\n\n" +
+      "```python\n" +
+      "def hello_world():\n" +
+      "    print('Hello, world!')\n" +
+      "```\n\n" +
+      "Convert it to Rust",
   },
   {
     role: "AI",
     text:
-      "AIs don't actually talk like this, you know? " +
-      "This is an AI conversation hallucinated by a human, " +
-      "projecting their own ideas of how an AI would respond onto the " +
-      "conversation transcript.",
+      "Here's how the Python code you provided would look in Rust:\n\n" +
+      '```rust\nfn main() {\n    println!("Hello, world!");\n}\n```',
   },
 ];
 
@@ -144,7 +130,6 @@ BottomScrollIndicator.parameters = {
 export const FullMessageWidth: StoryObj = Template.bind({}) as any;
 FullMessageWidth.args = {
   conversation,
-  showMostRecentMessage: false,
 };
 FullMessageWidth.parameters = {
   viewport: {

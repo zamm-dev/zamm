@@ -10,42 +10,77 @@
   let initialResizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
   let finalResizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
+  const remPx = 18;
+  // arrow size, left padding, and right padding
+  const messagePaddingPx = (0.5 + 0.75 + 0.75) * remPx;
   // chat window size at which the message bubble should be full width
   const MIN_FULL_WIDTH_PX = 400;
   const MAX_WIDTH_PX = 600;
 
   function maxMessageWidth(chatWidthPx: number) {
-    if (chatWidthPx <= MIN_FULL_WIDTH_PX) {
-      return chatWidthPx;
+    const availableWidthPx = chatWidthPx - messagePaddingPx;
+    if (availableWidthPx <= MIN_FULL_WIDTH_PX) {
+      return availableWidthPx;
     }
 
-    const fractionalWidth = Math.max(0.8 * chatWidthPx, MIN_FULL_WIDTH_PX);
+    const fractionalWidth = Math.max(0.8 * availableWidthPx, MIN_FULL_WIDTH_PX);
     return Math.min(fractionalWidth, MAX_WIDTH_PX);
+  }
+
+  function resetChildren(textElement: HTMLDivElement) {
+    const pElements = textElement.querySelectorAll("p");
+    pElements.forEach((pElement) => {
+      pElement.style.width = "";
+    });
+
+    const codeElements = textElement.querySelectorAll<HTMLDivElement>(".code");
+    codeElements.forEach((codeElement) => {
+      codeElement.style.width = "";
+    });
+  }
+
+  function resizeChildren(textElement: HTMLDivElement, maxWidth: number) {
+    const pElements = textElement.querySelectorAll("p");
+    pElements.forEach((pElement) => {
+      const range = document.createRange();
+      range.selectNodeContents(pElement);
+      const textRect = range.getBoundingClientRect();
+      const actualTextWidth = textRect.width;
+
+      pElement.style.width = `${actualTextWidth}px`;
+    });
+
+    const codeElements = textElement.querySelectorAll<HTMLDivElement>(".code");
+    codeElements.forEach((codeElement) => {
+      let existingWidth = codeElement.getBoundingClientRect().width;
+      if (existingWidth > maxWidth) {
+        codeElement.style.width = `${maxWidth}px`;
+      }
+    });
   }
 
   function resizeBubble(chatWidthPx: number) {
     if (chatWidthPx > 0 && textElement) {
       try {
-        textElement.style.width = "";
+        const markdownElement =
+          textElement.querySelector<HTMLDivElement>(".markdown");
+        if (!markdownElement) {
+          return;
+        }
+
+        resetChildren(markdownElement);
 
         const maxWidth = maxMessageWidth(chatWidthPx);
-        const currentWidth = textElement.getBoundingClientRect().width;
-        const newWidth = Math.min(currentWidth, maxWidth);
-        textElement.style.width = `${newWidth}px`;
+        const currentWidth = markdownElement.getBoundingClientRect().width;
+        const newWidth = Math.ceil(Math.min(currentWidth, maxWidth));
+        markdownElement.style.width = `${newWidth}px`;
 
         if (finalResizeTimeoutId) {
           clearTimeout(finalResizeTimeoutId);
         }
         finalResizeTimeoutId = setTimeout(() => {
-          if (textElement) {
-            const range = document.createRange();
-            range.selectNodeContents(textElement);
-            const textRect = range.getBoundingClientRect();
-            const actualTextWidth = textRect.width;
-
-            const finalWidth = Math.min(actualTextWidth, newWidth);
-            textElement.style.width = `${finalWidth}px`;
-          }
+          resizeChildren(markdownElement, maxWidth);
+          markdownElement.style.width = "";
         }, 10);
       } catch (err) {
         console.warn("Cannot resize chat message bubble: ", err);
@@ -76,6 +111,7 @@
   .message {
     --message-color: gray;
     --arrow-size: 0.5rem;
+    --internal-spacing: 0.75rem;
     position: relative;
   }
 
@@ -83,15 +119,15 @@
     margin: 0.5rem var(--arrow-size);
     border-radius: var(--corner-roundness);
     width: fit-content;
-    padding: 0.75rem;
+    padding: var(--internal-spacing);
     box-sizing: border-box;
     background-color: var(--message-color);
-    white-space: pre-line;
     text-align: left;
   }
 
   .text {
     box-sizing: content-box;
+    width: fit-content;
     max-width: 600px;
   }
 
