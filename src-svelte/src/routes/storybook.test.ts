@@ -111,7 +111,15 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["screens", "chat", "message"],
-    variants: ["human", "ai", "ai-multiline", "code"],
+    variants: [
+      "human",
+      "ai",
+      "ai-multiline",
+      "human-code",
+      "highlighted-human-code",
+      "ai-code",
+      "highlighted-ai-code",
+    ],
   },
   {
     path: ["screens", "chat", "conversation"],

@@ -4,6 +4,7 @@
 
   export let role: "System" | "Human" | "AI";
   export let conversationWidthPx: Writable<number> | undefined = undefined;
+  export let forceHighlight = false;
   const classList = `message atomic-reveal ${role.toLowerCase()}`;
   let textElement: HTMLDivElement | null;
 
@@ -98,7 +99,7 @@
   });
 </script>
 
-<div class={classList} role="listitem">
+<div class={classList} class:force-highlight={forceHighlight} role="listitem">
   <div class="arrow"></div>
   <div class="text-container">
     <div class="text" bind:this={textElement}>
@@ -113,6 +114,32 @@
     --arrow-size: 0.5rem;
     --internal-spacing: 0.75rem;
     position: relative;
+  }
+
+  .message :global(.code) {
+    transition: box-shadow var(--standard-duration);
+  }
+
+  .message.human :global(.code) {
+    box-shadow: inset 0.02rem 0.02rem 0.3rem 0.1rem rgba(0, 102, 0, 0.1);
+  }
+
+  .message.human :global(.code:hover),
+  .message.human.force-highlight :global(.code) {
+    box-shadow:
+      inset 0.02rem 0.02rem 0.3rem 0.1rem rgba(0, 102, 0, 0.2),
+      0.02rem 0.02rem 0.3rem 0.1rem rgba(0, 102, 0, 0.05);
+  }
+
+  .message.ai :global(.code) {
+    box-shadow: inset 0.02rem 0.02rem 0.3rem 0.1rem rgba(0, 0, 102, 0.1);
+  }
+
+  .message.ai :global(.code:hover),
+  .message.ai.force-highlight :global(.code) {
+    box-shadow:
+      inset 0.02rem 0.02rem 0.3rem 0.1rem rgba(0, 0, 102, 0.2),
+      0.02rem 0.02rem 0.3rem 0.1rem rgba(0, 0, 102, 0.05);
   }
 
   .message .text-container {
