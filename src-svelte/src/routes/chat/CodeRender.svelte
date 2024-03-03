@@ -57,7 +57,8 @@
   .code :global(code) {
     padding: var(--internal-spacing) 1rem;
     background-color: transparent;
-    font-family: "Inconsolata", monospace;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
   }
 
   .code,

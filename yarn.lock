@@ -1386,11 +1386,6 @@
   resolved "https://registry.yarnpkg.com/@fontsource/fira-mono/-/fira-mono-4.5.10.tgz#443be4b2b4fc6e685b88431fcfdaf8d5f5639bbf"
   integrity sha512-bxUnRP8xptGRo8YXeY073DSpfK74XpSb0ZyRNpHV9WvLnJ7TwPOjZll8hTMin7zLC6iOp59pDZ8EQDj1gzgAQQ==
 
-"@fontsource/inconsolata@^5.0.16":
-  version "5.0.16"
-  resolved "https://registry.yarnpkg.com/@fontsource/inconsolata/-/inconsolata-5.0.16.tgz#8237065e6bb0366f66c49cebeea7d1d2d1fa504e"
-  integrity sha512-xcKlutUGBGGwjlxHyWA8b/J+ayGaPkAEYQQfs0NchvnbKz4X8RoIVSoEWg27//4lFoR817mc1Z3yCMXvRajmBg==
-
 "@fontsource/jetbrains-mono@^5.0.11":
   version "5.0.18"
   resolved "https://registry.yarnpkg.com/@fontsource/jetbrains-mono/-/jetbrains-mono-5.0.18.tgz#ac2d610201bb3bc0577ed907a94aed37af8aa537"

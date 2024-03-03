@@ -56,20 +56,61 @@ AIMultiline.parameters = {
   },
 };
 
-export const Code: StoryObj = Template.bind({}) as any;
-Code.args = {
-  message: {
-    role: "Human",
-    text:
-      "This is some Python code:\n\n" +
-      "```python\n" +
-      "def hello_world():\n" +
-      "    print('Hello, world!')\n" +
-      "```\n\n" +
-      "What do you think?",
+const humanCodeMessage = {
+  role: "Human",
+  text:
+    "This is some Python code:\n\n" +
+    "```python\n" +
+    "def hello_world():\n" +
+    "    print('Hello, world!')\n" +
+    "```\n\n" +
+    "Convert it to Rust",
+};
+
+const aiCodeMessage = {
+  role: "AI",
+  text:
+    "Here's how the Python code you provided would look in Rust:\n\n" +
+    '```rust\nfn main() {\n    println!("Hello, world!");\n}\n```',
+};
+
+export const HumanCode: StoryObj = Template.bind({}) as any;
+HumanCode.args = {
+  message: humanCodeMessage,
+};
+HumanCode.parameters = {
+  viewport: {
+    defaultViewport: "tablet",
   },
 };
-Code.parameters = {
+
+export const HighlightedHumanCode: StoryObj = Template.bind({}) as any;
+HighlightedHumanCode.args = {
+  message: humanCodeMessage,
+  forceHighlight: true,
+};
+HighlightedHumanCode.parameters = {
+  viewport: {
+    defaultViewport: "tablet",
+  },
+};
+
+export const AICode: StoryObj = Template.bind({}) as any;
+AICode.args = {
+  message: aiCodeMessage,
+};
+AICode.parameters = {
+  viewport: {
+    defaultViewport: "tablet",
+  },
+};
+
+export const HighlightedAiCode: StoryObj = Template.bind({}) as any;
+HighlightedAiCode.args = {
+  message: aiCodeMessage,
+  forceHighlight: true,
+};
+HighlightedAiCode.parameters = {
   viewport: {
     defaultViewport: "tablet",
   },
