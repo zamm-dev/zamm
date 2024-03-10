@@ -135,7 +135,12 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["screens", "credits", "creditor"],
-    variants: ["github-contributor", "dependency-with-icon"],
+    variants: [
+      "regular",
+      "github-contributor",
+      "typodermic-font",
+      "dependency-with-icon",
+    ],
   },
 ];
 
