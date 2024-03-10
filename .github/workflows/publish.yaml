@@ -99,16 +99,18 @@ jobs:
           toolchain: ${{ env.RUST_VERSION }}
           override: true
           components: rustfmt, clippy
-      - name: Build frontend
+      - name: Setup frontend dependencies
         run: |
           npm install -g pnpm
-          cd forks/neodrag
           pnpm install
           pnpm compile
-          cd ..
+        working-directory: forks/neodrag
+      - name: Build frontend
+        run: |
           yarn install
           yarn svelte-kit sync
           yarn build
+        working-directory: src-svelte
       - name: Build the app
         uses: tauri-apps/tauri-action@v0
         with:
