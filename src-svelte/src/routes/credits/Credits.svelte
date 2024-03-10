@@ -124,6 +124,23 @@
             logo="docker.svg"
             url="https://www.docker.com/"
           />
+          <Creditor
+            name="Pre-commit"
+            logo="pre-commit.svg"
+            url="https://pre-commit.com/"
+          />
+        </Grid>
+      </SubInfoBox>
+      <SubInfoBox subheading="Fonts">
+        <Grid>
+          <Creditor
+            name="Nasalization"
+            url="https://typodermicfonts.com/nasalization/"
+          />
+          <Creditor
+            name="Good Timing"
+            url="https://typodermicfonts.com/good-timing/"
+          />
         </Grid>
       </SubInfoBox>
       <SubInfoBox subheading="Icons">
