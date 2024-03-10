@@ -126,6 +126,44 @@
           />
         </Grid>
       </SubInfoBox>
+      <SubInfoBox subheading="Icons">
+        <Grid>
+          <Creditor
+            name="Iconify"
+            logo="iconify.png"
+            url="https://iconify.design/"
+          />
+          <Creditor
+            name="Unplugin"
+            logo="unplugin.svg"
+            url="https://unplugin.vercel.app/"
+          />
+          <Creditor
+            name="Element+"
+            logo="element-plus.png"
+            url="https://github.com/element-plus/element-plus-icons"
+          />
+          <Creditor
+            name="Phosphor Icons"
+            logo="phosphor-icons.svg"
+            url="https://phosphoricons.com/"
+          />
+          <Creditor
+            name="Material Icons"
+            logo="google.svg"
+            url="https://github.com/google/material-design-icons"
+          />
+          <Creditor
+            name="Tabler Icons"
+            logo="tabler.svg"
+            url="https://tabler.io/icons"
+          />
+          <Creditor
+            name="Ionicons"
+            url="https://github.com/ionic-team/ionicons"
+          />
+        </Grid>
+      </SubInfoBox>
     </div>
   </InfoBox>
 
