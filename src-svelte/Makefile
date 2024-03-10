@@ -3,11 +3,11 @@
 build: ../forks/neodrag/packages/svelte/dist $(shell find src -type f \( -name "*.svelte" -o -name "*.js" -o -name "*.ts" -o -name "*.css" -o -name "*.html" \) -not -path "*/node_modules/*")
 	yarn install --frozen-lockfile && yarn svelte-kit sync && yarn build
 
-forks/neodrag/packages/core/dist: forks/neodrag/packages/core/src/*
-	cd forks/neodrag/packages/core && pnpm install && pnpm compile
+../forks/neodrag/packages/core/dist: ../forks/neodrag/packages/core/src/*
+	cd ../forks/neodrag/packages/core && pnpm install && pnpm compile
 
-forks/neodrag/packages/svelte/dist: forks/neodrag/packages/core/dist forks/neodrag/packages/svelte/src/*
-	cd forks/neodrag/packages/svelte && pnpm install && pnpm compile
+../forks/neodrag/packages/svelte/dist: ../forks/neodrag/packages/core/dist ../forks/neodrag/packages/svelte/src/*
+	cd ../forks/neodrag/packages/svelte && pnpm install && pnpm compile
 
 local-screenshots:
 	mkdir -p screenshots/local
