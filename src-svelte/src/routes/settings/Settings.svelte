@@ -49,57 +49,69 @@
   };
 </script>
 
-<InfoBox title="Settings">
-  <div class="container">
-    <SubInfoBox subheading="Animation">
-      <SettingsSwitch
-        label="Enabled"
-        bind:toggledOn={$animationsOn}
-        onToggle={onAnimationsToggle}
-      />
-      <SettingsSwitch
-        label="Background"
-        bind:toggledOn={$backgroundAnimation}
-        onToggle={onbackgroundAnimationToggle}
-      />
-      <SettingsSlider
-        label="General speed"
-        min={0.1}
-        max={1}
-        bind:value={$animationSpeed}
-        onUpdate={onAnimationSpeedUpdate}
-      />
-    </SubInfoBox>
-  </div>
+<div class="container">
+  <InfoBox title="Settings" childNumber={0}>
+    <div class="settings-container">
+      <SubInfoBox subheading="Animation">
+        <SettingsSwitch
+          label="Enabled"
+          bind:toggledOn={$animationsOn}
+          onToggle={onAnimationsToggle}
+        />
+        <SettingsSwitch
+          label="Background"
+          bind:toggledOn={$backgroundAnimation}
+          onToggle={onbackgroundAnimationToggle}
+        />
+        <SettingsSlider
+          label="General speed"
+          min={0.1}
+          max={1}
+          bind:value={$animationSpeed}
+          onUpdate={onAnimationSpeedUpdate}
+        />
+      </SubInfoBox>
+    </div>
 
-  <div class="container">
-    <SubInfoBox subheading="Sound">
-      <SettingsSwitch
-        label="Enabled"
-        bind:toggledOn={$soundOn}
-        onToggle={onSoundToggle}
-      />
-      <SettingsSlider
-        label="Volume"
-        min={0}
-        max={2}
-        onUpdate={onVolumeUpdate}
-        bind:value={$volume}
-      />
-    </SubInfoBox>
-  </div>
-</InfoBox>
+    <div class="settings-container">
+      <SubInfoBox subheading="Sound">
+        <SettingsSwitch
+          label="Enabled"
+          bind:toggledOn={$soundOn}
+          onToggle={onSoundToggle}
+        />
+        <SettingsSlider
+          label="Volume"
+          min={0}
+          max={2}
+          onUpdate={onVolumeUpdate}
+          bind:value={$volume}
+        />
+      </SubInfoBox>
+    </div>
+  </InfoBox>
+
+  <InfoBox title="Data" childNumber={1}>
+    <p>Backup or restore your data by exporting/importing it.</p>
+  </InfoBox>
+</div>
 
 <style>
   .container {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .settings-container {
     margin-top: 1rem;
   }
 
-  .container:first-of-type {
+  .settings-container:first-of-type {
     margin-top: 0;
   }
 
-  .container :global(.sub-info-box .content) {
+  .settings-container :global(.sub-info-box .content) {
     --side-padding: 0.8rem;
     display: grid;
     grid-template-columns: 1fr;
@@ -109,7 +121,7 @@
 
   /* this takes sidebar width into account */
   @media (min-width: 52rem) {
-    .container :global(.sub-info-box .content) {
+    .settings-container :global(.sub-info-box .content) {
       grid-template-columns: 1fr 1fr;
     }
   }
