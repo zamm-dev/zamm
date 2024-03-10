@@ -10,6 +10,10 @@
       return url.pathname.slice(1);
     }
 
+    if (url.hostname.endsWith("typodermicfonts.com")) {
+      return url.pathname.slice(1, -1);
+    }
+
     const hostname = url.hostname.startsWith("www.")
       ? url.hostname.slice(4)
       : url.hostname;
@@ -36,6 +40,7 @@
 
 <script lang="ts">
   import GitHubIcon from "./GitHubIcon.svelte";
+  import TypodermicIcon from "./TypodermicIcon.svelte";
 
   export let logo: string | undefined = undefined;
   export let name: string;
@@ -43,6 +48,7 @@
   export let urlDisplay = formatUrl(url);
 
   const isGitHubLink = url.startsWith("https://github.com");
+  const isTypodermicLink = url.startsWith("https://typodermicfonts.com");
   const logoLink = logo ? `/logos/${logo}` : undefined;
 </script>
 
@@ -55,6 +61,8 @@
     <div class="external-link">
       {#if isGitHubLink}
         <GitHubIcon />
+      {:else if isTypodermicLink}
+        <TypodermicIcon />
       {/if}
       <a href={url} target="_blank" rel="noopener noreferrer">
         {urlDisplay}
