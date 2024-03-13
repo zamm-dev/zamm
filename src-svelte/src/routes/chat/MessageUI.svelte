@@ -46,7 +46,7 @@
       const range = document.createRange();
       range.selectNodeContents(pElement);
       const textRect = range.getBoundingClientRect();
-      const actualTextWidth = textRect.width;
+      const actualTextWidth = Math.ceil(textRect.width);
 
       pElement.style.width = `${actualTextWidth}px`;
     });
