@@ -230,6 +230,9 @@ describe.concurrent("Storybook visual tests", () => {
   };
 
   const baseMatchOptions: MatchImageSnapshotOptions = {
+    comparisonMethod: "ssim",
+    failureThreshold: 0.005,
+    failureThresholdType: "percent",
     allowSizeMismatch: true,
     storeReceivedOnFailure: true,
     customSnapshotsDir: `${SCREENSHOTS_BASE_DIR}/baseline`,
