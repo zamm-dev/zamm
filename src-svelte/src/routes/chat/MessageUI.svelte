@@ -21,11 +21,11 @@
   function maxMessageWidth(chatWidthPx: number) {
     const availableWidthPx = chatWidthPx - messagePaddingPx;
     if (availableWidthPx <= MIN_FULL_WIDTH_PX) {
-      return availableWidthPx;
+      return Math.ceil(availableWidthPx);
     }
 
     const fractionalWidth = Math.max(0.8 * availableWidthPx, MIN_FULL_WIDTH_PX);
-    return Math.min(fractionalWidth, MAX_WIDTH_PX);
+    return Math.ceil(Math.min(fractionalWidth, MAX_WIDTH_PX));
   }
 
   function resetChildren(textElement: HTMLDivElement) {
@@ -71,16 +71,18 @@
 
         resetChildren(markdownElement);
 
-        const maxWidth = maxMessageWidth(chatWidthPx);
+        const maxPotentialWidth = maxMessageWidth(chatWidthPx);
         const currentWidth = markdownElement.getBoundingClientRect().width;
-        const newWidth = Math.ceil(Math.min(currentWidth, maxWidth));
-        markdownElement.style.width = `${newWidth}px`;
+        const maxActualWidth = Math.ceil(
+          Math.min(currentWidth, maxPotentialWidth),
+        );
+        markdownElement.style.width = `${maxActualWidth}px`;
 
         if (finalResizeTimeoutId) {
           clearTimeout(finalResizeTimeoutId);
         }
         finalResizeTimeoutId = setTimeout(() => {
-          resizeChildren(markdownElement, maxWidth);
+          resizeChildren(markdownElement, maxActualWidth);
           markdownElement.style.width = "";
         }, 10);
       } catch (err) {
