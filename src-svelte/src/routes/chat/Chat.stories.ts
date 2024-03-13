@@ -116,6 +116,33 @@ MultilineChat.parameters = {
   },
 };
 
+export const ExtraLongInput: StoryObj = Template.bind({}) as any;
+ExtraLongInput.args = {
+  conversation,
+  initialMessage: `Hey, I have this definition for a book object:
+
+\`\`\`python
+class Book:
+  def __init__(self, title, author, pages):
+      self.title = title
+      self.author = author
+      self.pages = pages
+
+  def book_info(self):
+      return f"'{self.title}' by {self.author} has {self.pages} pages."
+
+  def is_long(self):
+      return self.pages > 200
+\`\`\`
+
+Do you have any code comments for me?`,
+};
+ExtraLongInput.parameters = {
+  viewport: {
+    defaultViewport: "smallTablet",
+  },
+};
+
 export const BottomScrollIndicator: StoryObj = Template.bind({}) as any;
 BottomScrollIndicator.args = {
   conversation,

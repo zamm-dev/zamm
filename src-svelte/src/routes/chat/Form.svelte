@@ -70,6 +70,7 @@
     font-family: var(--font-body);
     width: 100%;
     min-height: 1.2rem;
+    max-height: 9.8rem;
     resize: none;
   }
 </style>

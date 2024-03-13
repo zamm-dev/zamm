@@ -127,6 +127,7 @@ const components: ComponentTestConfig[] = [
       "empty",
       "not-empty",
       "multiline-chat",
+      "extra-long-input",
       "bottom-scroll-indicator",
       "typing-indicator-static",
       "full-message-width",
