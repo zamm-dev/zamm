@@ -1,4 +1,4 @@
-import Chatcomponent from "./Chat.svelte";
+import ChatComponent from "./Chat.svelte";
 import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
 import MockPageTransitions from "$lib/__mocks__/MockPageTransitions.svelte";
@@ -6,7 +6,7 @@ import type { StoryFn, StoryObj } from "@storybook/svelte";
 import type { ChatMessage } from "$lib/bindings";
 
 export default {
-  component: Chatcomponent,
+  component: ChatComponent,
   title: "Screens/Chat/Conversation",
   argTypes: {},
   decorators: [
@@ -21,16 +21,11 @@ export default {
 };
 
 const Template = ({ ...args }) => ({
-  Component: Chatcomponent,
+  Component: ChatComponent,
   props: args,
 });
 
 export const Empty: StoryObj = Template.bind({}) as any;
-Empty.parameters = {
-  viewport: {
-    defaultViewport: "tablet",
-  },
-};
 Empty.parameters = {
   viewport: {
     defaultViewport: "smallTablet",

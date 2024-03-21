@@ -1,14 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import type { Writable } from "svelte/store";
 
   export let role: "System" | "Human" | "AI";
-  export let conversationWidthPx: Writable<number> | undefined = undefined;
   export let forceHighlight = false;
   const classList = `message atomic-reveal ${role.toLowerCase()}`;
   let textElement: HTMLDivElement | null;
 
-  let initialResizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
   let finalResizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
   const remPx = 18;
@@ -60,7 +57,7 @@
     });
   }
 
-  function resizeBubble(chatWidthPx: number) {
+  export function resizeBubble(chatWidthPx: number) {
     if (chatWidthPx > 0 && textElement) {
       try {
         const markdownElement =
@@ -92,12 +89,11 @@
   }
 
   onMount(() => {
-    conversationWidthPx?.subscribe((chatWidthPx) => {
-      if (initialResizeTimeoutId) {
-        clearTimeout(initialResizeTimeoutId);
+    return () => {
+      if (finalResizeTimeoutId) {
+        clearTimeout(finalResizeTimeoutId);
       }
-      initialResizeTimeoutId = setTimeout(() => resizeBubble(chatWidthPx), 100);
-    });
+    };
   });
 </script>
 

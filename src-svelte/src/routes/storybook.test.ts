@@ -69,6 +69,14 @@ const components: ComponentTestConfig[] = [
     variants: ["external-link"],
   },
   {
+    path: ["reusable", "scrollable", "fixed"],
+    variants: ["top", "bottom"],
+  },
+  {
+    path: ["reusable", "scrollable", "growable"],
+    variants: ["small", "large"],
+  },
+  {
     path: ["layout", "background"],
     variants: [
       {

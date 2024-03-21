@@ -1,12 +1,12 @@
 <script lang="ts">
   import InfoBox from "$lib/InfoBox.svelte";
+  import Scrollable, { type ResizedEvent } from "$lib/Scrollable.svelte";
   import Message from "./Message.svelte";
   import TypingIndicator from "./TypingIndicator.svelte";
   import { type ChatMessage, chat } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import Form from "./Form.svelte";
   import { onMount } from "svelte";
-  import { writable } from "svelte/store";
 
   export let initialMessage = "";
   export let conversation: ChatMessage[] = [
@@ -17,70 +17,32 @@
   ];
   export let expectingResponse = false;
   export let showMostRecentMessage = true;
-  let conversationContainer: HTMLDivElement | undefined = undefined;
-  let conversationView: HTMLDivElement | undefined = undefined;
-  let conversationWidthPx = writable(0);
-  let topIndicator: HTMLDivElement;
-  let bottomIndicator: HTMLDivElement;
-  let topShadow: HTMLDivElement;
-  let bottomShadow: HTMLDivElement;
+  let initialMount = true;
+  let messageComponents: Message[] = [];
+  let growable: Scrollable | undefined;
+  let conversationWidthPx = 100;
 
-  onMount(() => {
-    resizeConversationView(true);
-    const resizeCallback = () => resizeConversationView(false);
-    window.addEventListener("resize", resizeCallback);
-
-    let topScrollObserver = new IntersectionObserver(
-      intersectionCallback(topShadow),
-    );
-    topScrollObserver.observe(topIndicator);
-    let bottomScrollObserver = new IntersectionObserver(
-      intersectionCallback(bottomShadow),
-    );
-    bottomScrollObserver.observe(bottomIndicator);
-
-    return () => {
-      window.removeEventListener("resize", resizeCallback);
-      topScrollObserver.disconnect();
-      bottomScrollObserver.disconnect();
-    };
-  });
-
-  function intersectionCallback(shadow: HTMLDivElement) {
-    return (entries: IntersectionObserverEntry[]) => {
-      let indicator = entries[0];
-      if (indicator.isIntersecting) {
-        shadow.classList.remove("visible");
-      } else {
-        shadow.classList.add("visible");
-      }
-    };
+  function resizeConversationView() {
+    growable?.resizeScrollable();
   }
 
-  function showChatBottom() {
-    if (conversationView) {
-      conversationView.scrollTop = conversationView.scrollHeight;
+  function onScrollableResized(e: ResizedEvent) {
+    conversationWidthPx = e.detail.width;
+    messageComponents.forEach((message) => {
+      message.resizeBubble(e.detail.width);
+    });
+    if (initialMount && showMostRecentMessage) {
+      growable?.scrollToBottom();
     }
   }
 
-  function resizeConversationView(initialMount = false) {
-    if (conversationView) {
-      conversationView.style.maxHeight = "8rem";
-      requestAnimationFrame(() => {
-        if (conversationView && conversationContainer) {
-          conversationView.style.maxHeight = `${conversationContainer.clientHeight}px`;
-
-          const conversationDimensions =
-            conversationView.getBoundingClientRect();
-          conversationWidthPx.set(conversationDimensions.width);
-          if (initialMount && showMostRecentMessage) {
-            showChatBottom();
-            // scroll to bottom again in case resized elements produce greater scroll
-            setTimeout(showChatBottom, 120);
-          }
-        }
-      });
-    }
+  function appendMessage(message: ChatMessage) {
+    conversation = [...conversation, message];
+    setTimeout(() => {
+      const latestMessage = messageComponents[messageComponents.length - 1];
+      latestMessage.resizeBubble(conversationWidthPx);
+      growable?.scrollToBottom();
+    }, 10);
   }
 
   async function sendChatMessage(message: string) {
@@ -92,38 +54,42 @@
       role: "Human",
       text: message,
     };
-    conversation = [...conversation, chatMessage];
+    appendMessage(chatMessage);
     expectingResponse = true;
-    setTimeout(showChatBottom, 50);
 
     try {
       let llmCall = await chat("OpenAI", "gpt-4", null, conversation);
-      conversation = [...conversation, llmCall.response.completion];
-      setTimeout(showChatBottom, 50);
+      appendMessage(llmCall.response.completion);
     } catch (err) {
       snackbarError(err as string);
     } finally {
       expectingResponse = false;
     }
   }
+
+  onMount(() => {
+    setTimeout(() => {
+      // hack: Storybook window resize doesn't cause remount
+      initialMount = false;
+    }, 1_000);
+  });
 </script>
 
 <InfoBox title="Chat" fullHeight>
   <div class="chat-container composite-reveal">
-    <div
-      class="conversation-container composite-reveal"
-      bind:this={conversationContainer}
+    <Scrollable
+      initialPosition={showMostRecentMessage ? "bottom" : "top"}
+      on:resize={onScrollableResized}
+      bind:this={growable}
     >
-      <div class="shadow top" bind:this={topShadow}></div>
-      <div
-        class="conversation composite-reveal"
-        role="list"
-        bind:this={conversationView}
-      >
-        <div class="indicator top" bind:this={topIndicator}></div>
+      <div class="composite-reveal" role="list">
         {#if conversation.length > 1}
-          {#each conversation.slice(1) as message}
-            <Message {message} {conversationWidthPx} />
+          {#each conversation.slice(1) as message, i (i)}
+            <Message
+              {message}
+              {conversationWidthPx}
+              bind:this={messageComponents[i]}
+            />
           {/each}
           {#if expectingResponse}
             <TypingIndicator />
@@ -134,10 +100,8 @@
             a message below.
           </p>
         {/if}
-        <div class="indicator bottom" bind:this={bottomIndicator}></div>
       </div>
-      <div class="shadow bottom" bind:this={bottomShadow}></div>
-    </div>
+    </Scrollable>
 
     <Form
       {sendChatMessage}
@@ -155,64 +119,10 @@
     gap: 1rem;
   }
 
-  .conversation-container {
-    flex-grow: 1;
-    position: relative;
-  }
-
-  .conversation {
-    max-height: 8rem;
-    overflow-y: auto;
-    position: relative;
-  }
-
   .empty-conversation {
     color: var(--color-faded);
     font-size: 0.85rem;
     font-style: italic;
     text-align: center;
-  }
-
-  .shadow {
-    z-index: 1;
-    height: 0.375rem;
-    width: 100%;
-    position: absolute;
-    display: none;
-  }
-
-  .conversation-container :global(.shadow.visible) {
-    display: block;
-  }
-
-  .shadow.top {
-    top: 0;
-    background-image: radial-gradient(
-      farthest-side at 50% 0%,
-      rgba(150, 150, 150, 0.4) 0%,
-      rgba(0, 0, 0, 0) 100%
-    );
-  }
-
-  .shadow.bottom {
-    bottom: 0;
-    background-image: radial-gradient(
-      farthest-side at 50% 100%,
-      rgba(150, 150, 150, 0.4) 0%,
-      rgba(0, 0, 0, 0) 100%
-    );
-  }
-
-  .indicator {
-    height: 1px;
-    width: 100%;
-  }
-
-  .indicator.top {
-    margin-bottom: -1px;
-  }
-
-  .indicator.bottom {
-    margin-top: -1px;
   }
 </style>
