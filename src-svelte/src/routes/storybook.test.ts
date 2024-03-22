@@ -3,6 +3,7 @@ import {
   webkit,
   type Page,
   type BrowserContext,
+  type Frame,
 } from "@playwright/test";
 import {
   afterAll,
@@ -31,13 +32,15 @@ const SCREENSHOTS_BASE_DIR =
 
 interface ComponentTestConfig {
   path: string[]; // Represents the Storybook hierarchy path
-  variants: string[] | VariantConfig[];
+  variants: (string | VariantConfig)[];
   screenshotEntireBody?: boolean;
 }
 
 interface VariantConfig {
   name: string;
+  prefix?: string;
   assertDynamic?: boolean;
+  additionalAction?: (frame: Frame) => Promise<void>;
 }
 
 const components: ComponentTestConfig[] = [
@@ -139,6 +142,14 @@ const components: ComponentTestConfig[] = [
       "bottom-scroll-indicator",
       "typing-indicator-static",
       "full-message-width",
+      {
+        name: "new-message-sent",
+        prefix: "extra-long-input",
+        additionalAction: async (frame: Frame) => {
+          await frame.click('button:has-text("Send")');
+          await frame.click('button[title="Dismiss"]');
+        },
+      },
     ],
     screenshotEntireBody: true,
   },
@@ -223,11 +234,10 @@ describe.concurrent("Storybook visual tests", () => {
     }
   });
 
-  const takeScreenshot = async (page: Page, screenshotEntireBody?: boolean) => {
-    const frame = page.frame({ name: "storybook-preview-iframe" });
-    if (!frame) {
-      throw new Error("Could not find Storybook iframe");
-    }
+  const takeScreenshot = async (
+    frame: Frame,
+    screenshotEntireBody?: boolean,
+  ) => {
     let locator = screenshotEntireBody
       ? "body"
       : "#storybook-root > :first-child";
@@ -264,7 +274,8 @@ describe.concurrent("Storybook visual tests", () => {
       test<StorybookTestContext>(
         `${testName} should render the same`,
         async ({ expect, page }) => {
-          const variantPrefix = `--${variantConfig.name}`;
+          const variantPrefixStr = variantConfig.prefix ?? variantConfig.name;
+          const variantPrefix = `--${variantPrefixStr}`;
 
           await page.goto(
             `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
@@ -285,8 +296,17 @@ describe.concurrent("Storybook visual tests", () => {
           );
           await Promise.all(imagePromises);
 
+          const frame = page.frame({ name: "storybook-preview-iframe" });
+          if (!frame) {
+            throw new Error("Could not find Storybook iframe");
+          }
+
+          if (variantConfig.additionalAction) {
+            await variantConfig.additionalAction(frame);
+          }
+
           const screenshot = await takeScreenshot(
-            page,
+            frame,
             config.screenshotEntireBody,
           );
 
@@ -325,7 +345,7 @@ describe.concurrent("Storybook visual tests", () => {
           if (variantConfig.assertDynamic !== undefined) {
             await new Promise((r) => setTimeout(r, 1000));
             const newScreenshot = await takeScreenshot(
-              page,
+              frame,
               config.screenshotEntireBody,
             );
 
