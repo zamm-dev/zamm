@@ -5,10 +5,10 @@
   import SvelteMarkdown from "svelte-markdown";
 
   export let message: ChatMessage;
-  let resizeBubbleBound: (chatWidthPx: number) => void;
+  let resizeBubbleBound: (chatWidthPx: number) => Promise<void>;
 
   export function resizeBubble(chatWidthPx: number) {
-    resizeBubbleBound(chatWidthPx);
+    return resizeBubbleBound(chatWidthPx);
   }
 </script>
 

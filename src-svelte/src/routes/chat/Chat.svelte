@@ -26,11 +26,12 @@
     growable?.resizeScrollable();
   }
 
-  function onScrollableResized(e: ResizedEvent) {
+  async function onScrollableResized(e: ResizedEvent) {
     conversationWidthPx = e.detail.width;
-    messageComponents.forEach((message) => {
-      message.resizeBubble(e.detail.width);
-    });
+    const resizePromises = messageComponents.map((message) =>
+      message.resizeBubble(e.detail.width),
+    );
+    await Promise.all(resizePromises);
     if (initialMount && showMostRecentMessage) {
       growable?.scrollToBottom();
     }
@@ -38,9 +39,9 @@
 
   function appendMessage(message: ChatMessage) {
     conversation = [...conversation, message];
-    setTimeout(() => {
+    setTimeout(async () => {
       const latestMessage = messageComponents[messageComponents.length - 1];
-      latestMessage.resizeBubble(conversationWidthPx);
+      await latestMessage.resizeBubble(conversationWidthPx);
       growable?.scrollToBottom();
     }, 10);
   }

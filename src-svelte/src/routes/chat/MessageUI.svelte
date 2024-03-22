@@ -57,7 +57,7 @@
     });
   }
 
-  export function resizeBubble(chatWidthPx: number) {
+  export async function resizeBubble(chatWidthPx: number) {
     if (chatWidthPx > 0 && textElement) {
       try {
         const markdownElement =
@@ -68,6 +68,7 @@
 
         resetChildren(markdownElement);
 
+        await new Promise((r) => setTimeout(r, 0));
         const maxPotentialWidth = maxMessageWidth(chatWidthPx);
         const currentWidth = markdownElement.getBoundingClientRect().width;
         const maxActualWidth = Math.ceil(
