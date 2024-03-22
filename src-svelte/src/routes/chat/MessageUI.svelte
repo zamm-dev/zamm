@@ -82,7 +82,7 @@
         finalResizeTimeoutId = setTimeout(() => {
           resizeChildren(markdownElement, maxActualWidth);
           markdownElement.style.width = "";
-        }, 10);
+        }, 100);
       } catch (err) {
         console.warn("Cannot resize chat message bubble: ", err);
       }
