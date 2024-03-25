@@ -6,7 +6,6 @@
   import { type ChatMessage, chat } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import Form from "./Form.svelte";
-  import { onMount } from "svelte";
 
   export let initialMessage = "";
   export let conversation: ChatMessage[] = [
@@ -17,7 +16,6 @@
   ];
   export let expectingResponse = false;
   export let showMostRecentMessage = true;
-  let initialMount = true;
   let messageComponents: Message[] = [];
   let growable: Scrollable | undefined;
   let conversationWidthPx = 100;
@@ -32,7 +30,7 @@
       message.resizeBubble(e.detail.width),
     );
     await Promise.all(resizePromises);
-    if (initialMount && showMostRecentMessage) {
+    if (showMostRecentMessage) {
       growable?.scrollToBottom();
     }
   }
@@ -67,13 +65,6 @@
       expectingResponse = false;
     }
   }
-
-  onMount(() => {
-    setTimeout(() => {
-      // hack: Storybook window resize doesn't cause remount
-      initialMount = false;
-    }, 1_000);
-  });
 </script>
 
 <InfoBox title="Chat" fullHeight>

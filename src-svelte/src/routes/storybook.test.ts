@@ -40,7 +40,7 @@ interface VariantConfig {
   name: string;
   prefix?: string;
   assertDynamic?: boolean;
-  additionalAction?: (frame: Frame) => Promise<void>;
+  additionalAction?: (frame: Frame, page: Page) => Promise<void>;
 }
 
 const components: ComponentTestConfig[] = [
@@ -141,7 +141,16 @@ const components: ComponentTestConfig[] = [
       "extra-long-input",
       "bottom-scroll-indicator",
       "typing-indicator-static",
-      "full-message-width",
+      {
+        name: "full-message-width",
+        additionalAction: async (frame: Frame, page: Page) => {
+          await new Promise((r) => setTimeout(r, 1000));
+          // need to do a manual scroll because Storybook resize messes things up on CI
+          const scrollContents = frame.locator(".scroll-contents");
+          await scrollContents.focus();
+          await page.keyboard.press("End");
+        },
+      },
       {
         name: "new-message-sent",
         prefix: "extra-long-input",
@@ -302,7 +311,7 @@ describe.concurrent("Storybook visual tests", () => {
           }
 
           if (variantConfig.additionalAction) {
-            await variantConfig.additionalAction(frame);
+            await variantConfig.additionalAction(frame, page);
           }
 
           const screenshot = await takeScreenshot(
