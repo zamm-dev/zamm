@@ -41,7 +41,7 @@
     conversation = [...conversation, message];
     setTimeout(async () => {
       const latestMessage = messageComponents[messageComponents.length - 1];
-      await latestMessage.resizeBubble(conversationWidthPx);
+      await latestMessage?.resizeBubble(conversationWidthPx);
       growable?.scrollToBottom();
     }, 10);
   }
