@@ -150,8 +150,6 @@ jobs:
   svelte:
     name: Run Svelte tests
     runs-on: ubuntu-latest
-    container:
-      image: "mcr.microsoft.com/playwright:v1.38.0-jammy"
     env:
       PLAYWRIGHT_TIMEOUT: 60000
     needs: build
@@ -180,11 +178,16 @@ jobs:
           cd src-svelte && yarn install --frozen-lockfile && yarn svelte-kit sync
           cd ../webdriver && yarn install --frozen-lockfile
       # end of common dependency setup with downloaded artifacts
-      - name: Update Playwright browsers
-        run: yarn playwright install
-      - name: Run Svelte Tests
+      - name: Install remaining dependencies
         run: |
-          xvfb-run yarn workspace gui test
+          yarn playwright install --with-deps
+          sudo apt-get install -y imagemagick
+      - name: Run Svelte Tests
+        run: xvfb-run yarn workspace gui test
+      - name: Do better diff
+        if: always()
+        run: python3 diff-screenshots.py
+        working-directory: src-svelte/
       - name: Upload final app
         if: always() # run even if tests fail
         uses: actions/upload-artifact@v3

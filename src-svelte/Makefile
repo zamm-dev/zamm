@@ -19,6 +19,7 @@ update-local-screenshots:
 
 test:
 	yarn test
+	python3 diff-screenshots.py
 
 format:
 	yarn prettier --write --plugin prettier-plugin-svelte src/
