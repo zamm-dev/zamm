@@ -77,11 +77,7 @@
       <div class="composite-reveal" role="list">
         {#if conversation.length > 1}
           {#each conversation.slice(1) as message, i (i)}
-            <Message
-              {message}
-              {conversationWidthPx}
-              bind:this={messageComponents[i]}
-            />
+            <Message {message} bind:this={messageComponents[i]} />
           {/each}
           {#if expectingResponse}
             <TypingIndicator />
