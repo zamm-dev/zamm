@@ -5,9 +5,18 @@
   import SvelteMarkdown from "svelte-markdown";
 
   export let message: ChatMessage;
+  let resizeBubbleBound: (chatWidthPx: number) => Promise<void>;
+
+  export function resizeBubble(chatWidthPx: number) {
+    return resizeBubbleBound(chatWidthPx);
+  }
 </script>
 
-<MessageUI role={message.role} {...$$restProps}>
+<MessageUI
+  role={message.role}
+  bind:resizeBubble={resizeBubbleBound}
+  {...$$restProps}
+>
   <div class="markdown">
     <SvelteMarkdown source={message.text} renderers={{ code: CodeRender }} />
   </div>
