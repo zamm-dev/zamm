@@ -5,6 +5,7 @@ import {
   expect,
   type Page,
   type Frame,
+  type Locator,
 } from "@playwright/test";
 import { afterAll, beforeAll, describe, test } from "vitest";
 
@@ -65,18 +66,29 @@ describe("Switch drag test", () => {
     return { onOffSwitch, toggle, switchBounds };
   };
 
+  const expectAriaValue = async (
+    switchElement: Locator,
+    expectedValue: boolean,
+  ) => {
+    const switchValueStr = await switchElement.evaluate((el) =>
+      el.getAttribute("aria-checked"),
+    );
+    expect(switchValueStr).not.toBeNull();
+    expect(switchValueStr).toEqual(expectedValue.toString());
+  };
+
   test(
     "switches state when drag released at end",
     async () => {
       const { onOffSwitch, toggle, switchBounds } = await getSwitchAndToggle();
-      await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
-      expect(numSoundsPlayed === 0).toBeTruthy();
+      await expectAriaValue(onOffSwitch, false);
+      expect(numSoundsPlayed).toEqual(0);
 
       await toggle.dragTo(onOffSwitch, {
         targetPosition: { x: switchBounds.width, y: switchBounds.height / 2 },
       });
-      await expect(onOffSwitch).toHaveAttribute("aria-checked", "true");
-      expect(numSoundsPlayed === 1).toBeTruthy();
+      await expectAriaValue(onOffSwitch, true);
+      expect(numSoundsPlayed).toEqual(1);
     },
     { retry: 2 },
   );
@@ -85,8 +97,8 @@ describe("Switch drag test", () => {
     "switches state when drag released more than halfway to end",
     async () => {
       const { onOffSwitch, toggle, switchBounds } = await getSwitchAndToggle();
-      await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
-      expect(numSoundsPlayed === 0).toBeTruthy();
+      await expectAriaValue(onOffSwitch, false);
+      expect(numSoundsPlayed).toEqual(0);
 
       await toggle.dragTo(onOffSwitch, {
         targetPosition: {
@@ -94,8 +106,8 @@ describe("Switch drag test", () => {
           y: switchBounds.height / 2,
         },
       });
-      await expect(onOffSwitch).toHaveAttribute("aria-checked", "true");
-      expect(numSoundsPlayed === 1).toBeTruthy();
+      await expectAriaValue(onOffSwitch, true);
+      expect(numSoundsPlayed).toEqual(1);
       const expectedDelays = [0];
       expect(
         JSON.stringify(soundDelays) === JSON.stringify(expectedDelays),
@@ -110,8 +122,8 @@ describe("Switch drag test", () => {
       const { onOffSwitch, toggle, switchBounds } =
         await getSwitchAndToggle("slow-motion");
       // ===== same as previous test =====
-      await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
-      expect(numSoundsPlayed === 0).toBeTruthy();
+      await expectAriaValue(onOffSwitch, false);
+      expect(numSoundsPlayed).toEqual(0);
 
       await toggle.dragTo(onOffSwitch, {
         targetPosition: {
@@ -121,8 +133,8 @@ describe("Switch drag test", () => {
       });
       // sound is delayed, wait for it to fire
       await new Promise((r) => setTimeout(r, 500));
-      await expect(onOffSwitch).toHaveAttribute("aria-checked", "true");
-      expect(numSoundsPlayed === 1).toBeTruthy();
+      await expectAriaValue(onOffSwitch, true);
+      expect(numSoundsPlayed).toEqual(1);
       // ===== end similarity block =====
       const expectedDelays = [450];
       expect(
@@ -136,8 +148,8 @@ describe("Switch drag test", () => {
     "maintains state when drag released less than halfway to end",
     async () => {
       const { onOffSwitch, toggle, switchBounds } = await getSwitchAndToggle();
-      await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
-      expect(numSoundsPlayed === 0).toBeTruthy();
+      await expectAriaValue(onOffSwitch, false);
+      expect(numSoundsPlayed).toEqual(0);
 
       await toggle.dragTo(onOffSwitch, {
         targetPosition: {
@@ -145,8 +157,8 @@ describe("Switch drag test", () => {
           y: switchBounds.height / 2,
         },
       });
-      await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
-      expect(numSoundsPlayed === 0).toBeTruthy();
+      await expectAriaValue(onOffSwitch, false);
+      expect(numSoundsPlayed).toEqual(0);
     },
     { retry: 2 },
   );
@@ -157,24 +169,24 @@ describe("Switch drag test", () => {
       const { onOffSwitch, toggle, switchBounds } =
         await getSwitchAndToggle("slow-motion");
       const finalY = switchBounds.y + switchBounds.height / 2;
-      await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
-      expect(numSoundsPlayed === 0).toBeTruthy();
+      await expectAriaValue(onOffSwitch, false);
+      expect(numSoundsPlayed).toEqual(0);
 
       await toggle.hover();
       await page.mouse.down();
 
       // move to the very end
       await page.mouse.move(switchBounds.x + switchBounds.width, finalY);
-      expect(numSoundsPlayed === 1).toBeTruthy();
+      expect(numSoundsPlayed).toEqual(1);
 
       // move back to the beginning
       await page.mouse.move(switchBounds.x, finalY);
-      await expect(onOffSwitch).toHaveAttribute("aria-checked", "false");
-      expect(numSoundsPlayed === 2).toBeTruthy();
+      await expectAriaValue(onOffSwitch, false);
+      expect(numSoundsPlayed).toEqual(2);
 
       // does not play sound when released
       await page.mouse.up();
-      expect(numSoundsPlayed === 2).toBeTruthy();
+      expect(numSoundsPlayed).toEqual(2);
 
       // should have no delay for both sounds played despite slower animation
       const expectedDelays = [0, 0];
