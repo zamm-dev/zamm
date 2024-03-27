@@ -151,6 +151,14 @@
     text-align: left;
   }
 
+  .message:first-child .text-container {
+    margin-top: 0;
+  }
+
+  .message:last-child .text-container {
+    margin-bottom: 0;
+  }
+
   .text {
     box-sizing: content-box;
     width: fit-content;
