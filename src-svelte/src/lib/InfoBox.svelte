@@ -477,6 +477,12 @@
           anim.tickForGlobalTime(tGlobalFraction);
         });
 
+        if (tGlobalFraction === 0) {
+          node.classList.add("wait-for-infobox");
+        } else if (tGlobalFraction >= 0.7) {
+          node.classList.remove("wait-for-infobox");
+        }
+
         if (tGlobalFraction === 1) {
           observer.disconnect();
         }

@@ -110,11 +110,20 @@
     overflow-y: auto;
   }
 
+  :global(.wait-for-infobox) .scroll-contents {
+    scrollbar-color: transparent transparent;
+  }
+
   .shadow {
     z-index: 1;
     height: 0.375rem;
     width: 100%;
     position: absolute;
+    display: none;
+  }
+
+  :global(.wait-for-infobox .shadow.bottom.visible),
+  :global(.wait-for-infobox .shadow.top.visible) {
     display: none;
   }
 
