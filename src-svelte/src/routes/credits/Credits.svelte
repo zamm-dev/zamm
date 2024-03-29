@@ -6,7 +6,7 @@
   import Creditor from "./Creditor.svelte";
   import Grid from "./Grid.svelte";
 
-  let scrollDelay = 4.4 * $standardDuration;
+  let scrollDelay = 4.4 * $standardDuration + 1_000;
 </script>
 
 <div class="container">
