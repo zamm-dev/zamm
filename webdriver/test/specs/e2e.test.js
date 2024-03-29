@@ -46,4 +46,22 @@ describe("App", function () {
       await browser.checkFullPageScreen("settings-screen", {}),
     ).toBeLessThanOrEqual(maxMismatch);
   });
+
+  it("should allow navigation to the credits page", async function () {
+    this.retries(2);
+    await findAndClick('a[title="Credits"]');
+    await findAndClick('a[title="Dashboard"]');
+    await findAndClick('a[title="Credits"]');
+    await browser.pause(2500); // for page to finish rendering
+    await browser.execute(
+      `document.querySelector('.growable .scroll-contents')
+        .dispatchEvent(new Event('mousedown'));`,
+    );
+    await browser.execute(
+      "document.querySelector('.growable .scroll-contents').scrollTop = 0;",
+    );
+    expect(
+      await browser.checkFullPageScreen("credits-screen", {}),
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
 });

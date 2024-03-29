@@ -21,3 +21,8 @@ export const Bottom: StoryObj = Template.bind({}) as any;
 Bottom.args = {
   initialPosition: "bottom",
 };
+
+export const AutoScroll: StoryObj = Template.bind({}) as any;
+AutoScroll.args = {
+  autoscroll: true,
+};

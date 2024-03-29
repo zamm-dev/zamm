@@ -8,7 +8,7 @@
   import FixedScrollable from "./FixedScrollable.svelte";
 
   export let minHeight = "8rem";
-  export let initialPosition: "top" | "bottom" = "bottom";
+  export let initialPosition: "top" | "bottom" = "top";
   let scrollableHeight: string = minHeight;
   let container: HTMLDivElement | null = null;
   let scrollable: FixedScrollable | null = null;
@@ -51,6 +51,7 @@
     {initialPosition}
     maxHeight={scrollableHeight}
     bind:this={scrollable}
+    {...$$restProps}
   >
     <slot />
   </FixedScrollable>

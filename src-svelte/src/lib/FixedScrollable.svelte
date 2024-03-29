@@ -3,7 +3,10 @@
 
   export let maxHeight: string;
   export let initialPosition: "top" | "bottom" = "top";
+  export let autoscroll = false;
+  export let scrollDelay = 0;
   let scrollContents: HTMLDivElement | undefined = undefined;
+  let scrollInterval: NodeJS.Timeout | undefined = undefined;
   let topIndicator: HTMLDivElement;
   let bottomIndicator: HTMLDivElement;
   let topShadow: HTMLDivElement;
@@ -34,6 +37,12 @@
     };
   }
 
+  function stopScrolling() {
+    if (scrollInterval) {
+      clearInterval(scrollInterval);
+    }
+  }
+
   onMount(() => {
     let topScrollObserver = new IntersectionObserver(
       intersectionCallback(topShadow),
@@ -51,9 +60,20 @@
       setTimeout(() => scrollToBottom(), 10);
     }
 
+    if (autoscroll) {
+      setTimeout(() => {
+        scrollInterval = setInterval(() => {
+          if (scrollContents) {
+            scrollContents.scrollBy(0, 1);
+          }
+        }, 10);
+      }, scrollDelay);
+    }
+
     return () => {
       topScrollObserver.disconnect();
       bottomScrollObserver.disconnect();
+      stopScrolling();
     };
   });
 
@@ -66,6 +86,9 @@
     class="scroll-contents composite-reveal"
     {style}
     bind:this={scrollContents}
+    on:mousedown={stopScrolling}
+    on:wheel={stopScrolling}
+    role="none"
   >
     <div class="indicator top" bind:this={topIndicator}></div>
     <slot />
@@ -87,11 +110,20 @@
     overflow-y: auto;
   }
 
+  :global(.wait-for-infobox) .scroll-contents {
+    scrollbar-color: transparent transparent;
+  }
+
   .shadow {
     z-index: 1;
     height: 0.375rem;
     width: 100%;
     position: absolute;
+    display: none;
+  }
+
+  :global(.wait-for-infobox .shadow.bottom.visible),
+  :global(.wait-for-infobox .shadow.top.visible) {
     display: none;
   }
 
