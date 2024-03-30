@@ -113,6 +113,11 @@ pub enum Error {
         source: RodioError,
     },
     #[error(transparent)]
+    Uuid {
+        #[from]
+        source: uuid::Error,
+    },
+    #[error(transparent)]
     Diesel {
         #[from]
         source: diesel::result::Error,
