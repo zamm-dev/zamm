@@ -55,6 +55,9 @@
   --color-foreground: #FFF;
   --color-background: #F4F4F4;
   --color-offwhite: #FAF9F6;
+  --color-system: #FFF7CC;
+  --color-human: #E5FFE5;
+  --color-ai: #E5E5FF;
   --sidebar-width: 3.75rem;
   --shadow-offset: 4px;
   --shadow-blur: 8px;

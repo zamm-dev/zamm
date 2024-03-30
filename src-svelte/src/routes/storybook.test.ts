@@ -171,6 +171,10 @@ const components: ComponentTestConfig[] = [
       "dependency-with-icon",
     ],
   },
+  {
+    path: ["screens", "llm-call", "individual"],
+    variants: ["narrow", "wide"],
+  },
 ];
 
 async function findVariantFiles(
