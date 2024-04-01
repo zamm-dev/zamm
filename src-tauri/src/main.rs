@@ -22,8 +22,8 @@ mod setup;
 #[cfg(test)]
 mod test_helpers;
 use commands::{
-    chat, get_api_call, get_api_keys, get_preferences, get_system_info, play_sound,
-    set_api_key, set_preferences,
+    chat, get_api_call, get_api_calls, get_api_keys, get_preferences, get_system_info,
+    play_sound, set_api_key, set_preferences,
 };
 
 pub struct ZammDatabase(Mutex<Option<SqliteConnection>>);
@@ -41,6 +41,7 @@ fn main() {
             get_system_info,
             chat,
             get_api_call,
+            get_api_calls,
         ],
         "../src-svelte/src/lib/bindings.ts",
     )
@@ -61,6 +62,7 @@ fn main() {
             get_system_info,
             chat,
             get_api_call,
+            get_api_calls,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

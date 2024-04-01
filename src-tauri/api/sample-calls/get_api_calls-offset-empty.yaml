@@ -1,0 +1,13 @@
+request:
+  - get_api_calls
+  - >
+    {
+      "offset": 20
+    }
+response:
+  message: >
+    []
+sideEffects:
+  database:
+    startStateDump: many-api-calls
+    endStateDump: many-api-calls
