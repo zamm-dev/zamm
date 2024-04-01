@@ -93,14 +93,14 @@ mod tests {
 
     impl ZammResultReturn<GetApiCallRequest, LlmCall> for GetApiCallTestCase {}
 
-    async fn check_get_api_key_sample(test_fn_name: &'static str, file_prefix: &str) {
+    async fn check_get_api_call_sample(test_fn_name: &'static str, file_prefix: &str) {
         let mut test_case = GetApiCallTestCase { test_fn_name };
         test_case.check_sample_call(file_prefix).await;
     }
 
     #[tokio::test]
     async fn test_get_api_call_start_conversation() {
-        check_get_api_key_sample(
+        check_get_api_call_sample(
             function_name!(),
             "./api/sample-calls/get_api_call-start-conversation.yaml",
         )
@@ -109,7 +109,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_api_call_continued_conversation() {
-        check_get_api_key_sample(
+        check_get_api_call_sample(
             function_name!(),
             "./api/sample-calls/get_api_call-continue-conversation.yaml",
         )
