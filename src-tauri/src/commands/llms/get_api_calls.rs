@@ -10,13 +10,13 @@ use tauri::State;
 
 async fn get_api_calls_helper(
     zamm_db: &ZammDatabase,
-    offset: i64,
+    offset: i32,
 ) -> ZammResult<Vec<LlmCall>> {
     let mut db = zamm_db.0.lock().await;
     let conn = db.as_mut().ok_or(anyhow!("Failed to lock database"))?;
     let result: Vec<LlmCallRow> = llm_calls::table
         .order(llm_calls::timestamp.desc())
-        .offset(offset)
+        .offset(offset as i64)
         .limit(10)
         .load::<LlmCallRow>(conn)?;
     let calls: Vec<LlmCall> = result.into_iter().map(|row| row.into()).collect();
@@ -27,7 +27,7 @@ async fn get_api_calls_helper(
 #[specta]
 pub async fn get_api_calls(
     database: State<'_, ZammDatabase>,
-    offset: i64,
+    offset: i32,
 ) -> ZammResult<Vec<LlmCall>> {
     get_api_calls_helper(&database, offset).await
 }
@@ -45,7 +45,7 @@ mod tests {
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct GetApiCallsRequest {
-        offset: i64,
+        offset: i32,
     }
 
     struct GetApiCallsTestCase {

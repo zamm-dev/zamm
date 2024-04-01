@@ -45,7 +45,7 @@ fn main() {
         ],
         "../src-svelte/src/lib/bindings.ts",
     )
-    .unwrap();
+    .expect("Failed to export Specta bindings");
 
     let mut possible_db = setup::get_db();
     let api_keys = setup_api_keys(&mut possible_db);
