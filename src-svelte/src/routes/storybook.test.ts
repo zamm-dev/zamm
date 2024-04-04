@@ -175,6 +175,10 @@ const components: ComponentTestConfig[] = [
     path: ["screens", "llm-call", "individual"],
     variants: ["narrow", "wide"],
   },
+  {
+    path: ["screens", "llm-call", "list"],
+    variants: ["empty", "small", "full"],
+  },
 ];
 
 async function findVariantFiles(
