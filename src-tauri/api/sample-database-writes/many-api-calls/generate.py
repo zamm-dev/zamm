@@ -35,7 +35,7 @@ sideEffects:
 
 def generate_api_call_yaml(i: int) -> str:
     return f"""- id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a{i:02d}
-  timestamp: 2024-01-16T08:50:{i:02d}.738093890
+  timestamp: 2024-01-16T08:{i:02d}:50.738093890
   llm:
     name: gpt-4-0613
     requested: gpt-4
@@ -61,7 +61,7 @@ def generate_api_call_yaml(i: int) -> str:
 
 
 def generate_api_call_sql(i: int) -> str:
-    return """INSERT INTO llm_calls VALUES('d5ad1e49-f57f-4481-84fb-4d70ba8a7a{0:02d}','2024-01-16 08:50:{0:02d}.738093890','open_ai','gpt-4','gpt-4-0613',1.0,15,3,18,'{"type":"Chat","messages":[{"role":"System","text":"You are ZAMM, a chat program. Respond in first person."},{"role":"Human","text":"This is a mock conversation."}]}','{"role":"AI","text":"Mocking number {0}."}');""".replace(
+    return """INSERT INTO llm_calls VALUES('d5ad1e49-f57f-4481-84fb-4d70ba8a7a{0:02d}','2024-01-16 08:{0:02d}:50.738093890','open_ai','gpt-4','gpt-4-0613',1.0,15,3,18,'{"type":"Chat","messages":[{"role":"System","text":"You are ZAMM, a chat program. Respond in first person."},{"role":"Human","text":"This is a mock conversation."}]}','{"role":"AI","text":"Mocking number {0}."}');""".replace(
         "{0:02d}", str(i).zfill(2)
     ).replace(
         "{0}", str(i)
@@ -71,7 +71,7 @@ def generate_api_call_sql(i: int) -> str:
 def generate_api_call_json(i: int) -> str:
     return """      {
         "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a{0:02d}",
-        "timestamp": "2024-01-16T08:50:{0:02d}.738093890",
+        "timestamp": "2024-01-16T08:{0:02d}:50.738093890",
         "llm": {
           "name": "gpt-4-0613",
           "requested": "gpt-4",
