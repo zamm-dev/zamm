@@ -8,6 +8,1698 @@ response:
   message: >
     [
       {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a59",
+        "timestamp": "2024-01-16T08:50:59.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 59."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a58",
+        "timestamp": "2024-01-16T08:50:58.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 58."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a57",
+        "timestamp": "2024-01-16T08:50:57.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 57."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a56",
+        "timestamp": "2024-01-16T08:50:56.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 56."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a55",
+        "timestamp": "2024-01-16T08:50:55.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 55."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a54",
+        "timestamp": "2024-01-16T08:50:54.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 54."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a53",
+        "timestamp": "2024-01-16T08:50:53.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 53."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a52",
+        "timestamp": "2024-01-16T08:50:52.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 52."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a51",
+        "timestamp": "2024-01-16T08:50:51.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 51."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a50",
+        "timestamp": "2024-01-16T08:50:50.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 50."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a49",
+        "timestamp": "2024-01-16T08:50:49.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 49."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a48",
+        "timestamp": "2024-01-16T08:50:48.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 48."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a47",
+        "timestamp": "2024-01-16T08:50:47.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 47."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a46",
+        "timestamp": "2024-01-16T08:50:46.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 46."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a45",
+        "timestamp": "2024-01-16T08:50:45.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 45."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a44",
+        "timestamp": "2024-01-16T08:50:44.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 44."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a43",
+        "timestamp": "2024-01-16T08:50:43.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 43."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a42",
+        "timestamp": "2024-01-16T08:50:42.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 42."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a41",
+        "timestamp": "2024-01-16T08:50:41.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 41."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a40",
+        "timestamp": "2024-01-16T08:50:40.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 40."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a39",
+        "timestamp": "2024-01-16T08:50:39.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 39."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a38",
+        "timestamp": "2024-01-16T08:50:38.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 38."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a37",
+        "timestamp": "2024-01-16T08:50:37.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 37."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a36",
+        "timestamp": "2024-01-16T08:50:36.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 36."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a35",
+        "timestamp": "2024-01-16T08:50:35.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 35."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a34",
+        "timestamp": "2024-01-16T08:50:34.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 34."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a33",
+        "timestamp": "2024-01-16T08:50:33.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 33."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a32",
+        "timestamp": "2024-01-16T08:50:32.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 32."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a31",
+        "timestamp": "2024-01-16T08:50:31.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 31."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a30",
+        "timestamp": "2024-01-16T08:50:30.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 30."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a29",
+        "timestamp": "2024-01-16T08:50:29.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 29."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a28",
+        "timestamp": "2024-01-16T08:50:28.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 28."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a27",
+        "timestamp": "2024-01-16T08:50:27.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 27."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a26",
+        "timestamp": "2024-01-16T08:50:26.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 26."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a25",
+        "timestamp": "2024-01-16T08:50:25.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 25."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a24",
+        "timestamp": "2024-01-16T08:50:24.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 24."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a23",
+        "timestamp": "2024-01-16T08:50:23.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 23."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a22",
+        "timestamp": "2024-01-16T08:50:22.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 22."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a21",
+        "timestamp": "2024-01-16T08:50:21.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 21."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a20",
+        "timestamp": "2024-01-16T08:50:20.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 20."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a19",
+        "timestamp": "2024-01-16T08:50:19.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 19."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a18",
+        "timestamp": "2024-01-16T08:50:18.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 18."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a17",
+        "timestamp": "2024-01-16T08:50:17.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 17."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a16",
+        "timestamp": "2024-01-16T08:50:16.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 16."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a15",
+        "timestamp": "2024-01-16T08:50:15.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 15."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a14",
+        "timestamp": "2024-01-16T08:50:14.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 14."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a13",
+        "timestamp": "2024-01-16T08:50:13.738093890",
+        "llm": {
+          "name": "gpt-4-0613",
+          "requested": "gpt-4",
+          "provider": "OpenAI"
+        },
+        "request": {
+          "prompt": {
+            "type": "Chat",
+            "messages": [
+              {
+                "role": "System",
+                "text": "You are ZAMM, a chat program. Respond in first person."
+              },
+              {
+                "role": "Human",
+                "text": "This is a mock conversation."
+              }
+            ]
+          },
+          "temperature": 1.0
+        },
+        "response": {
+          "completion": {
+            "role": "AI",
+            "text": "Mocking number 13."
+          }
+        },
+        "tokens": {
+          "prompt": 15,
+          "response": 3,
+          "total": 18
+        }
+      },
+      {
         "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a12",
         "timestamp": "2024-01-16T08:50:12.738093890",
         "llm": {
@@ -107,258 +1799,6 @@ response:
           "completion": {
             "role": "AI",
             "text": "Mocking number 10."
-          }
-        },
-        "tokens": {
-          "prompt": 15,
-          "response": 3,
-          "total": 18
-        }
-      },
-      {
-        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a09",
-        "timestamp": "2024-01-16T08:50:09.738093890",
-        "llm": {
-          "name": "gpt-4-0613",
-          "requested": "gpt-4",
-          "provider": "OpenAI"
-        },
-        "request": {
-          "prompt": {
-            "type": "Chat",
-            "messages": [
-              {
-                "role": "System",
-                "text": "You are ZAMM, a chat program. Respond in first person."
-              },
-              {
-                "role": "Human",
-                "text": "This is a mock conversation."
-              }
-            ]
-          },
-          "temperature": 1.0
-        },
-        "response": {
-          "completion": {
-            "role": "AI",
-            "text": "Mocking number 9."
-          }
-        },
-        "tokens": {
-          "prompt": 15,
-          "response": 3,
-          "total": 18
-        }
-      },
-      {
-        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a08",
-        "timestamp": "2024-01-16T08:50:08.738093890",
-        "llm": {
-          "name": "gpt-4-0613",
-          "requested": "gpt-4",
-          "provider": "OpenAI"
-        },
-        "request": {
-          "prompt": {
-            "type": "Chat",
-            "messages": [
-              {
-                "role": "System",
-                "text": "You are ZAMM, a chat program. Respond in first person."
-              },
-              {
-                "role": "Human",
-                "text": "This is a mock conversation."
-              }
-            ]
-          },
-          "temperature": 1.0
-        },
-        "response": {
-          "completion": {
-            "role": "AI",
-            "text": "Mocking number 8."
-          }
-        },
-        "tokens": {
-          "prompt": 15,
-          "response": 3,
-          "total": 18
-        }
-      },
-      {
-        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a07",
-        "timestamp": "2024-01-16T08:50:07.738093890",
-        "llm": {
-          "name": "gpt-4-0613",
-          "requested": "gpt-4",
-          "provider": "OpenAI"
-        },
-        "request": {
-          "prompt": {
-            "type": "Chat",
-            "messages": [
-              {
-                "role": "System",
-                "text": "You are ZAMM, a chat program. Respond in first person."
-              },
-              {
-                "role": "Human",
-                "text": "This is a mock conversation."
-              }
-            ]
-          },
-          "temperature": 1.0
-        },
-        "response": {
-          "completion": {
-            "role": "AI",
-            "text": "Mocking number 7."
-          }
-        },
-        "tokens": {
-          "prompt": 15,
-          "response": 3,
-          "total": 18
-        }
-      },
-      {
-        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a06",
-        "timestamp": "2024-01-16T08:50:06.738093890",
-        "llm": {
-          "name": "gpt-4-0613",
-          "requested": "gpt-4",
-          "provider": "OpenAI"
-        },
-        "request": {
-          "prompt": {
-            "type": "Chat",
-            "messages": [
-              {
-                "role": "System",
-                "text": "You are ZAMM, a chat program. Respond in first person."
-              },
-              {
-                "role": "Human",
-                "text": "This is a mock conversation."
-              }
-            ]
-          },
-          "temperature": 1.0
-        },
-        "response": {
-          "completion": {
-            "role": "AI",
-            "text": "Mocking number 6."
-          }
-        },
-        "tokens": {
-          "prompt": 15,
-          "response": 3,
-          "total": 18
-        }
-      },
-      {
-        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a05",
-        "timestamp": "2024-01-16T08:50:05.738093890",
-        "llm": {
-          "name": "gpt-4-0613",
-          "requested": "gpt-4",
-          "provider": "OpenAI"
-        },
-        "request": {
-          "prompt": {
-            "type": "Chat",
-            "messages": [
-              {
-                "role": "System",
-                "text": "You are ZAMM, a chat program. Respond in first person."
-              },
-              {
-                "role": "Human",
-                "text": "This is a mock conversation."
-              }
-            ]
-          },
-          "temperature": 1.0
-        },
-        "response": {
-          "completion": {
-            "role": "AI",
-            "text": "Mocking number 5."
-          }
-        },
-        "tokens": {
-          "prompt": 15,
-          "response": 3,
-          "total": 18
-        }
-      },
-      {
-        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a04",
-        "timestamp": "2024-01-16T08:50:04.738093890",
-        "llm": {
-          "name": "gpt-4-0613",
-          "requested": "gpt-4",
-          "provider": "OpenAI"
-        },
-        "request": {
-          "prompt": {
-            "type": "Chat",
-            "messages": [
-              {
-                "role": "System",
-                "text": "You are ZAMM, a chat program. Respond in first person."
-              },
-              {
-                "role": "Human",
-                "text": "This is a mock conversation."
-              }
-            ]
-          },
-          "temperature": 1.0
-        },
-        "response": {
-          "completion": {
-            "role": "AI",
-            "text": "Mocking number 4."
-          }
-        },
-        "tokens": {
-          "prompt": 15,
-          "response": 3,
-          "total": 18
-        }
-      },
-      {
-        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a03",
-        "timestamp": "2024-01-16T08:50:03.738093890",
-        "llm": {
-          "name": "gpt-4-0613",
-          "requested": "gpt-4",
-          "provider": "OpenAI"
-        },
-        "request": {
-          "prompt": {
-            "type": "Chat",
-            "messages": [
-              {
-                "role": "System",
-                "text": "You are ZAMM, a chat program. Respond in first person."
-              },
-              {
-                "role": "Human",
-                "text": "This is a mock conversation."
-              }
-            ]
-          },
-          "temperature": 1.0
-        },
-        "response": {
-          "completion": {
-            "role": "AI",
-            "text": "Mocking number 3."
           }
         },
         "tokens": {

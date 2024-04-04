@@ -119,29 +119,29 @@ def db_index_sequence(n: int) -> Generator[int, None, None]:
 
 
 def generate_yaml(n: int) -> None:
-    with open("api/sample-database-writes/many-api-calls/dump.yaml", "w") as f:
-        f.write(yaml_preamble)
+    with open("api/sample-database-writes/many-api-calls/dump.yaml", "wb") as f:
+        f.write(yaml_preamble.encode())
         for i in db_index_sequence(n):
-            f.write(generate_api_call_yaml(i))
+            f.write(generate_api_call_yaml(i).encode())
 
 
 def generate_sql(n: int) -> None:
-    with open("api/sample-database-writes/many-api-calls/dump.sql", "w") as f:
+    with open("api/sample-database-writes/many-api-calls/dump.sql", "wb") as f:
         api_calls = []
         for i in db_index_sequence(n):
             api_calls.append(generate_api_call_sql(i))
-        f.write("\n".join(api_calls))
+        f.write("\n".join(api_calls).encode())
 
 
 def generate_json(test_name: str, offset: int, start: int, end: int) -> None:
-    with open(f"api/sample-calls/get_api_calls-{test_name}.yaml", "w") as f:
-        f.write(json_preamble(offset))
+    with open(f"api/sample-calls/get_api_calls-{test_name}.yaml", "wb") as f:
+        f.write(json_preamble(offset).encode())
         api_calls = []
         for i in range(start, end, -1):
             api_calls.append(generate_api_call_json(i))
         api_calls_json = ",\n".join(api_calls)
-        f.write(api_calls_json)
-        f.write(json_postamble)
+        f.write(api_calls_json.encode())
+        f.write(json_postamble.encode())
 
 
 def generate_json_sample_files(n: int, page_size: int) -> None:
@@ -160,7 +160,7 @@ def generate_json_sample_files(n: int, page_size: int) -> None:
 
 
 if __name__ == "__main__":
-    n = 13
+    n = 60
     generate_yaml(n)
     generate_sql(n)
-    generate_json_sample_files(n, 10)
+    generate_json_sample_files(n, 50)

@@ -8,6 +8,8 @@ use diesel::RunQueryDsl;
 use specta::specta;
 use tauri::State;
 
+const PAGE_SIZE: i64 = 50;
+
 async fn get_api_calls_helper(
     zamm_db: &ZammDatabase,
     offset: i32,
@@ -17,7 +19,7 @@ async fn get_api_calls_helper(
     let result: Vec<LlmCallRow> = llm_calls::table
         .order(llm_calls::timestamp.desc())
         .offset(offset as i64)
-        .limit(10)
+        .limit(PAGE_SIZE)
         .load::<LlmCallRow>(conn)?;
     let calls: Vec<LlmCall> = result.into_iter().map(|row| row.into()).collect();
     Ok(calls)
