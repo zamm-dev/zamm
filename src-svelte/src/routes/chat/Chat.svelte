@@ -5,6 +5,7 @@
   import TypingIndicator from "./TypingIndicator.svelte";
   import { type ChatMessage, chat } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
+  import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import Form from "./Form.svelte";
 
   export let initialMessage = "";
@@ -83,10 +84,10 @@
             <TypingIndicator />
           {/if}
         {:else}
-          <p class="empty-conversation atomic-reveal">
+          <EmptyPlaceholder>
             This conversation is currently empty.<br />Get it started by typing
             a message below.
-          </p>
+          </EmptyPlaceholder>
         {/if}
       </div>
     </Scrollable>
@@ -105,12 +106,5 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-  }
-
-  .empty-conversation {
-    color: var(--color-faded);
-    font-size: 0.85rem;
-    font-style: italic;
-    text-align: center;
   }
 </style>
