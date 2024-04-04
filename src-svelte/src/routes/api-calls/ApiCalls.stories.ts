@@ -44,5 +44,8 @@ Full.parameters = {
   viewport: {
     defaultViewport: "smallTablet",
   },
-  sampleCallFiles: ["/api/sample-calls/get_api_calls-full.yaml"],
+  sampleCallFiles: [
+    "/api/sample-calls/get_api_calls-full.yaml",
+    "/api/sample-calls/get_api_calls-offset.yaml",
+  ],
 };

@@ -6,7 +6,7 @@
   import { onMount } from "svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
 
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 50;
   const MIN_MESSAGE_WIDTH = "5rem";
 
   let llmCalls: LlmCall[] = [];
@@ -56,6 +56,7 @@
       .then((newCalls) => {
         llmCalls = [...llmCalls, ...newCalls];
         allCallsLoaded = newCalls.length < PAGE_SIZE;
+        llmCallsPromise = undefined;
       })
       .catch((error) => {
         snackbarError(error);
