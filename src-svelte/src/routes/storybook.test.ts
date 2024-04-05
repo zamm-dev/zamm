@@ -297,8 +297,9 @@ describe.concurrent("Storybook visual tests", () => {
           await page.goto(
             `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
           );
-          // wait for fonts to load
+          // hide bottom drawer
           await page.locator("button[title='Hide addons [A]']").click();
+          // wait for fonts to load
           await page.evaluate(() => document.fonts.ready);
           // wait for images to load
           const imagesLocator = page.locator("//img");
