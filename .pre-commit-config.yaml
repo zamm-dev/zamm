@@ -14,23 +14,6 @@ repos:
         args: [--disallow-untyped-defs, --ignore-missing-imports]
         additional_dependencies:
           - types-PyYAML
-  - repo: https://github.com/pre-commit/mirrors-eslint
-    rev: v9.0.0-alpha.2
-    hooks:
-      - id: eslint
-        types: [file]
-        args: [--fix, --max-warnings=0]
-        files: \.(js|ts|svelte)$
-        exclude: src-svelte/src/lib/sample-call.ts
-        additional_dependencies:
-          - eslint
-          - svelte
-          - typescript
-          - eslint-plugin-svelte
-          - eslint-config-prettier
-          - "@typescript-eslint/eslint-plugin"
-          - "@typescript-eslint/parser"
-          - svelte-eslint-parser
   - repo: local
     hooks:
       - id: typecheck-svelte
@@ -47,6 +30,13 @@ repos:
         types: [file]
         files: \.(json|yaml|html|js|ts|svelte)$
         exclude: ^src-tauri/api/sample-database-writes/
+      - id: eslint
+        name: eslint
+        entry: yarn eslint --fix --max-warnings=0
+        language: system
+        types: [file]
+        files: \.(js|ts|svelte)$
+        exclude: src-svelte/src/lib/sample-call.ts
       - id: cargo-fmt
         name: cargo fmt
         entry: cargo fmt --manifest-path src-tauri/Cargo.toml --
