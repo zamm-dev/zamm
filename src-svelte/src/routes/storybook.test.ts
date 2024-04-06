@@ -174,10 +174,12 @@ const components: ComponentTestConfig[] = [
   {
     path: ["screens", "llm-call", "individual"],
     variants: ["narrow", "wide"],
+    screenshotEntireBody: true,
   },
   {
     path: ["screens", "llm-call", "list"],
     variants: ["empty", "small", "full"],
+    screenshotEntireBody: true,
   },
 ];
 
@@ -253,16 +255,39 @@ describe.concurrent("Storybook visual tests", () => {
 
   const takeScreenshot = async (
     frame: Frame,
+    page: Page,
     screenshotEntireBody?: boolean,
   ) => {
-    let locator = screenshotEntireBody
+    let locatorStr = screenshotEntireBody
       ? "body"
       : "#storybook-root > :first-child";
-    const elementClass = await frame.locator(locator).getAttribute("class");
+    const elementClass = await frame.locator(locatorStr).getAttribute("class");
     if (elementClass?.includes("storybook-wrapper")) {
-      locator = ".storybook-wrapper > :first-child > :first-child";
+      locatorStr = ".storybook-wrapper > :first-child > :first-child";
     }
-    return await frame.locator(locator).screenshot();
+
+    const currentViewport = page.viewportSize();
+    if (currentViewport === null) {
+      throw new Error("Viewport is null");
+    }
+
+    const elementLocator = frame.locator(locatorStr);
+    await elementLocator.waitFor({ state: "visible" });
+    const elementHeight = await elementLocator.evaluate(
+      (el) => el.clientHeight,
+    );
+    const storybookHeight = 60; // height taken up by Storybook elements
+    const effectiveViewportHeight = currentViewport.height - storybookHeight;
+    const extraHeightNeeded = elementHeight - effectiveViewportHeight;
+
+    if (extraHeightNeeded > 0) {
+      await page.setViewportSize({
+        width: currentViewport.width,
+        height: currentViewport.height + extraHeightNeeded,
+      });
+    }
+
+    return await elementLocator.screenshot();
   };
 
   const baseMatchOptions: MatchImageSnapshotOptions = {
@@ -325,6 +350,7 @@ describe.concurrent("Storybook visual tests", () => {
 
           const screenshot = await takeScreenshot(
             frame,
+            page,
             config.screenshotEntireBody,
           );
 
@@ -364,6 +390,7 @@ describe.concurrent("Storybook visual tests", () => {
             await new Promise((r) => setTimeout(r, 1000));
             const newScreenshot = await takeScreenshot(
               frame,
+              page,
               config.screenshotEntireBody,
             );
 

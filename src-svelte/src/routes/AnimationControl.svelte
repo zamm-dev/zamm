@@ -11,7 +11,11 @@
     `--standard-duration: ${standardDurationMs};`;
 </script>
 
-<div class="container" class:animations-disabled={!$animationsOn} {style}>
+<div
+  class="container full-height"
+  class:animations-disabled={!$animationsOn}
+  {style}
+>
   <slot />
 </div>
 
