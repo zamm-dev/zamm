@@ -9,18 +9,21 @@
   const PAGE_SIZE = 50;
   const MIN_MESSAGE_WIDTH = "5rem";
 
+  export let dateTimeLocale: string | undefined = undefined;
+  export let timeZone: string | undefined = undefined;
   let llmCalls: LlmCall[] = [];
   let llmCallsPromise: Promise<void> | undefined = undefined;
   let allCallsLoaded = false;
   let messageWidth = MIN_MESSAGE_WIDTH;
 
-  const formatter = new Intl.DateTimeFormat(undefined, {
+  const formatter = new Intl.DateTimeFormat(dateTimeLocale, {
     year: "numeric",
     month: "numeric",
     day: "numeric",
     hour: "numeric",
     minute: "numeric",
     hour12: true,
+    timeZone,
   });
 
   export function formatTimestamp(timestamp: string): string {

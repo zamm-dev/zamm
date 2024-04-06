@@ -32,6 +32,10 @@ Empty.parameters = {
 };
 
 export const Small: StoryObj = Template.bind({}) as any;
+Small.args = {
+  dateTimeLocale: "en-GB",
+  timeZone: "Asia/Phnom_Penh",
+};
 Small.parameters = {
   viewport: {
     defaultViewport: "smallTablet",
@@ -40,6 +44,10 @@ Small.parameters = {
 };
 
 export const Full: StoryObj = Template.bind({}) as any;
+Full.args = {
+  dateTimeLocale: "en-GB",
+  timeZone: "Asia/Phnom_Penh",
+};
 Full.parameters = {
   viewport: {
     defaultViewport: "smallTablet",

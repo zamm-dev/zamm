@@ -17,6 +17,8 @@ const Template = ({ ...args }) => ({
 export const Narrow: StoryObj = Template.bind({}) as any;
 Narrow.args = {
   id: "c13c1e67-2de3-48de-a34c-a32079c03316",
+  dateTimeLocale: "en-GB",
+  timeZone: "Asia/Phnom_Penh",
 };
 Narrow.parameters = {
   viewport: {
@@ -30,6 +32,8 @@ Narrow.parameters = {
 export const Wide: StoryObj = Template.bind({}) as any;
 Wide.args = {
   id: "c13c1e67-2de3-48de-a34c-a32079c03316",
+  dateTimeLocale: "en-GB",
+  timeZone: "Asia/Phnom_Penh",
 };
 Wide.parameters = {
   viewport: {

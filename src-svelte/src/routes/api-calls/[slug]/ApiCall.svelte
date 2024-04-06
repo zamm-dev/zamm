@@ -5,7 +5,11 @@
   import Loading from "$lib/Loading.svelte";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
 
-  const formatter = new Intl.DateTimeFormat("en-US", {
+  export let id: string;
+  export let dateTimeLocale: string | undefined = undefined;
+  export let timeZone: string | undefined = undefined;
+
+  const formatter = new Intl.DateTimeFormat(dateTimeLocale, {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -13,9 +17,9 @@
     minute: "numeric",
     second: "numeric",
     hour12: true,
+    timeZone,
   });
 
-  export let id: string;
   let humanTime: string | undefined = undefined;
   let temperature: string | undefined = undefined;
   let apiCallPromise = getApiCall(id)
