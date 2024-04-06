@@ -169,6 +169,12 @@ body {
   --cut-bottom-right: 8px;
 }
 
+.full-height {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 a, .link-like {
   color: #3333FF;
   text-decoration: none;

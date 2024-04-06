@@ -69,7 +69,7 @@
 </script>
 
 <InfoBox title="Chat" fullHeight>
-  <div class="chat-container composite-reveal">
+  <div class="chat-container composite-reveal full-height">
     <Scrollable
       initialPosition={showMostRecentMessage ? "bottom" : "top"}
       on:resize={onScrollableResized}

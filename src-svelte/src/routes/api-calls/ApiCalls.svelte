@@ -74,12 +74,12 @@
 </script>
 
 <InfoBox title="LLM API Calls" fullHeight>
-  <div class="container" style={`--message-width: ${messageWidth}`}>
+  <div class="container full-height" style={`--message-width: ${messageWidth}`}>
     <div class="message header">
       <div class="text-container">Message</div>
       <div class="time">Time</div>
     </div>
-    <div class="scrollable-container">
+    <div class="scrollable-container full-height">
       <Scrollable on:bottomReached={loadApiCalls}>
         {#if llmCalls.length > 0}
           {#each llmCalls as call (call.id)}
@@ -110,16 +110,10 @@
 
 <style>
   .container {
-    display: flex;
-    flex-direction: column;
     gap: var(--internal-spacing);
-    height: 100%;
   }
 
   .scrollable-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
     --side-padding: 0.8rem;
     margin: 0 calc(-1 * var(--side-padding));
     width: calc(100% + 2 * var(--side-padding));
@@ -167,7 +161,7 @@
   }
 
   .message .time {
-    width: 12rem;
+    width: 12.5rem;
     text-align: right;
   }
 </style>
