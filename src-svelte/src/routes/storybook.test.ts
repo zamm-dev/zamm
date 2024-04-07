@@ -40,6 +40,7 @@ interface VariantConfig {
   name: string;
   prefix?: string;
   assertDynamic?: boolean;
+  resizeWindow?: boolean;
   additionalAction?: (frame: Frame, page: Page) => Promise<void>;
 }
 
@@ -143,6 +144,7 @@ const components: ComponentTestConfig[] = [
       "typing-indicator-static",
       {
         name: "full-message-width",
+        resizeWindow: true,
         additionalAction: async (frame: Frame, page: Page) => {
           await new Promise((r) => setTimeout(r, 1000));
           // need to do a manual scroll because Storybook resize messes things up on CI
@@ -173,7 +175,13 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["screens", "llm-call", "individual"],
-    variants: ["narrow", "wide"],
+    variants: [
+      {
+        name: "narrow",
+        resizeWindow: true,
+      },
+      "wide",
+    ],
     screenshotEntireBody: true,
   },
   {
@@ -256,6 +264,7 @@ describe.concurrent("Storybook visual tests", () => {
   const takeScreenshot = async (
     frame: Frame,
     page: Page,
+    resizeWindow: boolean,
     screenshotEntireBody?: boolean,
   ) => {
     let locatorStr = screenshotEntireBody
@@ -265,26 +274,28 @@ describe.concurrent("Storybook visual tests", () => {
     if (elementClass?.includes("storybook-wrapper")) {
       locatorStr = ".storybook-wrapper > :first-child > :first-child";
     }
-
-    const currentViewport = page.viewportSize();
-    if (currentViewport === null) {
-      throw new Error("Viewport is null");
-    }
-
     const elementLocator = frame.locator(locatorStr);
     await elementLocator.waitFor({ state: "visible" });
-    const elementHeight = await elementLocator.evaluate(
-      (el) => el.clientHeight,
-    );
-    const storybookHeight = 60; // height taken up by Storybook elements
-    const effectiveViewportHeight = currentViewport.height - storybookHeight;
-    const extraHeightNeeded = elementHeight - effectiveViewportHeight;
 
-    if (extraHeightNeeded > 0) {
-      await page.setViewportSize({
-        width: currentViewport.width,
-        height: currentViewport.height + extraHeightNeeded,
-      });
+    if (resizeWindow) {
+      const currentViewport = page.viewportSize();
+      if (currentViewport === null) {
+        throw new Error("Viewport is null");
+      }
+
+      const elementHeight = await elementLocator.evaluate(
+        (el) => el.clientHeight,
+      );
+      const storybookHeight = 60; // height taken up by Storybook elements
+      const effectiveViewportHeight = currentViewport.height - storybookHeight;
+      const extraHeightNeeded = elementHeight - effectiveViewportHeight;
+
+      if (extraHeightNeeded > 0) {
+        await page.setViewportSize({
+          width: currentViewport.width,
+          height: currentViewport.height + extraHeightNeeded,
+        });
+      }
     }
 
     return await elementLocator.screenshot();
@@ -351,6 +362,7 @@ describe.concurrent("Storybook visual tests", () => {
           const screenshot = await takeScreenshot(
             frame,
             page,
+            variantConfig.resizeWindow ?? false,
             config.screenshotEntireBody,
           );
 
@@ -391,6 +403,7 @@ describe.concurrent("Storybook visual tests", () => {
             const newScreenshot = await takeScreenshot(
               frame,
               page,
+              variantConfig.resizeWindow ?? false,
               config.screenshotEntireBody,
             );
 
