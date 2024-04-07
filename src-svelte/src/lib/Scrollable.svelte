@@ -13,6 +13,7 @@
   let container: HTMLDivElement | null = null;
   let scrollable: FixedScrollable | null = null;
   const dispatchResizeEvent = createEventDispatcher();
+  const dispatchBottomReachedEvent = createEventDispatcher();
 
   export function resizeScrollable() {
     if (!scrollable) {
@@ -35,6 +36,10 @@
     scrollable?.scrollToBottom();
   }
 
+  function bottomReached() {
+    dispatchBottomReachedEvent("bottomReached");
+  }
+
   onMount(() => {
     resizeScrollable();
     const windowResizeCallback = () => resizeScrollable();
@@ -51,6 +56,7 @@
     {initialPosition}
     maxHeight={scrollableHeight}
     bind:this={scrollable}
+    on:bottomReached={bottomReached}
     {...$$restProps}
   >
     <slot />

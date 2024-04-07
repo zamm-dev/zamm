@@ -9,8 +9,8 @@
   let scrollDelay = 4.4 * $standardDuration + 1_000;
 </script>
 
-<div class="container">
-  <div class="credits-container">
+<div class="container full-height">
+  <div class="credits-container full-height">
     <InfoBox title="Credits" fullHeight>
       <Scrollable autoscroll {scrollDelay}>
         <div class="subinfo-container">
@@ -190,14 +190,7 @@
 
 <style>
   .container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
     gap: 1.5rem;
-  }
-
-  .credits-container {
-    flex: 1;
   }
 
   .credits-container :global(.info-content),

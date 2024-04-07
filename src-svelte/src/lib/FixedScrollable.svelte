@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { createEventDispatcher } from "svelte";
 
   export let maxHeight: string;
   export let initialPosition: "top" | "bottom" = "top";
@@ -11,6 +12,7 @@
   let bottomIndicator: HTMLDivElement;
   let topShadow: HTMLDivElement;
   let bottomShadow: HTMLDivElement;
+  const dispatchBottomReachedEvent = createEventDispatcher();
 
   export function getDimensions() {
     if (scrollContents) {
@@ -49,7 +51,14 @@
     );
     topScrollObserver.observe(topIndicator);
     let bottomScrollObserver = new IntersectionObserver(
-      intersectionCallback(bottomShadow),
+      (entries: IntersectionObserverEntry[]) => {
+        intersectionCallback(bottomShadow)(entries);
+
+        let indicator = entries[0];
+        if (indicator.isIntersecting) {
+          dispatchBottomReachedEvent("bottomReached");
+        }
+      },
     );
     bottomScrollObserver.observe(bottomIndicator);
 

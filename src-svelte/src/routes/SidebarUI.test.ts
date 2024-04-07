@@ -12,6 +12,30 @@ const tauriInvokeMock = vi.fn();
 vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
 
 describe("Sidebar", () => {
+  test("requires exact match for homepage", () => {
+    render(SidebarUI, {
+      currentRoute: "/",
+      dummyLinks: true,
+    });
+    const homeLink = screen.getByTitle("Dashboard");
+    const apiCallsLink = screen.getByTitle("API Calls");
+    expect(homeLink).toHaveAttribute("aria-current", "page");
+    expect(apiCallsLink).not.toHaveAttribute("aria-current", "page");
+  });
+
+  test("highlights right icon for sub-paths", () => {
+    render(SidebarUI, {
+      currentRoute: "/api-calls/1234",
+      dummyLinks: true,
+    });
+    const homeLink = screen.getByTitle("Dashboard");
+    const apiCallsLink = screen.getByTitle("API Calls");
+    expect(homeLink).not.toHaveAttribute("aria-current", "page");
+    expect(apiCallsLink).toHaveAttribute("aria-current", "page");
+  });
+});
+
+describe("Sidebar interactions", () => {
   let tauriInvokeMock: Mock;
   let playback: TauriInvokePlayback;
   let homeLink: HTMLElement;

@@ -40,6 +40,7 @@ interface VariantConfig {
   name: string;
   prefix?: string;
   assertDynamic?: boolean;
+  resizeWindow?: boolean;
   additionalAction?: (frame: Frame, page: Page) => Promise<void>;
 }
 
@@ -143,6 +144,7 @@ const components: ComponentTestConfig[] = [
       "typing-indicator-static",
       {
         name: "full-message-width",
+        resizeWindow: true,
         additionalAction: async (frame: Frame, page: Page) => {
           await new Promise((r) => setTimeout(r, 1000));
           // need to do a manual scroll because Storybook resize messes things up on CI
@@ -170,6 +172,22 @@ const components: ComponentTestConfig[] = [
       "typodermic-font",
       "dependency-with-icon",
     ],
+  },
+  {
+    path: ["screens", "llm-call", "individual"],
+    variants: [
+      {
+        name: "narrow",
+        resizeWindow: true,
+      },
+      "wide",
+    ],
+    screenshotEntireBody: true,
+  },
+  {
+    path: ["screens", "llm-call", "list"],
+    variants: ["empty", "small", "full"],
+    screenshotEntireBody: true,
   },
 ];
 
@@ -245,16 +263,42 @@ describe.concurrent("Storybook visual tests", () => {
 
   const takeScreenshot = async (
     frame: Frame,
+    page: Page,
+    resizeWindow: boolean,
     screenshotEntireBody?: boolean,
   ) => {
-    let locator = screenshotEntireBody
+    let locatorStr = screenshotEntireBody
       ? "body"
       : "#storybook-root > :first-child";
-    const elementClass = await frame.locator(locator).getAttribute("class");
+    const elementClass = await frame.locator(locatorStr).getAttribute("class");
     if (elementClass?.includes("storybook-wrapper")) {
-      locator = ".storybook-wrapper > :first-child > :first-child";
+      locatorStr = ".storybook-wrapper > :first-child > :first-child";
     }
-    return await frame.locator(locator).screenshot();
+    const elementLocator = frame.locator(locatorStr);
+    await elementLocator.waitFor({ state: "visible" });
+
+    if (resizeWindow) {
+      const currentViewport = page.viewportSize();
+      if (currentViewport === null) {
+        throw new Error("Viewport is null");
+      }
+
+      const elementHeight = await elementLocator.evaluate(
+        (el) => el.clientHeight,
+      );
+      const storybookHeight = 60; // height taken up by Storybook elements
+      const effectiveViewportHeight = currentViewport.height - storybookHeight;
+      const extraHeightNeeded = elementHeight - effectiveViewportHeight;
+
+      if (extraHeightNeeded > 0) {
+        await page.setViewportSize({
+          width: currentViewport.width,
+          height: currentViewport.height + extraHeightNeeded,
+        });
+      }
+    }
+
+    return await elementLocator.screenshot();
   };
 
   const baseMatchOptions: MatchImageSnapshotOptions = {
@@ -289,8 +333,9 @@ describe.concurrent("Storybook visual tests", () => {
           await page.goto(
             `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
           );
-          // wait for fonts to load
+          // hide bottom drawer
           await page.locator("button[title='Hide addons [A]']").click();
+          // wait for fonts to load
           await page.evaluate(() => document.fonts.ready);
           // wait for images to load
           const imagesLocator = page.locator("//img");
@@ -316,6 +361,8 @@ describe.concurrent("Storybook visual tests", () => {
 
           const screenshot = await takeScreenshot(
             frame,
+            page,
+            variantConfig.resizeWindow ?? false,
             config.screenshotEntireBody,
           );
 
@@ -355,6 +402,8 @@ describe.concurrent("Storybook visual tests", () => {
             await new Promise((r) => setTimeout(r, 1000));
             const newScreenshot = await takeScreenshot(
               frame,
+              page,
+              variantConfig.resizeWindow ?? false,
               config.screenshotEntireBody,
             );
 

@@ -27,6 +27,6 @@
   }
 
   .container:hover {
-    background: hsla(60, 100%, 50%, 0.2);
+    background: var(--color-hover);
   }
 </style>

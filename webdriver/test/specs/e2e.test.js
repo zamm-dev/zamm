@@ -36,6 +36,17 @@ describe("App", function () {
     ).toBeLessThanOrEqual(maxMismatch);
   });
 
+  it("should allow navigation to the API calls page", async function () {
+    this.retries(2);
+    await findAndClick('a[title="API Calls"]');
+    await findAndClick('a[title="Dashboard"]');
+    await findAndClick('a[title="API Calls"]');
+    await browser.pause(2500); // for page to finish rendering
+    expect(
+      await browser.checkFullPageScreen("api-calls", {}),
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
+
   it("should allow navigation to the settings page", async function () {
     this.retries(2);
     await findAndClick('a[title="Settings"]');

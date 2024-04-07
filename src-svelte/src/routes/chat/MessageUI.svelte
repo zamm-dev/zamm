@@ -187,7 +187,7 @@
   }
 
   .message.human {
-    --message-color: #e5ffe5;
+    --message-color: var(--color-human);
   }
 
   .message.human .text-container {
@@ -201,7 +201,7 @@
   }
 
   .message.ai {
-    --message-color: #e5e5ff;
+    --message-color: var(--color-ai);
   }
 
   .message.ai .text-container {

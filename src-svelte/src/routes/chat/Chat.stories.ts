@@ -2,6 +2,7 @@ import ChatComponent from "./Chat.svelte";
 import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
 import MockPageTransitions from "$lib/__mocks__/MockPageTransitions.svelte";
+import TauriInvokeDecorator from "$lib/__mocks__/invoke";
 import type { StoryFn, StoryObj } from "@storybook/svelte";
 import type { ChatMessage } from "$lib/bindings";
 
@@ -11,6 +12,7 @@ export default {
   argTypes: {},
   decorators: [
     SvelteStoresDecorator,
+    TauriInvokeDecorator,
     (story: StoryFn) => {
       return {
         Component: MockFullPageLayout,

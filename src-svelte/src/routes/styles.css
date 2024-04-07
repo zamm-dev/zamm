@@ -55,6 +55,10 @@
   --color-foreground: #FFF;
   --color-background: #F4F4F4;
   --color-offwhite: #FAF9F6;
+  --color-hover: hsla(60, 100%, 50%, 0.2);
+  --color-system: #FFF7CC;
+  --color-human: #E5FFE5;
+  --color-ai: #E5E5FF;
   --sidebar-width: 3.75rem;
   --shadow-offset: 4px;
   --shadow-blur: 8px;
@@ -163,6 +167,12 @@ body {
   --diagonal-border: 2.5px;
   --cut-top-left: 8px;
   --cut-bottom-right: 8px;
+}
+
+.full-height {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 a, .link-like {

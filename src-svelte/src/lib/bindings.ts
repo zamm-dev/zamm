@@ -38,6 +38,14 @@ export function chat(provider: Service, llm: string, temperature: number | null,
     return invoke()<LlmCall>("chat", { provider,llm,temperature,prompt })
 }
 
+export function getApiCall(id: string) {
+    return invoke()<LlmCall>("get_api_call", { id })
+}
+
+export function getApiCalls(offset: number) {
+    return invoke()<LlmCall[]>("get_api_calls", { offset })
+}
+
 export type Request = { prompt: Prompt; temperature: number }
 export type ChatMessage = { role: "System"; text: string } | { role: "Human"; text: string } | { role: "AI"; text: string }
 export type Llm = { name: string; requested: string; provider: Service }

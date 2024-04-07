@@ -91,7 +91,7 @@
 {#key currentRoute}
   {#if ready}
     <div
-      class="transition-container"
+      class="transition-container full-height"
       in:fly|global={transitions.in}
       out:fly|global={transitions.out}
     >
@@ -103,7 +103,7 @@
 <style>
   .transition-container {
     position: absolute;
-    height: 100%;
+    min-height: 100vh;
     width: 100%;
     box-sizing: border-box;
     padding: 1rem;

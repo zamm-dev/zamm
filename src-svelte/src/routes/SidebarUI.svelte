@@ -3,6 +3,7 @@
   import IconChat from "~icons/ph/chat-dots-fill";
   import IconDashboard from "~icons/material-symbols/monitor-heart";
   import IconHeartFill from "~icons/ph/heart-fill";
+  import IconDatabase from "~icons/fa6-solid/database";
   import { playSoundEffect } from "$lib/sound";
   import { animationSpeed } from "$lib/preferences";
 
@@ -16,6 +17,11 @@
       name: "Chat",
       path: "/chat",
       icon: IconChat,
+    },
+    {
+      name: "API Calls",
+      path: "/api-calls",
+      icon: IconDatabase,
     },
     {
       name: "Settings",
@@ -33,8 +39,15 @@
   export let dummyLinks = false;
   let indicatorPosition: string;
 
+  function routeMatches(sidebarRoute: string, pageRoute: string) {
+    if (sidebarRoute === "/") {
+      return pageRoute === sidebarRoute;
+    }
+    return pageRoute.includes(sidebarRoute);
+  }
+
   function setIndicatorPosition(newRoute: string) {
-    const routeIndex = routes.findIndex((r) => r.path === newRoute);
+    const routeIndex = routes.findIndex((r) => routeMatches(r.path, newRoute));
     indicatorPosition = `calc(${routeIndex} * var(--sidebar-icon-size))`;
     return indicatorPosition;
   }
@@ -96,9 +109,11 @@
 
   <nav>
     <div class="indicator" style="--top: {indicatorPosition};"></div>
-    {#each routes as route}
+    {#each routes as route (route.path)}
       <a
-        aria-current={route.path === currentRoute ? "page" : undefined}
+        aria-current={routeMatches(route.path, currentRoute)
+          ? "page"
+          : undefined}
         class:icon={true}
         class={route.name.toLowerCase()}
         id="nav-{route.name.toLowerCase()}"

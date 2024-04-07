@@ -9,8 +9,11 @@ clippy_process = subprocess.Popen(
 )
 clippy_output = clippy_process.communicate()[0].decode()
 
-separator_line = clippy_output.split(SEPARATOR)[1]
-zamm_output = "\n".join(separator_line.split("\n")[1:])
+if SEPARATOR not in clippy_output:
+    zamm_output = clippy_output
+else:
+    separator_line = clippy_output.split(SEPARATOR)[1]
+    zamm_output = "\n".join(separator_line.split("\n")[1:])
 
 print(zamm_output)
 

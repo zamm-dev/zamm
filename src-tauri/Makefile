@@ -16,5 +16,8 @@ test: tests
 tests:
 	cargo test -- --include-ignored --test-threads=1
 
+test-files:
+	python3 api/sample-database-writes/many-api-calls/generate.py
+
 clean:
 	cargo clean

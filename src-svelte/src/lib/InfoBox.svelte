@@ -532,24 +532,16 @@
   .container {
     --cut: 1rem;
     position: relative;
-    flex: 1;
     padding: 0;
   }
 
   .container.full-height,
   .container.full-height .border-container,
-  .container.full-height .info-box {
-    height: 100%;
-    box-sizing: border-box;
-  }
-
-  .container.full-height .info-box {
-    display: flex;
-    flex-direction: column;
-  }
-
+  .container.full-height .info-box,
   .container.full-height .info-content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   .border-box {

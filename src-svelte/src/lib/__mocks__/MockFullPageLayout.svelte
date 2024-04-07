@@ -3,7 +3,7 @@
   import Snackbar from "$lib/snackbar/Snackbar.svelte";
 </script>
 
-<div class="storybook-wrapper">
+<div class="storybook-wrapper full-height">
   <AnimationControl>
     <slot />
     <Snackbar />
