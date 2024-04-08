@@ -17,13 +17,15 @@
           <SubInfoBox
             subheading="Zen and the Automation of Metaprogramming for the Masses"
           >
-            <Creditor
-              name="Amos Jun-yeung Ng"
-              url="https://github.com/amosjyng/"
-            />
+            <Grid>
+              <Creditor
+                isPerson
+                name="Amos Jun-yeung Ng"
+                logo="amos-ng.jpg"
+                url="https://github.com/amosjyng/"
+              />
+            </Grid>
           </SubInfoBox>
-        </div>
-        <div class="subinfo-container">
           <SubInfoBox subheading="Frameworks">
             <Grid>
               <Creditor
@@ -170,6 +172,16 @@
                 name="Ionicons"
                 url="https://github.com/ionic-team/ionicons"
               />
+              <Creditor
+                name="Font Awesome"
+                logo="font-awesome.svg"
+                url="https://fontawesome.com/"
+              />
+              <Creditor
+                name="Vaadin"
+                logo="vaadin.svg"
+                url="https://vaadin.com/"
+              />
             </Grid>
           </SubInfoBox>
         </div>
@@ -198,9 +210,29 @@
     height: 100%;
   }
 
-  .credits-container :global(section:last-child .creditor:last-child) {
-    margin-bottom: 0;
-    padding-bottom: 0.5rem;
+  .credits-container :global(h3) {
+    margin-bottom: 0.75rem;
+  }
+
+  .credits-container
+    :global(.sub-info-box:last-child .creditor:nth-last-child(1)) {
+    padding-bottom: 0;
+  }
+
+  /* this takes sidebar width into account */
+  @media (min-width: 46rem) {
+    .credits-container
+      :global(.sub-info-box:last-child .creditor:nth-last-child(2)) {
+      padding-bottom: 0;
+    }
+  }
+
+  /* this takes sidebar width into account */
+  @media (min-width: 64rem) {
+    .credits-container
+      :global(.sub-info-box:last-child .creditor:nth-last-child(3)) {
+      padding-bottom: 0;
+    }
   }
 
   .subinfo-container {

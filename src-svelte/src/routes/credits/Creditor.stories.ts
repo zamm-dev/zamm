@@ -22,6 +22,7 @@ export const GithubContributor: StoryObj = Template.bind({}) as any;
 GithubContributor.args = {
   name: "Amos Jun-yeung Ng",
   url: "https://github.com/amosjyng/",
+  isPerson: true,
 };
 
 export const TypodermicFont: StoryObj = Template.bind({}) as any;

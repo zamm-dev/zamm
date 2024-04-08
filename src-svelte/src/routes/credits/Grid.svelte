@@ -11,9 +11,25 @@
   }
 
   /* this takes sidebar width into account */
-  @media (min-width: 40rem) {
+  @media (min-width: 46rem) {
     .credits-grid {
       grid-template-columns: 1fr 1fr;
+      justify-items: end;
+    }
+  }
+
+  /* this takes sidebar width into account */
+  @media (min-width: 55rem) {
+    .credits-grid {
+      justify-items: center;
+    }
+  }
+
+  /* this takes sidebar width into account */
+  @media (min-width: 64rem) {
+    .credits-grid {
+      grid-template-columns: 1fr 1fr 1fr;
+      justify-items: center;
     }
   }
 </style>
