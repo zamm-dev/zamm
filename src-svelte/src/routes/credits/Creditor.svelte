@@ -39,9 +39,12 @@
 </script>
 
 <script lang="ts">
+  import IconPackage from "~icons/vaadin/package";
+  import IconPerson from "~icons/ion/person";
   import GitHubIcon from "./GitHubIcon.svelte";
   import TypodermicIcon from "./TypodermicIcon.svelte";
 
+  export let isPerson = false;
   export let logo: string | undefined = undefined;
   export let name: string;
   export let url: string;
@@ -54,7 +57,15 @@
 
 <div class="creditor atomic-reveal">
   {#if logo}
-    <img src={logoLink} alt={name} />
+    <img class:person={isPerson} src={logoLink} alt={name} />
+  {:else if isPerson}
+    <div class="logo-placeholder">
+      <IconPerson />
+    </div>
+  {:else}
+    <div class="logo-placeholder">
+      <IconPackage />
+    </div>
   {/if}
   <div class="details">
     <h4>{name}</h4>
@@ -73,20 +84,33 @@
 
 <style>
   .creditor {
-    padding: 0.5rem 0;
+    padding: 0.5rem 0 0.5rem 1.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    width: 14rem;
   }
 
-  @media (min-width: 40rem) {
+  @media (min-width: 46rem) {
     .creditor {
-      padding: 1rem;
+      padding: 0.75rem;
     }
   }
 
   img {
     width: 2rem;
+  }
+
+  img.person {
+    width: 2.5rem;
+    border-radius: var(--corner-roundness);
+  }
+
+  .logo-placeholder,
+  .logo-placeholder :global(svg) {
+    width: 2rem;
+    height: 2rem;
+    color: var(--color-faded);
   }
 
   h4 {
