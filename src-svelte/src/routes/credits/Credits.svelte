@@ -210,6 +210,10 @@
     height: 100%;
   }
 
+  .credits-container :global(h3) {
+    margin-bottom: 0.75rem;
+  }
+
   .credits-container
     :global(.sub-info-box:last-child .creditor:nth-last-child(1)) {
     padding-bottom: 0;
