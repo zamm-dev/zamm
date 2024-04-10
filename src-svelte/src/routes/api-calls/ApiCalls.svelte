@@ -8,6 +8,7 @@
 
   const PAGE_SIZE = 50;
   const MIN_MESSAGE_WIDTH = "5rem";
+  const MIN_TIME_WIDTH = "12.5rem";
 
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
@@ -15,6 +16,8 @@
   let llmCallsPromise: Promise<void> | undefined = undefined;
   let allCallsLoaded = false;
   let messageWidth = MIN_MESSAGE_WIDTH;
+  let timeWidth = MIN_TIME_WIDTH;
+  let headerMessageWidth = MIN_MESSAGE_WIDTH;
 
   const formatter = new Intl.DateTimeFormat(dateTimeLocale, {
     year: "numeric",
@@ -32,18 +35,27 @@
     return formatter.format(date);
   }
 
+  function getWidths(selector: string) {
+    const elements = document.querySelectorAll(selector);
+    return Array.from(elements)
+      .map((el) => el.getBoundingClientRect().width)
+      .filter((width) => width > 0);
+  }
+
   function resizeMessageWidth() {
-    const textContainer = document.querySelector(".text-container");
-    if (!textContainer) {
-      console.warn("Could not find text container for resize");
-      return;
-    }
-
     messageWidth = MIN_MESSAGE_WIDTH;
+    // time width doesn't need a reset because it never decreases
 
-    requestAnimationFrame(() => {
-      messageWidth = `${textContainer.clientWidth}px`;
-    });
+    setTimeout(() => {
+      const textWidths = getWidths(".text-container");
+      const timeWidths = getWidths(".time");
+      const minTextWidth = Math.floor(Math.min(...textWidths));
+      messageWidth = `${minTextWidth}px`;
+      const maxTimeWidth = Math.ceil(Math.max(...timeWidths));
+      timeWidth = `${maxTimeWidth}px`;
+
+      headerMessageWidth = messageWidth;
+    }, 10);
   }
 
   function loadApiCalls() {
@@ -60,6 +72,8 @@
         llmCalls = [...llmCalls, ...newCalls];
         allCallsLoaded = newCalls.length < PAGE_SIZE;
         llmCallsPromise = undefined;
+
+        requestAnimationFrame(resizeMessageWidth);
       })
       .catch((error) => {
         snackbarError(error);
@@ -74,12 +88,19 @@
       window.removeEventListener("resize", resizeMessageWidth);
     };
   });
+
+  $: minimumWidths =
+    `--message-width: ${messageWidth}; ` +
+    `--header-message-width: ${headerMessageWidth}; ` +
+    `--time-width: ${timeWidth}`;
 </script>
 
 <InfoBox title="LLM API Calls" fullHeight>
-  <div class="container full-height" style={`--message-width: ${messageWidth}`}>
+  <div class="container full-height" style={minimumWidths}>
     <div class="message header">
-      <div class="text-container">Message</div>
+      <div class="text-container">
+        <div class="text">Message</div>
+      </div>
       <div class="time">Time</div>
     </div>
     <div class="scrollable-container full-height">
@@ -113,7 +134,7 @@
 
 <style>
   .container {
-    gap: var(--internal-spacing);
+    gap: 0.25rem;
   }
 
   .scrollable-container {
@@ -150,6 +171,8 @@
     padding: 0.2rem var(--side-padding);
     border-radius: var(--corner-roundness);
     transition: background 0.5s;
+    height: 1.62rem;
+    box-sizing: border-box;
   }
 
   .message.instance:hover {
@@ -163,8 +186,13 @@
     text-overflow: ellipsis;
   }
 
+  .message.header .text-container .text {
+    max-width: var(--header-message-width);
+  }
+
   .message .time {
-    width: 12.5rem;
+    min-width: var(--time-width);
+    box-sizing: border-box;
     text-align: right;
   }
 </style>
