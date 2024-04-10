@@ -1,5 +1,6 @@
 @import "@fontsource/jetbrains-mono";
 @import "@fontsource/nokora";
+@import "@fontsource/kdam-thmor-pro";
 
 @font-face {
   font-family: 'Nasalization';
@@ -46,7 +47,7 @@
 :root {
   --font-body: "Good Timing", "Nokora", sans-serif;
   --font-header: "Nasalization", sans-serif;
-  --font-mono: "Jetbrains Mono", monospace;
+  --font-mono: "Jetbrains Mono", "Kdam Thmor Pro", monospace;
   --color-text: rgba(0, 0, 0, 1);
   --color-header: rgba(255, 0, 0, 1);
   --color-faded: rgba(0, 0, 0, 0.5);

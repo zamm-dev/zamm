@@ -63,6 +63,7 @@
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.0.11",
+    "@fontsource/kdam-thmor-pro": "^5.0.19",
     "@fontsource/nokora": "^5.0.19",
     "@neodrag/svelte": "file:../forks/neodrag/packages/svelte",
     "autosize": "^6.0.1",

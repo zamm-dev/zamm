@@ -43,3 +43,16 @@ Wide.parameters = {
     "/api/sample-calls/get_api_call-continue-conversation.yaml",
   ],
 };
+
+export const Khmer: StoryObj = Template.bind({}) as any;
+Khmer.args = {
+  id: "92665f19-be8c-48f2-b483-07f1d9b97370",
+  dateTimeLocale: "en-GB",
+  timeZone: "Asia/Phnom_Penh",
+};
+Khmer.parameters = {
+  viewport: {
+    defaultViewport: "smallTablet",
+  },
+  sampleCallFiles: ["/api/sample-calls/get_api_call-khmer.yaml"],
+};

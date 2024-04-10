@@ -182,6 +182,7 @@ const components: ComponentTestConfig[] = [
         resizeWindow: true,
       },
       "wide",
+      "khmer",
     ],
     screenshotEntireBody: true,
   },
