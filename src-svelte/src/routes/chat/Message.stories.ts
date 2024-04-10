@@ -115,3 +115,16 @@ HighlightedAiCode.parameters = {
     defaultViewport: "tablet",
   },
 };
+
+export const MixedKhmerAndEnglish: StoryObj = Template.bind({}) as any;
+MixedKhmerAndEnglish.args = {
+  message: {
+    role: "Human",
+    text: "Hello, សួស្ដី, what languages do you speak? ចេះខ្មែរអត់?",
+  },
+};
+MixedKhmerAndEnglish.parameters = {
+  viewport: {
+    defaultViewport: "tablet",
+  },
+};

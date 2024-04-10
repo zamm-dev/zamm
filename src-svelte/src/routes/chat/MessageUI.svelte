@@ -1,3 +1,29 @@
+<script lang="ts" context="module">
+  export function styleKhmer(text: string) {
+    var newText = "";
+    var isKhmer = false;
+    for (let i = 0; i < text.length; i++) {
+      var ch = text.charAt(i);
+      if (ch >= "\u1780" && ch <= "\u17FF") {
+        if (!isKhmer) {
+          newText += '<span class="khmer">';
+        }
+        isKhmer = true;
+      } else {
+        if (isKhmer) {
+          newText += "</span>";
+        }
+        isKhmer = false;
+      }
+      newText += ch;
+    }
+    if (isKhmer) {
+      newText += "</span>";
+    }
+    return newText;
+  }
+</script>
+
 <script lang="ts">
   import { onMount } from "svelte";
 
@@ -90,6 +116,10 @@
   }
 
   onMount(() => {
+    for (const element of textElement?.querySelectorAll("p") ?? []) {
+      element.innerHTML = styleKhmer(element.innerHTML);
+    }
+
     return () => {
       if (finalResizeTimeoutId) {
         clearTimeout(finalResizeTimeoutId);
@@ -149,6 +179,10 @@
     box-sizing: border-box;
     background-color: var(--message-color);
     text-align: left;
+  }
+
+  .message .text-container :global(p span.khmer) {
+    font-size: 1.2rem;
   }
 
   .message:first-child .text-container {

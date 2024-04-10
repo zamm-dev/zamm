@@ -29,7 +29,7 @@ repos:
         language: system
         types: [file]
         files: \.(json|yaml|html|js|ts|svelte)$
-        exclude: ^src-tauri/api/sample-database-writes/
+        exclude: ^(src-tauri/api/sample-database-writes/|src-svelte/src/lib/sample-call.ts$)
       - id: eslint
         name: eslint
         entry: yarn eslint --fix --max-warnings=0

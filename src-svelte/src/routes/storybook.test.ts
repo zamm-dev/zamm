@@ -131,6 +131,7 @@ const components: ComponentTestConfig[] = [
       "highlighted-human-code",
       "ai-code",
       "highlighted-ai-code",
+      "mixed-khmer-and-english",
     ],
   },
   {
@@ -181,6 +182,7 @@ const components: ComponentTestConfig[] = [
         resizeWindow: true,
       },
       "wide",
+      "khmer",
     ],
     screenshotEntireBody: true,
   },
