@@ -1,4 +1,5 @@
 @import "@fontsource/jetbrains-mono";
+@import "@fontsource/nokora";
 
 @font-face {
   font-family: 'Nasalization';
@@ -43,7 +44,7 @@
 }
 
 :root {
-  --font-body: "Good Timing", sans-serif;
+  --font-body: "Good Timing", "Nokora", sans-serif;
   --font-header: "Nasalization", sans-serif;
   --font-mono: "Jetbrains Mono", monospace;
   --color-text: rgba(0, 0, 0, 1);
