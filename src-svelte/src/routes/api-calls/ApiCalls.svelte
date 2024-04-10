@@ -170,6 +170,8 @@
     padding: 0.2rem var(--side-padding);
     border-radius: var(--corner-roundness);
     transition: background 0.5s;
+    height: 1.62rem;
+    box-sizing: border-box;
   }
 
   .message.instance:hover {
