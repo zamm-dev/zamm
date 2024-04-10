@@ -7,16 +7,17 @@
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
 
   const PAGE_SIZE = 50;
-  const MIN_COLUMN_WIDTH = "5rem";
+  const MIN_MESSAGE_WIDTH = "5rem";
+  const MIN_TIME_WIDTH = "12.5rem";
 
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
   let llmCalls: LlmCall[] = [];
   let llmCallsPromise: Promise<void> | undefined = undefined;
   let allCallsLoaded = false;
-  let messageWidth = MIN_COLUMN_WIDTH;
-  let timeWidth = MIN_COLUMN_WIDTH;
-  let headerMessageWidth = MIN_COLUMN_WIDTH;
+  let messageWidth = MIN_MESSAGE_WIDTH;
+  let timeWidth = MIN_TIME_WIDTH;
+  let headerMessageWidth = MIN_MESSAGE_WIDTH;
 
   const formatter = new Intl.DateTimeFormat(dateTimeLocale, {
     year: "numeric",
@@ -42,7 +43,7 @@
   }
 
   function resizeMessageWidth() {
-    messageWidth = MIN_COLUMN_WIDTH;
+    messageWidth = MIN_MESSAGE_WIDTH;
     // time width doesn't need a reset because it never decreases
 
     setTimeout(() => {
