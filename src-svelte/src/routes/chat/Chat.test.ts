@@ -2,7 +2,7 @@ import { expect, test, vi, type Mock } from "vitest";
 import "@testing-library/jest-dom";
 
 import { render, screen, waitFor } from "@testing-library/svelte";
-import Chat, { resetConversation } from "./Chat.svelte";
+import Chat, { conversation, resetConversation } from "./Chat.svelte";
 import PersistentChatView from "./PersistentChatView.svelte";
 import userEvent from "@testing-library/user-event";
 import { TauriInvokePlayback, type ParsedCall } from "$lib/sample-call-testing";
@@ -131,12 +131,25 @@ describe("Chat conversation", () => {
     await userEvent.click(screen.getByRole("button", { name: "Send" }));
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
-
     // this part differs from sendChatMessage
+    await waitFor(() => {
+      expect(
+        screen.getByText("Yes, it works. How can I assist you today?"),
+      ).toBeInTheDocument();
+    });
+
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/chat-continue-conversation.yaml",
+    );
     await userEvent.type(chatInput, "Tell me something funny.");
     await userEvent.click(screen.getByRole("button", { name: "Send" }));
-    expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
-    expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
+    expect(tauriInvokeMock).toHaveBeenCalledTimes(2);
+    expect(screen.getByText("Tell me something funny.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Because they make up everything/),
+      ).toBeInTheDocument();
+    });
   });
 
   test("persists a conversation after returning to it", async () => {
@@ -150,5 +163,33 @@ describe("Chat conversation", () => {
     await waitFor(() => {
       expect(screen.getByText("Hello, does this work?")).toBeInTheDocument();
     });
+  });
+
+  test("listens for updates to conversation store", async () => {
+    render(Chat, {});
+    expect(
+      screen.queryByText("Hello, does this work?"),
+    ).not.toBeInTheDocument();
+    conversation.set([
+      {
+        role: "System",
+        text: "You are ZAMM, a chat program. Respond in first person.",
+      },
+      {
+        role: "Human",
+        text: "Hello, does this work?",
+      },
+      {
+        role: "AI",
+        text: "Yes, it works. How can I assist you today?",
+      },
+    ]);
+    await waitFor(() => {
+      expect(screen.getByText("Hello, does this work?")).toBeInTheDocument();
+    });
+    await sendChatMessage(
+      "Tell me something funny.",
+      "../src-tauri/api/sample-calls/chat-continue-conversation.yaml",
+    );
   });
 });
