@@ -90,10 +90,10 @@ const conversation: ChatMessage[] = [
 ];
 
 export const NotEmpty: StoryObj = Template.bind({}) as any;
-NotEmpty.args = {
-  conversation,
-};
 NotEmpty.parameters = {
+  stores: {
+    conversation,
+  },
   viewport: {
     defaultViewport: "smallTablet",
   },
@@ -101,13 +101,15 @@ NotEmpty.parameters = {
 
 export const MultilineChat: StoryObj = Template.bind({}) as any;
 MultilineChat.args = {
-  conversation,
   initialMessage:
     "This is what happens when the user types in so much text, " +
     "it wraps around and turns the text input area into a multiline input. " +
     "The send button's height should grow in line with the overall text area height.",
 };
 MultilineChat.parameters = {
+  stores: {
+    conversation,
+  },
   viewport: {
     defaultViewport: "smallTablet",
   },
@@ -115,7 +117,6 @@ MultilineChat.parameters = {
 
 export const ExtraLongInput: StoryObj = Template.bind({}) as any;
 ExtraLongInput.args = {
-  conversation,
   initialMessage: `Hey, I have this definition for a book object:
 
 \`\`\`python
@@ -135,6 +136,9 @@ class Book:
 Do you have any code comments for me?`,
 };
 ExtraLongInput.parameters = {
+  stores: {
+    conversation,
+  },
   viewport: {
     defaultViewport: "smallTablet",
   },
@@ -142,20 +146,22 @@ ExtraLongInput.parameters = {
 
 export const BottomScrollIndicator: StoryObj = Template.bind({}) as any;
 BottomScrollIndicator.args = {
-  conversation,
   showMostRecentMessage: false,
 };
 BottomScrollIndicator.parameters = {
+  stores: {
+    conversation,
+  },
   viewport: {
     defaultViewport: "smallTablet",
   },
 };
 
 export const FullMessageWidth: StoryObj = Template.bind({}) as any;
-FullMessageWidth.args = {
-  conversation,
-};
 FullMessageWidth.parameters = {
+  stores: {
+    conversation,
+  },
   viewport: {
     defaultViewport: "mobile1",
   },
@@ -163,10 +169,12 @@ FullMessageWidth.parameters = {
 
 export const TypingIndicator: StoryObj = Template.bind({}) as any;
 TypingIndicator.args = {
-  conversation: shortConversation,
   expectingResponse: true,
 };
 TypingIndicator.parameters = {
+  stores: {
+    conversation: shortConversation,
+  },
   viewport: {
     defaultViewport: "smallTablet",
   },
@@ -174,10 +182,12 @@ TypingIndicator.parameters = {
 
 export const TypingIndicatorStatic: StoryObj = Template.bind({}) as any;
 TypingIndicatorStatic.args = {
-  conversation: shortConversation,
   expectingResponse: true,
 };
 TypingIndicatorStatic.parameters = {
+  stores: {
+    conversation: shortConversation,
+  },
   preferences: {
     animationsOn: false,
   },

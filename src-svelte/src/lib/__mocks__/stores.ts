@@ -5,7 +5,8 @@ import {
   animationSpeed,
 } from "$lib/preferences";
 import { systemInfo } from "$lib/system-info";
-import type { SystemInfo } from "$lib/bindings";
+import { conversation } from "../../routes/chat/Chat.svelte";
+import type { SystemInfo, ChatMessage } from "$lib/bindings";
 import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
 
 interface Preferences {
@@ -16,6 +17,7 @@ interface Preferences {
 
 interface Stores {
   systemInfo?: SystemInfo;
+  conversation?: ChatMessage[];
 }
 
 interface StoreArgs {
@@ -52,6 +54,7 @@ const SvelteStoresDecorator: Decorator = (
   }
 
   systemInfo.set(stores?.systemInfo);
+  conversation.set(stores?.conversation || []);
 
   return story(args, context);
 };

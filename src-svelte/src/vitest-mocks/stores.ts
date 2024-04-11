@@ -6,15 +6,15 @@ interface Page {
   params: Record<string, string>;
 }
 
-const getStores = () => ({
+export const mockStores = {
   navigating: readable(null),
-  page: readable({ url: new URL("http://localhost"), params: {} }),
+  page: writable({ url: new URL("http://localhost"), params: {} }),
   session: writable(null),
   updated: readable(false),
-});
+};
 
 export const page = {
   subscribe(fn: Subscriber<Page>) {
-    return getStores().page.subscribe(fn);
+    return mockStores.page.subscribe(fn);
   },
 };

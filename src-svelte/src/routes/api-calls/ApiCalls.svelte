@@ -37,9 +37,10 @@
 
   function getWidths(selector: string) {
     const elements = document.querySelectorAll(selector);
-    return Array.from(elements)
+    const results = Array.from(elements)
       .map((el) => el.getBoundingClientRect().width)
       .filter((width) => width > 0);
+    return results;
   }
 
   function resizeMessageWidth() {
@@ -47,8 +48,8 @@
     // time width doesn't need a reset because it never decreases
 
     setTimeout(() => {
-      const textWidths = getWidths(".text-container");
-      const timeWidths = getWidths(".time");
+      const textWidths = getWidths(".api-calls-page .text-container");
+      const timeWidths = getWidths(".api-calls-page .time");
       const minTextWidth = Math.floor(Math.min(...textWidths));
       messageWidth = `${minTextWidth}px`;
       const maxTimeWidth = Math.ceil(Math.max(...timeWidths));
@@ -96,7 +97,7 @@
 </script>
 
 <InfoBox title="LLM API Calls" fullHeight>
-  <div class="container full-height" style={minimumWidths}>
+  <div class="container api-calls-page full-height" style={minimumWidths}>
     <div class="message header">
       <div class="text-container">
         <div class="text">Message</div>

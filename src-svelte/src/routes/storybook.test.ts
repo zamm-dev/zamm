@@ -187,6 +187,11 @@ const components: ComponentTestConfig[] = [
     screenshotEntireBody: true,
   },
   {
+    path: ["screens", "llm-call", "individual", "actions"],
+    variants: ["narrow", "wide"],
+    screenshotEntireBody: true,
+  },
+  {
     path: ["screens", "llm-call", "list"],
     variants: ["empty", "small", "full"],
     screenshotEntireBody: true,
