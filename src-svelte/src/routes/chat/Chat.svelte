@@ -1,20 +1,30 @@
+<script lang="ts" context="module">
+  import { writable } from "svelte/store";
+  import { type ChatMessage } from "$lib/bindings";
+
+  const initialMessage: ChatMessage = {
+    role: "System",
+    text: "You are ZAMM, a chat program. Respond in first person.",
+  };
+
+  export const conversation = writable<ChatMessage[]>([initialMessage]);
+
+  export function resetConversation() {
+    conversation.set([initialMessage]);
+  }
+</script>
+
 <script lang="ts">
   import InfoBox from "$lib/InfoBox.svelte";
   import Scrollable, { type ResizedEvent } from "$lib/Scrollable.svelte";
   import Message from "./Message.svelte";
   import TypingIndicator from "./TypingIndicator.svelte";
-  import { type ChatMessage, chat } from "$lib/bindings";
+  import { chat } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import Form from "./Form.svelte";
 
   export let initialMessage = "";
-  export let conversation: ChatMessage[] = [
-    {
-      role: "System",
-      text: "You are ZAMM, a chat program. Respond in first person.",
-    },
-  ];
   export let expectingResponse = false;
   export let showMostRecentMessage = true;
   let messageComponents: Message[] = [];
@@ -37,7 +47,7 @@
   }
 
   function appendMessage(message: ChatMessage) {
-    conversation = [...conversation, message];
+    conversation.update((messages) => [...messages, message]);
     setTimeout(async () => {
       const latestMessage = messageComponents[messageComponents.length - 1];
       await latestMessage?.resizeBubble(conversationWidthPx);
@@ -58,7 +68,7 @@
     expectingResponse = true;
 
     try {
-      let llmCall = await chat("OpenAI", "gpt-4", null, conversation);
+      let llmCall = await chat("OpenAI", "gpt-4", null, $conversation);
       appendMessage(llmCall.response.completion);
     } catch (err) {
       snackbarError(err as string);
@@ -76,8 +86,8 @@
       bind:this={growable}
     >
       <div class="composite-reveal" role="list">
-        {#if conversation.length > 1}
-          {#each conversation.slice(1) as message, i (i)}
+        {#if $conversation.length > 1}
+          {#each $conversation.slice(1) as message, i (i)}
             <Message {message} bind:this={messageComponents[i]} />
           {/each}
           {#if expectingResponse}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PersistentChat from "./PersistentChat.svelte";
+  import Chat from "./Chat.svelte";
 
   let visible = true;
 
@@ -12,5 +12,5 @@
 <button on:click={remount}>Remount</button>
 
 {#if visible}
-  <PersistentChat />
+  <Chat />
 {/if}

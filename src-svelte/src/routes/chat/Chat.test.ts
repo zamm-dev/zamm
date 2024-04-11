@@ -2,7 +2,8 @@ import { expect, test, vi, type Mock } from "vitest";
 import "@testing-library/jest-dom";
 
 import { render, screen, waitFor } from "@testing-library/svelte";
-import Chat from "./Chat.svelte";
+import Chat, { resetConversation } from "./Chat.svelte";
+import PersistentChatView from "./PersistentChatView.svelte";
 import userEvent from "@testing-library/user-event";
 import { TauriInvokePlayback, type ParsedCall } from "$lib/sample-call-testing";
 import { animationSpeed } from "$lib/preferences";
@@ -52,6 +53,7 @@ describe("Chat conversation", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
+    resetConversation();
   });
 
   async function sendChatMessage(
@@ -135,5 +137,18 @@ describe("Chat conversation", () => {
     await userEvent.click(screen.getByRole("button", { name: "Send" }));
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
+  });
+
+  test("persists a conversation after returning to it", async () => {
+    render(PersistentChatView, {});
+    await sendChatMessage(
+      "Hello, does this work?",
+      "../src-tauri/api/sample-calls/chat-start-conversation.yaml",
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Remount" }));
+    await waitFor(() => {
+      expect(screen.getByText("Hello, does this work?")).toBeInTheDocument();
+    });
   });
 });
