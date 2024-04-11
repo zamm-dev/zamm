@@ -202,7 +202,7 @@
 
 <style>
   .container {
-    gap: 1.5rem;
+    gap: 1rem;
   }
 
   .credits-container :global(.info-content),
