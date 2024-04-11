@@ -1,15 +1,32 @@
 <script lang="ts">
+  import { createEventDispatcher } from "svelte";
+
   export let text: string;
   export let unwrapped = false;
   export let rightEnd = false;
+  const dispatchClickEvent = createEventDispatcher();
+
+  function handleClick() {
+    dispatchClickEvent("click");
+  }
 </script>
 
 {#if unwrapped}
-  <button class="cut-corners inner" class:right-end={rightEnd} type="submit">
+  <button
+    class="cut-corners inner"
+    class:right-end={rightEnd}
+    type="submit"
+    on:click={handleClick}
+  >
     {text}
   </button>
 {:else}
-  <button class="cut-corners outer" class:right-end={rightEnd} type="submit">
+  <button
+    class="cut-corners outer"
+    class:right-end={rightEnd}
+    type="submit"
+    on:click={handleClick}
+  >
     <div class="cut-corners inner" class:right-end={rightEnd}>{text}</div>
   </button>
 {/if}

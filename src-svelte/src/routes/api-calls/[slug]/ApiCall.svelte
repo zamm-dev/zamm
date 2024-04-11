@@ -1,13 +1,17 @@
 <script lang="ts">
   import InfoBox from "$lib/InfoBox.svelte";
   import SubInfoBox from "$lib/SubInfoBox.svelte";
-  import { getApiCall } from "$lib/bindings";
+  import { type LlmCall, getApiCall } from "$lib/bindings";
   import Loading from "$lib/Loading.svelte";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
+  import Button from "$lib/controls/Button.svelte";
+  import { conversation } from "../../chat/Chat.svelte";
+  import { goto } from "$app/navigation";
 
   export let id: string;
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
+  let apiCall: LlmCall | undefined = undefined;
 
   const formatter = new Intl.DateTimeFormat(dateTimeLocale, {
     year: "numeric",
@@ -23,7 +27,8 @@
   let humanTime: string | undefined = undefined;
   let temperature: string | undefined = undefined;
   let apiCallPromise = getApiCall(id)
-    .then((apiCall) => {
+    .then((retrievedApiCall) => {
+      apiCall = retrievedApiCall;
       const timestamp = apiCall.timestamp + "Z";
       const date = new Date(timestamp);
       humanTime = formatter.format(date);
@@ -34,6 +39,21 @@
     .catch((error) => {
       snackbarError(error);
     });
+
+  function restoreConversation() {
+    if (!apiCall) {
+      snackbarError("API call not yet loaded");
+      return;
+    }
+
+    const restoredConversation = [
+      ...apiCall.request.prompt.messages,
+      apiCall.response.completion,
+    ];
+    conversation.set(restoredConversation);
+
+    goto("/chat");
+  }
 </script>
 
 <InfoBox title="API Call">
@@ -92,6 +112,14 @@
   {/await}
 </InfoBox>
 
+<div class="actions-container">
+  <InfoBox title="Actions" childNumber={1}>
+    <div class="action-buttons">
+      <Button text="Restore conversation" on:click={restoreConversation} />
+    </div>
+  </InfoBox>
+</div>
+
 <style>
   td:first-child {
     color: var(--color-faded);
@@ -135,5 +163,14 @@
     font-family: var(--font-mono);
     margin: 0;
     text-align: left;
+  }
+
+  .actions-container {
+    margin-top: 1rem;
+  }
+
+  .action-buttons {
+    width: fit-content;
+    margin: 0 auto;
   }
 </style>
