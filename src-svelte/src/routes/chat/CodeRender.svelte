@@ -1,6 +1,8 @@
 <script lang="ts">
   import Highlight from "svelte-highlight";
   import bash from "svelte-highlight/languages/bash";
+  import html from "svelte-highlight/languages/xml";
+  import css from "svelte-highlight/languages/css";
   import javascript from "svelte-highlight/languages/javascript";
   import typescript from "svelte-highlight/languages/typescript";
   import rust from "svelte-highlight/languages/rust";
@@ -13,7 +15,7 @@
 
   function getLanguageStr() {
     if (lang) {
-      return lang.split(" ")[0];
+      return lang.split(" ")[0].toLowerCase();
     }
     return "plaintext";
   }
@@ -27,8 +29,13 @@
       case "js":
       case "javascript":
         return javascript;
+      case "ts":
       case "typescript":
         return typescript;
+      case "html":
+        return html;
+      case "css":
+        return css;
       case "rust":
         return rust;
       case "py":
