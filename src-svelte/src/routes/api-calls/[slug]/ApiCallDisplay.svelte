@@ -39,7 +39,7 @@
 
 <InfoBox title="API Call">
   {#if apiCall}
-    <table>
+    <table class="composite-reveal">
       <tr>
         <td>ID</td>
         <td>{apiCall?.id ?? "Unknown"}</td>
@@ -74,9 +74,9 @@
     </table>
 
     <SubInfoBox subheading="Prompt">
-      <div class="prompt">
+      <div class="prompt composite-reveal">
         {#each apiCall?.request.prompt.messages ?? [] as message}
-          <div class={"message " + message.role.toLowerCase()}>
+          <div class={"message atomic-reveal " + message.role.toLowerCase()}>
             <span class="role">{message.role}</span>
             <pre>{message.text}</pre>
           </div>
