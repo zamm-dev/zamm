@@ -13,7 +13,9 @@ describe("AnimationControl", () => {
   test("will enable animations by default", async () => {
     render(AnimationControl, {});
 
-    const animationControl = document.querySelector(".container") as Element;
+    const animationControl = document.getElementById(
+      "animation-control",
+    ) as Element;
     expect(animationControl.classList).not.toContainEqual(
       "animations-disabled",
     );
@@ -26,7 +28,9 @@ describe("AnimationControl", () => {
     animationsOn.set(false);
     render(AnimationControl, {});
 
-    const animationControl = document.querySelector(".container") as Element;
+    const animationControl = document.getElementById(
+      "animation-control",
+    ) as Element;
     expect(animationControl.classList).toContainEqual("animations-disabled");
     expect(animationControl.getAttribute("style")).toEqual(
       "--base-animation-speed: 1; --standard-duration: 0.00ms;",
@@ -37,7 +41,9 @@ describe("AnimationControl", () => {
     animationSpeed.set(0.9);
     render(AnimationControl, {});
 
-    const animationControl = document.querySelector(".container") as Element;
+    const animationControl = document.getElementById(
+      "animation-control",
+    ) as Element;
     expect(animationControl.classList).not.toContainEqual(
       "animations-disabled",
     );
