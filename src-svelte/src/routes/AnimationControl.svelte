@@ -12,7 +12,8 @@
 </script>
 
 <div
-  class="container full-height"
+  id="animation-control"
+  class="full-height"
   class:animations-disabled={!$animationsOn}
   {style}
 >
@@ -20,12 +21,12 @@
 </div>
 
 <style>
-  .container {
+  #animation-control {
     height: 100%;
     position: relative;
   }
 
-  .container.animations-disabled :global(*) {
+  #animation-control.animations-disabled :global(*) {
     animation-play-state: paused !important;
     transition: none !important;
   }

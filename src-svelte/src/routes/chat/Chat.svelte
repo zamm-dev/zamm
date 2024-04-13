@@ -29,6 +29,7 @@
   export let showMostRecentMessage = true;
   let messageComponents: Message[] = [];
   let growable: Scrollable | undefined;
+  let chatContainer: HTMLDivElement | undefined = undefined;
   let conversationWidthPx = 100;
 
   function resizeConversationView() {
@@ -44,6 +45,13 @@
     if (showMostRecentMessage) {
       growable?.scrollToBottom();
     }
+    if (!chatContainer) {
+      console.warn("Chat container not initialized");
+      return;
+    }
+    chatContainer.dispatchEvent(
+      new CustomEvent("info-box-update", { bubbles: true }),
+    );
   }
 
   function appendMessage(message: ChatMessage) {
@@ -81,7 +89,10 @@
 </script>
 
 <InfoBox title="Chat" fullHeight>
-  <div class="chat-container composite-reveal full-height">
+  <div
+    class="chat-container composite-reveal full-height"
+    bind:this={chatContainer}
+  >
     <Scrollable
       initialPosition={showMostRecentMessage ? "bottom" : "top"}
       on:resize={onScrollableResized}

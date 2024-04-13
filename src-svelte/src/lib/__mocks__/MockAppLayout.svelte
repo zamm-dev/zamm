@@ -3,7 +3,7 @@
   import Snackbar from "$lib/snackbar/Snackbar.svelte";
 </script>
 
-<div class="storybook-wrapper">
+<div id="mock-app-layout" class="storybook-wrapper">
   <AnimationControl>
     <slot />
     <Snackbar />

@@ -9,8 +9,16 @@
   animationSpeed.set(0.1);
 </script>
 
-<MockFullPageLayout>
-  <PageTransition currentRoute="/storybook-demo">
-    <slot />
-  </PageTransition>
-</MockFullPageLayout>
+<div id="mock-transitions">
+  <MockFullPageLayout>
+    <PageTransition currentRoute="/storybook-demo">
+      <slot />
+    </PageTransition>
+  </MockFullPageLayout>
+</div>
+
+<style>
+  #mock-transitions {
+    margin: -1rem;
+  }
+</style>

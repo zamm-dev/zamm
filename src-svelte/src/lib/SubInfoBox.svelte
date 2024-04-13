@@ -5,11 +5,11 @@
   const subinfoboxId = getComponentId("subinfobox");
 </script>
 
-<section class="sub-info-box" aria-labelledby={subinfoboxId}>
+<section class="sub-info-box composite-reveal" aria-labelledby={subinfoboxId}>
   <div class="subheading">
     <h3 id={subinfoboxId}>{subheading}</h3>
   </div>
-  <div class="content">
+  <div class="content composite-reveal">
     <slot />
   </div>
 </section>
