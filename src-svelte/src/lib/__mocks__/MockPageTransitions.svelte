@@ -14,3 +14,9 @@
     <slot />
   </PageTransition>
 </MockFullPageLayout>
+
+<style>
+  :global(.storybook-wrapper.full-height) {
+    margin: -1rem;
+  }
+</style>

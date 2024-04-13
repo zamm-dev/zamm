@@ -1,7 +1,6 @@
 import ChatComponent from "./Chat.svelte";
 import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
-import MockPageTransitions from "$lib/__mocks__/MockPageTransitions.svelte";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
 import type { StoryFn, StoryObj } from "@storybook/svelte";
 import type { ChatMessage } from "$lib/bindings";
@@ -34,7 +33,7 @@ Empty.parameters = {
   },
 };
 
-const shortConversation: ChatMessage[] = [
+export const shortConversation: ChatMessage[] = [
   {
     role: "System",
     text: "You are ZAMM, a chat program. Respond in first person.",
@@ -45,7 +44,7 @@ const shortConversation: ChatMessage[] = [
   },
 ];
 
-const conversation: ChatMessage[] = [
+export const conversation: ChatMessage[] = [
   {
     role: "System",
     text: "You are ZAMM, a chat program. Respond in first person.",
@@ -195,13 +194,3 @@ TypingIndicatorStatic.parameters = {
     defaultViewport: "smallTablet",
   },
 };
-
-export const FullPage: StoryObj = Template.bind({}) as any;
-FullPage.decorators = [
-  (story: StoryFn) => {
-    return {
-      Component: MockPageTransitions,
-      slot: story,
-    };
-  },
-];
