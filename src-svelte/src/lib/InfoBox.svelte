@@ -412,7 +412,10 @@
         revealCutoffFraction,
         equivalentYProgress,
       );
-      const delayFraction = adjustedYProgress * theoreticalTotalKickoffFraction;
+      const delayFraction = Math.max(
+        0,
+        adjustedYProgress * theoreticalTotalKickoffFraction,
+      );
       return new PrimitiveTimingFraction({
         delayFraction,
         durationFraction: perElementRevealFraction,
@@ -455,15 +458,16 @@
     let revealAnimations = getNodeAnimations(node);
 
     const config = { childList: true, subtree: true };
-    const mutationCallback: MutationCallback = () => {
+    const recalculateReveals = () => {
       revealAnimations = getNodeAnimations(node);
       // hide all new nodes immediately
       revealAnimations.forEach((anim) => {
         anim.tickForGlobalTime(0);
       });
     };
-    const observer = new MutationObserver(mutationCallback);
-    observer.observe(node, config);
+    const mutationObserver = new MutationObserver(recalculateReveals);
+    mutationObserver.observe(node, config);
+    node.addEventListener("info-box-update", recalculateReveals);
 
     return {
       delay: timing.infoBox.delayMs(),
@@ -484,7 +488,8 @@
         }
 
         if (tGlobalFraction === 1) {
-          observer.disconnect();
+          mutationObserver.disconnect();
+          node.removeEventListener("info-box-update", recalculateReveals);
         }
       },
     };
