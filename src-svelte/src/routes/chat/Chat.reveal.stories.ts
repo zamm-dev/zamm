@@ -3,7 +3,7 @@ import SvelteStoresDecorator from "$lib/__mocks__/stores";
 import MockPageTransitions from "$lib/__mocks__/MockPageTransitions.svelte";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
 import type { StoryFn, StoryObj } from "@storybook/svelte";
-import { conversation } from "./Chat.stories";
+import { conversation } from "./Chat.mock-data";
 
 export default {
   component: ChatComponent,
