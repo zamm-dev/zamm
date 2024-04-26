@@ -1,9 +1,13 @@
 <script lang="ts">
   import AnimationControl from "../../routes/AnimationControl.svelte";
   import Snackbar from "$lib/snackbar/Snackbar.svelte";
+  import BackgroundUi from "../../routes/BackgroundUI.svelte";
 </script>
 
 <div id="mock-full-page-layout" class="storybook-wrapper full-height">
+  <div class="bg">
+    <BackgroundUi />
+  </div>
   <AnimationControl>
     <slot />
     <Snackbar />
@@ -11,6 +15,15 @@
 </div>
 
 <style>
+  .bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+  }
+
   .storybook-wrapper {
     max-width: 50rem;
     position: relative;
