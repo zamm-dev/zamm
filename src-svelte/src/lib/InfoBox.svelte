@@ -555,6 +555,7 @@
     position: absolute;
     filter: url(#round) drop-shadow(0px 1px 4px rgba(26, 58, 58, 0.4));
     z-index: 1;
+    opacity: 0.85;
   }
 
   .border-box::before {
