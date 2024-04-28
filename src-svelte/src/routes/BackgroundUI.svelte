@@ -128,5 +128,6 @@
     right: 0;
     z-index: -100;
     overflow: hidden;
+    border-radius: var(--main-corners);
   }
 </style>
