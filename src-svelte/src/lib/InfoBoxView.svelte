@@ -8,7 +8,7 @@
 
 <div style="--base-animation-speed: {$animationSpeed};">
   <InfoBox {...$$restProps}>
-    <p>
+    <p class="atomic-reveal">
       How do we know that even the realest of realities wouldn't be subjective,
       in the final analysis? Nobody can prove his existence, can he? &mdash; <em
         >Simulacron 3</em
