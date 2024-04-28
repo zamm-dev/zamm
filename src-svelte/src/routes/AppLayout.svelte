@@ -84,13 +84,9 @@
     height: 100vh;
     box-sizing: border-box;
     margin-left: var(--sidebar-space);
-    overflow-x: hidden;
-    overflow-y: scroll;
     border-radius: var(--main-corners);
     background-color: var(--color-offwhite);
     box-shadow: calc(-1 * var(--shadow-offset)) 0 var(--shadow-blur) 0 #ccc;
-    overflow-y: auto;
-    overflow-x: hidden;
   }
 
   .background-layout {
@@ -105,6 +101,8 @@
 
   main {
     position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
     z-index: 1;
     max-width: 70rem;
     margin: 0 auto;
