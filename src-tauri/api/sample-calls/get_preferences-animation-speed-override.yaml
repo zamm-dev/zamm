@@ -2,9 +2,5 @@ request: ["get_preferences"]
 response:
   message: >
     {
-      "animations_on": null,
-      "background_animation": null,
-      "animation_speed": 0.9,
-      "sound_on": null,
-      "volume": null
+      "animation_speed": 0.9
     }

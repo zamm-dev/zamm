@@ -10,41 +10,35 @@
     backgroundAnimation,
     soundOn,
     volume,
-    NullPreferences,
   } from "$lib/preferences";
   import { setPreferences } from "$lib/bindings";
 
   const onAnimationsToggle = (newValue: boolean) => {
     setPreferences({
-      ...NullPreferences,
       animations_on: newValue,
     });
   };
 
   const onbackgroundAnimationToggle = (newValue: boolean) => {
     setPreferences({
-      ...NullPreferences,
       background_animation: newValue,
     });
   };
 
   const onAnimationSpeedUpdate = (newValue: number) => {
     setPreferences({
-      ...NullPreferences,
       animation_speed: newValue,
     });
   };
 
   const onSoundToggle = (newValue: boolean) => {
     setPreferences({
-      ...NullPreferences,
       sound_on: newValue,
     });
   };
 
   const onVolumeUpdate = (newValue: number) => {
     setPreferences({
-      ...NullPreferences,
       volume: newValue,
     });
   };

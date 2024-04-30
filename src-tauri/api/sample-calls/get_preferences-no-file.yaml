@@ -1,13 +1,7 @@
 request: ["get_preferences"]
 response:
   message: >
-    {
-      "animations_on": null,
-      "background_animation": null,
-      "animation_speed": null,
-      "sound_on": null,
-      "volume": null
-    }
+    {}
 sideEffects:
   disk:
     startStateDirectory: empty

@@ -1,5 +1,4 @@
 import { writable, derived } from "svelte/store";
-import type { Preferences } from "./bindings";
 
 export const animationsOn = writable(true);
 export const transparencyOn = writable(false);
@@ -13,11 +12,3 @@ export const standardDuration = derived(
   ([$animationsOn, $animationSpeed]) =>
     $animationsOn ? 100 / $animationSpeed : 0,
 );
-
-export const NullPreferences: Preferences = {
-  animations_on: null,
-  background_animation: null,
-  animation_speed: null,
-  sound_on: null,
-  volume: null,
-};

@@ -20,25 +20,25 @@
 
   onMount(async () => {
     const prefs = await getPreferences();
-    if (prefs.sound_on !== null) {
+    if (prefs.sound_on != null) {
       soundOn.set(prefs.sound_on);
     }
 
-    if (prefs.volume !== null) {
+    if (prefs.volume != null) {
       volume.set(prefs.volume);
     }
 
-    if (prefs.animations_on !== null) {
+    if (prefs.animations_on != null) {
       animationsOn.set(prefs.animations_on);
     }
 
-    if (prefs.background_animation === null) {
+    if (prefs.background_animation == null) {
       backgroundAnimation.set(true);
     } else {
       backgroundAnimation.set(prefs.background_animation);
     }
 
-    if (prefs.animation_speed !== null) {
+    if (prefs.animation_speed != null) {
       animationSpeed.set(prefs.animation_speed);
     }
 
