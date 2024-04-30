@@ -8,6 +8,7 @@ import {
   volume,
   animationsOn,
   animationSpeed,
+  transparencyOn,
 } from "$lib/preferences";
 import { TauriInvokePlayback } from "$lib/sample-call-testing";
 import { tickFor } from "$lib/test-helpers";
@@ -100,6 +101,21 @@ describe("AppLayout", () => {
     render(AppLayout, { currentRoute: "/" });
     await waitFor(() => {
       expect(get(animationSpeed)).toBe(0.9);
+    });
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+  });
+
+  test("will set transparency if transparency preference overridden", async () => {
+    expect(get(transparencyOn)).toBe(false);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/get_preferences-transparency-on.yaml",
+    );
+
+    render(AppLayout, { currentRoute: "/" });
+    await waitFor(() => {
+      expect(get(transparencyOn)).toBe(true);
     });
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
   });

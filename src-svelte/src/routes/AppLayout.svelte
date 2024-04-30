@@ -11,6 +11,7 @@
     soundOn,
     backgroundAnimation,
     animationSpeed,
+    transparencyOn,
     volume,
     animationsOn,
   } from "$lib/preferences";
@@ -40,6 +41,10 @@
 
     if (prefs.animation_speed != null) {
       animationSpeed.set(prefs.animation_speed);
+    }
+
+    if (prefs.transparency_on != null) {
+      transparencyOn.set(prefs.transparency_on);
     }
 
     ready = true;

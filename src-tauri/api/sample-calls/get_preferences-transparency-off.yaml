@@ -1,0 +1,10 @@
+request: ["get_preferences"]
+response:
+  message: >
+    {
+      "transparency_on": false
+    }
+sideEffects:
+  disk:
+    startStateDirectory: preferences/transparency-off
+    endStateDirectory: preferences/transparency-off

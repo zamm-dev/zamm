@@ -31,6 +31,12 @@
     });
   };
 
+  const onTransparencyToggle = (newValue: boolean) => {
+    setPreferences({
+      transparency_on: newValue,
+    });
+  };
+
   const onSoundToggle = (newValue: boolean) => {
     setPreferences({
       sound_on: newValue,
@@ -69,7 +75,11 @@
 
   <div class="container">
     <SubInfoBox subheading="Other visual effects">
-      <SettingsSwitch label="Transparency" bind:toggledOn={$transparencyOn} />
+      <SettingsSwitch
+        label="Transparency"
+        bind:toggledOn={$transparencyOn}
+        onToggle={onTransparencyToggle}
+      />
     </SubInfoBox>
   </div>
 

@@ -123,6 +123,24 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_get_preferences_with_transparency_off() {
+        check_get_preferences_sample(
+            function_name!(),
+            "./api/sample-calls/get_preferences-transparency-off.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_get_preferences_with_transparency_on() {
+        check_get_preferences_sample(
+            function_name!(),
+            "./api/sample-calls/get_preferences-transparency-on.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
     async fn test_get_preferences_with_extra_settings() {
         check_get_preferences_sample(
             function_name!(),

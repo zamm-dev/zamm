@@ -16,6 +16,8 @@ pub struct Preferences {
     #[serde(skip_serializing_if = "Option::is_none")]
     animation_speed: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    transparency_on: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     sound_on: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     volume: Option<f64>,
