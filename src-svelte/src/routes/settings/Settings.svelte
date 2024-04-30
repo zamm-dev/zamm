@@ -6,6 +6,7 @@
   import {
     animationsOn,
     animationSpeed,
+    transparencyOn,
     backgroundAnimation,
     soundOn,
     volume,
@@ -69,6 +70,12 @@
         bind:value={$animationSpeed}
         onUpdate={onAnimationSpeedUpdate}
       />
+    </SubInfoBox>
+  </div>
+
+  <div class="container">
+    <SubInfoBox subheading="Other visual effects">
+      <SettingsSwitch label="Transparency" bind:toggledOn={$transparencyOn} />
     </SubInfoBox>
   </div>
 

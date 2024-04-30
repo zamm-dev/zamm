@@ -244,7 +244,7 @@
   import getComponentId from "./label-id";
   import RoundDef from "./RoundDef.svelte";
   import { cubicInOut, cubicOut, linear } from "svelte/easing";
-  import { animationSpeed, animationsOn } from "./preferences";
+  import { animationSpeed, animationsOn, transparencyOn } from "./preferences";
   import { fade, type TransitionConfig } from "svelte/transition";
   import { firstAppLoad, firstPageLoad } from "./firstPageLoad";
   import { SubAnimation, PropertyAnimation } from "$lib/animation-timing";
@@ -514,7 +514,11 @@
   <RoundDef />
 
   <div class="border-container">
-    <div class="border-box" in:revealOutline|global={timing.borderBox}>
+    <div
+      class="border-box"
+      class:transparent={$transparencyOn}
+      in:revealOutline|global={timing.borderBox}
+    >
       <div class="blur"></div>
       <div class="background"></div>
     </div>
@@ -573,6 +577,14 @@
     );
   }
 
+  .border-box .blur {
+    display: none;
+  }
+
+  .border-box.transparent .blur {
+    display: block;
+  }
+
   .border-box .blur::before {
     backdrop-filter: blur(9px);
     -webkit-clip-path: var(--poly);
@@ -582,6 +594,10 @@
 
   .border-box .background {
     filter: url(#round) drop-shadow(0px 1px 4px rgba(26, 58, 58, 0.4));
+  }
+
+  .border-box.transparent .background {
+    filter: url(#round) drop-shadow(0px 1px 4px rgba(26, 58, 58, 0.8));
     opacity: 0.5;
   }
 
