@@ -1,14 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { standardDuration } from "$lib/preferences";
   import prand from "pure-rand";
 
   const rng = prand.xoroshiro128plus(8650539321744612);
   const CHAR_EM = 20;
   const CHAR_GAP = 5;
   const BLOCK_SIZE = CHAR_EM + CHAR_GAP;
-  const ANIMATE_INTERVAL_MS = 50;
-  const CHAR_INTERVAL_MS = 100;
-  const ANIMATES_PER_CHAR = Math.round(CHAR_INTERVAL_MS / ANIMATE_INTERVAL_MS);
+  const ANIMATES_PER_CHAR = 2;
   const STATIC_INITIAL_DRAWS = 100;
   const DDJ = [
     "道可道非常道",
@@ -23,6 +22,7 @@
     "眾妙之門",
   ];
   export let animated = false;
+  $: animateIntervalMs = $standardDuration / 2;
   let background: HTMLDivElement | null = null;
   let canvas: HTMLCanvasElement | null = null;
   let ctx: CanvasRenderingContext2D | null = null;
@@ -43,7 +43,7 @@
       return;
     }
 
-    animateInterval = setInterval(draw, ANIMATE_INTERVAL_MS);
+    animateInterval = setInterval(draw, animateIntervalMs);
   }
 
   function nextColumnPosition() {
@@ -120,6 +120,11 @@
     }
   }
 
+  function updateAnimationSpeed(_newSpeed: number) {
+    stopAnimating();
+    startAnimating();
+  }
+
   onMount(() => {
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
@@ -131,6 +136,7 @@
   });
 
   $: updateAnimationState(animated);
+  $: updateAnimationSpeed(animateIntervalMs);
 </script>
 
 <div class="background" bind:this={background}>
