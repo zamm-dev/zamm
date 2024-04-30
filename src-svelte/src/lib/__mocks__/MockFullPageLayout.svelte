@@ -1,12 +1,12 @@
 <script lang="ts">
   import AnimationControl from "../../routes/AnimationControl.svelte";
   import Snackbar from "$lib/snackbar/Snackbar.svelte";
-  import BackgroundUi from "../../routes/BackgroundUI.svelte";
+  import Background from "../../routes/Background.svelte";
 </script>
 
 <div id="mock-full-page-layout" class="storybook-wrapper full-height">
   <div class="bg">
-    <BackgroundUi />
+    <Background />
   </div>
   <AnimationControl>
     <slot />

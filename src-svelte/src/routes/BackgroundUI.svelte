@@ -1,12 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import prand from "pure-rand";
 
+  const rng = prand.xoroshiro128plus(8650539321744612);
   const CHAR_EM = 20;
   const CHAR_GAP = 5;
   const BLOCK_SIZE = CHAR_EM + CHAR_GAP;
   const ANIMATE_INTERVAL_MS = 50;
   const CHAR_INTERVAL_MS = 100;
   const ANIMATES_PER_CHAR = Math.round(CHAR_INTERVAL_MS / ANIMATE_INTERVAL_MS);
+  const STATIC_INITIAL_DRAWS = 100;
   const DDJ = [
     "道可道非常道",
     "名可名非常名",
@@ -20,7 +23,6 @@
     "眾妙之門",
   ];
   export let animated = false;
-  let animationState: string;
   let background: HTMLDivElement | null = null;
   let canvas: HTMLCanvasElement | null = null;
   let ctx: CanvasRenderingContext2D | null = null;
@@ -44,6 +46,10 @@
     animateInterval = setInterval(draw, ANIMATE_INTERVAL_MS);
   }
 
+  function nextColumnPosition() {
+    return prand.unsafeUniformIntDistribution(-numRows, 0, rng);
+  }
+
   function resizeCanvas() {
     if (!canvas || !background) {
       return;
@@ -64,12 +70,16 @@
     ctx.fillStyle = "#FAF9F6";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    dropsPosition = Array(numColumns)
-      .fill(0)
-      .map(() => Math.ceil(Math.random() * -numRows));
+    dropsPosition = Array(numColumns).fill(0).map(nextColumnPosition);
     dropsAnimateCounter = Array(numColumns).fill(0);
 
-    startAnimating();
+    if (animated) {
+      startAnimating();
+    } else {
+      for (let i = 0; i < STATIC_INITIAL_DRAWS; i++) {
+        draw();
+      }
+    }
   }
 
   function draw() {
@@ -93,12 +103,20 @@
       );
 
       if (dropsPosition[column] > numRows) {
-        dropsPosition[column] = Math.ceil(Math.random() * -numRows);
+        dropsPosition[column] = nextColumnPosition();
       }
 
       if (dropsAnimateCounter[column]++ % ANIMATES_PER_CHAR === 0) {
         dropsPosition[column]++;
       }
+    }
+  }
+
+  function updateAnimationState(nowAnimating: boolean) {
+    if (nowAnimating) {
+      startAnimating();
+    } else {
+      stopAnimating();
     }
   }
 
@@ -112,7 +130,7 @@
     };
   });
 
-  $: animationState = animated ? "running" : "paused";
+  $: updateAnimationState(animated);
 </script>
 
 <div class="background" bind:this={background}>
