@@ -151,8 +151,21 @@
   }
 
   onMount(() => {
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
+    const fontFile = new FontFace(
+      "Zhi Mang Xing",
+      "url(/public-fonts/zhi-mang-xing.ttf)",
+    );
+    document.fonts.add(fontFile);
+
+    fontFile.load().then(
+      () => {
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas);
+      },
+      (err) => {
+        console.error(err);
+      },
+    );
 
     return () => {
       stopAnimating();
