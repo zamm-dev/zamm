@@ -2,10 +2,12 @@
   import { onMount } from "svelte";
   import { standardDuration } from "$lib/preferences";
   import prand from "pure-rand";
+  import FontFaceObserver from "fontfaceobserver";
 
   const rng = prand.xoroshiro128plus(8650539321744612);
   const CHAR_EM = 26;
   const CHAR_GAP = 2;
+  const TEXT_FONT = CHAR_EM + "px 'Zhi Mang Xing', sans-serif";
   const BLOCK_SIZE = CHAR_EM + CHAR_GAP;
   const ANIMATES_PER_CHAR = 2;
   const STATIC_INITIAL_DRAWS = 100;
@@ -37,13 +39,34 @@
     animateInterval = undefined;
   }
 
+  function ensureChineseFontLoaded(callback: () => void) {
+    var zhiMangXing = new FontFaceObserver("Zhi Mang Xing");
+    zhiMangXing
+      .load("中文字")
+      .then(callback)
+      .catch(function (err) {
+        console.warn(
+          "Could not load Chinese font for background animation:",
+          err,
+        );
+      });
+  }
+
   function startAnimating() {
-    if (animateInterval) {
-      console.warn("Animation already running");
+    if (!animated) {
+      // this is possible from the animation speed change trigger
+      console.warn("Animation not enabled");
       return;
     }
 
-    animateInterval = setInterval(draw, animateIntervalMs);
+    ensureChineseFontLoaded(function () {
+      if (animateInterval) {
+        console.warn("Animation already running");
+        return;
+      }
+
+      animateInterval = setInterval(draw, animateIntervalMs);
+    });
   }
 
   function nextColumnPosition() {
@@ -76,9 +99,11 @@
     if (animated) {
       startAnimating();
     } else {
-      for (let i = 0; i < STATIC_INITIAL_DRAWS; i++) {
-        draw();
-      }
+      ensureChineseFontLoaded(function () {
+        for (let i = 0; i < STATIC_INITIAL_DRAWS; i++) {
+          draw();
+        }
+      });
     }
   }
 
@@ -91,7 +116,7 @@
     ctx.fillStyle = "#FAF9F633";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#D5CDB4C0";
-    ctx.font = CHAR_EM + "px 'Zhi Mang Xing', sans-serif";
+    ctx.font = TEXT_FONT;
 
     for (var column = 0; column < dropsPosition.length; column++) {
       const textLine = DDJ[column % DDJ.length];
