@@ -11,6 +11,7 @@ fn get_preferences_happy_path(
 ) -> ZammResult<Preferences> {
     let preferences_path = get_preferences_file(maybe_preferences_dir.as_ref())?;
     let display_filename = preferences_path.display();
+    #[allow(unused_mut)]
     let mut found_preferences = if preferences_path.exists() {
         println!("Reading preferences from {display_filename}");
         let contents = fs::read_to_string(preferences_path)?;
