@@ -61,13 +61,15 @@
       </div>
       <Snackbar />
 
-      <main>
-        {#if ready}
-          <PageTransition {currentRoute}>
-            <slot />
-          </PageTransition>
-        {/if}
-      </main>
+      <div class="content-container">
+        <main>
+          {#if ready}
+            <PageTransition {currentRoute}>
+              <slot />
+            </PageTransition>
+          {/if}
+        </main>
+      </div>
     </div>
   </AnimationControl>
 </div>
@@ -104,13 +106,17 @@
     right: 0;
   }
 
-  main {
+  .content-container {
+    width: 100%;
+    height: 100%;
     position: relative;
     overflow-y: auto;
     overflow-x: hidden;
-    z-index: 1;
+  }
+
+  main {
+    position: relative;
     max-width: 70rem;
     margin: 0 auto;
-    height: 100%;
   }
 </style>
