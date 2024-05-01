@@ -6,44 +6,45 @@
   import {
     animationsOn,
     animationSpeed,
+    transparencyOn,
     backgroundAnimation,
     soundOn,
     volume,
-    NullPreferences,
   } from "$lib/preferences";
   import { setPreferences } from "$lib/bindings";
 
   const onAnimationsToggle = (newValue: boolean) => {
     setPreferences({
-      ...NullPreferences,
       animations_on: newValue,
     });
   };
 
   const onbackgroundAnimationToggle = (newValue: boolean) => {
     setPreferences({
-      ...NullPreferences,
       background_animation: newValue,
     });
   };
 
   const onAnimationSpeedUpdate = (newValue: number) => {
     setPreferences({
-      ...NullPreferences,
       animation_speed: newValue,
+    });
+  };
+
+  const onTransparencyToggle = (newValue: boolean) => {
+    setPreferences({
+      transparency_on: newValue,
     });
   };
 
   const onSoundToggle = (newValue: boolean) => {
     setPreferences({
-      ...NullPreferences,
       sound_on: newValue,
     });
   };
 
   const onVolumeUpdate = (newValue: number) => {
     setPreferences({
-      ...NullPreferences,
       volume: newValue,
     });
   };
@@ -68,6 +69,16 @@
         max={1}
         bind:value={$animationSpeed}
         onUpdate={onAnimationSpeedUpdate}
+      />
+    </SubInfoBox>
+  </div>
+
+  <div class="container">
+    <SubInfoBox subheading="Other visual effects">
+      <SettingsSwitch
+        label="Transparency"
+        bind:toggledOn={$transparencyOn}
+        onToggle={onTransparencyToggle}
       />
     </SubInfoBox>
   </div>

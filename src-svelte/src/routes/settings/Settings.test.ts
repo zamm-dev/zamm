@@ -4,14 +4,14 @@ import "@testing-library/jest-dom";
 import { act, getByLabelText, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import Settings from "./Settings.svelte";
-import { soundOn, volume } from "$lib/preferences";
+import { soundOn, volume, transparencyOn } from "$lib/preferences";
 import {
   parseSampleCall,
   type ParsedCall,
   TauriInvokePlayback,
 } from "$lib/sample-call-testing";
 
-describe("Switch", () => {
+describe("Settings", () => {
   let tauriInvokeMock: Mock;
   let playback: TauriInvokePlayback;
 
@@ -55,6 +55,10 @@ describe("Switch", () => {
       (...args: (string | Record<string, string>)[]) =>
         playback.mockCall(...args),
     );
+
+    soundOn.set(true);
+    volume.set(1);
+    transparencyOn.set(false);
   });
 
   test("can toggle sound on and off while saving setting", async () => {
@@ -90,6 +94,37 @@ describe("Switch", () => {
     await user.keyboard("[ArrowLeft]");
     expect(get(volume)).toBe(0.8);
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(playback.unmatchedCalls.length).toBe(0);
+  });
+
+  test("can toggle transparency on and off while saving setting", async () => {
+    render(Settings, {});
+    expect(get(transparencyOn)).toBe(false);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    const otherVisualsRegion = screen.getByRole("region", {
+      name: "Other visual effects",
+    });
+    const transparencySwitch = getByLabelText(
+      otherVisualsRegion,
+      "Transparency",
+    );
+    playback.addCalls(playSwitchSoundCall);
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/set_preferences-transparency-on.yaml",
+    );
+    await act(() => userEvent.click(transparencySwitch));
+    expect(get(transparencyOn)).toBe(true);
+    expect(tauriInvokeMock).toHaveReturnedTimes(2);
+    expect(playback.unmatchedCalls.length).toBe(0);
+
+    playback.addCalls(playSwitchSoundCall);
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/set_preferences-transparency-off.yaml",
+    );
+    await act(() => userEvent.click(transparencySwitch));
+    expect(get(transparencyOn)).toBe(false);
+    expect(tauriInvokeMock).toHaveReturnedTimes(4);
     expect(playback.unmatchedCalls.length).toBe(0);
   });
 });

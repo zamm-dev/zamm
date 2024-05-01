@@ -3,11 +3,11 @@ request:
   - >
     {
       "preferences": {
-        "sound_on": false
+        "transparency_on": true
       }
     }
 response:
   message: "null"
 sideEffects:
   disk:
-    endStateDirectory: preferences/sound-override
+    endStateDirectory: preferences/transparency-on

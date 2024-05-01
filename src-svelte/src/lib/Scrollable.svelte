@@ -27,7 +27,8 @@
         return;
       }
 
-      scrollableHeight = `${container.clientHeight}px`;
+      const newHeight = Math.floor(container.getBoundingClientRect().height);
+      scrollableHeight = `${newHeight}px`;
       dispatchResizeEvent("resize", scrollable.getDimensions());
     });
   }

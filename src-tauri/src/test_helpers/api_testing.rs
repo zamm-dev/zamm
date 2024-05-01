@@ -25,8 +25,11 @@ fn read_sample(filename: &str) -> SampleCall {
 }
 
 fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> {
-    fs::create_dir_all(&dst)?;
-    for entry in fs::read_dir(src)? {
+    fs::create_dir_all(&dst)
+        .unwrap_or_else(|_| panic!("Error creating directory at {:?}", dst.as_ref()));
+    for entry in fs::read_dir(&src).unwrap_or_else(|_| {
+        panic!("Error reading from directory at {:?}", src.as_ref())
+    }) {
         let entry = entry?;
         let ty = entry.file_type()?;
         if ty.is_dir() {

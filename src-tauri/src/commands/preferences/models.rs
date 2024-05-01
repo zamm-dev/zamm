@@ -9,11 +9,18 @@ pub static PREFERENCES_FILENAME: &str = "preferences.toml";
 
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Type)]
 pub struct Preferences {
-    animations_on: Option<bool>,
-    background_animation: Option<bool>,
-    animation_speed: Option<f64>,
-    sound_on: Option<bool>,
-    volume: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub animations_on: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub background_animation: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub animation_speed: Option<f64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub transparency_on: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub sound_on: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub volume: Option<f64>,
 }
 
 pub fn get_preferences_file(

@@ -164,4 +164,22 @@ mod tests {
         )
         .await;
     }
+
+    #[tokio::test]
+    async fn test_set_preferences_transparency_on() {
+        check_set_preferences_sample(
+            function_name!(),
+            "./api/sample-calls/set_preferences-transparency-on.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_set_preferences_transparency_off() {
+        check_set_preferences_sample(
+            function_name!(),
+            "./api/sample-calls/set_preferences-transparency-off.yaml",
+        )
+        .await;
+    }
 }

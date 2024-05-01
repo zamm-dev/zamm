@@ -244,7 +244,7 @@
   import getComponentId from "./label-id";
   import RoundDef from "./RoundDef.svelte";
   import { cubicInOut, cubicOut, linear } from "svelte/easing";
-  import { animationSpeed, animationsOn } from "./preferences";
+  import { animationSpeed, animationsOn, transparencyOn } from "./preferences";
   import { fade, type TransitionConfig } from "svelte/transition";
   import { firstAppLoad, firstPageLoad } from "./firstPageLoad";
   import { SubAnimation, PropertyAnimation } from "$lib/animation-timing";
@@ -514,7 +514,14 @@
   <RoundDef />
 
   <div class="border-container">
-    <div class="border-box" in:revealOutline|global={timing.borderBox}></div>
+    <div
+      class="border-box"
+      class:transparent={$transparencyOn}
+      in:revealOutline|global={timing.borderBox}
+    >
+      <div class="blur"></div>
+      <div class="background"></div>
+    </div>
     <div class="info-box">
       <h2
         in:revealTitle|global={timing.title}
@@ -549,32 +556,56 @@
     flex-direction: column;
   }
 
-  .border-box {
+  .border-box,
+  .border-box div,
+  .border-box div::before {
     width: 100%;
     height: 100%;
     position: absolute;
-    filter: url(#round) drop-shadow(0px 1px 4px rgba(26, 58, 58, 0.4));
-    z-index: 1;
   }
 
-  .border-box::before {
+  .border-box {
+    z-index: 1;
+    --cut-depth: calc(2 * var(--cut) * cos(45deg));
+    --poly: polygon(
+      0% var(--cut-depth),
+      var(--cut-depth) 0%,
+      100% 0%,
+      100% calc(100% - var(--cut-depth)),
+      calc(100% - var(--cut-depth)) 100%,
+      0% 100%
+    );
+  }
+
+  .border-box .blur {
+    display: none;
+  }
+
+  .border-box.transparent .blur {
+    display: block;
+  }
+
+  .border-box .blur::before {
+    backdrop-filter: blur(9px);
+    -webkit-clip-path: var(--poly);
+    clip-path: var(--poly);
     content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--color-foreground);
-    -webkit-mask:
-      linear-gradient(-45deg, transparent 0 var(--cut), #fff 0) bottom right,
-      linear-gradient(135deg, transparent 0 var(--cut), #fff 0) top left;
-    -webkit-mask-size: 51% 100%;
-    -webkit-mask-repeat: no-repeat;
-    mask:
-      linear-gradient(-45deg, transparent 0 var(--cut), #fff 0) bottom right,
-      linear-gradient(135deg, transparent 0 var(--cut), #fff 0) top left;
-    mask-size: 51% 100%;
-    mask-repeat: no-repeat;
+  }
+
+  .border-box .background {
+    filter: url(#round) drop-shadow(0px 1px 4px rgba(26, 58, 58, 0.4));
+  }
+
+  .border-box.transparent .background {
+    filter: url(#round) drop-shadow(0px 1px 4px rgba(26, 58, 58, 0.8));
+    opacity: 0.5;
+  }
+
+  .border-box .background::before {
+    background: #fff;
+    -webkit-clip-path: var(--poly);
+    clip-path: var(--poly);
+    content: "";
   }
 
   .info-box {
