@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import { standardDuration } from "$lib/preferences";
   import prand from "pure-rand";
-  import FontFaceObserver from "fontfaceobserver";
 
   const rng = prand.xoroshiro128plus(8650539321744612);
   const CHAR_EM = 26;
@@ -39,19 +38,6 @@
     animateInterval = undefined;
   }
 
-  function ensureChineseFontLoaded(callback: () => void) {
-    var zhiMangXing = new FontFaceObserver("Zhi Mang Xing");
-    zhiMangXing
-      .load("中文字")
-      .then(callback)
-      .catch(function (err) {
-        console.warn(
-          "Could not load Chinese font for background animation:",
-          err,
-        );
-      });
-  }
-
   function startAnimating() {
     if (!animated) {
       // this is possible from the animation speed change trigger
@@ -59,14 +45,12 @@
       return;
     }
 
-    ensureChineseFontLoaded(function () {
-      if (animateInterval) {
-        console.warn("Animation already running");
-        return;
-      }
+    if (animateInterval) {
+      console.warn("Animation already running");
+      return;
+    }
 
-      animateInterval = setInterval(draw, animateIntervalMs);
-    });
+    animateInterval = setInterval(draw, animateIntervalMs);
   }
 
   function nextColumnPosition() {
@@ -99,17 +83,14 @@
     if (animated) {
       startAnimating();
     } else {
-      ensureChineseFontLoaded(function () {
-        for (let i = 0; i < STATIC_INITIAL_DRAWS; i++) {
-          draw();
-        }
-      });
+      for (let i = 0; i < STATIC_INITIAL_DRAWS; i++) {
+        draw();
+      }
     }
   }
 
   function draw() {
     if (!ctx || !canvas || numColumns === 0) {
-      console.warn("Canvas not ready for drawing");
       return;
     }
 

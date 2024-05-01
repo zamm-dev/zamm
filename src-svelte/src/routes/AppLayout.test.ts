@@ -16,6 +16,17 @@ import { tickFor } from "$lib/test-helpers";
 const tauriInvokeMock = vi.fn();
 
 vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+vi.stubGlobal("FontFace", function () {
+  return {
+    load: () => Promise.resolve(),
+  };
+});
+Object.defineProperty(document, "fonts", {
+  value: {
+    add: vi.fn(),
+    load: vi.fn(),
+  },
+});
 
 describe("AppLayout", () => {
   let tauriInvokeMock: Mock;
