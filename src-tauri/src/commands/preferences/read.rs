@@ -11,15 +11,20 @@ fn get_preferences_happy_path(
 ) -> ZammResult<Preferences> {
     let preferences_path = get_preferences_file(maybe_preferences_dir.as_ref())?;
     let display_filename = preferences_path.display();
-    if preferences_path.exists() {
+    let mut found_preferences = if preferences_path.exists() {
         println!("Reading preferences from {display_filename}");
         let contents = fs::read_to_string(preferences_path)?;
         let preferences: Preferences = toml::from_str(&contents)?;
-        Ok(preferences)
+        preferences
     } else {
         println!("No preferences found at {display_filename}");
-        Ok(Preferences::default())
+        Preferences::default()
+    };
+    #[cfg(target_os = "windows")]
+    if found_preferences.transparency_on.is_none() {
+        found_preferences.transparency_on = Some(true);
     }
+    Ok(found_preferences)
 }
 
 fn get_preferences_helper(preferences_path: &Option<PathBuf>) -> Preferences {
@@ -95,6 +100,7 @@ mod tests {
         test_case.check_sample_call(file_prefix).await;
     }
 
+    #[cfg(not(target_os = "windows"))]
     #[tokio::test]
     async fn test_get_preferences_without_file() {
         check_get_preferences_sample(
@@ -104,6 +110,17 @@ mod tests {
         .await;
     }
 
+    #[cfg(target_os = "windows")]
+    #[tokio::test]
+    async fn test_get_preferences_without_file() {
+        check_get_preferences_sample(
+            function_name!(),
+            "./api/sample-calls/get_preferences-no-file-windows.yaml",
+        )
+        .await;
+    }
+
+    #[cfg(not(target_os = "windows"))]
     #[tokio::test]
     async fn test_get_preferences_with_sound_override() {
         check_get_preferences_sample(
@@ -113,6 +130,7 @@ mod tests {
         .await;
     }
 
+    #[cfg(not(target_os = "windows"))]
     #[tokio::test]
     async fn test_get_preferences_with_volume_override() {
         check_get_preferences_sample(
@@ -140,6 +158,7 @@ mod tests {
         .await;
     }
 
+    #[cfg(not(target_os = "windows"))]
     #[tokio::test]
     async fn test_get_preferences_with_extra_settings() {
         check_get_preferences_sample(
