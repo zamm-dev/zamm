@@ -65,6 +65,7 @@
     "@fontsource/jetbrains-mono": "^5.0.11",
     "@fontsource/kdam-thmor-pro": "^5.0.19",
     "@fontsource/nokora": "^5.0.19",
+    "@fontsource/zhi-mang-xing": "^5.0.12",
     "@neodrag/svelte": "file:../forks/neodrag/packages/svelte",
     "autosize": "^6.0.1",
     "nanoid": "^3.3.6",

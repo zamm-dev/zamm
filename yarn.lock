@@ -1396,6 +1396,11 @@
   resolved "https://registry.yarnpkg.com/@fontsource/nokora/-/nokora-5.0.19.tgz#8912f767a6a8f1ac16fdc96f2435790ba92bdac8"
   integrity sha512-zZSp2/3O8lR3ILRhfkogN/coeiRSnHoY3A6bscnGoQvBLVjhKV9MvIWTsYhHfPGFVUQp46UUoVZoVy3YJtlzqg==
 
+"@fontsource/zhi-mang-xing@^5.0.12":
+  version "5.0.12"
+  resolved "https://registry.yarnpkg.com/@fontsource/zhi-mang-xing/-/zhi-mang-xing-5.0.12.tgz#20aa1780ad58f876b61ae1ad32b6b1cb11a5cde0"
+  integrity sha512-1s63WfOM6sTqpW+nvmMWRZaIuw/ehGv9XSTB79Iod3DH0TLPjZ7BZweU8woLpOW6DwHlD64fGGFU13Fr6LlvoA==
+
 "@glideapps/ts-necessities@2.1.3", "@glideapps/ts-necessities@^2.1.3":
   version "2.1.3"
   resolved "https://registry.yarnpkg.com/@glideapps/ts-necessities/-/ts-necessities-2.1.3.tgz#502beb495fad73cb6576ece1ffdb62023cacc9d5"

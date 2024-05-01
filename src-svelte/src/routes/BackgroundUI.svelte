@@ -4,22 +4,22 @@
   import prand from "pure-rand";
 
   const rng = prand.xoroshiro128plus(8650539321744612);
-  const CHAR_EM = 20;
-  const CHAR_GAP = 5;
+  const CHAR_EM = 26;
+  const CHAR_GAP = 2;
   const BLOCK_SIZE = CHAR_EM + CHAR_GAP;
   const ANIMATES_PER_CHAR = 2;
   const STATIC_INITIAL_DRAWS = 100;
   const DDJ = [
     "道可道非常道",
     "名可名非常名",
-    "無名天地之始",
-    "有名萬物之母",
-    "故常無欲以觀其妙",
-    "常有欲以觀其徼",
-    "此兩者同出而異名",
-    "同謂之玄",
+    "无名天地之始",
+    "有名万物之母",
+    "故常无欲以观其妙",
+    "常有欲以观其徼",
+    "此两者同出而异名",
+    "同谓之玄",
     "玄之又玄",
-    "眾妙之門",
+    "众妙之门",
   ];
   export let animated = false;
   $: animateIntervalMs = $standardDuration / 2;
@@ -91,7 +91,7 @@
     ctx.fillStyle = "#FAF9F633";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#D5CDB4C0";
-    ctx.font = CHAR_EM + "px sans-serif";
+    ctx.font = CHAR_EM + "px 'Zhi Mang Xing', sans-serif";
 
     for (var column = 0; column < dropsPosition.length; column++) {
       const textLine = DDJ[column % DDJ.length];
