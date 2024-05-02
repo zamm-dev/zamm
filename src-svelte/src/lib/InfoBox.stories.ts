@@ -2,6 +2,7 @@ import InfoBox from "./InfoBoxView.svelte";
 import type { StoryFn, StoryObj } from "@storybook/svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
 import MockTransitions from "$lib/__mocks__/MockTransitions.svelte";
+import MockPageTransitions from "./__mocks__/MockPageTransitions.svelte";
 
 export default {
   component: InfoBox,
@@ -72,6 +73,28 @@ Motionless.decorators = [
   (story: StoryFn) => {
     return {
       Component: MockTransitions,
+      slot: story,
+    };
+  },
+];
+
+export const Transparent: StoryObj = Template.bind({}) as any;
+Transparent.args = {
+  title: "Simulation",
+  maxWidth: "50rem",
+};
+Transparent.parameters = {
+  preferences: {
+    animationsOn: false,
+    backgroundAnimation: false,
+    transparencyOn: true,
+  },
+};
+Transparent.decorators = [
+  SvelteStoresDecorator,
+  (story: StoryFn) => {
+    return {
+      Component: MockPageTransitions,
       slot: story,
     };
   },

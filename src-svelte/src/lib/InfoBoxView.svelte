@@ -6,7 +6,10 @@
   firstPageLoad.set(true);
 </script>
 
-<div style="--base-animation-speed: {$animationSpeed};">
+<div
+  class="screenshot-container"
+  style="--base-animation-speed: {$animationSpeed};"
+>
   <InfoBox {...$$restProps}>
     <p class="atomic-reveal">
       How do we know that even the realest of realities wouldn't be subjective,
@@ -16,3 +19,10 @@
     </p>
   </InfoBox>
 </div>
+
+<style>
+  .screenshot-container {
+    padding: 1rem;
+    margin: -1rem;
+  }
+</style>

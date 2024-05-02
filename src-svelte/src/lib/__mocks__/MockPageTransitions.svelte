@@ -2,18 +2,13 @@
   import MockFullPageLayout from "./MockFullPageLayout.svelte";
   import PageTransition from "../../routes/PageTransition.svelte";
   import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
-  import {
-    animationSpeed,
-    transparencyOn,
-    backgroundAnimation,
-  } from "$lib/preferences";
+  import { animationSpeed, transparencyOn } from "$lib/preferences";
   import Background from "../../routes/Background.svelte";
 
   firstAppLoad.set(true);
   firstPageLoad.set(true);
   animationSpeed.set(0.1);
   transparencyOn.set(true);
-  backgroundAnimation.set(true);
 </script>
 
 <div id="mock-transitions">
