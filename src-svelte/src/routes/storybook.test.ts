@@ -1,18 +1,12 @@
 import {
   type Browser,
+  chromium,
   webkit,
   type Page,
   type BrowserContext,
   type Frame,
 } from "@playwright/test";
-import {
-  afterAll,
-  beforeAll,
-  afterEach,
-  beforeEach,
-  describe,
-  test,
-} from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, test } from "vitest";
 import {
   toMatchImageSnapshot,
   type MatchImageSnapshotOptions,
@@ -39,6 +33,8 @@ interface ComponentTestConfig {
 interface VariantConfig {
   name: string;
   prefix?: string;
+  browser?: "webkit" | "chromium";
+  selector?: string;
   assertDynamic?: boolean;
   resizeWindow?: boolean;
   additionalAction?: (frame: Frame, page: Page) => Promise<void>;
@@ -65,7 +61,14 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["reusable", "infobox"],
-    variants: ["regular"],
+    variants: [
+      "regular",
+      {
+        name: "transparent",
+        browser: "chromium",
+        selector: ".screenshot-container",
+      },
+    ],
     screenshotEntireBody: true,
   },
   {
@@ -228,19 +231,25 @@ async function checkVariants(variantFiles: string[], screenshot: Buffer) {
   return false;
 }
 
-interface StorybookTestContext {
-  page: Page;
-}
-
 describe.concurrent("Storybook visual tests", () => {
-  let browser: Browser;
-  let browserContext: BrowserContext;
+  let webkitBrowser: Browser;
+  let webkitBrowserContext: BrowserContext;
+  let chromiumBrowser: Browser;
+  let chromiumBrowserContext: BrowserContext;
 
   beforeAll(async () => {
-    browser = await webkit.launch({ headless: true });
-    console.log(`Running tests with Webkit version ${browser.version()}`);
-    browserContext = await browser.newContext();
-    browserContext.setDefaultTimeout(DEFAULT_TIMEOUT);
+    webkitBrowser = await webkit.launch({ headless: true });
+    webkitBrowserContext = await webkitBrowser.newContext();
+    webkitBrowserContext.setDefaultTimeout(DEFAULT_TIMEOUT);
+
+    chromiumBrowser = await chromium.launch({ headless: true });
+    chromiumBrowserContext = await chromiumBrowser.newContext();
+    chromiumBrowserContext.setDefaultTimeout(DEFAULT_TIMEOUT);
+
+    console.log(
+      `Running tests with Webkit v${webkitBrowser.version()} and ` +
+        `Chromium v${chromiumBrowser.version()}`,
+    );
 
     try {
       await fs.rm(`${SCREENSHOTS_BASE_DIR}/testing`, {
@@ -253,34 +262,38 @@ describe.concurrent("Storybook visual tests", () => {
   });
 
   afterAll(async () => {
-    await browserContext.close();
-    await browser.close();
+    await webkitBrowserContext.close();
+    await webkitBrowser.close();
+    await chromiumBrowserContext.close();
+    await chromiumBrowser.close();
   });
 
-  beforeEach<StorybookTestContext>(async (context) => {
-    context.page = await browserContext.newPage();
+  beforeEach(async (context) => {
     context.expect.extend({ toMatchImageSnapshot });
-  });
-
-  afterEach<StorybookTestContext>(async (context) => {
-    if (context.task.result?.state === "pass") {
-      await context.page.close();
-    }
   });
 
   const takeScreenshot = async (
     frame: Frame,
     page: Page,
     resizeWindow: boolean,
+    selector?: string,
     screenshotEntireBody?: boolean,
   ) => {
-    let locatorStr = screenshotEntireBody
-      ? "body"
-      : "#storybook-root > :first-child";
-    const elementClass = await frame.locator(locatorStr).getAttribute("class");
-    if (elementClass?.includes("storybook-wrapper")) {
-      locatorStr = ".storybook-wrapper > :first-child > :first-child";
+    let locatorStr;
+    if (selector) {
+      locatorStr = selector;
+    } else {
+      locatorStr = screenshotEntireBody
+        ? "body"
+        : "#storybook-root > :first-child";
+      const elementClass = await frame
+        .locator(locatorStr)
+        .getAttribute("class");
+      if (elementClass?.includes("storybook-wrapper")) {
+        locatorStr = ".storybook-wrapper > :first-child > :first-child";
+      }
     }
+
     const elementLocator = frame.locator(locatorStr);
     await elementLocator.waitFor({ state: "visible" });
 
@@ -331,9 +344,13 @@ describe.concurrent("Storybook visual tests", () => {
             }
           : variant;
       const testName = `${storybookPath}/${variantConfig.name}.png`;
-      test<StorybookTestContext>(
+      test(
         `${testName} should render the same`,
-        async ({ expect, page }) => {
+        async ({ expect }) => {
+          const page =
+            variantConfig.browser === "chromium"
+              ? await chromiumBrowserContext.newPage()
+              : await webkitBrowserContext.newPage();
           const variantPrefixStr = variantConfig.prefix ?? variantConfig.name;
           const variantPrefix = `--${variantPrefixStr}`;
 
@@ -370,6 +387,7 @@ describe.concurrent("Storybook visual tests", () => {
             frame,
             page,
             variantConfig.resizeWindow ?? false,
+            variantConfig.selector,
             config.screenshotEntireBody,
           );
 
@@ -411,6 +429,7 @@ describe.concurrent("Storybook visual tests", () => {
               frame,
               page,
               variantConfig.resizeWindow ?? false,
+              variantConfig.selector,
               config.screenshotEntireBody,
             );
 
@@ -426,6 +445,8 @@ describe.concurrent("Storybook visual tests", () => {
               expect(newScreenshot).toMatchImageSnapshot(matchOptions);
             }
           }
+
+          await page.close();
         },
         {
           retry: 1,
