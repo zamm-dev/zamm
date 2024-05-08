@@ -23,6 +23,16 @@ SlowMotion.parameters = {
   },
 };
 
+export const Subpath: StoryObj = Template.bind({}) as any;
+Subpath.args = {
+  routeBAddress: "/a/subpath",
+};
+Subpath.parameters = {
+  preferences: {
+    animationSpeed: 0.1,
+  },
+};
+
 export const Motionless: StoryObj = Template.bind({}) as any;
 Motionless.parameters = {
   preferences: {
