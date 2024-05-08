@@ -1,6 +1,15 @@
 <script lang="ts" context="module">
   import { cubicIn, backOut } from "svelte/easing";
 
+  export enum TransitionType {
+    // user is going leftward -- meaning both incoming and outgoing are moving right
+    Left,
+    // user is going rightward -- meaning both incoming and outgoing are moving left
+    Right,
+    // incoming goes left, outgoing goes right
+    Swap,
+  }
+
   interface TransitionTiming {
     duration: number;
     delay?: number;
@@ -16,40 +25,25 @@
     in: Transition;
   }
 
-  export function getTransitionTiming(
-    totalDurationMs: number,
-    overlapFraction: number,
-  ): TransitionTiming {
-    const spacingFraction = -overlapFraction;
-    // let
-    //   d = duration of a single transition
-    //   s = spacing between transitions as fraction of d
-    //   and T = total duration of entire transition,
-    // then
-    //   d + (d * (1 + spacing)) = T
-    //   d * (2 + spacing) = T
-    //   d = T / (2 + spacing)
-    const transitionDurationMs = totalDurationMs / (2 + spacingFraction);
-    const transitionDelayMs = transitionDurationMs * (1 + spacingFraction);
-    return {
-      duration: Math.round(transitionDurationMs),
-      delay: Math.round(transitionDelayMs),
-    };
-  }
+  export function getTransitionType(
+    oldRoute: string,
+    newRoute: string,
+  ): TransitionType {
+    if (oldRoute === "/" || newRoute === "/") {
+      return TransitionType.Swap;
+    }
 
-  export function getTransitions(
-    totalDurationMs: number,
-    overlapFraction: number,
-  ): Transitions {
-    const { duration, delay } = getTransitionTiming(
-      totalDurationMs,
-      overlapFraction,
-    );
-    const out = { x: "-20%", duration, easing: cubicIn };
-    return {
-      out,
-      in: { ...out, delay, easing: backOut },
-    };
+    if (newRoute.startsWith(oldRoute)) {
+      // e.g. we're drilling down from /path/ to /path/subpath/
+      return TransitionType.Right;
+    }
+
+    if (oldRoute.startsWith(newRoute)) {
+      // e.g. we're moving back up from /path/subpath/ to /path/
+      return TransitionType.Left;
+    }
+
+    return TransitionType.Swap;
   }
 </script>
 
@@ -60,8 +54,10 @@
   import { onMount, tick } from "svelte";
 
   export let currentRoute: string;
+  let oldRoute = currentRoute;
   let ready = false;
   const visitedKeys = new Set<string>();
+  let transitions: Transitions = getTransitions(TransitionType.Swap);
 
   onMount(async () => {
     const regularDelay = transitions.in.delay;
@@ -82,10 +78,66 @@
     visitedKeys.add(route);
   }
 
-  // twice the speed of sidebar UI slider
-  $: totalDurationMs = 2 * $standardDuration;
-  $: transitions = getTransitions(totalDurationMs, 0);
+  function getTransitions(transitionType: TransitionType) {
+    const baseSlideTransition = {
+      duration: $standardDuration,
+      easing: cubicIn,
+      delay: 0,
+    };
+
+    switch (transitionType) {
+      case TransitionType.Right:
+        return {
+          out: {
+            ...baseSlideTransition,
+            x: "-100%",
+          },
+          in: {
+            ...baseSlideTransition,
+            x: "100%",
+          },
+        };
+      case TransitionType.Left:
+        return {
+          out: {
+            ...baseSlideTransition,
+            x: "100%",
+          },
+          in: {
+            ...baseSlideTransition,
+            x: "-100%",
+          },
+        };
+      case TransitionType.Swap:
+        return {
+          out: {
+            x: "-20%",
+            duration: $standardDuration,
+            easing: cubicIn,
+            delay: 0,
+          },
+          in: {
+            x: "-20%",
+            duration: $standardDuration,
+            easing: backOut,
+            delay: $standardDuration,
+          },
+        };
+    }
+  }
+
+  function updateFlyDirection(route: string) {
+    if (!ready) {
+      return;
+    }
+
+    const direction = getTransitionType(oldRoute, route);
+    transitions = getTransitions(direction);
+    oldRoute = route;
+  }
+
   $: checkFirstPageLoad(currentRoute);
+  $: updateFlyDirection(currentRoute);
 </script>
 
 {#key currentRoute}

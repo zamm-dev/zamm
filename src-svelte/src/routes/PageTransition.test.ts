@@ -1,61 +1,33 @@
-import { getTransitionTiming } from "./PageTransition.svelte";
+import { getTransitionType, TransitionType } from "./PageTransition.svelte";
 import PageTransitionControl from "./PageTransitionControl.svelte";
 import { act, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import { get } from "svelte/store";
 import { firstPageLoad } from "$lib/firstPageLoad";
 
-describe("PageTransition durations", () => {
-  it("should halve the duration if no overlap", () => {
-    const totalTime = 100;
-    const overlapFraction = 0;
-    const expectedDuration = 50;
-    const expectedDelay = 50;
-    // check that our test is doing the math right
-    // both durations will have the same length, so the total time is the time delay
-    // before the second one starts plus the length of the second one
-    expect(expectedDuration + expectedDelay).toEqual(totalTime);
-    // check that our function is doing the math right
-    expect(getTransitionTiming(totalTime, overlapFraction)).toEqual({
-      duration: expectedDuration,
-      delay: expectedDelay,
-    });
+describe("Screen during transition", () => {
+  it("should move towards the right if new route is subpath", () => {
+    expect(getTransitionType("/parent", "/parent/child")).toEqual(
+      TransitionType.Right,
+    );
   });
 
-  it("should increase delay if negative overlap", () => {
-    const totalTime = 220;
-    const overlapFraction = -0.2;
-    const expectedDuration = 100;
-    const expectedDelay = 120;
-    expect(expectedDuration + expectedDelay).toEqual(totalTime);
-    expect(getTransitionTiming(totalTime, overlapFraction)).toEqual({
-      duration: expectedDuration,
-      delay: expectedDelay,
-    });
+  it("should move towards the left if new route is super-path", () => {
+    expect(getTransitionType("/parent/child", "/parent")).toEqual(
+      TransitionType.Left,
+    );
   });
 
-  it("should increase duration if positive overlap", () => {
-    const totalTime = 180;
-    const overlapFraction = 0.2;
-    const expectedDuration = 100;
-    const expectedDelay = 80;
-    expect(expectedDuration + expectedDelay).toEqual(totalTime);
-    expect(getTransitionTiming(totalTime, overlapFraction)).toEqual({
-      duration: expectedDuration,
-      delay: expectedDelay,
-    });
+  it("should swap if both routes are different", () => {
+    expect(getTransitionType("/some-page", "/other-page")).toEqual(
+      TransitionType.Swap,
+    );
   });
 
-  it("should have zero delay at total overlap", () => {
-    const totalTime = 100;
-    const overlapFraction = 1.0;
-    const expectedDuration = 100;
-    const expectedDelay = 0;
-    expect(expectedDuration + expectedDelay).toEqual(totalTime);
-    expect(getTransitionTiming(totalTime, overlapFraction)).toEqual({
-      duration: expectedDuration,
-      delay: expectedDelay,
-    });
+  it("should swap for root path", () => {
+    expect(getTransitionType("/", "/some-page")).toEqual(TransitionType.Swap);
+
+    expect(getTransitionType("/some-page", "/")).toEqual(TransitionType.Swap);
   });
 });
 

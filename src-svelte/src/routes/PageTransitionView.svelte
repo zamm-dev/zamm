@@ -5,12 +5,13 @@
   import PageTransition from "./PageTransition.svelte";
 
   let routeA = true;
+  export let routeBAddress = "/b/";
 
   function toggleRoute() {
     routeA = !routeA;
   }
 
-  $: currentRoute = routeA ? "/a.html" : "/b.html";
+  $: currentRoute = routeA ? "/a/" : routeBAddress;
 </script>
 
 <button class="route-toggle" on:click={toggleRoute}>Toggle route</button>
