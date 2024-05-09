@@ -52,7 +52,7 @@
     bind:this={textareaInput}
     bind:value={currentMessage}
   />
-  <Button unwrapped rightEnd><IconSend /></Button>
+  <Button ariaLabel="Send" unwrapped rightEnd><IconSend /></Button>
 </form>
 
 <style>

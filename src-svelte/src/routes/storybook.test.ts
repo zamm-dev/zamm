@@ -161,7 +161,7 @@ const components: ComponentTestConfig[] = [
         name: "new-message-sent",
         prefix: "extra-long-input",
         additionalAction: async (frame: Frame) => {
-          await frame.click('button:has-text("Send")');
+          await frame.click('button[aria-label="Send"]');
           await frame.click('button[title="Dismiss"]');
         },
       },
