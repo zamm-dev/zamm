@@ -1,6 +1,7 @@
 <script lang="ts">
   import autosize from "autosize";
   import Button from "$lib/controls/Button.svelte";
+  import IconSend from "~icons/gravity-ui/arrow-right";
   import { onMount } from "svelte";
 
   export let sendChatMessage: (message: string) => void;
@@ -51,7 +52,7 @@
     bind:this={textareaInput}
     bind:value={currentMessage}
   />
-  <Button unwrapped rightEnd>Send</Button>
+  <Button unwrapped rightEnd><IconSend /></Button>
 </form>
 
 <style>
@@ -72,5 +73,13 @@
     min-height: 1.2rem;
     max-height: 9.8rem;
     resize: none;
+  }
+
+  form :global(button) {
+    width: 4rem;
+    min-height: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 </style>
