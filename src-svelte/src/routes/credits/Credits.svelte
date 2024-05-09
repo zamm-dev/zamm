@@ -182,6 +182,11 @@
                 logo="vaadin.svg"
                 url="https://vaadin.com/"
               />
+              <Creditor
+                name="Gravity UI"
+                logo="gravity-ui.png"
+                url="https://gravity-ui.com/"
+              />
             </Grid>
           </SubInfoBox>
         </div>

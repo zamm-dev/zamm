@@ -99,11 +99,11 @@
 
   img {
     width: 2rem;
+    border-radius: var(--corner-roundness);
   }
 
   img.person {
     width: 2.5rem;
-    border-radius: var(--corner-roundness);
   }
 
   .logo-placeholder,
