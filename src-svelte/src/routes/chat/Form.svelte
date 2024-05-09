@@ -63,7 +63,7 @@
   }
 
   textarea {
-    margin: 0 0.75rem;
+    margin: auto 0.75rem;
     flex: 1;
     background-color: transparent;
     font-size: 1rem;
