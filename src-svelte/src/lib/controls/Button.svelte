@@ -1,7 +1,6 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
 
-  export let text: string;
   export let unwrapped = false;
   export let rightEnd = false;
   const dispatchClickEvent = createEventDispatcher();
@@ -18,7 +17,7 @@
     type="submit"
     on:click={handleClick}
   >
-    {text}
+    <slot />
   </button>
 {:else}
   <button
@@ -27,7 +26,9 @@
     type="submit"
     on:click={handleClick}
   >
-    <div class="cut-corners inner" class:right-end={rightEnd}>{text}</div>
+    <div class="cut-corners inner" class:right-end={rightEnd}>
+      <slot />
+    </div>
   </button>
 {/if}
 

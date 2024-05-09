@@ -51,7 +51,7 @@
     bind:this={textareaInput}
     bind:value={currentMessage}
   />
-  <Button unwrapped rightEnd text="Send" />
+  <Button unwrapped rightEnd>Send</Button>
 </form>
 
 <style>

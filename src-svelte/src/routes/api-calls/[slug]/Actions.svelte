@@ -26,7 +26,7 @@
 
 <InfoBox title="Actions" childNumber={1}>
   <div class="action-buttons">
-    <Button text="Restore conversation" on:click={restoreConversation} />
+    <Button on:click={restoreConversation}>Restore conversation</Button>
   </div>
 </InfoBox>
 
