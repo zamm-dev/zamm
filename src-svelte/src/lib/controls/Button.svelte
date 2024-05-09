@@ -45,7 +45,6 @@
   .outer.right-end,
   .inner.right-end {
     --cut-top-left: 0.01rem;
-    height: 100%;
   }
 
   .inner {

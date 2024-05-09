@@ -58,7 +58,7 @@
   form {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
   }
 
