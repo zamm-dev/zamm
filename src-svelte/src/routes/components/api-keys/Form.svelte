@@ -106,7 +106,7 @@
       </div>
 
       <div class="save-button">
-        <Button text="Save" />
+        <Button>Save</Button>
       </div>
     </form>
   </div>

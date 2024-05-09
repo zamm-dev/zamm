@@ -51,19 +51,19 @@
     bind:this={textareaInput}
     bind:value={currentMessage}
   />
-  <Button unwrapped rightEnd text="Send" />
+  <Button unwrapped rightEnd>Send</Button>
 </form>
 
 <style>
   form {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
   }
 
   textarea {
-    margin: 0 0.75rem;
+    margin: auto 0.75rem;
     flex: 1;
     background-color: transparent;
     font-size: 1rem;
