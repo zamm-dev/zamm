@@ -1,4 +1,4 @@
-import Button from "./Button.svelte";
+import Button from "./ButtonView.svelte";
 import type { StoryObj } from "@storybook/svelte";
 
 export default {
