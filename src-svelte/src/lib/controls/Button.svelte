@@ -3,6 +3,7 @@
 
   export let unwrapped = false;
   export let rightEnd = false;
+  export let ariaLabel: string | undefined = undefined;
   const dispatchClickEvent = createEventDispatcher();
 
   function handleClick() {
@@ -15,6 +16,7 @@
     class="cut-corners inner"
     class:right-end={rightEnd}
     type="submit"
+    aria-label={ariaLabel}
     on:click={handleClick}
   >
     <slot />
@@ -24,6 +26,7 @@
     class="cut-corners outer"
     class:right-end={rightEnd}
     type="submit"
+    aria-label={ariaLabel}
     on:click={handleClick}
   >
     <div class="cut-corners inner" class:right-end={rightEnd}>
