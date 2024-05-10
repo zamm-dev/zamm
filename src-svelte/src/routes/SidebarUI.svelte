@@ -6,6 +6,7 @@
   import IconDatabase from "~icons/fa6-solid/database";
   import { playSoundEffect } from "$lib/sound";
   import { animationSpeed } from "$lib/preferences";
+  import { onMount } from "svelte";
 
   const routes: App.Route[] = [
     {
@@ -35,9 +36,11 @@
     },
   ];
 
+  const REGULAR_TRANSITION_DURATION = "calc(2 * var(--standard-duration))";
   export let currentRoute: string;
   export let dummyLinks = false;
-  let indicatorPosition: string;
+  let indicatorPosition: number;
+  let transitionDuration = REGULAR_TRANSITION_DURATION;
 
   function routeMatches(sidebarRoute: string, pageRoute: string) {
     if (sidebarRoute === "/") {
@@ -46,9 +49,16 @@
     return pageRoute.includes(sidebarRoute);
   }
 
-  function setIndicatorPosition(newRoute: string) {
+  function getIndicatorPosition(newRoute: string) {
     const routeIndex = routes.findIndex((r) => routeMatches(r.path, newRoute));
-    indicatorPosition = `calc(${routeIndex} * var(--sidebar-icon-size))`;
+    const routeName = routes[routeIndex].name.toLowerCase();
+    const routeElementId = `nav-${routeName}`;
+    const iconElement = document.getElementById(routeElementId);
+    if (!iconElement) {
+      // possible before element has mounted
+      return 0;
+    }
+    indicatorPosition = iconElement.offsetTop;
     return indicatorPosition;
   }
 
@@ -68,10 +78,26 @@
     };
   }
 
-  $: indicatorPosition = setIndicatorPosition(currentRoute);
+  onMount(() => {
+    const updateIndicator = () => {
+      transitionDuration = "0";
+      indicatorPosition = getIndicatorPosition(currentRoute);
+      setTimeout(() => {
+        transitionDuration = REGULAR_TRANSITION_DURATION;
+      }, 10);
+    };
+    updateIndicator();
+    window.addEventListener("resize", updateIndicator);
+
+    return () => {
+      window.removeEventListener("resize", updateIndicator);
+    };
+  });
+
+  $: indicatorPosition = getIndicatorPosition(currentRoute);
 </script>
 
-<header>
+<header style={`--animation-duration: ${transitionDuration};`}>
   <svg
     version="1.1"
     style="visibility: hidden; position: absolute;"
@@ -108,8 +134,24 @@
   </svg>
 
   <nav>
-    <div class="indicator" style="--top: {indicatorPosition};"></div>
-    {#each routes as route (route.path)}
+    <div class="indicator" style="--top: {indicatorPosition}px;"></div>
+    {#each routes.slice(0, routes.length - 2) as route (route.path)}
+      <a
+        aria-current={routeMatches(route.path, currentRoute)
+          ? "page"
+          : undefined}
+        class:icon={true}
+        class={route.name.toLowerCase()}
+        id="nav-{route.name.toLowerCase()}"
+        title={route.name}
+        href={dummyLinks ? "#" : route.path}
+        on:click={routeChangeSimulator(route)}
+      >
+        <svelte:component this={route.icon} />
+      </a>
+    {/each}
+    <div class="spacer"></div>
+    {#each routes.slice(routes.length - 2, routes.length) as route (route.path)}
       <a
         aria-current={routeMatches(route.path, currentRoute)
           ? "page"
@@ -129,14 +171,13 @@
 
 <style>
   header {
-    --animation-duration: calc(2 * var(--standard-duration));
     --icons-top-offset: calc(2 * var(--corner-roundness));
     --sidebar-left-padding: 0.5rem;
     --sidebar-icon-size: calc(
       var(--sidebar-width) - var(--sidebar-left-padding)
     );
-    padding-top: var(--icons-top-offset);
-    padding-left: var(--sidebar-left-padding);
+    padding: var(--icons-top-offset) 0 var(--icons-top-offset)
+      var(--sidebar-left-padding);
     float: left;
     clip-path: inset(0 0 0 0);
     height: 100vh;
@@ -148,6 +189,13 @@
 
   nav {
     position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  nav .spacer {
+    flex: 1;
   }
 
   .icon,
