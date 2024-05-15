@@ -1,0 +1,1 @@
+DROP TABLE llm_call_continuations

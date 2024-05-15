@@ -8,6 +8,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    llm_call_continuations (previous_call_id, next_call_id) {
+        previous_call_id -> Text,
+        next_call_id -> Text,
+    }
+}
+
+diesel::table! {
     llm_calls (id) {
         id -> Text,
         timestamp -> Timestamp,
@@ -23,4 +30,8 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(api_keys, llm_calls,);
+diesel::allow_tables_to_appear_in_same_query!(
+    api_keys,
+    llm_call_continuations,
+    llm_calls,
+);
