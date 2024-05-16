@@ -7,7 +7,7 @@ import PersistentChatView from "./PersistentChatView.svelte";
 import userEvent from "@testing-library/user-event";
 import { TauriInvokePlayback, type ParsedCall } from "$lib/sample-call-testing";
 import { animationSpeed } from "$lib/preferences";
-import type { ChatMessage, LlmCall } from "$lib/bindings";
+import type { ChatMessage, LightweightLlmCall } from "$lib/bindings";
 
 describe("Chat conversation", () => {
   let tauriInvokeMock: Mock;
@@ -81,8 +81,9 @@ describe("Chat conversation", () => {
     expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
 
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
-    const lastResult: LlmCall = tauriInvokeMock.mock.results[0].value;
-    const aiResponse = lastResult.response.completion.text;
+    const lastResult: LightweightLlmCall =
+      tauriInvokeMock.mock.results[0].value;
+    const aiResponse = lastResult.response_message.text;
     const lastSentence = aiResponse.split("\n").slice(-1)[0];
     await waitFor(() => {
       expect(

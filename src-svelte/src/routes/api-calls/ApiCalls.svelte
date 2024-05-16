@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { getApiCalls, type LlmCall } from "$lib/bindings";
+  import { getApiCalls, type LightweightLlmCall } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import InfoBox from "$lib/InfoBox.svelte";
   import Scrollable from "$lib/Scrollable.svelte";
@@ -12,7 +12,7 @@
 
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
-  let llmCalls: LlmCall[] = [];
+  let llmCalls: LightweightLlmCall[] = [];
   let llmCallsPromise: Promise<void> | undefined = undefined;
   let allCallsLoaded = false;
   let messageWidth = MIN_MESSAGE_WIDTH;
@@ -111,7 +111,7 @@
             <a href={`/api-calls/${call.id}`}>
               <div class="message instance">
                 <div class="text-container">
-                  <div class="text">{call.response.completion.text}</div>
+                  <div class="text">{call.response_message.text}</div>
                 </div>
                 <div class="time">{formatTimestamp(call.timestamp)}</div>
               </div>

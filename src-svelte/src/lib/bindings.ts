@@ -35,7 +35,7 @@ export function getSystemInfo() {
 }
 
 export function chat(provider: Service, llm: string, temperature: number | null, prompt: ChatMessage[]) {
-    return invoke()<LlmCall>("chat", { provider,llm,temperature,prompt })
+    return invoke()<LightweightLlmCall>("chat", { provider,llm,temperature,prompt })
 }
 
 export function getApiCall(id: string) {
@@ -43,22 +43,23 @@ export function getApiCall(id: string) {
 }
 
 export function getApiCalls(offset: number) {
-    return invoke()<LlmCall[]>("get_api_calls", { offset })
+    return invoke()<LightweightLlmCall[]>("get_api_calls", { offset })
 }
 
-export type Request = { prompt: Prompt; temperature: number }
 export type ChatMessage = { role: "System"; text: string } | { role: "Human"; text: string } | { role: "AI"; text: string }
-export type Llm = { name: string; requested: string; provider: Service }
-export type Service = "OpenAI"
-export type EntityId = { uuid: string }
+export type Prompt = ({ type: "Chat" } & ChatPrompt)
 export type Response = { completion: ChatMessage }
+export type Service = "OpenAI"
+export type Request = { prompt: Prompt; temperature: number }
 export type Preferences = { animations_on?: boolean | null; background_animation?: boolean | null; animation_speed?: number | null; transparency_on?: boolean | null; sound_on?: boolean | null; volume?: number | null }
+export type Llm = { name: string; requested: string; provider: Service }
+export type LightweightLlmCall = { id: EntityId; timestamp: string; response_message: ChatMessage }
+export type LlmCall = { id: EntityId; timestamp: string; llm: Llm; request: Request; response: Response; tokens: TokenMetadata }
 export type ApiKeys = { openai: string | null }
 export type OS = "Mac" | "Linux" | "Windows"
 export type Shell = "Bash" | "Zsh" | "PowerShell"
 export type SystemInfo = { zamm_version: string; os: OS | null; shell: Shell | null; shell_init_file: string | null }
-export type LlmCall = { id: EntityId; timestamp: string; llm: Llm; request: Request; response: Response; tokens: TokenMetadata }
+export type ChatPrompt = { messages: ChatMessage[] }
 export type TokenMetadata = { prompt: number | null; response: number | null; total: number | null }
 export type Sound = "Switch" | "Whoosh"
-export type Prompt = ({ type: "Chat" } & ChatPrompt)
-export type ChatPrompt = { messages: ChatMessage[] }
+export type EntityId = { uuid: string }
