@@ -72,37 +72,9 @@ def generate_api_call_json(i: int) -> str:
     return """      {
         "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a{0:02d}",
         "timestamp": "2024-01-16T08:{0:02d}:50.738093890",
-        "llm": {
-          "name": "gpt-4-0613",
-          "requested": "gpt-4",
-          "provider": "OpenAI"
-        },
-        "request": {
-          "prompt": {
-            "type": "Chat",
-            "messages": [
-              {
-                "role": "System",
-                "text": "You are ZAMM, a chat program. Respond in first person."
-              },
-              {
-                "role": "Human",
-                "text": "This is a mock conversation."
-              }
-            ]
-          },
-          "temperature": 1.0
-        },
-        "response": {
-          "completion": {
-            "role": "AI",
-            "text": "Mocking number {0}."
-          }
-        },
-        "tokens": {
-          "prompt": 15,
-          "response": 3,
-          "total": 18
+        "response_message": {
+          "role": "AI",
+          "text": "Mocking number {0}."
         }
       }""".replace(
         "{0:02d}", str(i).zfill(2)

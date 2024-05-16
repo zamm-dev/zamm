@@ -1,5 +1,5 @@
 use crate::commands::errors::ZammResult;
-use crate::models::llm_calls::{LlmCall, LlmCallRow};
+use crate::models::llm_calls::{LightweightLlmCall, LlmCallRow};
 use crate::schema::llm_calls;
 use crate::ZammDatabase;
 use anyhow::anyhow;
@@ -13,7 +13,7 @@ const PAGE_SIZE: i64 = 50;
 async fn get_api_calls_helper(
     zamm_db: &ZammDatabase,
     offset: i32,
-) -> ZammResult<Vec<LlmCall>> {
+) -> ZammResult<Vec<LightweightLlmCall>> {
     let mut db = zamm_db.0.lock().await;
     let conn = db.as_mut().ok_or(anyhow!("Failed to lock database"))?;
     let result: Vec<LlmCallRow> = llm_calls::table
@@ -21,7 +21,8 @@ async fn get_api_calls_helper(
         .offset(offset as i64)
         .limit(PAGE_SIZE)
         .load::<LlmCallRow>(conn)?;
-    let calls: Vec<LlmCall> = result.into_iter().map(|row| row.into()).collect();
+    let calls: Vec<LightweightLlmCall> =
+        result.into_iter().map(|row| row.into()).collect();
     Ok(calls)
 }
 
@@ -30,7 +31,7 @@ async fn get_api_calls_helper(
 pub async fn get_api_calls(
     database: State<'_, ZammDatabase>,
     offset: i32,
-) -> ZammResult<Vec<LlmCall>> {
+) -> ZammResult<Vec<LightweightLlmCall>> {
     get_api_calls_helper(&database, offset).await
 }
 
@@ -54,7 +55,7 @@ mod tests {
         test_fn_name: &'static str,
     }
 
-    impl SampleCallTestCase<GetApiCallsRequest, ZammResult<Vec<LlmCall>>>
+    impl SampleCallTestCase<GetApiCallsRequest, ZammResult<Vec<LightweightLlmCall>>>
         for GetApiCallsTestCase
     {
         const EXPECTED_API_CALL: &'static str = "get_api_calls";
@@ -68,7 +69,7 @@ mod tests {
             &mut self,
             args: &Option<GetApiCallsRequest>,
             side_effects: &SideEffectsHelpers,
-        ) -> ZammResult<Vec<LlmCall>> {
+        ) -> ZammResult<Vec<LightweightLlmCall>> {
             get_api_calls_helper(
                 side_effects.db.as_ref().unwrap(),
                 args.as_ref().unwrap().offset,
@@ -79,7 +80,7 @@ mod tests {
         fn serialize_result(
             &self,
             sample: &SampleCall,
-            result: &ZammResult<Vec<LlmCall>>,
+            result: &ZammResult<Vec<LightweightLlmCall>>,
         ) -> String {
             ZammResultReturn::serialize_result(self, sample, result)
         }
@@ -88,13 +89,16 @@ mod tests {
             &self,
             sample: &SampleCall,
             args: Option<&GetApiCallsRequest>,
-            result: &ZammResult<Vec<LlmCall>>,
+            result: &ZammResult<Vec<LightweightLlmCall>>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl ZammResultReturn<GetApiCallsRequest, Vec<LlmCall>> for GetApiCallsTestCase {}
+    impl ZammResultReturn<GetApiCallsRequest, Vec<LightweightLlmCall>>
+        for GetApiCallsTestCase
+    {
+    }
 
     async fn check_get_api_calls_sample(test_fn_name: &'static str, file_prefix: &str) {
         let mut test_case = GetApiCallsTestCase { test_fn_name };

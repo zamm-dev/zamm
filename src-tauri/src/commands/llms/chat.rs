@@ -1,8 +1,8 @@
 use crate::commands::errors::ZammResult;
 use crate::commands::Error;
 use crate::models::llm_calls::{
-    ChatMessage, ChatPrompt, EntityId, Llm, LlmCall, Prompt, Request, Response,
-    TokenMetadata,
+    ChatMessage, ChatPrompt, EntityId, LightweightLlmCall, Llm, LlmCall, Prompt,
+    Request, Response, TokenMetadata,
 };
 use crate::schema::llm_calls;
 use crate::setup::api_keys::Service;
@@ -24,7 +24,7 @@ async fn chat_helper(
     temperature: Option<f32>,
     prompt: Vec<ChatMessage>,
     http_client: reqwest_middleware::ClientWithMiddleware,
-) -> ZammResult<LlmCall> {
+) -> ZammResult<LightweightLlmCall> {
     let api_keys = zamm_api_keys.0.lock().await;
     if api_keys.openai.is_none() {
         return Err(Error::MissingApiKey {
@@ -106,7 +106,7 @@ async fn chat_helper(
             .execute(conn)?;
     } // todo: warn users if DB write unsuccessful
 
-    Ok(llm_call)
+    Ok(llm_call.into())
 }
 
 #[tauri::command(async)]
@@ -118,7 +118,7 @@ pub async fn chat(
     llm: String,
     temperature: Option<f32>,
     prompt: Vec<ChatMessage>,
-) -> ZammResult<LlmCall> {
+) -> ZammResult<LightweightLlmCall> {
     let http_client = reqwest::ClientBuilder::new().build()?;
     let client_with_middleware =
         reqwest_middleware::ClientBuilder::new(http_client).build();
@@ -167,7 +167,7 @@ mod tests {
         test_fn_name: &'static str,
     }
 
-    impl SampleCallTestCase<ChatRequest, ZammResult<LlmCall>> for ChatTestCase {
+    impl SampleCallTestCase<ChatRequest, ZammResult<LightweightLlmCall>> for ChatTestCase {
         const EXPECTED_API_CALL: &'static str = "chat";
         const CALL_HAS_ARGS: bool = true;
 
@@ -179,7 +179,7 @@ mod tests {
             &mut self,
             args: &Option<ChatRequest>,
             side_effects: &SideEffectsHelpers,
-        ) -> ZammResult<LlmCall> {
+        ) -> ZammResult<LightweightLlmCall> {
             let actual_args = args.as_ref().unwrap().clone();
 
             let network_helper = side_effects.network.as_ref().unwrap();
@@ -207,7 +207,7 @@ mod tests {
         fn output_replacements(
             &self,
             sample: &SampleCall,
-            result: &ZammResult<LlmCall>,
+            result: &ZammResult<LightweightLlmCall>,
         ) -> HashMap<String, String> {
             let expected_output = parse_response(&sample.response.message);
             let actual_output = result.as_ref().unwrap();
@@ -230,7 +230,7 @@ mod tests {
         fn serialize_result(
             &self,
             sample: &SampleCall,
-            result: &ZammResult<LlmCall>,
+            result: &ZammResult<LightweightLlmCall>,
         ) -> String {
             ZammResultReturn::serialize_result(self, sample, result)
         }
@@ -239,21 +239,21 @@ mod tests {
             &self,
             sample: &SampleCall,
             args: Option<&ChatRequest>,
-            result: &ZammResult<LlmCall>,
+            result: &ZammResult<LightweightLlmCall>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl ZammResultReturn<ChatRequest, LlmCall> for ChatTestCase {
+    impl ZammResultReturn<ChatRequest, LightweightLlmCall> for ChatTestCase {
         fn serialize_result(
             &self,
             sample: &SampleCall,
-            result: &ZammResult<LlmCall>,
+            result: &ZammResult<LightweightLlmCall>,
         ) -> String {
             let expected_llm_call = parse_response(&sample.response.message);
             // swap out non-deterministic parts before JSON comparison
-            let deterministic_llm_call = LlmCall {
+            let deterministic_llm_call = LightweightLlmCall {
                 id: expected_llm_call.id,
                 timestamp: expected_llm_call.timestamp,
                 ..result.as_ref().unwrap().clone()
@@ -262,7 +262,7 @@ mod tests {
         }
     }
 
-    fn parse_response(response_str: &str) -> LlmCall {
+    fn parse_response(response_str: &str) -> LightweightLlmCall {
         serde_json::from_str(response_str).unwrap()
     }
 
