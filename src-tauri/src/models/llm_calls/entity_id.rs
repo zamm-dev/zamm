@@ -1,0 +1,50 @@
+use diesel::backend::Backend;
+use diesel::deserialize::FromSqlRow;
+use diesel::deserialize::{self, FromSql};
+use diesel::expression::AsExpression;
+use diesel::serialize::{self, IsNull, Output, ToSql};
+use diesel::sql_types::Text;
+use diesel::sqlite::Sqlite;
+use serde::{Deserialize, Serialize};
+use std::ops::Deref;
+use uuid::Uuid;
+
+#[derive(
+    AsExpression, FromSqlRow, Debug, Clone, specta::Type, Serialize, Deserialize,
+)]
+#[diesel(sql_type = Text)]
+#[serde(transparent)]
+pub struct EntityId {
+    pub uuid: Uuid,
+}
+
+impl Deref for EntityId {
+    type Target = Uuid;
+
+    fn deref(&self) -> &Self::Target {
+        &self.uuid
+    }
+}
+
+impl ToSql<Text, Sqlite> for EntityId
+where
+    String: ToSql<Text, Sqlite>,
+{
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Sqlite>) -> serialize::Result {
+        let uuid_str = self.uuid.to_string();
+        out.set_value(uuid_str);
+        Ok(IsNull::No)
+    }
+}
+
+impl<DB> FromSql<Text, DB> for EntityId
+where
+    DB: Backend,
+    String: FromSql<Text, DB>,
+{
+    fn from_sql(bytes: DB::RawValue<'_>) -> deserialize::Result<Self> {
+        let uuid_str = String::from_sql(bytes)?;
+        let parsed_uuid = Uuid::parse_str(&uuid_str)?;
+        Ok(EntityId { uuid: parsed_uuid })
+    }
+}

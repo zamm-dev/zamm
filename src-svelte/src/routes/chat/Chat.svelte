@@ -79,7 +79,7 @@
 
     try {
       let llmCall = await chat("OpenAI", "gpt-4", null, $conversation);
-      appendMessage(llmCall.response.completion);
+      appendMessage(llmCall.response_message);
     } catch (err) {
       snackbarError(err as string);
     } finally {
