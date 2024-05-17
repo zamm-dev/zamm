@@ -1,6 +1,6 @@
 use crate::commands::errors::ZammResult;
-use crate::models::llm_calls::{EntityId, LlmCall, LlmCallRow};
-use crate::schema::llm_calls;
+use crate::models::llm_calls::{EntityId, LlmCall, LlmCallLeftJoinResult};
+use crate::schema::{llm_call_continuations, llm_calls};
 use crate::ZammDatabase;
 use anyhow::anyhow;
 use diesel::prelude::*;
@@ -18,10 +18,23 @@ async fn get_api_call_helper(
     };
     let mut db = zamm_db.0.lock().await;
     let conn = db.as_mut().ok_or(anyhow!("Failed to lock database"))?;
-    let result: LlmCallRow = llm_calls::table
-        .filter(llm_calls::id.eq(parsed_uuid))
-        .first::<LlmCallRow>(conn)?;
-    Ok(result.into())
+
+    let previous_call_result: LlmCallLeftJoinResult = llm_calls::table
+        .left_join(
+            llm_call_continuations::dsl::llm_call_continuations
+                .on(llm_calls::id.eq(llm_call_continuations::next_call_id)),
+        )
+        .select((
+            llm_calls::all_columns,
+            llm_call_continuations::previous_call_id.nullable(),
+        ))
+        .filter(llm_calls::id.eq(&parsed_uuid))
+        .first::<LlmCallLeftJoinResult>(conn)?;
+    let next_calls_result = llm_call_continuations::table
+        .select(llm_call_continuations::next_call_id)
+        .filter(llm_call_continuations::previous_call_id.eq(parsed_uuid))
+        .load::<EntityId>(conn)?;
+    Ok((previous_call_result, next_calls_result).into())
 }
 
 #[tauri::command(async)]

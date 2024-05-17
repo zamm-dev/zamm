@@ -1,7 +1,9 @@
 use crate::commands::errors::ZammResult;
-use crate::models::llm_calls::{LlmCall, LlmCallRow, NewLlmCallRow};
+use crate::models::llm_calls::{
+    EntityId, LlmCall, LlmCallLeftJoinResult, NewLlmCallContinuation, NewLlmCallRow,
+};
 use crate::models::{ApiKey, NewApiKey};
-use crate::schema::{api_keys, llm_calls};
+use crate::schema::{api_keys, llm_call_continuations, llm_calls};
 use crate::ZammDatabase;
 use anyhow::anyhow;
 use diesel::prelude::*;
@@ -24,6 +26,13 @@ impl DatabaseContents {
     pub fn insertable_llm_calls(&self) -> Vec<NewLlmCallRow> {
         self.llm_calls.iter().map(|k| k.as_sql_row()).collect()
     }
+
+    pub fn insertable_call_continuations(&self) -> Vec<NewLlmCallContinuation> {
+        self.llm_calls
+            .iter()
+            .filter_map(|k| k.as_continuation())
+            .collect()
+    }
 }
 
 pub async fn get_database_contents(
@@ -33,11 +42,33 @@ pub async fn get_database_contents(
         &mut zamm_db.0.lock().await;
     let db = db_mutex.as_mut().ok_or(anyhow!("Error getting db"))?;
     let api_keys = api_keys::table.load::<ApiKey>(db)?;
-    let llm_call_rows = llm_calls::table.load::<LlmCallRow>(db)?;
-    let llm_calls: Vec<LlmCall> = llm_call_rows.into_iter().map(|r| r.into()).collect();
+    let llm_call_left_joins = llm_calls::table
+        .left_join(
+            llm_call_continuations::dsl::llm_call_continuations
+                .on(llm_calls::id.eq(llm_call_continuations::next_call_id)),
+        )
+        .select((
+            llm_calls::all_columns,
+            llm_call_continuations::previous_call_id.nullable(),
+        ))
+        .get_results::<LlmCallLeftJoinResult>(db)?;
+    let llm_calls_result: ZammResult<Vec<LlmCall>> = llm_call_left_joins
+        .into_iter()
+        .map(|lf| {
+            let (llm_call_row, previous_call_id) = lf;
+            let next_calls_result = match previous_call_id.as_ref() {
+                Some(previous_id) => llm_call_continuations::table
+                    .select(llm_call_continuations::next_call_id)
+                    .filter(llm_call_continuations::previous_call_id.eq(previous_id))
+                    .load::<EntityId>(db)?,
+                None => Vec::new(),
+            };
+            Ok(((llm_call_row, previous_call_id), next_calls_result).into())
+        })
+        .collect();
     Ok(DatabaseContents {
         api_keys,
-        llm_calls,
+        llm_calls: llm_calls_result?,
     })
 }
 
@@ -71,6 +102,9 @@ pub async fn read_database_contents(
             .execute(conn)?;
         diesel::insert_into(llm_calls::table)
             .values(&db_contents.insertable_llm_calls())
+            .execute(conn)?;
+        diesel::insert_into(llm_call_continuations::table)
+            .values(&db_contents.insertable_call_continuations())
             .execute(conn)?;
         Ok(())
     })?;

@@ -1,6 +1,9 @@
 use crate::models::llm_calls::entity_id::EntityId;
+use crate::models::llm_calls::linkage::NewLlmCallContinuation;
 use crate::models::llm_calls::row::{LlmCallRow, NewLlmCallRow};
-use crate::models::llm_calls::various::{Llm, Request, Response, TokenMetadata};
+use crate::models::llm_calls::various::{
+    ConversationMetadata, Llm, Request, Response, TokenMetadata,
+};
 use chrono::naive::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
@@ -12,6 +15,8 @@ pub struct LlmCall {
     pub request: Request,
     pub response: Response,
     pub tokens: TokenMetadata,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub conversation: Option<ConversationMetadata>,
 }
 
 impl LlmCall {
@@ -30,29 +35,55 @@ impl LlmCall {
             completion: &self.response.completion,
         }
     }
+
+    pub fn as_continuation(&self) -> Option<NewLlmCallContinuation> {
+        self.conversation.as_ref().and_then(|c| {
+            c.previous_call_id
+                .as_ref()
+                .map(|id| NewLlmCallContinuation {
+                    previous_call_id: id,
+                    next_call_id: &self.id,
+                })
+        })
+    }
 }
 
-impl From<LlmCallRow> for LlmCall {
-    fn from(row: LlmCallRow) -> Self {
-        let id = row.id;
-        let timestamp = row.timestamp;
+pub type LlmCallLeftJoinResult = (LlmCallRow, Option<EntityId>);
+pub type LlmCallQueryResults = (LlmCallLeftJoinResult, Vec<EntityId>);
+
+impl From<LlmCallQueryResults> for LlmCall {
+    fn from(query_results: LlmCallQueryResults) -> Self {
+        let ((llm_call_row, previous_call_id), next_call_ids) = query_results;
+
+        let id = llm_call_row.id;
+        let timestamp = llm_call_row.timestamp;
         let llm = Llm {
-            name: row.llm,
-            requested: row.llm_requested,
-            provider: row.provider,
+            name: llm_call_row.llm,
+            requested: llm_call_row.llm_requested,
+            provider: llm_call_row.provider,
         };
         let request = Request {
-            prompt: row.prompt,
-            temperature: row.temperature,
+            prompt: llm_call_row.prompt,
+            temperature: llm_call_row.temperature,
         };
         let response = Response {
-            completion: row.completion,
+            completion: llm_call_row.completion,
         };
         let token_metadata = TokenMetadata {
-            prompt: row.prompt_tokens,
-            response: row.response_tokens,
-            total: row.total_tokens,
+            prompt: llm_call_row.prompt_tokens,
+            response: llm_call_row.response_tokens,
+            total: llm_call_row.total_tokens,
         };
+        let conversation_metadata =
+            if previous_call_id.is_some() || !next_call_ids.is_empty() {
+                Some(ConversationMetadata {
+                    previous_call_id,
+                    next_call_ids,
+                })
+            } else {
+                None
+            };
+
         LlmCall {
             id,
             timestamp,
@@ -60,6 +91,7 @@ impl From<LlmCallRow> for LlmCall {
             request,
             response,
             tokens: token_metadata,
+            conversation: conversation_metadata,
         }
     }
 }

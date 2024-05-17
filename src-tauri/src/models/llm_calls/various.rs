@@ -1,4 +1,5 @@
 use crate::models::llm_calls::chat_message::ChatMessage;
+use crate::models::llm_calls::entity_id::EntityId;
 use crate::models::llm_calls::prompt::Prompt;
 use crate::setup::api_keys::Service;
 use serde::{Deserialize, Serialize};
@@ -26,4 +27,12 @@ pub struct TokenMetadata {
     pub prompt: Option<i32>,
     pub response: Option<i32>,
     pub total: Option<i32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+pub struct ConversationMetadata {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub previous_call_id: Option<EntityId>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub next_call_ids: Vec<EntityId>,
 }

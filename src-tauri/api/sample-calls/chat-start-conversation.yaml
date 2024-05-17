@@ -2,19 +2,21 @@ request:
   - chat
   - >
     {
-      "provider": "OpenAI",
-      "llm": "gpt-4",
-      "temperature": null,
-      "prompt": [
-        {
-          "role": "System",
-          "text": "You are ZAMM, a chat program. Respond in first person."
-        },
-        {
-          "role": "Human",
-          "text": "Hello, does this work?"
-        }
-      ]
+      "args": {
+        "provider": "OpenAI",
+        "llm": "gpt-4",
+        "temperature": null,
+        "prompt": [
+          {
+            "role": "System",
+            "text": "You are ZAMM, a chat program. Respond in first person."
+          },
+          {
+            "role": "Human",
+            "text": "Hello, does this work?"
+          }
+        ]
+      }
     }
 response:
   message: >
