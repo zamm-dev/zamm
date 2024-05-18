@@ -81,10 +81,11 @@ async fn chat_helper(
             .as_ref()
             .map(|usage| usage.total_tokens as i32),
     };
-    let conversation_metadata = args.previous_call_id.map(|id| ConversationMetadata {
-        previous_call_id: Some(EntityId { uuid: id }),
+    let previous_call_id = args.previous_call_id.map(|id| EntityId { uuid: id });
+    let conversation_metadata = ConversationMetadata {
+        previous_call_id,
         next_call_ids: [].to_vec(),
-    });
+    };
     let sole_choice = response
         .choices
         .first()
@@ -121,12 +122,7 @@ async fn chat_helper(
             .values(llm_call.as_sql_row())
             .execute(conn)?;
 
-        if llm_call
-            .conversation
-            .as_ref()
-            .and_then(|c| c.previous_call_id.as_ref())
-            .is_some()
-        {
+        if llm_call.conversation.previous_call_id.is_some() {
             diesel::insert_into(llm_call_continuations::table)
                 .values(llm_call.as_continuation())
                 .execute(conn)?;

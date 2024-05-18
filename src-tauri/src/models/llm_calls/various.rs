@@ -29,10 +29,16 @@ pub struct TokenMetadata {
     pub total: Option<i32>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+#[derive(Debug, Default, Clone, Serialize, Deserialize, specta::Type)]
 pub struct ConversationMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub previous_call_id: Option<EntityId>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub next_call_ids: Vec<EntityId>,
+}
+
+impl ConversationMetadata {
+    pub fn is_default(&self) -> bool {
+        self.previous_call_id.is_none() && self.next_call_ids.is_empty()
+    }
 }

@@ -15,8 +15,8 @@ pub struct LlmCall {
     pub request: Request,
     pub response: Response,
     pub tokens: TokenMetadata,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub conversation: Option<ConversationMetadata>,
+    #[serde(skip_serializing_if = "ConversationMetadata::is_default", default)]
+    pub conversation: ConversationMetadata,
 }
 
 impl LlmCall {
@@ -37,14 +37,13 @@ impl LlmCall {
     }
 
     pub fn as_continuation(&self) -> Option<NewLlmCallContinuation> {
-        self.conversation.as_ref().and_then(|c| {
-            c.previous_call_id
-                .as_ref()
-                .map(|id| NewLlmCallContinuation {
-                    previous_call_id: id,
-                    next_call_id: &self.id,
-                })
-        })
+        self.conversation
+            .previous_call_id
+            .as_ref()
+            .map(|id| NewLlmCallContinuation {
+                previous_call_id: id,
+                next_call_id: &self.id,
+            })
     }
 }
 
@@ -74,15 +73,10 @@ impl From<LlmCallQueryResults> for LlmCall {
             response: llm_call_row.response_tokens,
             total: llm_call_row.total_tokens,
         };
-        let conversation_metadata =
-            if previous_call_id.is_some() || !next_call_ids.is_empty() {
-                Some(ConversationMetadata {
-                    previous_call_id,
-                    next_call_ids,
-                })
-            } else {
-                None
-            };
+        let conversation_metadata = ConversationMetadata {
+            previous_call_id,
+            next_call_ids,
+        };
 
         LlmCall {
             id,
