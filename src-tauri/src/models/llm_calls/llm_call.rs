@@ -1,9 +1,11 @@
+use crate::models::llm_calls::chat_message::ChatMessage;
 use crate::models::llm_calls::entity_id::EntityId;
-use crate::models::llm_calls::linkage::NewLlmCallContinuation;
-use crate::models::llm_calls::row::{LlmCallRow, NewLlmCallRow};
+use crate::models::llm_calls::row::LlmCallRow;
 use crate::models::llm_calls::various::{
-    ConversationMetadata, Llm, Request, Response, TokenMetadata,
+    ConversationMetadata, Llm, LlmCallReference, Request, Response, TokenMetadata,
 };
+#[cfg(test)]
+use crate::models::llm_calls::{NewLlmCallContinuation, NewLlmCallRow};
 use chrono::naive::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
@@ -19,6 +21,7 @@ pub struct LlmCall {
     pub conversation: ConversationMetadata,
 }
 
+#[cfg(test)]
 impl LlmCall {
     pub fn as_sql_row(&self) -> NewLlmCallRow {
         NewLlmCallRow {
@@ -38,21 +41,22 @@ impl LlmCall {
 
     pub fn as_continuation(&self) -> Option<NewLlmCallContinuation> {
         self.conversation
-            .previous_call_id
+            .previous_call
             .as_ref()
-            .map(|id| NewLlmCallContinuation {
-                previous_call_id: id,
+            .map(|call| NewLlmCallContinuation {
+                previous_call_id: &call.id,
                 next_call_id: &self.id,
             })
     }
 }
 
-pub type LlmCallLeftJoinResult = (LlmCallRow, Option<EntityId>);
-pub type LlmCallQueryResults = (LlmCallLeftJoinResult, Vec<EntityId>);
+pub type LlmCallLeftJoinResult = (LlmCallRow, Option<EntityId>, Option<ChatMessage>);
+pub type LlmCallQueryResults = (LlmCallLeftJoinResult, Vec<(EntityId, ChatMessage)>);
 
 impl From<LlmCallQueryResults> for LlmCall {
     fn from(query_results: LlmCallQueryResults) -> Self {
-        let ((llm_call_row, previous_call_id), next_call_ids) = query_results;
+        let ((llm_call_row, previous_call_id, previous_call_completion), next_calls) =
+            query_results;
 
         let id = llm_call_row.id;
         let timestamp = llm_call_row.timestamp;
@@ -73,9 +77,20 @@ impl From<LlmCallQueryResults> for LlmCall {
             response: llm_call_row.response_tokens,
             total: llm_call_row.total_tokens,
         };
+        let previous_call: Option<LlmCallReference> =
+            if let (Some(id), Some(completion)) =
+                (previous_call_id, previous_call_completion)
+            {
+                Some((id, completion).into())
+            } else {
+                None
+            };
         let conversation_metadata = ConversationMetadata {
-            previous_call_id,
-            next_call_ids,
+            previous_call,
+            next_calls: next_calls
+                .into_iter()
+                .map(|(id, completion)| (id, completion).into())
+                .collect(),
         };
 
         LlmCall {

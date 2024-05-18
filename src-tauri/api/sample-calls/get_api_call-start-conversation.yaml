@@ -42,8 +42,11 @@ response:
         "total": 44
       },
       "conversation": {
-        "next_call_ids": [
-          "c13c1e67-2de3-48de-a34c-a32079c03316"
+        "next_calls": [
+          {
+            "id": "c13c1e67-2de3-48de-a34c-a32079c03316",
+            "snippet": "Sure, here's a joke for you: Why don't scientists trust..."
+          }
         ]
       }
     }

@@ -1,9 +1,11 @@
 use crate::commands::errors::ZammResult;
 use crate::models::llm_calls::{
-    EntityId, LlmCall, LlmCallLeftJoinResult, NewLlmCallContinuation, NewLlmCallRow,
+    ChatMessage, EntityId, LlmCall, LlmCallLeftJoinResult, NewLlmCallContinuation,
+    NewLlmCallRow,
 };
 use crate::models::{ApiKey, NewApiKey};
 use crate::schema::{api_keys, llm_call_continuations, llm_calls};
+use crate::views::llm_call_named_continuations;
 use crate::ZammDatabase;
 use anyhow::anyhow;
 use diesel::prelude::*;
@@ -44,23 +46,33 @@ pub async fn get_database_contents(
     let api_keys = api_keys::table.load::<ApiKey>(db)?;
     let llm_call_left_joins = llm_calls::table
         .left_join(
-            llm_call_continuations::dsl::llm_call_continuations
-                .on(llm_calls::id.eq(llm_call_continuations::next_call_id)),
+            llm_call_named_continuations::dsl::llm_call_named_continuations
+                .on(llm_calls::id.eq(llm_call_named_continuations::next_call_id)),
         )
         .select((
             llm_calls::all_columns,
-            llm_call_continuations::previous_call_id.nullable(),
+            llm_call_named_continuations::previous_call_id.nullable(),
+            llm_call_named_continuations::previous_call_completion.nullable(),
         ))
         .get_results::<LlmCallLeftJoinResult>(db)?;
     let llm_calls_result: ZammResult<Vec<LlmCall>> = llm_call_left_joins
         .into_iter()
         .map(|lf| {
-            let (llm_call_row, previous_call_id) = lf;
-            let next_calls_result = llm_call_continuations::table
-                .select(llm_call_continuations::next_call_id)
-                .filter(llm_call_continuations::previous_call_id.eq(&llm_call_row.id))
-                .load::<EntityId>(db)?;
-            Ok(((llm_call_row, previous_call_id), next_calls_result).into())
+            let (llm_call_row, previous_call_id, previous_call_completion) = lf;
+            let next_calls_result = llm_call_named_continuations::table
+                .select((
+                    llm_call_named_continuations::next_call_id,
+                    llm_call_named_continuations::next_call_completion,
+                ))
+                .filter(
+                    llm_call_named_continuations::previous_call_id.eq(&llm_call_row.id),
+                )
+                .load::<(EntityId, ChatMessage)>(db)?;
+            Ok((
+                (llm_call_row, previous_call_id, previous_call_completion),
+                next_calls_result,
+            )
+                .into())
         })
         .collect();
     Ok(DatabaseContents {

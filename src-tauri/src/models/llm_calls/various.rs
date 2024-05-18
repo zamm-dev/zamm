@@ -29,16 +29,43 @@ pub struct TokenMetadata {
     pub total: Option<i32>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+pub struct LlmCallReference {
+    pub id: EntityId,
+    pub snippet: String,
+}
+
+impl From<(EntityId, ChatMessage)> for LlmCallReference {
+    fn from((id, message): (EntityId, ChatMessage)) -> Self {
+        let text = match message {
+            ChatMessage::System { text } => text,
+            ChatMessage::Human { text } => text,
+            ChatMessage::AI { text } => text,
+        };
+        let truncated_text = text
+            .split_whitespace()
+            .take(10)
+            .collect::<Vec<&str>>()
+            .join(" ");
+        let snippet = if text == truncated_text {
+            text
+        } else {
+            format!("{}...", truncated_text)
+        };
+        Self { id, snippet }
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize, specta::Type)]
 pub struct ConversationMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub previous_call_id: Option<EntityId>,
+    pub previous_call: Option<LlmCallReference>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
-    pub next_call_ids: Vec<EntityId>,
+    pub next_calls: Vec<LlmCallReference>,
 }
 
 impl ConversationMetadata {
     pub fn is_default(&self) -> bool {
-        self.previous_call_id.is_none() && self.next_call_ids.is_empty()
+        self.previous_call.is_none() && self.next_calls.is_empty()
     }
 }

@@ -1,6 +1,7 @@
 use crate::commands::errors::ZammResult;
-use crate::models::llm_calls::{EntityId, LlmCall, LlmCallLeftJoinResult};
-use crate::schema::{llm_call_continuations, llm_calls};
+use crate::models::llm_calls::{ChatMessage, EntityId, LlmCall, LlmCallLeftJoinResult};
+use crate::schema::llm_calls;
+use crate::views::llm_call_named_continuations;
 use crate::ZammDatabase;
 use anyhow::anyhow;
 use diesel::prelude::*;
@@ -21,19 +22,23 @@ async fn get_api_call_helper(
 
     let previous_call_result: LlmCallLeftJoinResult = llm_calls::table
         .left_join(
-            llm_call_continuations::dsl::llm_call_continuations
-                .on(llm_calls::id.eq(llm_call_continuations::next_call_id)),
+            llm_call_named_continuations::dsl::llm_call_named_continuations
+                .on(llm_calls::id.eq(llm_call_named_continuations::next_call_id)),
         )
         .select((
             llm_calls::all_columns,
-            llm_call_continuations::previous_call_id.nullable(),
+            llm_call_named_continuations::previous_call_id.nullable(),
+            llm_call_named_continuations::previous_call_completion.nullable(),
         ))
         .filter(llm_calls::id.eq(&parsed_uuid))
         .first::<LlmCallLeftJoinResult>(conn)?;
-    let next_calls_result = llm_call_continuations::table
-        .select(llm_call_continuations::next_call_id)
-        .filter(llm_call_continuations::previous_call_id.eq(parsed_uuid))
-        .load::<EntityId>(conn)?;
+    let next_calls_result = llm_call_named_continuations::table
+        .select((
+            llm_call_named_continuations::next_call_id,
+            llm_call_named_continuations::next_call_completion,
+        ))
+        .filter(llm_call_named_continuations::previous_call_id.eq(parsed_uuid))
+        .load::<(EntityId, ChatMessage)>(conn)?;
     Ok((previous_call_result, next_calls_result).into())
 }
 

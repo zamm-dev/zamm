@@ -50,7 +50,10 @@ response:
         "total": 79
       },
       "conversation": {
-        "previous_call_id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a74"
+        "previous_call": {
+          "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
+          "snippet": "Yes, it works. How can I assist you today?"
+        }
       }
     }
 sideEffects:

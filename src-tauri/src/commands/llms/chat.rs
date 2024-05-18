@@ -1,8 +1,8 @@
 use crate::commands::errors::ZammResult;
 use crate::commands::Error;
 use crate::models::llm_calls::{
-    ChatMessage, ChatPrompt, ConversationMetadata, EntityId, LightweightLlmCall, Llm,
-    LlmCall, Prompt, Request, Response, TokenMetadata,
+    ChatMessage, ChatPrompt, EntityId, LightweightLlmCall, NewLlmCallContinuation,
+    NewLlmCallRow, Prompt, TokenMetadata,
 };
 use crate::schema::{llm_call_continuations, llm_calls};
 use crate::setup::api_keys::Service;
@@ -43,7 +43,7 @@ async fn chat_helper(
 
     let db = &mut zamm_db.0.lock().await;
 
-    let config = match args.provider {
+    let config = match &args.provider {
         Service::OpenAI => {
             let openai_api_key =
                 api_keys.openai.as_ref().ok_or(Error::MissingApiKey {
@@ -82,10 +82,6 @@ async fn chat_helper(
             .map(|usage| usage.total_tokens as i32),
     };
     let previous_call_id = args.previous_call_id.map(|id| EntityId { uuid: id });
-    let conversation_metadata = ConversationMetadata {
-        previous_call_id,
-        next_call_ids: [].to_vec(),
-    };
     let sole_choice = response
         .choices
         .first()
@@ -94,42 +90,47 @@ async fn chat_helper(
         })?
         .message
         .to_owned();
-    let llm_call = LlmCall {
-        id: EntityId {
-            uuid: Uuid::new_v4(),
-        },
-        timestamp: chrono::Utc::now().naive_utc(),
-        llm: Llm {
-            provider: Service::OpenAI,
-            name: response.model.clone(),
-            requested: requested_model.to_owned(),
-        },
-        request: Request {
-            temperature: requested_temperature,
-            prompt: Prompt::Chat(ChatPrompt {
-                messages: args.prompt,
-            }),
-        },
-        response: Response {
-            completion: sole_choice.try_into()?,
-        },
-        tokens: token_metadata,
-        conversation: conversation_metadata,
+
+    let new_id = EntityId {
+        uuid: Uuid::new_v4(),
     };
+    let timestamp = chrono::Utc::now().naive_utc();
+    let completion: ChatMessage = sole_choice.try_into()?;
 
     if let Some(conn) = db.as_mut() {
         diesel::insert_into(llm_calls::table)
-            .values(llm_call.as_sql_row())
+            .values(NewLlmCallRow {
+                id: &new_id,
+                timestamp: &timestamp,
+                provider: &args.provider,
+                llm_requested: &requested_model,
+                llm: &response.model,
+                temperature: &requested_temperature,
+                prompt_tokens: token_metadata.prompt.as_ref(),
+                response_tokens: token_metadata.response.as_ref(),
+                total_tokens: token_metadata.total.as_ref(),
+                prompt: &Prompt::Chat(ChatPrompt {
+                    messages: args.prompt,
+                }),
+                completion: &completion,
+            })
             .execute(conn)?;
 
-        if llm_call.conversation.previous_call_id.is_some() {
+        if let Some(previous_id) = previous_call_id {
             diesel::insert_into(llm_call_continuations::table)
-                .values(llm_call.as_continuation())
+                .values(NewLlmCallContinuation {
+                    previous_call_id: &previous_id,
+                    next_call_id: &new_id,
+                })
                 .execute(conn)?;
         }
     } // todo: warn users if DB write unsuccessful
 
-    Ok(llm_call.into())
+    Ok(LightweightLlmCall {
+        id: new_id,
+        timestamp,
+        response_message: completion,
+    })
 }
 
 #[tauri::command(async)]
