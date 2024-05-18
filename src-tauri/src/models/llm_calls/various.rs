@@ -33,6 +33,6 @@ pub struct TokenMetadata {
 pub struct ConversationMetadata {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub previous_call_id: Option<EntityId>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub next_call_ids: Vec<EntityId>,
 }

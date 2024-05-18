@@ -6,6 +6,7 @@ request:
         "provider": "OpenAI",
         "llm": "gpt-4",
         "temperature": null,
+        "previous_call_id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
         "prompt": [
           {
             "role": "System",

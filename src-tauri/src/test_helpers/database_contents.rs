@@ -56,13 +56,10 @@ pub async fn get_database_contents(
         .into_iter()
         .map(|lf| {
             let (llm_call_row, previous_call_id) = lf;
-            let next_calls_result = match previous_call_id.as_ref() {
-                Some(previous_id) => llm_call_continuations::table
-                    .select(llm_call_continuations::next_call_id)
-                    .filter(llm_call_continuations::previous_call_id.eq(previous_id))
-                    .load::<EntityId>(db)?,
-                None => Vec::new(),
-            };
+            let next_calls_result = llm_call_continuations::table
+                .select(llm_call_continuations::next_call_id)
+                .filter(llm_call_continuations::previous_call_id.eq(&llm_call_row.id))
+                .load::<EntityId>(db)?;
             Ok(((llm_call_row, previous_call_id), next_calls_result).into())
         })
         .collect();
@@ -115,7 +112,7 @@ pub fn dump_sqlite_database(db_path: &PathBuf, dump_path: &PathBuf) {
     let dump_output = std::process::Command::new("sqlite3")
         .arg(db_path)
         // avoid the inserts into __diesel_schema_migrations
-        .arg(".dump api_keys llm_calls")
+        .arg(".dump api_keys llm_calls llm_call_continuations")
         .output()
         .expect("Error running sqlite3 .dump command");
     // filter output by lines starting with "INSERT"
