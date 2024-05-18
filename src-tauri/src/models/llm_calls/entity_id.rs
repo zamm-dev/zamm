@@ -10,7 +10,16 @@ use std::ops::Deref;
 use uuid::Uuid;
 
 #[derive(
-    AsExpression, FromSqlRow, Debug, Clone, specta::Type, Serialize, Deserialize,
+    AsExpression,
+    FromSqlRow,
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Hash,
+    specta::Type,
+    Serialize,
+    Deserialize,
 )]
 #[diesel(sql_type = Text)]
 #[serde(transparent)]
