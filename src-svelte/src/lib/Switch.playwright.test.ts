@@ -22,6 +22,7 @@ describe("Switch drag test", () => {
   beforeAll(async () => {
     browser = await chromium.launch({ headless: true });
     context = await browser.newContext();
+    context.setDefaultTimeout(9_000);
     await context.exposeFunction(
       "_testRecordSoundPlayed",
       () => numSoundsPlayed++,

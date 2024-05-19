@@ -20,6 +20,7 @@ describe("Api Calls endless scroll test", () => {
   beforeAll(async () => {
     browser = await chromium.launch({ headless: true });
     context = await browser.newContext();
+    context.setDefaultTimeout(9_000);
     page = await context.newPage();
 
     if (DEBUG_LOGGING) {
