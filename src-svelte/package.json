@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest --pool=forks run",
     "test-watch": "vitest",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
