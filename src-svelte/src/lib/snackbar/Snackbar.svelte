@@ -21,7 +21,9 @@
 
   let nextId = 0;
 
-  export function snackbarError(msg: string) {
+  export function snackbarError(error: string | Error) {
+    const msg = error instanceof Error ? error.message : error;
+
     console.warn(msg);
     animateDurationMs = baseAnimationDurationMs;
     const id = nextId++;
