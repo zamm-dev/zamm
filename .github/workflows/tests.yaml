@@ -100,7 +100,9 @@ jobs:
         run: yarn link
         working-directory: forks/neodrag/packages/svelte
       - name: Install main Node dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          sudo apt install -y libgif-dev
+          yarn install --frozen-lockfile
       - name: Setup Svelte project
         run: |
           yarn link @neodrag/svelte
@@ -177,6 +179,7 @@ jobs:
           name: builds
       - name: Install Node dependencies
         run: |
+          sudo apt install -y libgif-dev
           yarn install --frozen-lockfile
           cd src-svelte && yarn install --frozen-lockfile && yarn svelte-kit sync
       # end of common dependency setup with downloaded artifacts
@@ -233,6 +236,7 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
       - name: Install Node dependencies
         run: |
+          sudo apt install -y libgif-dev
           yarn install --frozen-lockfile
           cd src-svelte && yarn svelte-kit sync
       - name: Install Rust
