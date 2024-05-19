@@ -3,7 +3,7 @@ name: publish
 on: workflow_dispatch
 
 env:
-  NODEJS_VERSION: "20.5.1"
+  NODEJS_VERSION: "22.2.0"
   RUST_VERSION: "1.76.0"
   GITHUB_TOKEN: ${{ secrets.FONTS_PAT }}
   TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
