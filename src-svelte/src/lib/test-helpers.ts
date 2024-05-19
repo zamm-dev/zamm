@@ -3,7 +3,7 @@ import fetch from "node-fetch";
 import { tick } from "svelte";
 
 async function startStorybook(): Promise<ChildProcess> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const storybookProcess = spawn("yarn", ["storybook", "--ci"]);
     if (!storybookProcess) {
       throw new Error("Could not start storybook process");
@@ -17,7 +17,11 @@ async function startStorybook(): Promise<ChildProcess> {
     storybookProcess.stdout.on("data", (data) => {
       const strippedData = data.toString().replace(/\\x1B\[\d+m/g, "");
       if (storybookStartupMessage.test(strippedData)) {
-        resolve(storybookProcess);
+        fetch("http://localhost:6006")
+          .then(() => {
+            resolve(storybookProcess);
+          })
+          .catch(reject);
       }
     });
 
