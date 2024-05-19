@@ -113,7 +113,7 @@ describe("Chat conversation", () => {
   test("won't send multiple messages at once", async () => {
     render(Chat, {});
     expect(tauriInvokeMock).not.toHaveBeenCalled();
-    playback.callPauseMs = 1_000; // this line differs from sendChatMessage
+    playback.callPauseMs = 2_000; // this line differs from sendChatMessage
     playback.addSamples(
       "../src-tauri/api/sample-calls/chat-start-conversation.yaml",
     );
@@ -133,24 +133,12 @@ describe("Chat conversation", () => {
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
     // this part differs from sendChatMessage
-    await waitFor(() => {
-      expect(
-        screen.getByText("Yes, it works. How can I assist you today?"),
-      ).toBeInTheDocument();
-    });
-
-    playback.addSamples(
-      "../src-tauri/api/sample-calls/chat-continue-conversation.yaml",
-    );
     await userEvent.type(chatInput, "Tell me something funny.");
     await userEvent.click(screen.getByRole("button", { name: "Send" }));
-    expect(tauriInvokeMock).toHaveBeenCalledTimes(2);
-    expect(screen.getByText("Tell me something funny.")).toBeInTheDocument();
-    await waitFor(() => {
-      expect(
-        screen.getByText(/Because they make up everything/),
-      ).toBeInTheDocument();
-    });
+    // remember, we're intentionally delaying the first return here,
+    // so the mock won't be called
+    expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
   });
 
   test("persists a conversation after returning to it", async () => {
