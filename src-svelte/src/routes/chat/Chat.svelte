@@ -7,9 +7,11 @@
     text: "You are ZAMM, a chat program. Respond in first person.",
   };
 
+  export const lastMessageId = writable<string | undefined>(undefined);
   export const conversation = writable<ChatMessage[]>([initialMessage]);
 
   export function resetConversation() {
+    lastMessageId.set(undefined);
     conversation.set([initialMessage]);
   }
 </script>
@@ -78,7 +80,14 @@
     expectingResponse = true;
 
     try {
-      let llmCall = await chat("OpenAI", "gpt-4", null, $conversation);
+      let llmCall = await chat({
+        provider: "OpenAI",
+        llm: "gpt-4",
+        temperature: null,
+        previous_call_id: $lastMessageId,
+        prompt: $conversation,
+      });
+      lastMessageId.set(llmCall.id);
       appendMessage(llmCall.response_message);
     } catch (err) {
       snackbarError(err as string);

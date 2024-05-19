@@ -2,12 +2,16 @@ import { expect, test, vi, type Mock } from "vitest";
 import "@testing-library/jest-dom";
 
 import { render, screen, waitFor } from "@testing-library/svelte";
-import Chat, { conversation, resetConversation } from "./Chat.svelte";
+import Chat, {
+  conversation,
+  lastMessageId,
+  resetConversation,
+} from "./Chat.svelte";
 import PersistentChatView from "./PersistentChatView.svelte";
 import userEvent from "@testing-library/user-event";
 import { TauriInvokePlayback, type ParsedCall } from "$lib/sample-call-testing";
 import { animationSpeed } from "$lib/preferences";
-import type { ChatMessage, LightweightLlmCall } from "$lib/bindings";
+import type { ChatArgs, LightweightLlmCall } from "$lib/bindings";
 
 describe("Chat conversation", () => {
   let tauriInvokeMock: Mock;
@@ -64,13 +68,11 @@ describe("Chat conversation", () => {
     playback.addSamples(correspondingApiCallSample);
     const nextExpectedApiCall: ParsedCall =
       playback.unmatchedCalls.slice(-1)[0];
-    const nextExpectedCallArgs = nextExpectedApiCall.request[1] as Record<
-      string,
-      any
-    >;
-    const nextExpectedMessage = nextExpectedCallArgs["prompt"].slice(
-      -1,
-    )[0] as ChatMessage;
+    const nextExpectedCallArgs = nextExpectedApiCall.request[1] as unknown as {
+      args: ChatArgs;
+    };
+    const nextExpectedMessage =
+      nextExpectedCallArgs.args["prompt"].slice(-1)[0];
     const nextExpectedHumanPrompt = nextExpectedMessage.text;
 
     const chatInput = screen.getByLabelText("Chat with the AI:");
@@ -117,13 +119,11 @@ describe("Chat conversation", () => {
     );
     const nextExpectedApiCall: ParsedCall =
       playback.unmatchedCalls.slice(-1)[0];
-    const nextExpectedCallArgs = nextExpectedApiCall.request[1] as Record<
-      string,
-      any
-    >;
-    const nextExpectedMessage = nextExpectedCallArgs["prompt"].slice(
-      -1,
-    )[0] as ChatMessage;
+    const nextExpectedCallArgs = nextExpectedApiCall.request[1] as unknown as {
+      args: ChatArgs;
+    };
+    const nextExpectedMessage =
+      nextExpectedCallArgs.args["prompt"].slice(-1)[0];
     const nextExpectedHumanPrompt = nextExpectedMessage.text;
 
     const chatInput = screen.getByLabelText("Chat with the AI:");
@@ -171,6 +171,7 @@ describe("Chat conversation", () => {
     expect(
       screen.queryByText("Hello, does this work?"),
     ).not.toBeInTheDocument();
+    lastMessageId.set("d5ad1e49-f57f-4481-84fb-4d70ba8a7a74");
     conversation.set([
       {
         role: "System",

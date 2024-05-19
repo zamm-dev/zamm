@@ -81,7 +81,7 @@ export type LightweightLlmCall = {
 };
 export type ApiKeys = { openai: string | null };
 export type OS = "Mac" | "Linux" | "Windows";
-export type EntityId = { uuid: string };
+export type EntityId = string;
 export type Shell = "Bash" | "Zsh" | "PowerShell";
 export type SystemInfo = {
   zamm_version: string;

@@ -1,7 +1,7 @@
 <script lang="ts">
   import InfoBox from "$lib/InfoBox.svelte";
   import { type LlmCall } from "$lib/bindings";
-  import { conversation } from "../../chat/Chat.svelte";
+  import { lastMessageId, conversation } from "../../chat/Chat.svelte";
   import { goto } from "$app/navigation";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import Button from "$lib/controls/Button.svelte";
@@ -14,6 +14,7 @@
       return;
     }
 
+    lastMessageId.set(apiCall.id);
     const restoredConversation = [
       ...apiCall.request.prompt.messages,
       apiCall.response.completion,
