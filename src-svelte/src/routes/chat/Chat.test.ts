@@ -94,6 +94,7 @@ describe("Chat conversation", () => {
         ),
       ).toBeInTheDocument();
     });
+    expect(chatInput).toHaveValue("");
 
     tauriInvokeMock.mockClear();
   }
@@ -139,6 +140,7 @@ describe("Chat conversation", () => {
     // so the mock won't be called
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
+    expect(chatInput).toHaveValue("Tell me something funny.");
   });
 
   test("persists a conversation after returning to it", async () => {

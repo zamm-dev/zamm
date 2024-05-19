@@ -126,6 +126,7 @@
 
     <Form
       {sendChatMessage}
+      chatBusy={expectingResponse}
       currentMessage={initialMessage}
       onTextInputResize={resizeConversationView}
     />
