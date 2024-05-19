@@ -4,7 +4,7 @@ version = "0.1.4"
 description = "Yet another AI chat app"
 authors = ["Amos Ng <me@amos.ng>"]
 license = "GPL-2.0-or-later"
-repository = "https://github.com/amosjyng/zamm"
+repository = "https://github.com/zamm-dev/zamm"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

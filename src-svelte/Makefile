@@ -17,6 +17,9 @@ update-local-screenshots:
 	cp -r screenshots/local/testing/actual/* screenshots/local/baseline/
 	cp -r screenshots/local/testing/actual/* screenshots/baseline/
 
+quick-test:
+	yarn vitest --exclude src/routes/storybook.test.ts run
+
 test:
 	yarn test
 	python3 diff-screenshots.py
