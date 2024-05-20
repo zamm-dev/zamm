@@ -20,7 +20,7 @@ jobs:
     name: Build entire program
     runs-on: ubuntu-latest
     container:
-      image: "ghcr.io/amosjyng/zamm:v0.1.1-build"
+      image: "ghcr.io/zamm-dev/zamm:v0.1.4-build"
       options: --user root
     env:
       HOME: /root
@@ -150,6 +150,9 @@ jobs:
   svelte:
     name: Run Svelte tests
     runs-on: ubuntu-latest
+    container:
+      image: "ghcr.io/zamm-dev/zamm:v0.1.4-build"
+      options: --user root
     env:
       PLAYWRIGHT_TIMEOUT: 60000
     needs: build
@@ -176,14 +179,13 @@ jobs:
         run: |
           yarn install --frozen-lockfile
           cd src-svelte && yarn install --frozen-lockfile && yarn svelte-kit sync
-          cd ../webdriver && yarn install --frozen-lockfile
       # end of common dependency setup with downloaded artifacts
-      - name: Install remaining dependencies
+      - name: Copy over playwright binaries
         run: |
-          yarn playwright install --with-deps
-          sudo apt-get install -y imagemagick
+          mkdir -p /github/home/.cache/
+          cp -R /root/.cache/ms-playwright /github/home/.cache/ms-playwright
       - name: Run Svelte Tests
-        run: xvfb-run yarn workspace gui test
+        run: yarn workspace gui test
       - name: Do better diff
         if: always()
         run: python3 diff-screenshots.py

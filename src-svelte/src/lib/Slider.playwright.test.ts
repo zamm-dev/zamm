@@ -8,6 +8,7 @@ import {
   type Locator,
 } from "@playwright/test";
 import { afterAll, beforeAll, describe, test } from "vitest";
+import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
 
 const DEBUG_LOGGING = false;
 
@@ -21,6 +22,7 @@ describe("Slider drag test", () => {
   beforeAll(async () => {
     browser = await chromium.launch({ headless: true });
     context = await browser.newContext();
+    context.setDefaultTimeout(PLAYWRIGHT_TIMEOUT);
     await context.exposeFunction(
       "_testRecordSoundPlayed",
       () => numSoundsPlayed++,
@@ -88,7 +90,7 @@ describe("Slider drag test", () => {
       });
       await expectAriaValue(slider, 10);
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 
   test(
@@ -102,7 +104,7 @@ describe("Slider drag test", () => {
       });
       await expectAriaValue(slider, 0);
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 
   test(
@@ -124,7 +126,7 @@ describe("Slider drag test", () => {
       expect(value).toBeGreaterThan(5);
       expect(value).toBeLessThan(10);
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 
   test(
@@ -136,7 +138,7 @@ describe("Slider drag test", () => {
       await slider.press("ArrowRight");
       await expectAriaValue(slider, 6);
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 
   test(
@@ -156,6 +158,6 @@ describe("Slider drag test", () => {
       expect(value).toBeLessThan(5);
       expect(value).toBeGreaterThan(0);
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 });

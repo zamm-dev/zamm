@@ -8,6 +8,7 @@ import {
   type Locator,
 } from "@playwright/test";
 import { afterAll, beforeAll, describe, test } from "vitest";
+import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
 
 const DEBUG_LOGGING = false;
 
@@ -20,6 +21,7 @@ describe("Api Calls endless scroll test", () => {
   beforeAll(async () => {
     browser = await chromium.launch({ headless: true });
     context = await browser.newContext();
+    context.setDefaultTimeout(PLAYWRIGHT_TIMEOUT);
     page = await context.newPage();
 
     if (DEBUG_LOGGING) {
@@ -71,6 +73,6 @@ describe("Api Calls endless scroll test", () => {
       });
       await expectLastMessage(apiCallsScrollElement, "Mocking number 0.");
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 });

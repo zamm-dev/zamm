@@ -1,5 +1,5 @@
 FROM ubuntu:20.04
-LABEL org.opencontainers.image.source="https://github.com/amosjyng/zamm"
+LABEL org.opencontainers.image.source="https://github.com/zamm-dev/zamm"
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
@@ -44,3 +44,7 @@ RUN git clone --depth 1 --branch zamm/v0.0.0 https://github.com/amosjyng/async-o
   echo "// dummy file" > src/lib.rs && \
   echo "pub use tauri_build; fn main () {}" > build.rs && \
   cargo build --release --features custom-protocol
+
+# dev dependencies
+RUN yarn playwright install --with-deps && \
+  apt install -y imagemagick

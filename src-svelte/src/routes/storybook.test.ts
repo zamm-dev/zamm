@@ -13,11 +13,7 @@ import {
 } from "jest-image-snapshot";
 import * as fs from "fs/promises";
 import sizeOf from "image-size";
-
-const DEFAULT_TIMEOUT =
-  process.env.PLAYWRIGHT_TIMEOUT === undefined
-    ? 9_000
-    : parseInt(process.env.PLAYWRIGHT_TIMEOUT);
+import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
 
 const SCREENSHOTS_BASE_DIR =
   process.env.SCREENSHOTS_BASE_DIR === undefined
@@ -240,11 +236,11 @@ describe.concurrent("Storybook visual tests", () => {
   beforeAll(async () => {
     webkitBrowser = await webkit.launch({ headless: true });
     webkitBrowserContext = await webkitBrowser.newContext();
-    webkitBrowserContext.setDefaultTimeout(DEFAULT_TIMEOUT);
+    webkitBrowserContext.setDefaultTimeout(PLAYWRIGHT_TIMEOUT);
 
     chromiumBrowser = await chromium.launch({ headless: true });
     chromiumBrowserContext = await chromiumBrowser.newContext();
-    chromiumBrowserContext.setDefaultTimeout(DEFAULT_TIMEOUT);
+    chromiumBrowserContext.setDefaultTimeout(PLAYWRIGHT_TIMEOUT);
 
     console.log(
       `Running tests with Webkit v${webkitBrowser.version()} and ` +
@@ -450,7 +446,7 @@ describe.concurrent("Storybook visual tests", () => {
         },
         {
           retry: 1,
-          timeout: DEFAULT_TIMEOUT * 2.2,
+          timeout: PLAYWRIGHT_TEST_TIMEOUT,
         },
       );
     }

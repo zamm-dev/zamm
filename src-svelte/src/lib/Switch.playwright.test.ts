@@ -8,6 +8,7 @@ import {
   type Locator,
 } from "@playwright/test";
 import { afterAll, beforeAll, describe, test } from "vitest";
+import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
 
 const DEBUG_LOGGING = false;
 
@@ -22,6 +23,7 @@ describe("Switch drag test", () => {
   beforeAll(async () => {
     browser = await chromium.launch({ headless: true });
     context = await browser.newContext();
+    context.setDefaultTimeout(PLAYWRIGHT_TIMEOUT);
     await context.exposeFunction(
       "_testRecordSoundPlayed",
       () => numSoundsPlayed++,
@@ -90,7 +92,7 @@ describe("Switch drag test", () => {
       await expectAriaValue(onOffSwitch, true);
       expect(numSoundsPlayed).toEqual(1);
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 
   test(
@@ -113,7 +115,7 @@ describe("Switch drag test", () => {
         JSON.stringify(soundDelays) === JSON.stringify(expectedDelays),
       ).toBeTruthy();
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 
   test(
@@ -141,7 +143,7 @@ describe("Switch drag test", () => {
         JSON.stringify(soundDelays) === JSON.stringify(expectedDelays),
       ).toBeTruthy();
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 
   test(
@@ -160,7 +162,7 @@ describe("Switch drag test", () => {
       await expectAriaValue(onOffSwitch, false);
       expect(numSoundsPlayed).toEqual(0);
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 
   test(
@@ -194,6 +196,6 @@ describe("Switch drag test", () => {
         JSON.stringify(soundDelays) === JSON.stringify(expectedDelays),
       ).toBeTruthy();
     },
-    { retry: 2 },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 });
