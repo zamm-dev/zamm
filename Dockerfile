@@ -14,7 +14,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VERS
 ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cargo install --locked tauri-cli@${TAURI_CLI_VERSION}
 
-ARG NODEJS_VERSION=22.2.0
+ARG NODEJS_VERSION=20.5.1
 WORKDIR /tmp
 RUN curl -SLO "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}-linux-x64.tar.xz" && \
     tar -xJf "node-v${NODEJS_VERSION}-linux-x64.tar.xz" -C /usr/local --strip-components=1 && \

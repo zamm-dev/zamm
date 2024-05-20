@@ -7,7 +7,7 @@ on:
 
 env:
   POETRY_VERSION: "1.5.1"
-  NODEJS_VERSION: "22.2.0"
+  NODEJS_VERSION: "20.5.1"
   RUST_VERSION: "1.76.0"
   PRE_COMMIT_VERSION: "3.6.0"
   TAURI_CLI_VERSION: "1.5.9"
@@ -100,9 +100,7 @@ jobs:
         run: yarn link
         working-directory: forks/neodrag/packages/svelte
       - name: Install main Node dependencies
-        run: |
-          sudo apt install -y libgif-dev
-          yarn install --frozen-lockfile
+        run: yarn install --frozen-lockfile
       - name: Setup Svelte project
         run: |
           yarn link @neodrag/svelte
@@ -179,7 +177,6 @@ jobs:
           name: builds
       - name: Install Node dependencies
         run: |
-          sudo apt install -y libgif-dev
           yarn install --frozen-lockfile
           cd src-svelte && yarn install --frozen-lockfile && yarn svelte-kit sync
       # end of common dependency setup with downloaded artifacts
@@ -236,7 +233,6 @@ jobs:
           node-version: ${{ env.NODEJS_VERSION }}
       - name: Install Node dependencies
         run: |
-          sudo apt install -y libgif-dev
           yarn install --frozen-lockfile
           cd src-svelte && yarn svelte-kit sync
       - name: Install Rust
