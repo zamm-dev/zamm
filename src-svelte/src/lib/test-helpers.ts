@@ -2,6 +2,12 @@ import { spawn, ChildProcess } from "child_process";
 import fetch from "node-fetch";
 import { tick } from "svelte";
 
+export const PLAYWRIGHT_TIMEOUT =
+  process.env.PLAYWRIGHT_TIMEOUT === undefined
+    ? 9_000
+    : parseInt(process.env.PLAYWRIGHT_TIMEOUT);
+export const PLAYWRIGHT_TEST_TIMEOUT = 2.2 * PLAYWRIGHT_TIMEOUT;
+
 async function startStorybook(): Promise<ChildProcess> {
   return new Promise((resolve, reject) => {
     const storybookProcess = spawn("yarn", ["storybook", "--ci"]);

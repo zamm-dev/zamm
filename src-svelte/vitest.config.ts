@@ -22,7 +22,6 @@ export default defineConfig({
     environment: "jsdom",
     alias: [{ find: /^svelte$/, replacement: "svelte/internal" }],
     globalSetup: "src/testSetup.ts",
-    testTimeout: 20_000,
     poolOptions: {
       threads: {
         singleThread: true,
