@@ -5,7 +5,7 @@ use crate::models::llm_calls::various::{
     ConversationMetadata, Llm, LlmCallReference, Request, Response, TokenMetadata,
 };
 #[cfg(test)]
-use crate::models::llm_calls::{NewLlmCallContinuation, NewLlmCallRow};
+use crate::models::llm_calls::{NewLlmCallFollowUp, NewLlmCallRow};
 use chrono::naive::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
@@ -39,11 +39,11 @@ impl LlmCall {
         }
     }
 
-    pub fn as_continuation(&self) -> Option<NewLlmCallContinuation> {
+    pub fn as_follow_up_row(&self) -> Option<NewLlmCallFollowUp> {
         self.conversation
             .previous_call
             .as_ref()
-            .map(|call| NewLlmCallContinuation {
+            .map(|call| NewLlmCallFollowUp {
                 previous_call_id: &call.id,
                 next_call_id: &self.id,
             })

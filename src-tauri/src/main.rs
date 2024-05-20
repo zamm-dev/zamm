@@ -8,9 +8,9 @@ mod models;
 mod sample_call;
 mod schema;
 mod setup;
-mod views;
 #[cfg(test)]
 mod test_helpers;
+mod views;
 
 use clap::Parser;
 use diesel::sqlite::SqliteConnection;

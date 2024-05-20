@@ -1,10 +1,10 @@
 use crate::commands::errors::ZammResult;
 use crate::commands::Error;
 use crate::models::llm_calls::{
-    ChatMessage, ChatPrompt, EntityId, LightweightLlmCall, NewLlmCallContinuation,
+    ChatMessage, ChatPrompt, EntityId, LightweightLlmCall, NewLlmCallFollowUp,
     NewLlmCallRow, Prompt, TokenMetadata,
 };
-use crate::schema::{llm_call_continuations, llm_calls};
+use crate::schema::{llm_call_follow_ups, llm_calls};
 use crate::setup::api_keys::Service;
 use crate::{ZammApiKeys, ZammDatabase};
 use async_openai::config::OpenAIConfig;
@@ -117,8 +117,8 @@ async fn chat_helper(
             .execute(conn)?;
 
         if let Some(previous_id) = previous_call_id {
-            diesel::insert_into(llm_call_continuations::table)
-                .values(NewLlmCallContinuation {
+            diesel::insert_into(llm_call_follow_ups::table)
+                .values(NewLlmCallFollowUp {
                     previous_call_id: &previous_id,
                     next_call_id: &new_id,
                 })
