@@ -38,7 +38,9 @@ describe("Api Calls endless scroll test", () => {
   const getScrollElement = async () => {
     const url = `http://localhost:6006/?path=/story/screens-llm-call-list--full`;
     await page.goto(url);
-    await page.locator("button[title='Hide addons [A]']").click();
+    await page
+      .locator("button[title='Hide addons [A]']")
+      .dispatchEvent("click");
 
     const maybeFrame = page.frame({ name: "storybook-preview-iframe" });
     if (!maybeFrame) {
