@@ -3,9 +3,12 @@ import "@testing-library/jest-dom";
 
 import { render, screen, waitFor, within } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import { resetConversation } from "../../chat/Chat.svelte";
+import {
+  resetConversation,
+  conversation,
+  lastMessageId,
+} from "../../chat/Chat.svelte";
 import { TauriInvokePlayback } from "$lib/sample-call-testing";
-import { conversation } from "../../chat/Chat.svelte";
 import ApiCall from "./ApiCall.svelte";
 import { get } from "svelte/store";
 import { mockStores } from "../../../vitest-mocks/stores";
@@ -82,6 +85,7 @@ describe("Individual API call", () => {
         text: "You are ZAMM, a chat program. Respond in first person.",
       },
     ]);
+    expect(get(lastMessageId)).toBeUndefined();
     expect(get(mockStores.page).url.pathname).toEqual("/");
 
     const restoreButton = await waitFor(() =>
@@ -114,6 +118,7 @@ describe("Individual API call", () => {
         },
       ]);
     });
+    expect(get(lastMessageId)).toEqual("c13c1e67-2de3-48de-a34c-a32079c03316");
     expect(get(mockStores.page).url.pathname).toEqual("/chat");
   });
 });

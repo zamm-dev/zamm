@@ -1,10 +1,10 @@
 use crate::commands::errors::ZammResult;
 use crate::commands::Error;
 use crate::models::llm_calls::{
-    ChatMessage, ChatPrompt, EntityId, LightweightLlmCall, Llm, LlmCall, Prompt,
-    Request, Response, TokenMetadata,
+    ChatMessage, ChatPrompt, EntityId, LightweightLlmCall, NewLlmCallFollowUp,
+    NewLlmCallRow, Prompt, TokenMetadata,
 };
-use crate::schema::llm_calls;
+use crate::schema::{llm_call_follow_ups, llm_calls};
 use crate::setup::api_keys::Service;
 use crate::{ZammApiKeys, ZammDatabase};
 use async_openai::config::OpenAIConfig;
@@ -12,17 +12,26 @@ use async_openai::types::{
     ChatCompletionRequestMessage, CreateChatCompletionRequestArgs,
 };
 use diesel::RunQueryDsl;
+use serde::{Deserialize, Serialize};
 use specta::specta;
 use tauri::State;
 use uuid::Uuid;
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, specta::Type)]
+pub struct ChatArgs {
+    provider: Service,
+    llm: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    temperature: Option<f32>,
+    prompt: Vec<ChatMessage>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    previous_call_id: Option<Uuid>,
+}
+
 async fn chat_helper(
     zamm_api_keys: &ZammApiKeys,
     zamm_db: &ZammDatabase,
-    provider: Service,
-    llm: String,
-    temperature: Option<f32>,
-    prompt: Vec<ChatMessage>,
+    args: ChatArgs,
     http_client: reqwest_middleware::ClientWithMiddleware,
 ) -> ZammResult<LightweightLlmCall> {
     let api_keys = zamm_api_keys.0.lock().await;
@@ -34,7 +43,7 @@ async fn chat_helper(
 
     let db = &mut zamm_db.0.lock().await;
 
-    let config = match provider {
+    let config = match &args.provider {
         Service::OpenAI => {
             let openai_api_key =
                 api_keys.openai.as_ref().ok_or(Error::MissingApiKey {
@@ -44,13 +53,13 @@ async fn chat_helper(
         }
     };
 
-    let requested_model = llm;
-    let requested_temperature = temperature.unwrap_or(1.0);
+    let requested_model = args.llm;
+    let requested_temperature = args.temperature.unwrap_or(1.0);
 
     let openai_client =
         async_openai::Client::with_config(config).with_http_client(http_client);
     let messages: Vec<ChatCompletionRequestMessage> =
-        prompt.clone().into_iter().map(|m| m.into()).collect();
+        args.prompt.clone().into_iter().map(|m| m.into()).collect();
     let request = CreateChatCompletionRequestArgs::default()
         .model(&requested_model)
         .temperature(requested_temperature)
@@ -72,6 +81,7 @@ async fn chat_helper(
             .as_ref()
             .map(|usage| usage.total_tokens as i32),
     };
+    let previous_call_id = args.previous_call_id.map(|id| EntityId { uuid: id });
     let sole_choice = response
         .choices
         .first()
@@ -80,33 +90,47 @@ async fn chat_helper(
         })?
         .message
         .to_owned();
-    let llm_call = LlmCall {
-        id: EntityId {
-            uuid: Uuid::new_v4(),
-        },
-        timestamp: chrono::Utc::now().naive_utc(),
-        llm: Llm {
-            provider: Service::OpenAI,
-            name: response.model.clone(),
-            requested: requested_model.to_owned(),
-        },
-        request: Request {
-            temperature: requested_temperature,
-            prompt: Prompt::Chat(ChatPrompt { messages: prompt }),
-        },
-        response: Response {
-            completion: sole_choice.try_into()?,
-        },
-        tokens: token_metadata,
+
+    let new_id = EntityId {
+        uuid: Uuid::new_v4(),
     };
+    let timestamp = chrono::Utc::now().naive_utc();
+    let completion: ChatMessage = sole_choice.try_into()?;
 
     if let Some(conn) = db.as_mut() {
         diesel::insert_into(llm_calls::table)
-            .values(llm_call.as_sql_row())
+            .values(NewLlmCallRow {
+                id: &new_id,
+                timestamp: &timestamp,
+                provider: &args.provider,
+                llm_requested: &requested_model,
+                llm: &response.model,
+                temperature: &requested_temperature,
+                prompt_tokens: token_metadata.prompt.as_ref(),
+                response_tokens: token_metadata.response.as_ref(),
+                total_tokens: token_metadata.total.as_ref(),
+                prompt: &Prompt::Chat(ChatPrompt {
+                    messages: args.prompt,
+                }),
+                completion: &completion,
+            })
             .execute(conn)?;
+
+        if let Some(previous_id) = previous_call_id {
+            diesel::insert_into(llm_call_follow_ups::table)
+                .values(NewLlmCallFollowUp {
+                    previous_call_id: &previous_id,
+                    next_call_id: &new_id,
+                })
+                .execute(conn)?;
+        }
     } // todo: warn users if DB write unsuccessful
 
-    Ok(llm_call.into())
+    Ok(LightweightLlmCall {
+        id: new_id,
+        timestamp,
+        response_message: completion,
+    })
 }
 
 #[tauri::command(async)]
@@ -114,30 +138,18 @@ async fn chat_helper(
 pub async fn chat(
     api_keys: State<'_, ZammApiKeys>,
     database: State<'_, ZammDatabase>,
-    provider: Service,
-    llm: String,
-    temperature: Option<f32>,
-    prompt: Vec<ChatMessage>,
+    args: ChatArgs,
 ) -> ZammResult<LightweightLlmCall> {
     let http_client = reqwest::ClientBuilder::new().build()?;
     let client_with_middleware =
         reqwest_middleware::ClientBuilder::new(http_client).build();
-    chat_helper(
-        &api_keys,
-        &database,
-        provider,
-        llm,
-        temperature,
-        prompt,
-        client_with_middleware,
-    )
-    .await
+    chat_helper(&api_keys, &database, args, client_with_middleware).await
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::llm_calls::ChatMessage;
+
     use crate::sample_call::SampleCall;
     use crate::setup::api_keys::ApiKeys;
     use crate::test_helpers::api_testing::standard_test_subdir;
@@ -145,7 +157,6 @@ mod tests {
         SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
     };
     use rvcr::VCRMode;
-    use serde::{Deserialize, Serialize};
     use std::collections::HashMap;
     use std::env;
     use stdext::function_name;
@@ -157,10 +168,7 @@ mod tests {
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct ChatRequest {
-        provider: Service,
-        llm: String,
-        temperature: Option<f32>,
-        prompt: Vec<ChatMessage>,
+        args: ChatArgs,
     }
 
     struct ChatTestCase {
@@ -180,7 +188,7 @@ mod tests {
             args: &Option<ChatRequest>,
             side_effects: &SideEffectsHelpers,
         ) -> ZammResult<LightweightLlmCall> {
-            let actual_args = args.as_ref().unwrap().clone();
+            let actual_request = args.as_ref().unwrap().clone();
 
             let network_helper = side_effects.network.as_ref().unwrap();
             let api_keys = match network_helper.mode {
@@ -195,10 +203,7 @@ mod tests {
             chat_helper(
                 &api_keys,
                 side_effects.db.as_ref().unwrap(),
-                actual_args.provider,
-                actual_args.llm,
-                actual_args.temperature,
-                actual_args.prompt,
+                actual_request.args,
                 network_helper.network_client.clone(),
             )
             .await

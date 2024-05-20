@@ -7,7 +7,7 @@ use chrono::naive::NaiveDateTime;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Queryable, Selectable, Clone, Serialize, Deserialize)]
+#[derive(Debug, Queryable, Selectable, Clone, Serialize, Deserialize, Identifiable)]
 #[diesel(table_name = llm_calls)]
 pub struct LlmCallRow {
     pub id: EntityId,

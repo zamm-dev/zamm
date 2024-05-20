@@ -5,6 +5,7 @@
   import { onMount } from "svelte";
 
   export let sendChatMessage: (message: string) => void;
+  export let chatBusy = false;
   export let currentMessage = "";
   export let onTextInputResize: () => void = () => undefined;
   let textareaInput: HTMLTextAreaElement;
@@ -27,7 +28,7 @@
 
   function submitChat() {
     const message = currentMessage.trim();
-    if (message) {
+    if (message && !chatBusy) {
       sendChatMessage(currentMessage);
       currentMessage = "";
       requestAnimationFrame(() => {

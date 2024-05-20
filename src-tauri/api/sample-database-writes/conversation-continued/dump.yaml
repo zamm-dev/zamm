@@ -23,6 +23,10 @@ llm_calls:
     prompt: 32
     response: 12
     total: 44
+  conversation:
+    next_calls:
+    - id: c13c1e67-2de3-48de-a34c-a32079c03316
+      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust...'
 - id: c13c1e67-2de3-48de-a34c-a32079c03316
   timestamp: 2024-01-16T09:50:19.738093890
   llm:
@@ -50,3 +54,7 @@ llm_calls:
     prompt: 57
     response: 22
     total: 79
+  conversation:
+    previous_call:
+      id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a74
+      snippet: Yes, it works. How can I assist you today?

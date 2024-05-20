@@ -1,7 +1,11 @@
 use crate::commands::errors::ZammResult;
-use crate::models::llm_calls::{LlmCall, LlmCallRow, NewLlmCallRow};
+use crate::models::llm_calls::{
+    ChatMessage, EntityId, LlmCall, LlmCallLeftJoinResult, NewLlmCallFollowUp,
+    NewLlmCallRow,
+};
 use crate::models::{ApiKey, NewApiKey};
-use crate::schema::{api_keys, llm_calls};
+use crate::schema::{api_keys, llm_call_follow_ups, llm_calls};
+use crate::views::llm_call_named_follow_ups;
 use crate::ZammDatabase;
 use anyhow::anyhow;
 use diesel::prelude::*;
@@ -24,6 +28,13 @@ impl DatabaseContents {
     pub fn insertable_llm_calls(&self) -> Vec<NewLlmCallRow> {
         self.llm_calls.iter().map(|k| k.as_sql_row()).collect()
     }
+
+    pub fn insertable_call_follow_ups(&self) -> Vec<NewLlmCallFollowUp> {
+        self.llm_calls
+            .iter()
+            .filter_map(|k| k.as_follow_up_row())
+            .collect()
+    }
 }
 
 pub async fn get_database_contents(
@@ -33,11 +44,40 @@ pub async fn get_database_contents(
         &mut zamm_db.0.lock().await;
     let db = db_mutex.as_mut().ok_or(anyhow!("Error getting db"))?;
     let api_keys = api_keys::table.load::<ApiKey>(db)?;
-    let llm_call_rows = llm_calls::table.load::<LlmCallRow>(db)?;
-    let llm_calls: Vec<LlmCall> = llm_call_rows.into_iter().map(|r| r.into()).collect();
+    let llm_call_left_joins = llm_calls::table
+        .left_join(
+            llm_call_named_follow_ups::dsl::llm_call_named_follow_ups
+                .on(llm_calls::id.eq(llm_call_named_follow_ups::next_call_id)),
+        )
+        .select((
+            llm_calls::all_columns,
+            llm_call_named_follow_ups::previous_call_id.nullable(),
+            llm_call_named_follow_ups::previous_call_completion.nullable(),
+        ))
+        .get_results::<LlmCallLeftJoinResult>(db)?;
+    let llm_calls_result: ZammResult<Vec<LlmCall>> = llm_call_left_joins
+        .into_iter()
+        .map(|lf| {
+            let (llm_call_row, previous_call_id, previous_call_completion) = lf;
+            let next_calls_result = llm_call_named_follow_ups::table
+                .select((
+                    llm_call_named_follow_ups::next_call_id,
+                    llm_call_named_follow_ups::next_call_completion,
+                ))
+                .filter(
+                    llm_call_named_follow_ups::previous_call_id.eq(&llm_call_row.id),
+                )
+                .load::<(EntityId, ChatMessage)>(db)?;
+            Ok((
+                (llm_call_row, previous_call_id, previous_call_completion),
+                next_calls_result,
+            )
+                .into())
+        })
+        .collect();
     Ok(DatabaseContents {
         api_keys,
-        llm_calls,
+        llm_calls: llm_calls_result?,
     })
 }
 
@@ -72,6 +112,9 @@ pub async fn read_database_contents(
         diesel::insert_into(llm_calls::table)
             .values(&db_contents.insertable_llm_calls())
             .execute(conn)?;
+        diesel::insert_into(llm_call_follow_ups::table)
+            .values(&db_contents.insertable_call_follow_ups())
+            .execute(conn)?;
         Ok(())
     })?;
     Ok(())
@@ -81,7 +124,7 @@ pub fn dump_sqlite_database(db_path: &PathBuf, dump_path: &PathBuf) {
     let dump_output = std::process::Command::new("sqlite3")
         .arg(db_path)
         // avoid the inserts into __diesel_schema_migrations
-        .arg(".dump api_keys llm_calls")
+        .arg(".dump api_keys llm_calls llm_call_follow_ups")
         .output()
         .expect("Error running sqlite3 .dump command");
     // filter output by lines starting with "INSERT"

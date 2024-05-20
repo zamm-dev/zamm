@@ -2,12 +2,16 @@ import { expect, test, vi, type Mock } from "vitest";
 import "@testing-library/jest-dom";
 
 import { render, screen, waitFor } from "@testing-library/svelte";
-import Chat, { conversation, resetConversation } from "./Chat.svelte";
+import Chat, {
+  conversation,
+  lastMessageId,
+  resetConversation,
+} from "./Chat.svelte";
 import PersistentChatView from "./PersistentChatView.svelte";
 import userEvent from "@testing-library/user-event";
 import { TauriInvokePlayback, type ParsedCall } from "$lib/sample-call-testing";
 import { animationSpeed } from "$lib/preferences";
-import type { ChatMessage, LightweightLlmCall } from "$lib/bindings";
+import type { ChatArgs, LightweightLlmCall } from "$lib/bindings";
 
 describe("Chat conversation", () => {
   let tauriInvokeMock: Mock;
@@ -64,13 +68,11 @@ describe("Chat conversation", () => {
     playback.addSamples(correspondingApiCallSample);
     const nextExpectedApiCall: ParsedCall =
       playback.unmatchedCalls.slice(-1)[0];
-    const nextExpectedCallArgs = nextExpectedApiCall.request[1] as Record<
-      string,
-      any
-    >;
-    const nextExpectedMessage = nextExpectedCallArgs["prompt"].slice(
-      -1,
-    )[0] as ChatMessage;
+    const nextExpectedCallArgs = nextExpectedApiCall.request[1] as unknown as {
+      args: ChatArgs;
+    };
+    const nextExpectedMessage =
+      nextExpectedCallArgs.args["prompt"].slice(-1)[0];
     const nextExpectedHumanPrompt = nextExpectedMessage.text;
 
     const chatInput = screen.getByLabelText("Chat with the AI:");
@@ -92,6 +94,7 @@ describe("Chat conversation", () => {
         ),
       ).toBeInTheDocument();
     });
+    expect(chatInput).toHaveValue("");
 
     tauriInvokeMock.mockClear();
   }
@@ -111,19 +114,17 @@ describe("Chat conversation", () => {
   test("won't send multiple messages at once", async () => {
     render(Chat, {});
     expect(tauriInvokeMock).not.toHaveBeenCalled();
-    playback.callPauseMs = 1_000; // this line differs from sendChatMessage
+    playback.callPauseMs = 2_000; // this line differs from sendChatMessage
     playback.addSamples(
       "../src-tauri/api/sample-calls/chat-start-conversation.yaml",
     );
     const nextExpectedApiCall: ParsedCall =
       playback.unmatchedCalls.slice(-1)[0];
-    const nextExpectedCallArgs = nextExpectedApiCall.request[1] as Record<
-      string,
-      any
-    >;
-    const nextExpectedMessage = nextExpectedCallArgs["prompt"].slice(
-      -1,
-    )[0] as ChatMessage;
+    const nextExpectedCallArgs = nextExpectedApiCall.request[1] as unknown as {
+      args: ChatArgs;
+    };
+    const nextExpectedMessage =
+      nextExpectedCallArgs.args["prompt"].slice(-1)[0];
     const nextExpectedHumanPrompt = nextExpectedMessage.text;
 
     const chatInput = screen.getByLabelText("Chat with the AI:");
@@ -133,24 +134,13 @@ describe("Chat conversation", () => {
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
     // this part differs from sendChatMessage
-    await waitFor(() => {
-      expect(
-        screen.getByText("Yes, it works. How can I assist you today?"),
-      ).toBeInTheDocument();
-    });
-
-    playback.addSamples(
-      "../src-tauri/api/sample-calls/chat-continue-conversation.yaml",
-    );
     await userEvent.type(chatInput, "Tell me something funny.");
     await userEvent.click(screen.getByRole("button", { name: "Send" }));
-    expect(tauriInvokeMock).toHaveBeenCalledTimes(2);
-    expect(screen.getByText("Tell me something funny.")).toBeInTheDocument();
-    await waitFor(() => {
-      expect(
-        screen.getByText(/Because they make up everything/),
-      ).toBeInTheDocument();
-    });
+    // remember, we're intentionally delaying the first return here,
+    // so the mock won't be called
+    expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
+    expect(chatInput).toHaveValue("Tell me something funny.");
   });
 
   test("persists a conversation after returning to it", async () => {
@@ -171,6 +161,7 @@ describe("Chat conversation", () => {
     expect(
       screen.queryByText("Hello, does this work?"),
     ).not.toBeInTheDocument();
+    lastMessageId.set("d5ad1e49-f57f-4481-84fb-4d70ba8a7a74");
     conversation.set([
       {
         role: "System",

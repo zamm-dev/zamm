@@ -10,6 +10,7 @@ mod schema;
 mod setup;
 #[cfg(test)]
 mod test_helpers;
+mod views;
 
 use clap::Parser;
 use diesel::sqlite::SqliteConnection;
