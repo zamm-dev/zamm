@@ -1,0 +1,7 @@
+request:
+  - upgrade
+response:
+  message: "null"
+sideEffects:
+  disk:
+    endStateDirectory: preferences/version-init

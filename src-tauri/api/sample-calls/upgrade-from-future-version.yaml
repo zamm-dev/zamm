@@ -1,0 +1,8 @@
+request:
+  - upgrade
+response:
+  message: "null"
+sideEffects:
+  disk:
+    startStateDirectory: preferences/future-version
+    endStateDirectory: preferences/future-version
