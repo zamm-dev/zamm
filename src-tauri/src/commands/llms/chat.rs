@@ -293,4 +293,22 @@ mod tests {
         )
         .await;
     }
+
+    #[tokio::test]
+    async fn test_fork_conversation_step_1() {
+        test_llm_api_call(
+            function_name!(),
+            "api/sample-calls/chat-fork-conversation-python.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_fork_conversation_step_2() {
+        test_llm_api_call(
+            function_name!(),
+            "api/sample-calls/chat-fork-conversation-rust.yaml",
+        )
+        .await;
+    }
 }

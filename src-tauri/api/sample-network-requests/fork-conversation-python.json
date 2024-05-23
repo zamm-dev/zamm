@@ -1,0 +1,56 @@
+{
+  "http_interactions": [
+    {
+      "response": {
+        "body": {
+          "encoding": null,
+          "string": "{\n  \"id\": \"chatcmpl-9Rz29OFwZeds3sfv1PxpAwP3ywJ42\",\n  \"object\": \"chat.completion\",\n  \"created\": 1716456497,\n  \"model\": \"gpt-4-0613\",\n  \"choices\": [\n    {\n      \"index\": 0,\n      \"message\": {\n        \"role\": \"assistant\",\n        \"content\": \"Sure, here is a simple Python script that will print out the joke:\\n\\n```python\\nprint(\\\"Why don't scientists trust atoms? Because they make up everything!\\\")\\n```\\n\\nJust run this script and it will display the joke.\"\n      },\n      \"logprobs\": null,\n      \"finish_reason\": \"stop\"\n    }\n  ],\n  \"usage\": {\n    \"prompt_tokens\": 98,\n    \"completion_tokens\": 46,\n    \"total_tokens\": 144\n  },\n  \"system_fingerprint\": null\n}\n"
+        },
+        "http_version": "1.1",
+        "status": {
+          "code": 200,
+          "message": "OK"
+        },
+        "headers": {
+          "strict-transport-security": ["max-age=15724800; includeSubDomains"],
+          "transfer-encoding": ["chunked"],
+          "x-ratelimit-limit-tokens": ["10000"],
+          "x-ratelimit-reset-tokens": ["564ms"],
+          "x-ratelimit-reset-requests": ["8.64s"],
+          "connection": ["keep-alive"],
+          "x-ratelimit-remaining-tokens": ["9906"],
+          "x-ratelimit-remaining-requests": ["9999"],
+          "date": ["Thu, 23 May 2024 09:28:19 GMT"],
+          "alt-svc": ["h3=\":443\"; ma=86400"],
+          "x-request-id": ["req_3b7ade609570d487684ddc7a630cb077"],
+          "cf-cache-status": ["DYNAMIC"],
+          "content-type": ["application/json"],
+          "openai-version": ["2020-10-01"],
+          "server": ["cloudflare"],
+          "x-ratelimit-limit-requests": ["10000"],
+          "set-cookie": [
+            "_cfuvid=nCfjcpWvR3LVhrh9krMr2wGz5pl5acRlVXg61sdebYk-1716456499184-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None"
+          ],
+          "openai-organization": ["<CENSORED>"],
+          "openai-processing-ms": ["2210"],
+          "cf-ray": ["888403cc3e604996-PNH"]
+        }
+      },
+      "request": {
+        "uri": "https://api.openai.com/v1/chat/completions",
+        "body": {
+          "encoding": null,
+          "string": "{\"messages\":[{\"content\":\"You are ZAMM, a chat program. Respond in first person.\",\"role\":\"system\"},{\"content\":\"Hello, does this work?\",\"role\":\"user\"},{\"content\":\"Yes, it works. How can I assist you today?\",\"role\":\"assistant\"},{\"content\":\"Tell me something funny.\",\"role\":\"user\"},{\"content\":\"Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!\",\"role\":\"assistant\"},{\"content\":\"Write me a Python script that prints that joke out.\",\"role\":\"user\"}],\"model\":\"gpt-4\",\"temperature\":1.0}"
+        },
+        "method": "post",
+        "headers": {
+          "authorization": ["<CENSORED>"],
+          "content-type": ["application/json"],
+          "openai-beta": ["assistants=v1"]
+        }
+      },
+      "recorded_at": "Thu, 23 May 2024 09:28:18 +0000"
+    }
+  ],
+  "recorded_with": "rVCR 0.1.5"
+}

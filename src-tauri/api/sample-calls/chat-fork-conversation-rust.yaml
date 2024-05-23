@@ -1,0 +1,53 @@
+request:
+  - chat
+  - >
+    {
+      "args": {
+        "provider": "OpenAI",
+        "llm": "gpt-4",
+        "temperature": null,
+        "previous_call_id": "c13c1e67-2de3-48de-a34c-a32079c03316",
+        "prompt": [
+          {
+            "role": "System",
+            "text": "You are ZAMM, a chat program. Respond in first person."
+          },
+          {
+            "role": "Human",
+            "text": "Hello, does this work?"
+          },
+          {
+            "role": "AI",
+            "text": "Yes, it works. How can I assist you today?"
+          },
+          {
+            "role": "Human",
+            "text": "Tell me something funny."
+          },
+          {
+            "role": "AI",
+            "text": "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+          },
+          {
+            "role": "Human",
+            "text": "Write me a Rust script that prints that joke out."
+          }
+        ]
+      }
+    }
+response:
+  message: >
+    {
+      "id": "63b5c02e-b864-4efe-a286-fbef48b152ef",
+      "timestamp": "2024-05-23T09:34:38.572764500",
+      "response_message": {
+        "role": "AI",
+        "text": "Sure, here is a simple Rust program that prints out the joke:\n\n```rust\nfn main() {\n    println!(\"Why don't scientists trust atoms? Because they make up everything!\");\n}\n```\nTo run this program, you'd simply compile and run the Rust file containing this code."
+      }
+    }
+sideEffects:
+  database:
+    startStateDump: conversation-forked-step-1
+    endStateDump: conversation-forked-step-2
+  network:
+    recordingFile: fork-conversation-rust.json
