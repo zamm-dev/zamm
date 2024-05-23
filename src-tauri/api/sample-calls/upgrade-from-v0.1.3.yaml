@@ -1,8 +1,0 @@
-request:
-  - upgrade
-response:
-  message: "null"
-sideEffects:
-  disk:
-    startStateDirectory: preferences/v0.1.3
-    endStateDirectory: preferences/version-update

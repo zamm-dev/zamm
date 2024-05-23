@@ -6,3 +6,6 @@ sideEffects:
   disk:
     startStateDirectory: preferences/future-version
     endStateDirectory: preferences/future-version
+  database:
+    startStateDump: sample-v0.1.3-db
+    endStateDump: sample-v0.1.3-db

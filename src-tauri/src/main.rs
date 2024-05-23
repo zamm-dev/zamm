@@ -15,10 +15,12 @@ mod views;
 
 use clap::Parser;
 use diesel::sqlite::SqliteConnection;
+use futures::executor;
 use setup::api_keys::{setup_api_keys, ApiKeys};
 #[cfg(debug_assertions)]
 use specta::collect_types;
 use std::env;
+use tauri::Manager;
 #[cfg(debug_assertions)]
 use tauri_specta::ts;
 use tokio::sync::Mutex;
@@ -63,7 +65,17 @@ fn main() {
             tauri::Builder::default()
                 .setup(|app| {
                     let config_dir = app.handle().path_resolver().app_config_dir();
-                    handle_app_upgrades(&config_dir)?;
+                    let zamm_db = app.state::<ZammDatabase>();
+
+                    executor::block_on(async {
+                        handle_app_upgrades(&config_dir, &zamm_db)
+                            .await
+                            .unwrap_or_else(|e| {
+                                eprintln!("Couldn't run custom data migrations: {e}");
+                                eprintln!("Continuing with unchanged data");
+                            });
+                    });
+
                     Ok(())
                 })
                 .manage(ZammDatabase(Mutex::new(possible_db)))

@@ -5,3 +5,6 @@ response:
 sideEffects:
   disk:
     endStateDirectory: preferences/version-init
+  database:
+    startStateDump: empty
+    endStateDump: empty
