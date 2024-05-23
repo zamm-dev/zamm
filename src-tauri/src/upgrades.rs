@@ -42,6 +42,7 @@ async fn upgrade_to_v_0_1_4(zamm_db: &ZammDatabase) -> ZammResult<()> {
             })
             .collect();
 
+    let mut num_links_added = 0;
     for (id, timestamp, prompt) in non_initial_calls {
         let (search_prompt, search_completion) = match prompt {
             Prompt::Chat(chat_prompt) => {
@@ -70,7 +71,15 @@ async fn upgrade_to_v_0_1_4(zamm_db: &ZammDatabase) -> ZammResult<()> {
                     llm_call_follow_ups::next_call_id.eq(id),
                 ))
                 .execute(conn)?;
+            num_links_added += 1;
         }
+    }
+
+    if num_links_added > 0 {
+        println!(
+            "v0.1.4 data migration: Linked {} LLM API calls with their follow-ups",
+            num_links_added
+        );
     }
 
     Ok(())
