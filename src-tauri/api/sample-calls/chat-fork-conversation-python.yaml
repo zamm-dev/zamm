@@ -1,0 +1,53 @@
+request:
+  - chat
+  - >
+    {
+      "args": {
+        "provider": "OpenAI",
+        "llm": "gpt-4",
+        "temperature": null,
+        "previous_call_id": "c13c1e67-2de3-48de-a34c-a32079c03316",
+        "prompt": [
+          {
+            "role": "System",
+            "text": "You are ZAMM, a chat program. Respond in first person."
+          },
+          {
+            "role": "Human",
+            "text": "Hello, does this work?"
+          },
+          {
+            "role": "AI",
+            "text": "Yes, it works. How can I assist you today?"
+          },
+          {
+            "role": "Human",
+            "text": "Tell me something funny."
+          },
+          {
+            "role": "AI",
+            "text": "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+          },
+          {
+            "role": "Human",
+            "text": "Write me a Python script that prints that joke out."
+          }
+        ]
+      }
+    }
+response:
+  message: >
+    {
+      "id": "0e6bcadf-2b41-43d9-b4cf-81008d4f4771",
+      "timestamp": "2024-05-23T09:30:37.854241700",
+      "response_message": {
+        "role": "AI",
+        "text": "Sure, here is a simple Python script that will print out the joke:\n\n```python\nprint(\"Why don't scientists trust atoms? Because they make up everything!\")\n```\n\nJust run this script and it will display the joke."
+      }
+    }
+sideEffects:
+  database:
+    startStateDump: conversation-continued
+    endStateDump: conversation-forked-step-1
+  network:
+    recordingFile: fork-conversation-python.json
