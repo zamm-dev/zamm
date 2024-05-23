@@ -1,0 +1,11 @@
+request:
+  - upgrade
+response:
+  message: "null"
+sideEffects:
+  disk:
+    startStateDirectory: preferences/sound-override
+    endStateDirectory: preferences/version-update
+  database:
+    startStateDump: sample-v0.1.3-db
+    endStateDump: sample-v0.1.4-db

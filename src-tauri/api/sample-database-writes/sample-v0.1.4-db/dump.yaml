@@ -1,0 +1,178 @@
+api_keys: []
+llm_calls:
+- id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a74
+  timestamp: 2024-01-16T08:50:19.738093890
+  llm:
+    name: gpt-4-0613
+    requested: gpt-4
+    provider: OpenAI
+  request:
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: Hello, does this work?
+    temperature: 1.0
+  response:
+    completion:
+      role: AI
+      text: Yes, it works. How can I assist you today?
+  tokens:
+    prompt: 32
+    response: 12
+    total: 44
+  conversation:
+    next_calls:
+    - id: c13c1e67-2de3-48de-a34c-a32079c03316
+      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust...'
+- id: c13c1e67-2de3-48de-a34c-a32079c03316
+  timestamp: 2024-01-16T09:50:19.738093890
+  llm:
+    name: gpt-4-0613
+    requested: gpt-4
+    provider: OpenAI
+  request:
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: Hello, does this work?
+      - role: AI
+        text: Yes, it works. How can I assist you today?
+      - role: Human
+        text: Tell me something funny.
+    temperature: 1.0
+  response:
+    completion:
+      role: AI
+      text: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
+  tokens:
+    prompt: 57
+    response: 22
+    total: 79
+  conversation:
+    previous_call:
+      id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a74
+      snippet: Yes, it works. How can I assist you today?
+- id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a00
+  timestamp: 2024-01-18T08:00:50.738093890
+  llm:
+    name: gpt-4-0613
+    requested: gpt-4
+    provider: OpenAI
+  request:
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: This is a mock conversation.
+    temperature: 1.0
+  response:
+    completion:
+      role: AI
+      text: Mocking number 0.
+  tokens:
+    prompt: 15
+    response: 3
+    total: 18
+  conversation:
+    next_calls:
+    - id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a02
+      snippet: Mocking number 2.
+    - id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a06
+      snippet: Mocking number 6.
+- id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a02
+  timestamp: 2024-01-18T08:02:50.738093890
+  llm:
+    name: gpt-4-0613
+    requested: gpt-4
+    provider: OpenAI
+  request:
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: This is a mock conversation.
+      - role: AI
+        text: Mocking number 0.
+      - role: Human
+        text: This is a mock response.
+    temperature: 1.0
+  response:
+    completion:
+      role: AI
+      text: Mocking number 2.
+  tokens:
+    prompt: 15
+    response: 3
+    total: 18
+  conversation:
+    previous_call:
+      id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a00
+      snippet: Mocking number 0.
+- id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a04
+  timestamp: 2024-01-18T08:04:50.738093890
+  llm:
+    name: gpt-4-0613
+    requested: gpt-4
+    provider: OpenAI
+  request:
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: This is a non-existent fluke with no history.
+      - role: AI
+        text: Mocking number 0.
+      - role: Human
+        text: This is another mock response.
+    temperature: 1.0
+  response:
+    completion:
+      role: AI
+      text: Mocking number 4.
+  tokens:
+    prompt: 15
+    response: 3
+    total: 18
+- id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a06
+  timestamp: 2024-01-18T08:06:50.738093890
+  llm:
+    name: gpt-4-0613
+    requested: gpt-4
+    provider: OpenAI
+  request:
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: This is a mock conversation.
+      - role: AI
+        text: Mocking number 0.
+      - role: Human
+        text: This is another mock response.
+    temperature: 1.0
+  response:
+    completion:
+      role: AI
+      text: Mocking number 6.
+  tokens:
+    prompt: 15
+    response: 3
+    total: 18
+  conversation:
+    previous_call:
+      id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a00
+      snippet: Mocking number 0.

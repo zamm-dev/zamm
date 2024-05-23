@@ -10,6 +10,8 @@ pub static PREFERENCES_FILENAME: &str = "preferences.toml";
 #[derive(Debug, Default, Clone, PartialEq, Serialize, Deserialize, Type)]
 pub struct Preferences {
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub animations_on: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub background_animation: Option<bool>,

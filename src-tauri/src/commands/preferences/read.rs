@@ -6,21 +6,27 @@ use std::path::PathBuf;
 use crate::commands::errors::ZammResult;
 use crate::commands::preferences::models::{get_preferences_file, Preferences};
 
-fn get_preferences_happy_path(
+pub fn get_preferences_file_contents(
     maybe_preferences_dir: &Option<PathBuf>,
 ) -> ZammResult<Preferences> {
     let preferences_path = get_preferences_file(maybe_preferences_dir.as_ref())?;
     let display_filename = preferences_path.display();
-    #[allow(unused_mut)]
-    let mut found_preferences = if preferences_path.exists() {
+    if preferences_path.exists() {
         println!("Reading preferences from {display_filename}");
         let contents = fs::read_to_string(preferences_path)?;
         let preferences: Preferences = toml::from_str(&contents)?;
-        preferences
+        Ok(preferences)
     } else {
         println!("No preferences found at {display_filename}");
-        Preferences::default()
-    };
+        Ok(Preferences::default())
+    }
+}
+
+fn get_preferences_happy_path(
+    maybe_preferences_dir: &Option<PathBuf>,
+) -> ZammResult<Preferences> {
+    #[allow(unused_mut)]
+    let mut found_preferences = get_preferences_file_contents(maybe_preferences_dir)?;
     #[cfg(target_os = "windows")]
     if found_preferences.transparency_on.is_none() {
         found_preferences.transparency_on = Some(true);
@@ -28,7 +34,7 @@ fn get_preferences_happy_path(
     Ok(found_preferences)
 }
 
-fn get_preferences_helper(preferences_path: &Option<PathBuf>) -> Preferences {
+pub fn get_preferences_helper(preferences_path: &Option<PathBuf>) -> Preferences {
     match get_preferences_happy_path(preferences_path) {
         Ok(preferences) => preferences,
         Err(e) => {

@@ -1,7 +1,7 @@
 pub mod errors;
 mod keys;
 mod llms;
-mod preferences;
+pub mod preferences;
 mod sounds;
 mod system;
 

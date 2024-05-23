@@ -29,7 +29,7 @@ fn deep_merge(base: &mut Value, other: &Value) {
     }
 }
 
-fn set_preferences_helper(
+pub fn set_preferences_helper(
     maybe_preferences_dir: &Option<PathBuf>,
     preferences: &Preferences,
 ) -> ZammResult<()> {

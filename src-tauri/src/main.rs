@@ -10,14 +10,17 @@ mod schema;
 mod setup;
 #[cfg(test)]
 mod test_helpers;
+mod upgrades;
 mod views;
 
 use clap::Parser;
 use diesel::sqlite::SqliteConnection;
+use futures::executor;
 use setup::api_keys::{setup_api_keys, ApiKeys};
 #[cfg(debug_assertions)]
 use specta::collect_types;
 use std::env;
+use tauri::Manager;
 #[cfg(debug_assertions)]
 use tauri_specta::ts;
 use tokio::sync::Mutex;
@@ -27,6 +30,7 @@ use commands::{
     chat, get_api_call, get_api_calls, get_api_keys, get_preferences, get_system_info,
     play_sound, set_api_key, set_preferences,
 };
+use upgrades::handle_app_upgrades;
 
 pub struct ZammDatabase(Mutex<Option<SqliteConnection>>);
 pub struct ZammApiKeys(Mutex<ApiKeys>);
@@ -59,6 +63,21 @@ fn main() {
             let api_keys = setup_api_keys(&mut possible_db);
 
             tauri::Builder::default()
+                .setup(|app| {
+                    let config_dir = app.handle().path_resolver().app_config_dir();
+                    let zamm_db = app.state::<ZammDatabase>();
+
+                    executor::block_on(async {
+                        handle_app_upgrades(&config_dir, &zamm_db)
+                            .await
+                            .unwrap_or_else(|e| {
+                                eprintln!("Couldn't run custom data migrations: {e}");
+                                eprintln!("Continuing with unchanged data");
+                            });
+                    });
+
+                    Ok(())
+                })
                 .manage(ZammDatabase(Mutex::new(possible_db)))
                 .manage(ZammApiKeys(Mutex::new(api_keys)))
                 .invoke_handler(tauri::generate_handler![
