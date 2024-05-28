@@ -177,7 +177,7 @@
   .conversation-links {
     display: flex;
     flex-direction: row;
-    gap: 1rem;
+    gap: 0.5rem;
   }
 
   .conversation.previous-links,
@@ -186,6 +186,17 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+  }
+
+  @media (max-width: 46rem) {
+    .conversation-links {
+      flex-direction: column;
+    }
+
+    .conversation.previous-links,
+    .conversation.next-links {
+      flex: none;
+    }
   }
 
   .conversation.link {
