@@ -55,11 +55,15 @@ const CONTINUE_CONVERSATION_CALL = {
     next_calls: [
       {
         id: "0e6bcadf-2b41-43d9-b4cf-81008d4f4771",
-        snippet: "Sure, here is a simple Python script that will print...",
+        snippet:
+          // eslint-disable-next-line max-len
+          "Sure, here is a simple Python script that will print out the joke: ```python print(\"Why don't scientists trust atoms? Because...",
       },
       {
         id: "63b5c02e-b864-4efe-a286-fbef48b152ef",
-        snippet: "Sure, here is a simple Rust program that prints out...",
+        snippet:
+          // eslint-disable-next-line max-len
+          "Sure, here is a simple Rust program that prints out the joke: ```rust fn main() { println!(\"Why don't scientists trust...",
       },
     ],
   },
@@ -156,12 +160,15 @@ const LOTS_OF_CODE_CALL = {
       {
         id: "a0f13902-8ae9-4fce-9317-5189636bb058",
         snippet:
-          "`HasTable` trait is implemented for every struct that derives `Table`....",
+          // eslint-disable-next-line max-len
+          "`HasTable` trait is implemented for every struct that derives `Table`. The way to implement `HasTable` is by using `#[derive(Table)]` macro...",
       },
     ],
     previous_call: {
       id: "93c89a67-7423-42dd-9869-4fc155c2f477",
-      snippet: "With Diesel ORM in Rust, you can't change arbitrarily the...",
+      snippet:
+        // eslint-disable-next-line max-len
+        "With Diesel ORM in Rust, you can't change arbitrarily the order of `JOIN` operations through the query builder because it...",
     },
   },
 };

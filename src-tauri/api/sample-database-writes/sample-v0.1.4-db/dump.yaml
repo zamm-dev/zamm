@@ -26,7 +26,7 @@ llm_calls:
   conversation:
     next_calls:
     - id: c13c1e67-2de3-48de-a34c-a32079c03316
-      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust...'
+      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
 - id: c13c1e67-2de3-48de-a34c-a32079c03316
   timestamp: 2024-01-16T09:50:19.738093890
   llm:

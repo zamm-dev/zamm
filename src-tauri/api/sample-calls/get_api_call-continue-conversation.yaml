@@ -57,11 +57,11 @@ response:
         "next_calls": [
           {
             "id": "0e6bcadf-2b41-43d9-b4cf-81008d4f4771",
-            "snippet": "Sure, here is a simple Python script that will print..."
+            "snippet": "Sure, here is a simple Python script that will print out the joke: ```python print(\"Why don't scientists trust atoms? Because..."
           },
           {
             "id": "63b5c02e-b864-4efe-a286-fbef48b152ef",
-            "snippet": "Sure, here is a simple Rust program that prints out..."
+            "snippet": "Sure, here is a simple Rust program that prints out the joke: ```rust fn main() { println!(\"Why don't scientists trust..."
           }
         ]
       }
