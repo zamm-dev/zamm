@@ -53,10 +53,20 @@ response:
         "previous_call": {
           "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
           "snippet": "Yes, it works. How can I assist you today?"
-        }
+        },
+        "next_calls": [
+          {
+            "id": "0e6bcadf-2b41-43d9-b4cf-81008d4f4771",
+            "snippet": "Sure, here is a simple Python script that will print..."
+          },
+          {
+            "id": "63b5c02e-b864-4efe-a286-fbef48b152ef",
+            "snippet": "Sure, here is a simple Rust program that prints out..."
+          }
+        ]
       }
     }
 sideEffects:
   database:
-    startStateDump: conversation-continued
-    endStateDump: conversation-continued
+    startStateDump: conversation-forked-step-2
+    endStateDump: conversation-forked-step-2
