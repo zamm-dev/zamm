@@ -35,7 +35,7 @@ interface VariantConfig {
   selector?: string;
   assertDynamic?: boolean;
   narrowWindow?: boolean;
-  resizeWindow?: boolean;
+  tallWindow?: boolean;
   additionalAction?: (frame: Frame, page: Page) => Promise<void>;
 }
 
@@ -147,7 +147,7 @@ const components: ComponentTestConfig[] = [
       "typing-indicator-static",
       {
         name: "full-message-width",
-        resizeWindow: true,
+        tallWindow: true,
         additionalAction: async (frame: Frame, page: Page) => {
           await new Promise((r) => setTimeout(r, 1000));
           // need to do a manual scroll because Storybook resize messes things up on CI
@@ -182,16 +182,16 @@ const components: ComponentTestConfig[] = [
       {
         name: "narrow",
         narrowWindow: true,
-        resizeWindow: true,
+        tallWindow: true,
       },
       {
         name: "wide",
-        resizeWindow: true,
+        tallWindow: true,
       },
       "khmer",
       {
         name: "lots-of-code",
-        resizeWindow: true,
+        tallWindow: true,
       },
     ],
     screenshotEntireBody: true,
@@ -282,7 +282,7 @@ describe.concurrent("Storybook visual tests", () => {
   const takeScreenshot = async (
     frame: Frame,
     page: Page,
-    resizeWindow: boolean,
+    tallWindow: boolean,
     selector?: string,
     screenshotEntireBody?: boolean,
   ) => {
@@ -304,7 +304,7 @@ describe.concurrent("Storybook visual tests", () => {
     const elementLocator = frame.locator(locatorStr);
     await elementLocator.waitFor({ state: "visible" });
 
-    if (resizeWindow) {
+    if (tallWindow) {
       const currentViewport = page.viewportSize();
       if (currentViewport === null) {
         throw new Error("Viewport is null");
@@ -409,7 +409,7 @@ describe.concurrent("Storybook visual tests", () => {
           const screenshot = await takeScreenshot(
             frame,
             page,
-            variantConfig.resizeWindow ?? false,
+            variantConfig.tallWindow ?? false,
             variantConfig.selector,
             config.screenshotEntireBody,
           );
@@ -451,7 +451,7 @@ describe.concurrent("Storybook visual tests", () => {
             const newScreenshot = await takeScreenshot(
               frame,
               page,
-              variantConfig.resizeWindow ?? false,
+              variantConfig.tallWindow ?? false,
               variantConfig.selector,
               config.screenshotEntireBody,
             );
