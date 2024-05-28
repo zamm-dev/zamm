@@ -221,6 +221,7 @@
   }
 
   .conversation.link .snippet {
+    flex: 1;
     text-align: start;
     display: -webkit-box;
     -webkit-line-clamp: 2;
