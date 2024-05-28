@@ -15,6 +15,8 @@ import * as fs from "fs/promises";
 import sizeOf from "image-size";
 import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
 
+const NARROW_WINDOW_SIZE = 675;
+
 const SCREENSHOTS_BASE_DIR =
   process.env.SCREENSHOTS_BASE_DIR === undefined
     ? "screenshots"
@@ -32,6 +34,7 @@ interface VariantConfig {
   browser?: "webkit" | "chromium";
   selector?: string;
   assertDynamic?: boolean;
+  narrowWindow?: boolean;
   resizeWindow?: boolean;
   additionalAction?: (frame: Frame, page: Page) => Promise<void>;
 }
@@ -178,9 +181,13 @@ const components: ComponentTestConfig[] = [
     variants: [
       {
         name: "narrow",
+        narrowWindow: true,
         resizeWindow: true,
       },
-      "wide",
+      {
+        name: "wide",
+        resizeWindow: true,
+      },
       "khmer",
       {
         name: "lots-of-code",
@@ -333,6 +340,18 @@ describe.concurrent("Storybook visual tests", () => {
     customReceivedPostfix: "",
   };
 
+  const makeWindowNarrow = async (page: Page) => {
+    const currentViewport = page.viewportSize();
+    if (currentViewport === null) {
+      throw new Error("Viewport is null");
+    }
+
+    await page.setViewportSize({
+      width: NARROW_WINDOW_SIZE,
+      height: currentViewport.height,
+    });
+  };
+
   for (const config of components) {
     const storybookUrl = config.path.join("-");
     const storybookPath = config.path.join("/");
@@ -353,6 +372,10 @@ describe.concurrent("Storybook visual tests", () => {
               : await webkitBrowserContext.newPage();
           const variantPrefixStr = variantConfig.prefix ?? variantConfig.name;
           const variantPrefix = `--${variantPrefixStr}`;
+
+          if (variantConfig.narrowWindow) {
+            await makeWindowNarrow(page);
+          }
 
           await page.goto(
             `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,

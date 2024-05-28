@@ -184,22 +184,12 @@ Narrow.args = {
   dateTimeLocale: "en-GB",
   timeZone: "Asia/Phnom_Penh",
 };
-Narrow.parameters = {
-  viewport: {
-    defaultViewport: "mobile2",
-  },
-};
 
 export const Wide: StoryObj = Template.bind({}) as any;
 Wide.args = {
   apiCall: CONTINUE_CONVERSATION_CALL,
   dateTimeLocale: "en-GB",
   timeZone: "Asia/Phnom_Penh",
-};
-Wide.parameters = {
-  viewport: {
-    defaultViewport: "smallTablet",
-  },
 };
 
 export const Khmer: StoryObj = Template.bind({}) as any;
@@ -219,9 +209,4 @@ LotsOfCode.args = {
   apiCall: LOTS_OF_CODE_CALL,
   dateTimeLocale: "en-GB",
   timeZone: "Asia/Phnom_Penh",
-};
-LotsOfCode.parameters = {
-  viewport: {
-    defaultViewport: "smallTablet",
-  },
 };
