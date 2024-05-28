@@ -182,6 +182,10 @@ const components: ComponentTestConfig[] = [
       },
       "wide",
       "khmer",
+      {
+        name: "lots-of-code",
+        resizeWindow: true,
+      },
     ],
     screenshotEntireBody: true,
   },
