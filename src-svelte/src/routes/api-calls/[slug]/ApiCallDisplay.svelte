@@ -167,6 +167,8 @@
 
   pre {
     white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-word;
     font-family: var(--font-mono);
     margin: 0;
     text-align: left;
