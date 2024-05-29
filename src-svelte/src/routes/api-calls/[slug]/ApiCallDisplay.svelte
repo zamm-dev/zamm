@@ -5,6 +5,7 @@
   import Loading from "$lib/Loading.svelte";
   import IconLeftArrow from "~icons/mingcute/left-fill";
   import IconRightArrow from "~icons/mingcute/right-fill";
+  import Prompt from "./Prompt.svelte";
 
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
@@ -77,16 +78,7 @@
       </tr>
     </table>
 
-    <SubInfoBox subheading="Prompt">
-      <div class="prompt composite-reveal">
-        {#each apiCall?.request.prompt.messages ?? [] as message}
-          <div class={"message atomic-reveal " + message.role.toLowerCase()}>
-            <span class="role">{message.role}</span>
-            <pre>{message.text}</pre>
-          </div>
-        {/each}
-      </div>
-    </SubInfoBox>
+    <Prompt prompt={apiCall.request.prompt} />
 
     <SubInfoBox subheading="Response">
       <pre class="response">{apiCall?.response.completion.text ??
@@ -135,47 +127,6 @@
   td:first-child {
     color: var(--color-faded);
     padding-right: 1rem;
-  }
-
-  .prompt {
-    margin-bottom: 1rem;
-  }
-
-  .message {
-    margin: 0.5rem 0;
-    padding: 0.5rem;
-    border-radius: var(--corner-roundness);
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-  }
-
-  .message.system {
-    background-color: var(--color-system);
-  }
-
-  .message.human {
-    background-color: var(--color-human);
-  }
-
-  .message.ai {
-    background-color: var(--color-ai);
-  }
-
-  .message .role {
-    color: var(--color-faded);
-    width: 4rem;
-    min-width: 4rem;
-    text-align: center;
-  }
-
-  pre {
-    white-space: pre-wrap;
-    word-wrap: break-word;
-    word-break: break-word;
-    font-family: var(--font-mono);
-    margin: 0;
-    text-align: left;
   }
 
   .conversation-links {
