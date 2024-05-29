@@ -57,6 +57,7 @@
         {#if editable}
           <textarea
             rows="1"
+            placeholder="Set text for new prompt message..."
             value={message.text}
             on:input={(e) => editText(i, e)}
             bind:this={textareas[i]}
