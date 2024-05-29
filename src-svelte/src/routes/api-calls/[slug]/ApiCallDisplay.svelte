@@ -128,6 +128,10 @@
 </InfoBox>
 
 <style>
+  td {
+    text-align: left;
+  }
+
   td:first-child {
     color: var(--color-faded);
     padding-right: 1rem;
