@@ -187,6 +187,11 @@
                 logo="gravity-ui.png"
                 url="https://gravity-ui.com/"
               />
+              <Creditor
+                name="MingCute Icon"
+                logo="mingcute.svg"
+                url="https://www.mingcute.com/"
+              />
             </Grid>
           </SubInfoBox>
         </div>
