@@ -3,6 +3,8 @@
   import SubInfoBox from "$lib/SubInfoBox.svelte";
   import { type LlmCall } from "$lib/bindings";
   import Loading from "$lib/Loading.svelte";
+  import IconLeftArrow from "~icons/mingcute/left-fill";
+  import IconRightArrow from "~icons/mingcute/right-fill";
 
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
@@ -35,6 +37,8 @@
   }
 
   $: updateDisplayStrings(apiCall);
+  $: previousCall = apiCall?.conversation?.previous_call;
+  $: nextCalls = apiCall?.conversation?.next_calls ?? [];
 </script>
 
 <InfoBox title="API Call">
@@ -88,12 +92,46 @@
       <pre class="response">{apiCall?.response.completion.text ??
           "Unknown"}</pre>
     </SubInfoBox>
+
+    {#if apiCall?.conversation !== undefined}
+      <SubInfoBox subheading="Conversation">
+        <div class="conversation-links composite-reveal">
+          <div class="conversation previous-links composite-reveal">
+            {#if previousCall !== undefined}
+              <a
+                class="conversation link previous atomic-reveal"
+                href={`/api-calls/${previousCall?.id}`}
+              >
+                <div class="arrow-icon"><IconLeftArrow /></div>
+                <div class="snippet">{previousCall?.snippet}</div>
+              </a>
+            {/if}
+          </div>
+
+          <div class="conversation next-links composite-reveal">
+            {#each nextCalls as nextCall}
+              <a
+                class="conversation link next atomic-reveal"
+                href={`/api-calls/${nextCall.id}`}
+              >
+                <div class="snippet">{nextCall.snippet}</div>
+                <div class="arrow-icon"><IconRightArrow /></div>
+              </a>
+            {/each}
+          </div>
+        </div>
+      </SubInfoBox>
+    {/if}
   {:else}
     <Loading />
   {/if}
 </InfoBox>
 
 <style>
+  td {
+    text-align: left;
+  }
+
   td:first-child {
     color: var(--color-faded);
     padding-right: 1rem;
@@ -133,8 +171,67 @@
 
   pre {
     white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-word;
     font-family: var(--font-mono);
     margin: 0;
     text-align: left;
+  }
+
+  .conversation-links {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .conversation.previous-links,
+  .conversation.next-links {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  @media (max-width: 46rem) {
+    .conversation-links {
+      flex-direction: column;
+    }
+
+    .conversation.previous-links,
+    .conversation.next-links {
+      flex: none;
+    }
+  }
+
+  .conversation.link {
+    border: 1px solid var(--color-border);
+    padding: 0.75rem;
+    border-radius: var(--corner-roundness);
+    color: black;
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .conversation.link .arrow-icon {
+    display: block;
+    margin-top: 0.3rem;
+  }
+
+  .conversation.link .arrow-icon :global(svg) {
+    transform: scale(1.5);
+    color: var(--color-faded);
+  }
+
+  .conversation.link .snippet {
+    flex: 1;
+    text-align: start;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 </style>

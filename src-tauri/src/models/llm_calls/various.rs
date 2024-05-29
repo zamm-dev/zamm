@@ -4,6 +4,8 @@ use crate::models::llm_calls::prompt::Prompt;
 use crate::setup::api_keys::Service;
 use serde::{Deserialize, Serialize};
 
+const NUM_WORDS_TO_SNIPPET: usize = 20;
+
 #[derive(Debug, Serialize, Deserialize, Clone, specta::Type)]
 pub struct Llm {
     pub name: String,
@@ -44,7 +46,7 @@ impl From<(EntityId, ChatMessage)> for LlmCallReference {
         };
         let truncated_text = text
             .split_whitespace()
-            .take(10)
+            .take(NUM_WORDS_TO_SNIPPET)
             .collect::<Vec<&str>>()
             .join(" ");
         let snippet = if text == truncated_text {

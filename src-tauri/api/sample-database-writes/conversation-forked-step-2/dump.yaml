@@ -26,7 +26,7 @@ llm_calls:
   conversation:
     next_calls:
     - id: c13c1e67-2de3-48de-a34c-a32079c03316
-      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust...'
+      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
 - id: c13c1e67-2de3-48de-a34c-a32079c03316
   timestamp: 2024-01-16T09:50:19.738093890
   llm:
@@ -60,9 +60,9 @@ llm_calls:
       snippet: Yes, it works. How can I assist you today?
     next_calls:
     - id: 0e6bcadf-2b41-43d9-b4cf-81008d4f4771
-      snippet: Sure, here is a simple Python script that will print...
+      snippet: 'Sure, here is a simple Python script that will print out the joke: ```python print("Why don''t scientists trust atoms? Because...'
     - id: 63b5c02e-b864-4efe-a286-fbef48b152ef
-      snippet: Sure, here is a simple Rust program that prints out...
+      snippet: 'Sure, here is a simple Rust program that prints out the joke: ```rust fn main() { println!("Why don''t scientists trust...'
 - id: 0e6bcadf-2b41-43d9-b4cf-81008d4f4771
   timestamp: 2024-05-23T09:30:37.854241700
   llm:
@@ -104,7 +104,7 @@ llm_calls:
   conversation:
     previous_call:
       id: c13c1e67-2de3-48de-a34c-a32079c03316
-      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust...'
+      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
 - id: 63b5c02e-b864-4efe-a286-fbef48b152ef
   timestamp: 2024-05-23T09:34:38.572764500
   llm:
@@ -147,4 +147,4 @@ llm_calls:
   conversation:
     previous_call:
       id: c13c1e67-2de3-48de-a34c-a32079c03316
-      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust...'
+      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'

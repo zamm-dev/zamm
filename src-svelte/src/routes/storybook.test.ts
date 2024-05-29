@@ -15,6 +15,8 @@ import * as fs from "fs/promises";
 import sizeOf from "image-size";
 import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
 
+const NARROW_WINDOW_SIZE = 675;
+
 const SCREENSHOTS_BASE_DIR =
   process.env.SCREENSHOTS_BASE_DIR === undefined
     ? "screenshots"
@@ -32,7 +34,8 @@ interface VariantConfig {
   browser?: "webkit" | "chromium";
   selector?: string;
   assertDynamic?: boolean;
-  resizeWindow?: boolean;
+  narrowWindow?: boolean;
+  tallWindow?: boolean;
   additionalAction?: (frame: Frame, page: Page) => Promise<void>;
 }
 
@@ -144,7 +147,7 @@ const components: ComponentTestConfig[] = [
       "typing-indicator-static",
       {
         name: "full-message-width",
-        resizeWindow: true,
+        tallWindow: true,
         additionalAction: async (frame: Frame, page: Page) => {
           await new Promise((r) => setTimeout(r, 1000));
           // need to do a manual scroll because Storybook resize messes things up on CI
@@ -178,10 +181,18 @@ const components: ComponentTestConfig[] = [
     variants: [
       {
         name: "narrow",
-        resizeWindow: true,
+        narrowWindow: true,
+        tallWindow: true,
       },
-      "wide",
+      {
+        name: "wide",
+        tallWindow: true,
+      },
       "khmer",
+      {
+        name: "lots-of-code",
+        tallWindow: true,
+      },
     ],
     screenshotEntireBody: true,
   },
@@ -271,7 +282,7 @@ describe.concurrent("Storybook visual tests", () => {
   const takeScreenshot = async (
     frame: Frame,
     page: Page,
-    resizeWindow: boolean,
+    tallWindow: boolean,
     selector?: string,
     screenshotEntireBody?: boolean,
   ) => {
@@ -293,7 +304,7 @@ describe.concurrent("Storybook visual tests", () => {
     const elementLocator = frame.locator(locatorStr);
     await elementLocator.waitFor({ state: "visible" });
 
-    if (resizeWindow) {
+    if (tallWindow) {
       const currentViewport = page.viewportSize();
       if (currentViewport === null) {
         throw new Error("Viewport is null");
@@ -329,6 +340,18 @@ describe.concurrent("Storybook visual tests", () => {
     customReceivedPostfix: "",
   };
 
+  const makeWindowNarrow = async (page: Page) => {
+    const currentViewport = page.viewportSize();
+    if (currentViewport === null) {
+      throw new Error("Viewport is null");
+    }
+
+    await page.setViewportSize({
+      width: NARROW_WINDOW_SIZE,
+      height: currentViewport.height,
+    });
+  };
+
   for (const config of components) {
     const storybookUrl = config.path.join("-");
     const storybookPath = config.path.join("/");
@@ -349,6 +372,10 @@ describe.concurrent("Storybook visual tests", () => {
               : await webkitBrowserContext.newPage();
           const variantPrefixStr = variantConfig.prefix ?? variantConfig.name;
           const variantPrefix = `--${variantPrefixStr}`;
+
+          if (variantConfig.narrowWindow) {
+            await makeWindowNarrow(page);
+          }
 
           await page.goto(
             `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
@@ -382,7 +409,7 @@ describe.concurrent("Storybook visual tests", () => {
           const screenshot = await takeScreenshot(
             frame,
             page,
-            variantConfig.resizeWindow ?? false,
+            variantConfig.tallWindow ?? false,
             variantConfig.selector,
             config.screenshotEntireBody,
           );
@@ -424,7 +451,7 @@ describe.concurrent("Storybook visual tests", () => {
             const newScreenshot = await takeScreenshot(
               frame,
               page,
-              variantConfig.resizeWindow ?? false,
+              variantConfig.tallWindow ?? false,
               variantConfig.selector,
               config.screenshotEntireBody,
             );

@@ -117,6 +117,15 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_get_api_call_no_links() {
+        check_get_api_call_sample(
+            function_name!(),
+            "./api/sample-calls/get_api_call-no-links.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
     async fn test_get_api_call_start_conversation() {
         check_get_api_call_sample(
             function_name!(),
