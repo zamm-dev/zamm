@@ -5,7 +5,7 @@ use crate::models::llm_calls::{
 };
 use crate::models::{ApiKey, NewApiKey};
 use crate::schema::{api_keys, llm_call_follow_ups, llm_calls};
-use crate::views::llm_call_named_follow_ups;
+use crate::views::{llm_call_named_follow_ups, llm_call_named_variants};
 use crate::ZammDatabase;
 use anyhow::anyhow;
 use diesel::prelude::*;
@@ -49,30 +49,42 @@ pub async fn get_database_contents(
             llm_call_named_follow_ups::dsl::llm_call_named_follow_ups
                 .on(llm_calls::id.eq(llm_call_named_follow_ups::next_call_id)),
         )
+        .left_join(
+            llm_call_named_variants::dsl::llm_call_named_variants
+                .on(llm_calls::id.eq(llm_call_named_variants::variant_id)),
+        )
         .select((
             llm_calls::all_columns,
             llm_call_named_follow_ups::previous_call_id.nullable(),
             llm_call_named_follow_ups::previous_call_completion.nullable(),
+            llm_call_named_variants::canonical_id.nullable(),
+            llm_call_named_variants::canonical_completion.nullable(),
         ))
         .get_results::<LlmCallLeftJoinResult>(db)?;
     let llm_calls_result: ZammResult<Vec<LlmCall>> = llm_call_left_joins
         .into_iter()
         .map(|lf| {
-            let (llm_call_row, previous_call_id, previous_call_completion) = lf;
-            let next_calls_result = llm_call_named_follow_ups::table
-                .select((
-                    llm_call_named_follow_ups::next_call_id,
-                    llm_call_named_follow_ups::next_call_completion,
-                ))
-                .filter(
-                    llm_call_named_follow_ups::previous_call_id.eq(&llm_call_row.id),
-                )
-                .load::<(EntityId, ChatMessage)>(db)?;
-            Ok((
-                (llm_call_row, previous_call_id, previous_call_completion),
-                next_calls_result,
-            )
-                .into())
+            let llm_call_id = lf.0.id.clone();
+            let next_calls_result: Vec<(EntityId, ChatMessage)> =
+                llm_call_named_follow_ups::table
+                    .select((
+                        llm_call_named_follow_ups::next_call_id,
+                        llm_call_named_follow_ups::next_call_completion,
+                    ))
+                    .filter(
+                        llm_call_named_follow_ups::previous_call_id.eq(&llm_call_id),
+                    )
+                    .load::<(EntityId, ChatMessage)>(db)?;
+            let canonical_id = lf.3.clone().unwrap_or(llm_call_id);
+            let variants_result: Vec<(EntityId, ChatMessage)> =
+                llm_call_named_variants::table
+                    .select((
+                        llm_call_named_variants::variant_id,
+                        llm_call_named_variants::variant_completion,
+                    ))
+                    .filter(llm_call_named_variants::canonical_id.eq(canonical_id))
+                    .load::<(EntityId, ChatMessage)>(db)?;
+            Ok((lf, next_calls_result, variants_result).into())
         })
         .collect();
     Ok(DatabaseContents {

@@ -71,3 +71,21 @@ impl ConversationMetadata {
         self.previous_call.is_none() && self.next_calls.is_empty()
     }
 }
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, specta::Type)]
+pub struct VariantMetadata {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub canonical: Option<LlmCallReference>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub variants: Vec<LlmCallReference>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub sibling_variants: Vec<LlmCallReference>,
+}
+
+impl VariantMetadata {
+    pub fn is_default(&self) -> bool {
+        self.canonical.is_none()
+            && self.variants.is_empty()
+            && self.sibling_variants.is_empty()
+    }
+}
