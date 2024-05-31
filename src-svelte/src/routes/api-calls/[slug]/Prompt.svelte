@@ -9,6 +9,10 @@
   let textareas: HTMLTextAreaElement[] = [];
 
   function toggleRole(i: number) {
+    if (!editable) {
+      return;
+    }
+
     switch (prompt.messages[i].role) {
       case "System":
         prompt.messages[i].role = "Human";
