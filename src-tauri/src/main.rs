@@ -19,7 +19,6 @@ use futures::executor;
 use setup::api_keys::{setup_api_keys, ApiKeys};
 #[cfg(debug_assertions)]
 use specta::collect_types;
-use std::env;
 use tauri::Manager;
 #[cfg(debug_assertions)]
 use tauri_specta::ts;

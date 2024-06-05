@@ -295,6 +295,15 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn test_manual_conversation_recreation() {
+        test_llm_api_call(
+            function_name!(),
+            "api/sample-calls/chat-manual-conversation-recreation.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
     async fn test_fork_conversation_step_1() {
         test_llm_api_call(
             function_name!(),

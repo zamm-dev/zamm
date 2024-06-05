@@ -6,6 +6,13 @@
     type: "Chat",
     messages: [{ role: "System", text: "" }],
   });
+
+  export function resetNewApiCall() {
+    prompt.set({
+      type: "Chat",
+      messages: [{ role: "System", text: "" }],
+    });
+  }
 </script>
 
 <script lang="ts">
@@ -32,6 +39,7 @@
         temperature: null,
         prompt: $prompt.messages,
       });
+      resetNewApiCall();
 
       goto(`/api-calls/${createdLlmCall.id}`);
     } catch (error) {

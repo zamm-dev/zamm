@@ -46,15 +46,19 @@
 </script>
 
 <SubInfoBox subheading="Prompt">
-  <div class="prompt composite-reveal">
+  <div class="prompt composite-reveal" role="list">
     {#each prompt.messages ?? [] as message, i}
-      <div class={"message atomic-reveal " + message.role.toLowerCase()}>
+      <div
+        class={"message atomic-reveal " + message.role.toLowerCase()}
+        role="listitem"
+      >
+        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
         <span
           class="role"
           class:editable
-          role="button"
-          aria-label="Toggle message type"
-          tabindex="0"
+          role={editable ? "button" : "text"}
+          aria-label={editable ? "Toggle message type" : undefined}
+          tabindex={editable ? 0 : undefined}
           on:click={() => toggleRole(i)}
           on:keypress={() => toggleRole(i)}>{message.role}</span
         >
