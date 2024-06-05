@@ -47,6 +47,18 @@ describe("App", function () {
     ).toBeLessThanOrEqual(maxMismatch);
   });
 
+  it("should allow navigation to the new API call page", async function () {
+    this.retries(2);
+    await findAndClick('a[title="API Calls"]');
+    await findAndClick("a=from scratch");
+    await findAndClick('a[title="API Calls"]');
+    await findAndClick("a=from scratch");
+    await browser.pause(2500); // for page to finish rendering
+    expect(
+      await browser.checkFullPageScreen("new-api-call", {}),
+    ).toBeLessThanOrEqual(maxMismatch);
+  });
+
   it("should allow navigation to the settings page", async function () {
     this.retries(2);
     await findAndClick('a[title="Settings"]');
