@@ -129,6 +129,12 @@
     padding-right: 1rem;
   }
 
+  pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+
   .conversation-links {
     display: flex;
     flex-direction: row;

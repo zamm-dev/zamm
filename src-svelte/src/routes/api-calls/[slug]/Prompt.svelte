@@ -122,6 +122,12 @@
     text-align: center;
   }
 
+  .message pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-word;
+  }
+
   textarea {
     font-family: var(--font-mono);
     font-size: 1rem;
