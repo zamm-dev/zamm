@@ -197,3 +197,9 @@ a[href^="https://"]::after {
   background-size: contain;
   display: inline-block;
 }
+
+pre {
+  font-family: var(--font-mono);
+  margin: 0;
+  text-align: left;
+}

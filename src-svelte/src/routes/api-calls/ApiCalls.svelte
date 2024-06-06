@@ -5,6 +5,7 @@
   import Scrollable from "$lib/Scrollable.svelte";
   import { onMount } from "svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
+  import IconAdd from "~icons/mingcute/add-fill";
 
   const PAGE_SIZE = 50;
   const MIN_MESSAGE_WIDTH = "5rem";
@@ -98,6 +99,9 @@
 
 <InfoBox title="LLM API Calls" fullHeight>
   <div class="container api-calls-page full-height" style={minimumWidths}>
+    <a class="new-api-call" href="/api-calls/new/" title="New API call">
+      <IconAdd />
+    </a>
     <div class="message header">
       <div class="text-container">
         <div class="text">Message</div>
@@ -122,7 +126,8 @@
             <div class="text-container">
               <EmptyPlaceholder>
                 Looks like you haven't made any calls to an LLM yet.<br />Get
-                started by using the chat functionality.
+                started via <a href="/chat">chat</a> or by making one
+                <a href="/api-calls/new/">from scratch</a>.
               </EmptyPlaceholder>
             </div>
             <div class="time"></div>
@@ -136,6 +141,17 @@
 <style>
   .container {
     gap: 0.25rem;
+  }
+
+  a.new-api-call {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+  }
+
+  a.new-api-call :global(svg) {
+    transform: scale(1.2);
+    color: var(--color-faded);
   }
 
   .scrollable-container {

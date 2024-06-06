@@ -9,4 +9,9 @@
     font-style: italic;
     text-align: center;
   }
+
+  .empty :global(a) {
+    color: var(--color-faded);
+    text-decoration: underline;
+  }
 </style>
