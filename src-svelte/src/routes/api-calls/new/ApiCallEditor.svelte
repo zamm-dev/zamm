@@ -59,7 +59,14 @@
 </InfoBox>
 
 <style>
+  .action {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
   .action :global(button) {
     width: 100%;
+    max-width: 25rem;
   }
 </style>
