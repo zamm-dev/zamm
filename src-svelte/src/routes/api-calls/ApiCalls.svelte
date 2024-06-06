@@ -99,7 +99,7 @@
 
 <InfoBox title="LLM API Calls" fullHeight>
   <div class="container api-calls-page full-height" style={minimumWidths}>
-    <a class="new-api-call" href="/api-calls/new/">
+    <a class="new-api-call" href="/api-calls/new/" title="New API call">
       <IconAdd />
     </a>
     <div class="message header">
