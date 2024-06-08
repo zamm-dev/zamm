@@ -6,7 +6,7 @@ use crate::models::llm_calls::various::{
     VariantMetadata,
 };
 #[cfg(test)]
-use crate::models::llm_calls::{NewLlmCallFollowUp, NewLlmCallRow};
+use crate::models::llm_calls::{NewLlmCallFollowUp, NewLlmCallRow, NewLlmCallVariant};
 use chrono::naive::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
@@ -50,6 +50,17 @@ impl LlmCall {
                 previous_call_id: &call.id,
                 next_call_id: &self.id,
             })
+    }
+
+    pub fn as_variant_rows(&self) -> Vec<NewLlmCallVariant> {
+        self.variation
+            .variants
+            .iter()
+            .map(|variant| NewLlmCallVariant {
+                canonical_id: &self.id,
+                variant_id: &variant.id,
+            })
+            .collect()
     }
 }
 

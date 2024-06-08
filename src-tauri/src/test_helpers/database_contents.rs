@@ -1,10 +1,10 @@
 use crate::commands::errors::ZammResult;
 use crate::models::llm_calls::{
     ChatMessage, EntityId, LlmCall, LlmCallLeftJoinResult, NewLlmCallFollowUp,
-    NewLlmCallRow,
+    NewLlmCallRow, NewLlmCallVariant,
 };
 use crate::models::{ApiKey, NewApiKey};
-use crate::schema::{api_keys, llm_call_follow_ups, llm_calls};
+use crate::schema::{api_keys, llm_call_follow_ups, llm_call_variants, llm_calls};
 use crate::views::{llm_call_named_follow_ups, llm_call_named_variants};
 use crate::ZammDatabase;
 use anyhow::anyhow;
@@ -33,6 +33,13 @@ impl DatabaseContents {
         self.llm_calls
             .iter()
             .filter_map(|k| k.as_follow_up_row())
+            .collect()
+    }
+
+    pub fn insertable_call_variants(&self) -> Vec<NewLlmCallVariant> {
+        self.llm_calls
+            .iter()
+            .flat_map(|k| k.as_variant_rows())
             .collect()
     }
 }
@@ -127,6 +134,9 @@ pub async fn read_database_contents(
         diesel::insert_into(llm_call_follow_ups::table)
             .values(&db_contents.insertable_call_follow_ups())
             .execute(conn)?;
+        diesel::insert_into(llm_call_variants::table)
+            .values(&db_contents.insertable_call_variants())
+            .execute(conn)?;
         Ok(())
     })?;
     Ok(())
@@ -136,7 +146,7 @@ pub fn dump_sqlite_database(db_path: &PathBuf, dump_path: &PathBuf) {
     let dump_output = std::process::Command::new("sqlite3")
         .arg(db_path)
         // avoid the inserts into __diesel_schema_migrations
-        .arg(".dump api_keys llm_calls llm_call_follow_ups")
+        .arg(".dump api_keys llm_calls llm_call_follow_ups llm_call_variants")
         .output()
         .expect("Error running sqlite3 .dump command");
     // filter output by lines starting with "INSERT"

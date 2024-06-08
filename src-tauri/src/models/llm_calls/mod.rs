@@ -10,7 +10,7 @@ mod various;
 pub use chat_message::ChatMessage;
 pub use entity_id::EntityId;
 pub use lightweight_llm_call::LightweightLlmCall;
-pub use linkage::NewLlmCallFollowUp;
+pub use linkage::{NewLlmCallFollowUp, NewLlmCallVariant};
 pub use llm_call::{LlmCall, LlmCallLeftJoinResult};
 pub use prompt::{ChatPrompt, Prompt};
 #[allow(unused_imports)]
