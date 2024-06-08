@@ -47,6 +47,33 @@ fn apply_replacements(input: &str, replacements: &HashMap<String, String>) -> St
         .fold(input.to_string(), |acc, (k, v)| acc.replace(k, v))
 }
 
+fn copy_file_if_missing(
+    expected_file_path: impl AsRef<Path>,
+    actual_file_path: impl AsRef<Path>,
+    fail_on_copy: bool,
+) {
+    let expected_path_abs = expected_file_path.as_ref().absolutize().unwrap();
+    let actual_path_abs = actual_file_path.as_ref().absolutize().unwrap();
+
+    if !expected_path_abs.exists() {
+        fs::create_dir_all(expected_path_abs.parent().unwrap()).unwrap();
+        fs::copy(&actual_path_abs, &expected_path_abs).unwrap();
+        if fail_on_copy {
+            panic!(
+                "Gold file not found at {}, copied actual file from {}",
+                expected_path_abs.as_ref().display(),
+                actual_path_abs.as_ref().display(),
+            );
+        } else {
+            eprintln!(
+                "Gold file not found at {}, copied actual file from {}",
+                expected_path_abs.as_ref().display(),
+                actual_path_abs.as_ref().display(),
+            );
+        }
+    }
+}
+
 fn compare_files(
     expected_file_path: impl AsRef<Path>,
     actual_file_path: impl AsRef<Path>,
@@ -396,6 +423,13 @@ where
                 .await
                 .unwrap();
             dump_sqlite_database(&db_info.temp_db_file, &actual_db_sql_dump);
+
+            copy_file_if_missing(
+                sample.db_end_dump("yaml"),
+                &actual_db_yaml_dump,
+                false,
+            );
+            copy_file_if_missing(sample.db_end_dump("sql"), &actual_db_sql_dump, true);
 
             compare_files(
                 sample.db_end_dump("yaml"),
