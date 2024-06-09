@@ -2,7 +2,11 @@ import { expect, test, vi, type Mock } from "vitest";
 import "@testing-library/jest-dom";
 
 import { render, screen } from "@testing-library/svelte";
-import ApiCallEditor, { resetNewApiCall } from "./ApiCallEditor.svelte";
+import ApiCallEditor, {
+  canonicalRef,
+  prompt,
+  resetNewApiCall,
+} from "./ApiCallEditor.svelte";
 import userEvent from "@testing-library/user-event";
 import { TauriInvokePlayback } from "$lib/sample-call-testing";
 import { get } from "svelte/store";
@@ -56,6 +60,9 @@ describe("API call editor", () => {
     if (messageInput === null) {
       throw new Error("Message input not found");
     }
+    if (messageInput.value !== "") {
+      await userEvent.clear(messageInput);
+    }
     await userEvent.type(messageInput, message);
     expect(messageInput).toHaveValue(message);
   }
@@ -83,6 +90,61 @@ describe("API call editor", () => {
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
     expect(get(mockStores.page).url.pathname).toEqual(
       "/api-calls/c13c1e67-2de3-48de-a34c-a32079c03316",
+    );
+  });
+
+  test("can edit an existing API call", async () => {
+    const snippet =
+      "Sure, here's a joke for you: Why don't scientists trust atoms? " +
+      "Because they make up everything!";
+    canonicalRef.set({
+      id: "c13c1e67-2de3-48de-a34c-a32079c03316",
+      snippet,
+    });
+    prompt.set({
+      type: "Chat",
+      messages: [
+        {
+          role: "System",
+          text: "You are ZAMM, a chat program. Respond in first person.",
+        },
+        {
+          role: "Human",
+          text: "Hello, does this work?",
+        },
+        {
+          role: "AI",
+          text: "Yes, it works. How can I assist you today?",
+        },
+        {
+          role: "Human",
+          text: "Tell me something funny.",
+        },
+      ],
+    });
+    render(ApiCallEditor, {});
+    const originalApiCallLabel = screen.getByText("Original API call:");
+    const originalApiCallLink = originalApiCallLabel.nextElementSibling;
+    if (originalApiCallLink === null) {
+      throw new Error("Original API call link not found");
+    }
+    expect(originalApiCallLink).toHaveTextContent(snippet);
+    expect(originalApiCallLink).toHaveAttribute(
+      "href",
+      "/api-calls/c13c1e67-2de3-48de-a34c-a32079c03316",
+    );
+
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/chat-edit-conversation.yaml",
+    );
+    await setNewMessage("Human", "Tell me a funny joke.");
+
+    await userEvent.click(screen.getByRole("button", { name: "Submit" }));
+    expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(get(mockStores.page).url.pathname).toEqual(
+      "/api-calls/f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
     );
   });
 });

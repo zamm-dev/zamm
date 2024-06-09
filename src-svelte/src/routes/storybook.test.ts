@@ -178,7 +178,7 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["screens", "llm-call", "new"],
-    variants: ["blank"],
+    variants: ["blank", "edit-continued-conversation"],
     screenshotEntireBody: true,
   },
   {
