@@ -2,13 +2,13 @@ request:
   - get_api_call
   - >
     {
-      "id": "c13c1e67-2de3-48de-a34c-a32079c03316"
+      "id": "7a35a4cf-f3d9-4388-bca8-2fe6e78c9648"
     }
 response:
   message: >
     {
-      "id": "c13c1e67-2de3-48de-a34c-a32079c03316",
-      "timestamp": "2024-01-16T09:50:19.738093890",
+      "id": "7a35a4cf-f3d9-4388-bca8-2fe6e78c9648",
+      "timestamp": "2024-06-08T09:40:22.392223700",
       "llm": {
         "name": "gpt-4-0613",
         "requested": "gpt-4",
@@ -24,7 +24,7 @@ response:
             },
             {
               "role": "Human",
-              "text": "Hello, does this work?"
+              "text": "Hello, does this really work?"
             },
             {
               "role": "AI",
@@ -32,7 +32,7 @@ response:
             },
             {
               "role": "Human",
-              "text": "Tell me something funny."
+              "text": "Tell me a funny joke."
             }
           ]
         },
@@ -41,32 +41,20 @@ response:
       "response": {
         "completion": {
           "role": "AI",
-          "text": "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+          "text": "Sure, here you go: Why don't scientists trust atoms? Because they make up everything!"
         }
       },
       "tokens": {
-        "prompt": 57,
-        "response": 22,
-        "total": 79
-      },
-      "conversation": {
-        "previous_call": {
-          "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
-          "snippet": "Yes, it works. How can I assist you today?"
-        },
-        "next_calls": [
-          {
-            "id": "0e6bcadf-2b41-43d9-b4cf-81008d4f4771",
-            "snippet": "Sure, here is a simple Python script that will print out the joke: ```python print(\"Why don't scientists trust atoms? Because..."
-          },
-          {
-            "id": "63b5c02e-b864-4efe-a286-fbef48b152ef",
-            "snippet": "Sure, here is a simple Rust program that prints out the joke: ```rust fn main() { println!(\"Why don't scientists trust..."
-          }
-        ]
+        "prompt": 59,
+        "response": 19,
+        "total": 78
       },
       "variation": {
-        "variants": [
+        "canonical": {
+          "id": "c13c1e67-2de3-48de-a34c-a32079c03316",
+          "snippet": "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+        },
+        "sibling_variants": [
           {
             "id": "f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
             "snippet": "Sure, here is a light-hearted joke for you: Why don't scientists trust atoms? Because they make up everything!..."

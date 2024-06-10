@@ -156,4 +156,13 @@ mod tests {
         )
         .await;
     }
+
+    #[tokio::test]
+    async fn test_get_api_call_edit() {
+        check_get_api_call_sample(
+            function_name!(),
+            "./api/sample-calls/get_api_call-edit.yaml",
+        )
+        .await;
+    }
 }
