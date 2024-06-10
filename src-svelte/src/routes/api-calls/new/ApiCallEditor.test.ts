@@ -11,6 +11,7 @@ import userEvent from "@testing-library/user-event";
 import { TauriInvokePlayback } from "$lib/sample-call-testing";
 import { get } from "svelte/store";
 import { mockStores } from "../../../vitest-mocks/stores";
+import { EDIT_CANONICAL_REF, EDIT_PROMPT } from "./test.data";
 
 describe("API call editor", () => {
   let tauriInvokeMock: Mock;
@@ -94,41 +95,15 @@ describe("API call editor", () => {
   });
 
   test("can edit an existing API call", async () => {
-    const snippet =
-      "Sure, here's a joke for you: Why don't scientists trust atoms? " +
-      "Because they make up everything!";
-    canonicalRef.set({
-      id: "c13c1e67-2de3-48de-a34c-a32079c03316",
-      snippet,
-    });
-    prompt.set({
-      type: "Chat",
-      messages: [
-        {
-          role: "System",
-          text: "You are ZAMM, a chat program. Respond in first person.",
-        },
-        {
-          role: "Human",
-          text: "Hello, does this work?",
-        },
-        {
-          role: "AI",
-          text: "Yes, it works. How can I assist you today?",
-        },
-        {
-          role: "Human",
-          text: "Tell me something funny.",
-        },
-      ],
-    });
+    canonicalRef.set(EDIT_CANONICAL_REF);
+    prompt.set(EDIT_PROMPT);
     render(ApiCallEditor, {});
     const originalApiCallLabel = screen.getByText("Original API call:");
     const originalApiCallLink = originalApiCallLabel.nextElementSibling;
     if (originalApiCallLink === null) {
       throw new Error("Original API call link not found");
     }
-    expect(originalApiCallLink).toHaveTextContent(snippet);
+    expect(originalApiCallLink).toHaveTextContent(EDIT_CANONICAL_REF.snippet);
     expect(originalApiCallLink).toHaveAttribute(
       "href",
       "/api-calls/c13c1e67-2de3-48de-a34c-a32079c03316",

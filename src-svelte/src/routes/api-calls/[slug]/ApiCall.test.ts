@@ -8,6 +8,13 @@ import {
   conversation,
   lastMessageId,
 } from "../../chat/Chat.svelte";
+import {
+  canonicalRef,
+  prompt,
+  getDefaultApiCall,
+  resetNewApiCall,
+} from "../new/ApiCallEditor.svelte";
+import { EDIT_CANONICAL_REF, EDIT_PROMPT } from "../new/test.data";
 import { TauriInvokePlayback } from "$lib/sample-call-testing";
 import ApiCall from "./ApiCall.svelte";
 import { get } from "svelte/store";
@@ -25,11 +32,17 @@ describe("Individual API call", () => {
       (...args: (string | Record<string, string>)[]) =>
         playback.mockCall(...args),
     );
+
+    mockStores.page.set({
+      url: new URL("http://localhost/"),
+      params: {},
+    });
+    resetConversation();
+    resetNewApiCall();
   });
 
   afterEach(() => {
     vi.unstubAllGlobals();
-    resetConversation();
   });
 
   function expectRowValue(key: string, expectedValue: string) {
@@ -120,5 +133,27 @@ describe("Individual API call", () => {
     });
     expect(get(lastMessageId)).toEqual("c13c1e67-2de3-48de-a34c-a32079c03316");
     expect(get(mockStores.page).url.pathname).toEqual("/chat");
+  });
+
+  test("can edit API call", async () => {
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/get_api_call-continue-conversation.yaml",
+    );
+    render(ApiCall, { id: "c13c1e67-2de3-48de-a34c-a32079c03316" });
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    await waitFor(() => {
+      screen.getByText("Hello, does this work?");
+    });
+    expect(get(canonicalRef)).toBeUndefined();
+    expect(get(prompt)).toEqual(getDefaultApiCall());
+    expect(get(mockStores.page).url.pathname).toEqual("/");
+
+    const editButton = await waitFor(() => screen.getByText("Edit API call"));
+    userEvent.click(editButton);
+    await waitFor(() => {
+      expect(get(prompt)).toEqual(EDIT_PROMPT);
+    });
+    expect(get(canonicalRef)).toEqual(EDIT_CANONICAL_REF);
+    expect(get(mockStores.page).url.pathname).toEqual("/api-calls/new/");
   });
 });

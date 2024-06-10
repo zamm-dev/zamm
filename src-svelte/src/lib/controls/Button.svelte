@@ -2,6 +2,7 @@
   import { createEventDispatcher } from "svelte";
 
   export let unwrapped = false;
+  export let leftEnd = false;
   export let rightEnd = false;
   export let ariaLabel: string | undefined = undefined;
   const dispatchClickEvent = createEventDispatcher();
@@ -14,6 +15,7 @@
 {#if unwrapped}
   <button
     class="cut-corners inner"
+    class:left-end={leftEnd}
     class:right-end={rightEnd}
     type="submit"
     aria-label={ariaLabel}
@@ -24,12 +26,17 @@
 {:else}
   <button
     class="cut-corners outer"
+    class:left-end={leftEnd}
     class:right-end={rightEnd}
     type="submit"
     aria-label={ariaLabel}
     on:click={handleClick}
   >
-    <div class="cut-corners inner" class:right-end={rightEnd}>
+    <div
+      class="cut-corners inner"
+      class:left-end={leftEnd}
+      class:right-end={rightEnd}
+    >
       <slot />
     </div>
   </button>
@@ -44,6 +51,11 @@
     text-transform: uppercase;
     transition-property: filter, transform;
     transition: calc(0.5 * var(--standard-duration)) ease-out;
+  }
+
+  .outer.left-end,
+  .inner.left-end {
+    --cut-bottom-right: 0.01rem;
   }
 
   .outer.right-end,
