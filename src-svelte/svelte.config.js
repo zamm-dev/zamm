@@ -11,7 +11,7 @@ const config = {
     adapter: adapter(),
     prerender: {
       crawl: false,
-      entries: ["*", "/api-calls/[slug]"],
+      entries: ["*", "/api-calls/new/", "/api-calls/[slug]"],
     },
   },
 };
