@@ -70,17 +70,39 @@ describe("Individual API call", () => {
     // check that human message is displayed
     expect(screen.getByText("Hello, does this work?")).toBeInTheDocument();
     // check that AI message is displayed
-    expect(
-      screen.getByText(
-        "Sure, here's a joke for you: " +
-          "Why don't scientists trust atoms? " +
-          "Because they make up everything!",
-      ),
-    ).toBeInTheDocument();
+    const responseSection = await screen.findByLabelText("Response");
+    const response = responseSection.querySelector("pre");
+    expect(response).toHaveTextContent(
+      "Sure, here's a joke for you: Why don't scientists trust atoms? " +
+        "Because they make up everything!",
+    );
+
     // check that metadata is displayed
     expectRowValue("LLM", "gpt-4 → gpt-4-0613");
     expectRowValue("Temperature", "1.00");
     expectRowValue("Tokens", "57 prompt + 22 response = 79 total tokens");
+
+    // check that links are displayed
+    const conversationSection = await screen.findByLabelText("Conversation");
+    const conversationLinks = Array.from(
+      conversationSection.querySelectorAll("a"),
+    ).map((a) => a.href);
+    expect(conversationLinks).toEqual([
+      // previous
+      "http://localhost:3000/api-calls/d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
+      // next
+      "http://localhost:3000/api-calls/0e6bcadf-2b41-43d9-b4cf-81008d4f4771",
+      "http://localhost:3000/api-calls/63b5c02e-b864-4efe-a286-fbef48b152ef",
+    ]);
+
+    const variantSection = await screen.findByLabelText("Variants");
+    const variantLinks = Array.from(variantSection.querySelectorAll("a")).map(
+      (a) => a.href,
+    );
+    expect(variantLinks).toEqual([
+      "http://localhost:3000/api-calls/f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
+      "http://localhost:3000/api-calls/7a35a4cf-f3d9-4388-bca8-2fe6e78c9648",
+    ]);
   });
 
   test("can restore chat conversation", async () => {
