@@ -6,6 +6,7 @@
   import IconLeftArrow from "~icons/mingcute/left-fill";
   import IconRightArrow from "~icons/mingcute/right-fill";
   import Prompt from "./Prompt.svelte";
+  import ApiCallReference from "$lib/ApiCallReference.svelte";
 
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
@@ -37,9 +38,23 @@
     temperature = apiCall.request.temperature.toFixed(2);
   }
 
+  function getThisAsRef(apiCall: LlmCall | undefined) {
+    if (!apiCall) {
+      return;
+    }
+
+    return {
+      id: apiCall.id,
+      snippet: apiCall.response.completion.text,
+    };
+  }
+
   $: updateDisplayStrings(apiCall);
   $: previousCall = apiCall?.conversation?.previous_call;
   $: nextCalls = apiCall?.conversation?.next_calls ?? [];
+  $: thisAsRef = getThisAsRef(apiCall);
+  $: variants =
+    apiCall?.variation?.variants ?? apiCall?.variation?.sibling_variants ?? [];
 </script>
 
 <InfoBox title="API Call">
@@ -84,6 +99,33 @@
       <pre class="response">{apiCall?.response.completion.text ??
           "Unknown"}</pre>
     </SubInfoBox>
+
+    {#if apiCall?.variation !== undefined}
+      <SubInfoBox subheading="Variants">
+        <div class="variation-links composite-reveal">
+          {#if apiCall.variation.canonical}
+            <ApiCallReference
+              selfContained
+              apiCall={apiCall.variation.canonical}
+            />
+          {:else if thisAsRef}
+            <ApiCallReference selfContained nolink apiCall={thisAsRef} />
+          {/if}
+
+          <ul>
+            {#each variants as variant}
+              <li>
+                <ApiCallReference
+                  selfContained
+                  nolink={variant.id === apiCall.id}
+                  apiCall={variant}
+                />
+              </li>
+            {/each}
+          </ul>
+        </div>
+      </SubInfoBox>
+    {/if}
 
     {#if apiCall?.conversation !== undefined}
       <SubInfoBox subheading="Conversation">
@@ -133,6 +175,18 @@
     white-space: pre-wrap;
     word-wrap: break-word;
     word-break: break-word;
+  }
+
+  .variation-links ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: circle;
+  }
+
+  .variation-links li {
+    display: list-item;
+    margin-left: 1rem;
+    width: calc(100% - 1rem);
   }
 
   .conversation-links {

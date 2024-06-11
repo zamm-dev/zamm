@@ -22,6 +22,7 @@
 </script>
 
 <script lang="ts">
+  import ApiCallReference from "$lib/ApiCallReference.svelte";
   import InfoBox from "$lib/InfoBox.svelte";
   import PromptComponent from "../[slug]/Prompt.svelte";
   import Button from "$lib/controls/Button.svelte";
@@ -61,7 +62,7 @@
   {#if $canonicalRef}
     <div class="canonical-display">
       <span class="label">Original API call:</span>
-      <a href="/api-calls/{$canonicalRef.id}">{$canonicalRef.snippet}</a>
+      <ApiCallReference apiCall={$canonicalRef} />
     </div>
   {/if}
 
@@ -84,14 +85,6 @@
 
   .canonical-display .label {
     white-space: nowrap;
-  }
-
-  .canonical-display a {
-    min-width: 0;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .action {

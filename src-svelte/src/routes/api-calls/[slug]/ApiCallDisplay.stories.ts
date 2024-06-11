@@ -5,6 +5,7 @@ import {
   CONTINUE_CONVERSATION_CALL,
   KHMER_CALL,
   LOTS_OF_CODE_CALL,
+  VARIANT_CALL,
 } from "./sample-calls";
 
 export default {
@@ -48,6 +49,13 @@ Khmer.parameters = {
 export const LotsOfCode: StoryObj = Template.bind({}) as any;
 LotsOfCode.args = {
   apiCall: LOTS_OF_CODE_CALL,
+  dateTimeLocale: "en-GB",
+  timeZone: "Asia/Phnom_Penh",
+};
+
+export const Variant: StoryObj = Template.bind({}) as any;
+Variant.args = {
+  apiCall: VARIANT_CALL,
   dateTimeLocale: "en-GB",
   timeZone: "Asia/Phnom_Penh",
 };

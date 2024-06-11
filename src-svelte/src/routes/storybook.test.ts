@@ -198,6 +198,7 @@ const components: ComponentTestConfig[] = [
         name: "lots-of-code",
         tallWindow: true,
       },
+      "variant",
     ],
     screenshotEntireBody: true,
   },
