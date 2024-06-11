@@ -180,13 +180,31 @@
   .variation-links ul {
     margin: 0;
     padding: 0;
-    list-style-type: circle;
+    list-style-type: none;
   }
 
   .variation-links li {
-    display: list-item;
-    margin-left: 1rem;
-    width: calc(100% - 1rem);
+    --indent: 2rem;
+    --line-thickness: 2px;
+    margin-left: var(--indent);
+    width: calc(100% - var(--indent));
+    position: relative;
+  }
+
+  .variation-links li:before {
+    content: "";
+    position: absolute;
+    bottom: 50%;
+    left: calc(-1 * var(--indent) + 0.5rem);
+    width: 1rem;
+    height: 150%;
+    border-bottom: var(--line-thickness) solid var(--color-border);
+    border-left: var(--line-thickness) solid var(--color-border);
+    border-bottom-left-radius: var(--corner-roundness);
+  }
+
+  .variation-links li:first-child:before {
+    height: 50%;
   }
 
   .conversation-links {
