@@ -6,6 +6,7 @@
   import IconLeftArrow from "~icons/mingcute/left-fill";
   import IconRightArrow from "~icons/mingcute/right-fill";
   import Prompt from "./Prompt.svelte";
+  import ApiCallReference from "$lib/ApiCallReference.svelte";
 
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
@@ -37,9 +38,23 @@
     temperature = apiCall.request.temperature.toFixed(2);
   }
 
+  function getThisAsRef(apiCall: LlmCall | undefined) {
+    if (!apiCall) {
+      return;
+    }
+
+    return {
+      id: apiCall.id,
+      snippet: apiCall.response.completion.text,
+    };
+  }
+
   $: updateDisplayStrings(apiCall);
   $: previousCall = apiCall?.conversation?.previous_call;
   $: nextCalls = apiCall?.conversation?.next_calls ?? [];
+  $: thisAsRef = getThisAsRef(apiCall);
+  $: variants =
+    apiCall?.variation?.variants ?? apiCall?.variation?.sibling_variants ?? [];
 </script>
 
 <InfoBox title="API Call">
@@ -84,6 +99,33 @@
       <pre class="response">{apiCall?.response.completion.text ??
           "Unknown"}</pre>
     </SubInfoBox>
+
+    {#if apiCall?.variation !== undefined}
+      <SubInfoBox subheading="Variants">
+        <div class="variation-links composite-reveal">
+          {#if apiCall.variation.canonical}
+            <ApiCallReference
+              selfContained
+              apiCall={apiCall.variation.canonical}
+            />
+          {:else if thisAsRef}
+            <ApiCallReference selfContained nolink apiCall={thisAsRef} />
+          {/if}
+
+          <ul>
+            {#each variants as variant}
+              <li>
+                <ApiCallReference
+                  selfContained
+                  nolink={variant.id === apiCall.id}
+                  apiCall={variant}
+                />
+              </li>
+            {/each}
+          </ul>
+        </div>
+      </SubInfoBox>
+    {/if}
 
     {#if apiCall?.conversation !== undefined}
       <SubInfoBox subheading="Conversation">
@@ -133,6 +175,36 @@
     white-space: pre-wrap;
     word-wrap: break-word;
     word-break: break-word;
+  }
+
+  .variation-links ul {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+  }
+
+  .variation-links li {
+    --indent: 2rem;
+    --line-thickness: 2px;
+    margin-left: var(--indent);
+    width: calc(100% - var(--indent));
+    position: relative;
+  }
+
+  .variation-links li:before {
+    content: "";
+    position: absolute;
+    bottom: 50%;
+    left: calc(-1 * var(--indent) + 0.5rem);
+    width: 1rem;
+    height: 150%;
+    border-bottom: var(--line-thickness) solid var(--color-border);
+    border-left: var(--line-thickness) solid var(--color-border);
+    border-bottom-left-radius: var(--corner-roundness);
+  }
+
+  .variation-links li:first-child:before {
+    height: 50%;
   }
 
   .conversation-links {

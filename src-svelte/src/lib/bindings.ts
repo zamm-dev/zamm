@@ -53,20 +53,26 @@ export function getApiCalls(offset: number) {
   return invoke()<LightweightLlmCall[]>("get_api_calls", { offset });
 }
 
+export type TokenMetadata = {
+  prompt: number | null;
+  response: number | null;
+  total: number | null;
+};
+export type Request = { prompt: Prompt; temperature: number };
 export type ChatMessage =
   | { role: "System"; text: string }
   | { role: "Human"; text: string }
   | { role: "AI"; text: string };
 export type Llm = { name: string; requested: string; provider: Service };
-export type Prompt = { type: "Chat" } & ChatPrompt;
-export type Request = { prompt: Prompt; temperature: number };
-export type Service = "OpenAI";
-export type Response = { completion: ChatMessage };
-export type ConversationMetadata = {
-  previous_call?: LlmCallReference | null;
-  next_calls?: LlmCallReference[];
+export type VariantMetadata = {
+  canonical?: LlmCallReference | null;
+  variants?: LlmCallReference[];
+  sibling_variants?: LlmCallReference[];
 };
+export type Prompt = { type: "Chat" } & ChatPrompt;
+export type Service = "OpenAI";
 export type Preferences = {
+  version?: string | null;
   animations_on?: boolean | null;
   background_animation?: boolean | null;
   animation_speed?: number | null;
@@ -79,6 +85,16 @@ export type LightweightLlmCall = {
   timestamp: string;
   response_message: ChatMessage;
 };
+export type LlmCall = {
+  id: EntityId;
+  timestamp: string;
+  llm: Llm;
+  request: Request;
+  response: Response;
+  tokens: TokenMetadata;
+  conversation?: ConversationMetadata;
+  variation?: VariantMetadata;
+};
 export type ApiKeys = { openai: string | null };
 export type OS = "Mac" | "Linux" | "Windows";
 export type EntityId = string;
@@ -90,26 +106,18 @@ export type SystemInfo = {
   shell_init_file: string | null;
 };
 export type ChatPrompt = { messages: ChatMessage[] };
-export type TokenMetadata = {
-  prompt: number | null;
-  response: number | null;
-  total: number | null;
+export type Response = { completion: ChatMessage };
+export type ConversationMetadata = {
+  previous_call?: LlmCallReference | null;
+  next_calls?: LlmCallReference[];
 };
-export type LlmCallReference = { id: EntityId; snippet: string };
 export type ChatArgs = {
   provider: Service;
   llm: string;
   temperature?: number | null;
   prompt: ChatMessage[];
   previous_call_id?: string | null;
+  canonical_id?: string | null;
 };
-export type LlmCall = {
-  id: EntityId;
-  timestamp: string;
-  llm: Llm;
-  request: Request;
-  response: Response;
-  tokens: TokenMetadata;
-  conversation?: ConversationMetadata;
-};
+export type LlmCallReference = { id: EntityId; snippet: string };
 export type Sound = "Switch" | "Whoosh";

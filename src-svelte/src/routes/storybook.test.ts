@@ -178,7 +178,7 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["screens", "llm-call", "new"],
-    variants: ["blank"],
+    variants: ["blank", "edit-continued-conversation"],
     screenshotEntireBody: true,
   },
   {
@@ -198,6 +198,7 @@ const components: ComponentTestConfig[] = [
         name: "lots-of-code",
         tallWindow: true,
       },
+      "variant",
     ],
     screenshotEntireBody: true,
   },

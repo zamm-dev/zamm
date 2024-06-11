@@ -2,11 +2,16 @@ import { expect, test, vi, type Mock } from "vitest";
 import "@testing-library/jest-dom";
 
 import { render, screen } from "@testing-library/svelte";
-import ApiCallEditor, { resetNewApiCall } from "./ApiCallEditor.svelte";
+import ApiCallEditor, {
+  canonicalRef,
+  prompt,
+  resetNewApiCall,
+} from "./ApiCallEditor.svelte";
 import userEvent from "@testing-library/user-event";
 import { TauriInvokePlayback } from "$lib/sample-call-testing";
 import { get } from "svelte/store";
 import { mockStores } from "../../../vitest-mocks/stores";
+import { EDIT_CANONICAL_REF, EDIT_PROMPT } from "./test.data";
 
 describe("API call editor", () => {
   let tauriInvokeMock: Mock;
@@ -56,6 +61,9 @@ describe("API call editor", () => {
     if (messageInput === null) {
       throw new Error("Message input not found");
     }
+    if (messageInput.value !== "") {
+      await userEvent.clear(messageInput);
+    }
     await userEvent.type(messageInput, message);
     expect(messageInput).toHaveValue(message);
   }
@@ -83,6 +91,35 @@ describe("API call editor", () => {
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
     expect(get(mockStores.page).url.pathname).toEqual(
       "/api-calls/c13c1e67-2de3-48de-a34c-a32079c03316",
+    );
+  });
+
+  test("can edit an existing API call", async () => {
+    canonicalRef.set(EDIT_CANONICAL_REF);
+    prompt.set(EDIT_PROMPT);
+    render(ApiCallEditor, {});
+    const originalApiCallLabel = screen.getByText("Original API call:");
+    const originalApiCallLink = originalApiCallLabel.nextElementSibling;
+    if (originalApiCallLink === null) {
+      throw new Error("Original API call link not found");
+    }
+    expect(originalApiCallLink).toHaveTextContent(EDIT_CANONICAL_REF.snippet);
+    expect(originalApiCallLink).toHaveAttribute(
+      "href",
+      "/api-calls/c13c1e67-2de3-48de-a34c-a32079c03316",
+    );
+
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/chat-edit-conversation.yaml",
+    );
+    await setNewMessage("Human", "Tell me a funny joke.");
+
+    await userEvent.click(screen.getByRole("button", { name: "Submit" }));
+    expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(get(mockStores.page).url.pathname).toEqual(
+      "/api-calls/f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
     );
   });
 });

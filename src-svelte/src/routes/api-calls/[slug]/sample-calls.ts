@@ -33,9 +33,8 @@ export const CONTINUE_CONVERSATION_CALL = {
   response: {
     completion: {
       role: "AI",
-      text:
-        "Sure, here's a joke for you: " +
-        "Why don't scientists trust atoms? Because they make up everything!",
+      // eslint-disable-next-line max-len
+      text: "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!",
     },
   },
   tokens: {
@@ -60,6 +59,22 @@ export const CONTINUE_CONVERSATION_CALL = {
         snippet:
           // eslint-disable-next-line max-len
           "Sure, here is a simple Rust program that prints out the joke: ```rust fn main() { println!(\"Why don't scientists trust...",
+      },
+    ],
+  },
+  variation: {
+    variants: [
+      {
+        id: "f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
+        snippet:
+          // eslint-disable-next-line max-len
+          "Sure, here is a light-hearted joke for you: Why don't scientists trust atoms? Because they make up everything!...",
+      },
+      {
+        id: "7a35a4cf-f3d9-4388-bca8-2fe6e78c9648",
+        snippet:
+          // eslint-disable-next-line max-len
+          "Sure, here you go: Why don't scientists trust atoms? Because they make up everything!",
       },
     ],
   },
@@ -166,5 +181,73 @@ export const LOTS_OF_CODE_CALL = {
         // eslint-disable-next-line max-len
         "With Diesel ORM in Rust, you can't change arbitrarily the order of `JOIN` operations through the query builder because it...",
     },
+  },
+};
+
+export const VARIANT_CALL = {
+  id: "7a35a4cf-f3d9-4388-bca8-2fe6e78c9648",
+  timestamp: "2024-06-08T09:40:22.392223700",
+  llm: {
+    name: "gpt-4-0613",
+    requested: "gpt-4",
+    provider: "OpenAI",
+  },
+  request: {
+    prompt: {
+      type: "Chat",
+      messages: [
+        {
+          role: "System",
+          text: "You are ZAMM, a chat program. Respond in first person.",
+        },
+        {
+          role: "Human",
+          text: "Hello, does this really work?",
+        },
+        {
+          role: "AI",
+          text: "Yes, it works. How can I assist you today?",
+        },
+        {
+          role: "Human",
+          text: "Tell me a funny joke.",
+        },
+      ],
+    },
+    temperature: 1.0,
+  },
+  response: {
+    completion: {
+      role: "AI",
+      // eslint-disable-next-line max-len
+      text: "Sure, here you go: Why don't scientists trust atoms? Because they make up everything!",
+    },
+  },
+  tokens: {
+    prompt: 59,
+    response: 19,
+    total: 78,
+  },
+  variation: {
+    canonical: {
+      id: "c13c1e67-2de3-48de-a34c-a32079c03316",
+      snippet:
+        // eslint-disable-next-line max-len
+        "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!",
+    },
+    sibling_variants: [
+      {
+        id: "f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
+        snippet:
+          // eslint-disable-next-line max-len
+          "Sure, here is a light-hearted joke for you: Why don't scientists trust atoms? Because they make up everything!...",
+      },
+      {
+        id: "7a35a4cf-f3d9-4388-bca8-2fe6e78c9648",
+        snippet:
+          // eslint-disable-next-line max-len
+          "Sure, here you go: Why don't scientists trust atoms? Because they make up everything!",
+      },
+    ],
   },
 };

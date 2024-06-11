@@ -15,6 +15,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    llm_call_variants (canonical_id, variant_id) {
+        canonical_id -> Text,
+        variant_id -> Text,
+    }
+}
+
+diesel::table! {
     llm_calls (id) {
         id -> Text,
         timestamp -> Timestamp,
@@ -30,4 +37,9 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(api_keys, llm_call_follow_ups, llm_calls,);
+diesel::allow_tables_to_appear_in_same_query!(
+    api_keys,
+    llm_call_follow_ups,
+    llm_call_variants,
+    llm_calls,
+);

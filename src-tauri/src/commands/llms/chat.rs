@@ -2,15 +2,16 @@ use crate::commands::errors::ZammResult;
 use crate::commands::Error;
 use crate::models::llm_calls::{
     ChatMessage, ChatPrompt, EntityId, LightweightLlmCall, NewLlmCallFollowUp,
-    NewLlmCallRow, Prompt, TokenMetadata,
+    NewLlmCallRow, NewLlmCallVariant, Prompt, TokenMetadata,
 };
-use crate::schema::{llm_call_follow_ups, llm_calls};
+use crate::schema::{llm_call_follow_ups, llm_call_variants, llm_calls};
 use crate::setup::api_keys::Service;
 use crate::{ZammApiKeys, ZammDatabase};
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestMessage, CreateChatCompletionRequestArgs,
 };
+use diesel::prelude::*;
 use diesel::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use specta::specta;
@@ -26,6 +27,8 @@ pub struct ChatArgs {
     prompt: Vec<ChatMessage>,
     #[serde(skip_serializing_if = "Option::is_none")]
     previous_call_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    canonical_id: Option<Uuid>,
 }
 
 async fn chat_helper(
@@ -121,6 +124,24 @@ async fn chat_helper(
                 .values(NewLlmCallFollowUp {
                     previous_call_id: &previous_id,
                     next_call_id: &new_id,
+                })
+                .execute(conn)?;
+        }
+
+        if let Some(potential_canonical_uuid) = args.canonical_id {
+            let potential_canonical_id = EntityId {
+                uuid: potential_canonical_uuid,
+            };
+            // check if the canonical ID is itself a variant
+            let canonical_id = llm_call_variants::table
+                .select(llm_call_variants::canonical_id)
+                .filter(llm_call_variants::variant_id.eq(&potential_canonical_id))
+                .first::<EntityId>(conn)
+                .unwrap_or(potential_canonical_id);
+            diesel::insert_into(llm_call_variants::table)
+                .values(NewLlmCallVariant {
+                    canonical_id: &canonical_id,
+                    variant_id: &new_id,
                 })
                 .execute(conn)?;
         }
@@ -317,6 +338,26 @@ mod tests {
         test_llm_api_call(
             function_name!(),
             "api/sample-calls/chat-fork-conversation-rust.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_edit_conversation() {
+        test_llm_api_call(
+            function_name!(),
+            "api/sample-calls/chat-edit-conversation.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_re_edit_conversation() {
+        // this test checks that if we edit a variant, the new variant gets linked to
+        // the original canonical call, not to the variant that was edited
+        test_llm_api_call(
+            function_name!(),
+            "api/sample-calls/chat-re-edit-conversation.yaml",
         )
         .await;
     }

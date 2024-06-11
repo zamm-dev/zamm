@@ -3,9 +3,10 @@ use crate::models::llm_calls::entity_id::EntityId;
 use crate::models::llm_calls::row::LlmCallRow;
 use crate::models::llm_calls::various::{
     ConversationMetadata, Llm, LlmCallReference, Request, Response, TokenMetadata,
+    VariantMetadata,
 };
 #[cfg(test)]
-use crate::models::llm_calls::{NewLlmCallFollowUp, NewLlmCallRow};
+use crate::models::llm_calls::{NewLlmCallFollowUp, NewLlmCallRow, NewLlmCallVariant};
 use chrono::naive::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
@@ -19,6 +20,8 @@ pub struct LlmCall {
     pub tokens: TokenMetadata,
     #[serde(skip_serializing_if = "ConversationMetadata::is_default", default)]
     pub conversation: ConversationMetadata,
+    #[serde(skip_serializing_if = "VariantMetadata::is_default", default)]
+    pub variation: VariantMetadata,
 }
 
 #[cfg(test)]
@@ -48,15 +51,46 @@ impl LlmCall {
                 next_call_id: &self.id,
             })
     }
+
+    pub fn as_variant_rows(&self) -> Vec<NewLlmCallVariant> {
+        self.variation
+            .variants
+            .iter()
+            .map(|variant| NewLlmCallVariant {
+                canonical_id: &self.id,
+                variant_id: &variant.id,
+            })
+            .collect()
+    }
 }
 
-pub type LlmCallLeftJoinResult = (LlmCallRow, Option<EntityId>, Option<ChatMessage>);
-pub type LlmCallQueryResults = (LlmCallLeftJoinResult, Vec<(EntityId, ChatMessage)>);
+pub type LlmCallLeftJoinResult = (
+    LlmCallRow,
+    Option<EntityId>,
+    Option<ChatMessage>,
+    Option<EntityId>,
+    Option<ChatMessage>,
+);
+
+pub type LlmCallQueryResults = (
+    LlmCallLeftJoinResult,
+    Vec<(EntityId, ChatMessage)>,
+    Vec<(EntityId, ChatMessage)>,
+);
 
 impl From<LlmCallQueryResults> for LlmCall {
     fn from(query_results: LlmCallQueryResults) -> Self {
-        let ((llm_call_row, previous_call_id, previous_call_completion), next_calls) =
-            query_results;
+        let (
+            (
+                llm_call_row,
+                previous_call_id,
+                previous_call_completion,
+                maybe_canonical_id,
+                maybe_canonical_completion,
+            ),
+            next_calls,
+            variants,
+        ) = query_results;
 
         let id = llm_call_row.id;
         let timestamp = llm_call_row.timestamp;
@@ -92,6 +126,25 @@ impl From<LlmCallQueryResults> for LlmCall {
                 .map(|(id, completion)| (id, completion).into())
                 .collect(),
         };
+        let variant_references = variants
+            .into_iter()
+            .map(|(id, completion)| (id, completion).into())
+            .collect();
+        let variant_metadata = if let (Some(canonical_id), Some(canonical_completion)) =
+            (maybe_canonical_id, maybe_canonical_completion)
+        {
+            VariantMetadata {
+                canonical: Some((canonical_id, canonical_completion).into()),
+                variants: Vec::new(),
+                sibling_variants: variant_references,
+            }
+        } else {
+            VariantMetadata {
+                canonical: None,
+                variants: variant_references,
+                sibling_variants: Vec::new(),
+            }
+        };
 
         LlmCall {
             id,
@@ -101,6 +154,7 @@ impl From<LlmCallQueryResults> for LlmCall {
             response,
             tokens: token_metadata,
             conversation: conversation_metadata,
+            variation: variant_metadata,
         }
     }
 }

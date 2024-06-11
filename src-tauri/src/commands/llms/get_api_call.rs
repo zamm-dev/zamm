@@ -1,7 +1,7 @@
 use crate::commands::errors::ZammResult;
 use crate::models::llm_calls::{ChatMessage, EntityId, LlmCall, LlmCallLeftJoinResult};
 use crate::schema::llm_calls;
-use crate::views::llm_call_named_follow_ups;
+use crate::views::{llm_call_named_follow_ups, llm_call_named_variants};
 use crate::ZammDatabase;
 use anyhow::anyhow;
 use diesel::prelude::*;
@@ -20,15 +20,21 @@ async fn get_api_call_helper(
     let mut db = zamm_db.0.lock().await;
     let conn = db.as_mut().ok_or(anyhow!("Failed to lock database"))?;
 
-    let previous_call_result: LlmCallLeftJoinResult = llm_calls::table
+    let left_join_result: LlmCallLeftJoinResult = llm_calls::table
         .left_join(
             llm_call_named_follow_ups::dsl::llm_call_named_follow_ups
                 .on(llm_calls::id.eq(llm_call_named_follow_ups::next_call_id)),
+        )
+        .left_join(
+            llm_call_named_variants::dsl::llm_call_named_variants
+                .on(llm_calls::id.eq(llm_call_named_variants::variant_id)),
         )
         .select((
             llm_calls::all_columns,
             llm_call_named_follow_ups::previous_call_id.nullable(),
             llm_call_named_follow_ups::previous_call_completion.nullable(),
+            llm_call_named_variants::canonical_id.nullable(),
+            llm_call_named_variants::canonical_completion.nullable(),
         ))
         .filter(llm_calls::id.eq(&parsed_uuid))
         .first::<LlmCallLeftJoinResult>(conn)?;
@@ -37,9 +43,17 @@ async fn get_api_call_helper(
             llm_call_named_follow_ups::next_call_id,
             llm_call_named_follow_ups::next_call_completion,
         ))
-        .filter(llm_call_named_follow_ups::previous_call_id.eq(parsed_uuid))
+        .filter(llm_call_named_follow_ups::previous_call_id.eq(&parsed_uuid))
         .load::<(EntityId, ChatMessage)>(conn)?;
-    Ok((previous_call_result, next_calls_result).into())
+    let canonical_id = left_join_result.3.clone().unwrap_or(parsed_uuid);
+    let variants_result = llm_call_named_variants::table
+        .select((
+            llm_call_named_variants::variant_id,
+            llm_call_named_variants::variant_completion,
+        ))
+        .filter(llm_call_named_variants::canonical_id.eq(canonical_id))
+        .load::<(EntityId, ChatMessage)>(conn)?;
+    Ok((left_join_result, next_calls_result, variants_result).into())
 }
 
 #[tauri::command(async)]
@@ -139,6 +153,15 @@ mod tests {
         check_get_api_call_sample(
             function_name!(),
             "./api/sample-calls/get_api_call-continue-conversation.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_get_api_call_edit() {
+        check_get_api_call_sample(
+            function_name!(),
+            "./api/sample-calls/get_api_call-edit.yaml",
         )
         .await;
     }

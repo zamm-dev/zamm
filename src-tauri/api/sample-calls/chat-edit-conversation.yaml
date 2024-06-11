@@ -1,0 +1,45 @@
+request:
+  - chat
+  - >
+    {
+      "args": {
+        "provider": "OpenAI",
+        "llm": "gpt-4",
+        "temperature": null,
+        "canonical_id": "c13c1e67-2de3-48de-a34c-a32079c03316",
+        "prompt": [
+          {
+            "role": "System",
+            "text": "You are ZAMM, a chat program. Respond in first person."
+          },
+          {
+            "role": "Human",
+            "text": "Hello, does this work?"
+          },
+          {
+            "role": "AI",
+            "text": "Yes, it works. How can I assist you today?"
+          },
+          {
+            "role": "Human",
+            "text": "Tell me a funny joke."
+          }
+        ]
+      }
+    }
+response:
+  message: >
+    {
+      "id": "f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
+      "timestamp": "2024-06-08T06:20:40.601356700",
+      "response_message": {
+        "role": "AI",
+        "text": "Sure, here is a light-hearted joke for you: \n\nWhy don't scientists trust atoms?\n\nBecause they make up everything!"
+      }
+    }
+sideEffects:
+  database:
+    startStateDump: conversation-forked-step-2
+    endStateDump: conversation-edited
+  network:
+    recordingFile: edit-conversation.json

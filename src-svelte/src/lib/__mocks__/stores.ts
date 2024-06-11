@@ -6,7 +6,17 @@ import {
 } from "$lib/preferences";
 import { systemInfo } from "$lib/system-info";
 import { conversation } from "../../routes/chat/Chat.svelte";
-import type { SystemInfo, ChatMessage } from "$lib/bindings";
+import {
+  canonicalRef,
+  getDefaultApiCall,
+  prompt,
+} from "../../routes/api-calls/new/ApiCallEditor.svelte";
+import type {
+  SystemInfo,
+  ChatMessage,
+  Prompt,
+  LlmCallReference,
+} from "$lib/bindings";
 import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
 
 interface Preferences {
@@ -15,9 +25,15 @@ interface Preferences {
   animationSpeed?: number;
 }
 
+interface ApiCallEditing {
+  canonicalRef: LlmCallReference;
+  prompt: Prompt;
+}
+
 interface Stores {
   systemInfo?: SystemInfo;
   conversation?: ChatMessage[];
+  apiCallEditing?: ApiCallEditing;
 }
 
 interface StoreArgs {
@@ -55,6 +71,8 @@ const SvelteStoresDecorator: Decorator = (
 
   systemInfo.set(stores?.systemInfo);
   conversation.set(stores?.conversation || []);
+  canonicalRef.set(stores?.apiCallEditing?.canonicalRef);
+  prompt.set(stores?.apiCallEditing?.prompt || getDefaultApiCall());
 
   return story(args, context);
 };
