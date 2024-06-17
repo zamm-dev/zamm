@@ -8,4 +8,10 @@
 6. Do a squash commit into the blog repo's main branch and push to origin
 7. Download and install the latest version from the release webpage to ensure that everything works as expected
 8. Submit release to HN, and update blog post with link to HN post
-9. Bump version number in `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`, and `src-tauri/tauri.conf.json`, and update the end-to-end screenshot
+9. Bump version number in:
+   - `src-tauri/Cargo.toml`
+   - `src-tauri/Cargo.lock`
+   - `src-tauri/tauri.conf.json`
+   - `src-tauri/api/sample-disk-writes/preferences/version-init/preferences.toml`
+   - `src-tauri/api/sample-disk-writes/preferences/version-update/preferences.toml`
+10. Update the end-to-end screenshot
