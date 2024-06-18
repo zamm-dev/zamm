@@ -33,6 +33,37 @@ describe("Sidebar", () => {
     expect(homeLink).not.toHaveAttribute("aria-current", "page");
     expect(apiCallsLink).toHaveAttribute("aria-current", "page");
   });
+
+  test("saves sub-path when navigating to new icon", async () => {
+    render(SidebarUI, {
+      currentRoute: "/api-calls/1234",
+      dummyLinks: true,
+    });
+    const homeLink = screen.getByTitle("Dashboard");
+    const apiCallsLink = screen.getByTitle("API Calls");
+    expect(homeLink).toHaveAttribute("href", "/");
+    expect(apiCallsLink).toHaveAttribute("href", "/api-calls");
+
+    await act(() => userEvent.click(homeLink));
+    expect(homeLink).toHaveAttribute("href", "/");
+    expect(apiCallsLink).toHaveAttribute("href", "/api-calls/1234");
+  });
+
+  test("restores default path when navigating back to old icon", async () => {
+    render(SidebarUI, {
+      currentRoute: "/api-calls/1234",
+      dummyLinks: true,
+    });
+    const homeLink = screen.getByTitle("Dashboard");
+    const apiCallsLink = screen.getByTitle("API Calls");
+    await act(() => userEvent.click(homeLink));
+    expect(homeLink).toHaveAttribute("href", "/");
+    expect(apiCallsLink).toHaveAttribute("href", "/api-calls/1234");
+
+    await act(() => userEvent.click(apiCallsLink));
+    expect(homeLink).toHaveAttribute("href", "/");
+    expect(apiCallsLink).toHaveAttribute("href", "/api-calls");
+  });
 });
 
 describe("Sidebar interactions", () => {
