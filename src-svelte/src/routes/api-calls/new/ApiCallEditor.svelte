@@ -30,7 +30,7 @@
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import { goto } from "$app/navigation";
 
-  let expectingResponse = false;
+  export let expectingResponse = false;
 
   async function submitApiCall() {
     if (expectingResponse) {
@@ -69,7 +69,8 @@
   <PromptComponent editable bind:prompt={$prompt} />
 
   <div class="action">
-    <Button on:click={submitApiCall}>Submit</Button>
+    <Button disabled={expectingResponse} on:click={submitApiCall}>Submit</Button
+    >
   </div>
 </InfoBox>
 

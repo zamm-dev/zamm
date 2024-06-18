@@ -31,3 +31,21 @@ EditContinuedConversation.parameters = {
     },
   },
 };
+
+export const Busy: StoryObj = Template.bind({}) as any;
+Busy.args = {
+  expectingResponse: true,
+};
+Busy.parameters = {
+  stores: {
+    apiCallEditing: {
+      canonicalRef: {
+        id: "c13c1e67-2de3-48de-a34c-a32079c03316",
+        snippet:
+          "Sure, here's a joke for you: Why don't scientists trust atoms? " +
+          "Because they make up everything!",
+      },
+      prompt: CONTINUE_CONVERSATION_CALL.request.prompt,
+    },
+  },
+};

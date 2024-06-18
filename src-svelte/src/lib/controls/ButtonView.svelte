@@ -4,4 +4,4 @@
   export let text: string;
 </script>
 
-<Button>{text}</Button>
+<Button {...$$restProps}>{text}</Button>

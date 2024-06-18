@@ -16,3 +16,9 @@ export const Regular: StoryObj = Template.bind({}) as any;
 Regular.args = {
   text: "Simulate",
 };
+
+export const Disabled: StoryObj = Template.bind({}) as any;
+Disabled.args = {
+  text: "Simulate",
+  disabled: true,
+};

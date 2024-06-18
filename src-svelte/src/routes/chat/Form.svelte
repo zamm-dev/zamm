@@ -53,7 +53,9 @@
     bind:this={textareaInput}
     bind:value={currentMessage}
   />
-  <Button ariaLabel="Send" unwrapped rightEnd><IconSend /></Button>
+  <Button ariaLabel="Send" disabled={chatBusy} unwrapped rightEnd
+    ><IconSend /></Button
+  >
 </form>
 
 <style>
