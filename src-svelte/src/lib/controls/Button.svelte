@@ -2,6 +2,7 @@
   import { createEventDispatcher } from "svelte";
 
   export let unwrapped = false;
+  export let disabled = false;
   export let leftEnd = false;
   export let rightEnd = false;
   export let ariaLabel: string | undefined = undefined;
@@ -17,6 +18,7 @@
     class="cut-corners inner"
     class:left-end={leftEnd}
     class:right-end={rightEnd}
+    class:disabled
     type="submit"
     aria-label={ariaLabel}
     on:click={handleClick}
@@ -28,6 +30,7 @@
     class="cut-corners outer"
     class:left-end={leftEnd}
     class:right-end={rightEnd}
+    class:disabled
     type="submit"
     aria-label={ariaLabel}
     on:click={handleClick}
@@ -73,6 +76,23 @@
 
   .inner:active {
     transform: translateY(0.08rem) scale(0.98);
+  }
+
+  .inner.disabled,
+  .disabled .inner {
+    filter: grayscale(1);
+    color: var(--color-faded);
+    pointer-events: none;
+  }
+
+  .inner.disabled:hover,
+  .disabled .inner:hover {
+    filter: grayscale(1);
+  }
+
+  .inner.disabled:active,
+  .disabled .inner:active {
+    transform: none;
   }
 
   .outer {
