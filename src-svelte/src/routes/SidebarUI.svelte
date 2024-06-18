@@ -41,6 +41,14 @@
   export let dummyLinks = false;
   let indicatorPosition: number;
   let transitionDuration = REGULAR_TRANSITION_DURATION;
+  let previousRoute = currentRoute;
+  let iconLinks = routes.reduce(
+    (acc, route) => {
+      acc[route.name] = route.path;
+      return acc;
+    },
+    {} as Record<string, string>,
+  );
 
   function routeMatches(sidebarRoute: string, pageRoute: string) {
     if (sidebarRoute === "/") {
@@ -49,9 +57,13 @@
     return pageRoute.includes(sidebarRoute);
   }
 
-  function getIndicatorPosition(newRoute: string) {
+  function getMatchingRoute(newRoute: string) {
     const routeIndex = routes.findIndex((r) => routeMatches(r.path, newRoute));
-    const routeName = routes[routeIndex].name.toLowerCase();
+    return routes[routeIndex];
+  }
+
+  function getIndicatorPosition(matchingTab: App.Route) {
+    const routeName = matchingTab.name.toLowerCase();
     const routeElementId = `nav-${routeName}`;
     const iconElement = document.getElementById(routeElementId);
     if (!iconElement) {
@@ -60,6 +72,19 @@
     }
     indicatorPosition = iconElement.offsetTop;
     return indicatorPosition;
+  }
+
+  function updateIndicator(newRoute: string) {
+    const previousTab = getMatchingRoute(previousRoute);
+    const currentTab = getMatchingRoute(newRoute);
+    indicatorPosition = getIndicatorPosition(currentTab);
+    if (previousTab.name !== currentTab.name) {
+      // click on the previous icon will take the user back to that same page
+      iconLinks[previousTab.name] = previousRoute;
+      // clicking on the new icon will reset to the default page for this icon
+      iconLinks[currentTab.name] = currentTab.path;
+    }
+    previousRoute = newRoute;
   }
 
   function playWhooshSound() {
@@ -81,7 +106,7 @@
   onMount(() => {
     const updateIndicator = () => {
       transitionDuration = "0";
-      indicatorPosition = getIndicatorPosition(currentRoute);
+      indicatorPosition = getIndicatorPosition(getMatchingRoute(currentRoute));
       setTimeout(() => {
         transitionDuration = REGULAR_TRANSITION_DURATION;
       }, 10);
@@ -94,7 +119,7 @@
     };
   });
 
-  $: indicatorPosition = getIndicatorPosition(currentRoute);
+  $: updateIndicator(currentRoute);
 </script>
 
 <header style={`--animation-duration: ${transitionDuration};`}>
@@ -144,7 +169,7 @@
         class={route.name.toLowerCase()}
         id="nav-{route.name.toLowerCase()}"
         title={route.name}
-        href={dummyLinks ? "#" : route.path}
+        href={iconLinks[route.name]}
         on:click={routeChangeSimulator(route)}
       >
         <svelte:component this={route.icon} />
@@ -160,7 +185,7 @@
         class={route.name.toLowerCase()}
         id="nav-{route.name.toLowerCase()}"
         title={route.name}
-        href={dummyLinks ? "#" : route.path}
+        href={iconLinks[route.name]}
         on:click={routeChangeSimulator(route)}
       >
         <svelte:component this={route.icon} />
