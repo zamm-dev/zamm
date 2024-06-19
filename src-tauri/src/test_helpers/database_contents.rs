@@ -8,6 +8,7 @@ use crate::schema::{api_keys, llm_call_follow_ups, llm_call_variants, llm_calls}
 use crate::views::{llm_call_named_follow_ups, llm_call_named_variants};
 use crate::ZammDatabase;
 use anyhow::anyhow;
+use diesel::connection::SimpleConnection;
 use diesel::prelude::*;
 use path_absolutize::Absolutize;
 use std::fs;
@@ -140,6 +141,12 @@ pub async fn read_database_contents(
         Ok(())
     })?;
     Ok(())
+}
+
+pub fn load_sqlite_database(conn: &mut SqliteConnection, dump_path: &PathBuf) {
+    let dump = fs::read_to_string(dump_path).expect("Error reading dump file");
+    conn.batch_execute(&dump)
+        .expect("Error loading dump into database");
 }
 
 pub fn dump_sqlite_database(db_path: &PathBuf, dump_path: &PathBuf) {

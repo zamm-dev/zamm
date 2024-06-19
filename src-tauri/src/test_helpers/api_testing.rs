@@ -1,8 +1,9 @@
 use crate::commands::errors::ZammResult;
 use crate::sample_call::{Disk, SampleCall};
-use crate::test_helpers::database::setup_zamm_db;
+use crate::test_helpers::database::{setup_database, setup_zamm_db};
 use crate::test_helpers::database_contents::{
-    dump_sqlite_database, read_database_contents, write_database_contents,
+    dump_sqlite_database, load_sqlite_database, read_database_contents,
+    write_database_contents,
 };
 use crate::test_helpers::temp_files::get_temp_test_dir;
 use crate::ZammDatabase;
@@ -14,6 +15,7 @@ use std::collections::HashMap;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
+use tokio::sync::Mutex;
 use vcr_cassette::Headers;
 
 fn read_sample(filename: &str) -> SampleCall {
@@ -47,29 +49,62 @@ fn apply_replacements(input: &str, replacements: &HashMap<String, String>) -> St
         .fold(input.to_string(), |acc, (k, v)| acc.replace(k, v))
 }
 
-fn copy_file_if_missing(
-    expected_file_path: impl AsRef<Path>,
-    actual_file_path: impl AsRef<Path>,
-    fail_on_copy: bool,
-) {
-    let expected_path_abs = expected_file_path.as_ref().absolutize().unwrap();
-    let actual_path_abs = actual_file_path.as_ref().absolutize().unwrap();
+fn copy_missing_gold_file(expected_path_abs: &Path, actual_path_abs: &Path) {
+    fs::create_dir_all(expected_path_abs.parent().unwrap()).unwrap();
+    fs::copy(actual_path_abs, expected_path_abs).unwrap();
+    eprintln!(
+        "Gold file not found at {}, copied actual file from {}",
+        expected_path_abs.display(),
+        actual_path_abs.display(),
+    );
+}
 
-    if !expected_path_abs.exists() {
-        fs::create_dir_all(expected_path_abs.parent().unwrap()).unwrap();
-        fs::copy(&actual_path_abs, &expected_path_abs).unwrap();
-        if fail_on_copy {
-            panic!(
-                "Gold file not found at {}, copied actual file from {}",
-                expected_path_abs.as_ref().display(),
-                actual_path_abs.as_ref().display(),
-            );
-        } else {
-            eprintln!(
-                "Gold file not found at {}, copied actual file from {}",
-                expected_path_abs.as_ref().display(),
-                actual_path_abs.as_ref().display(),
-            );
+async fn dump_sql_to_yaml(
+    expected_sql_dump_abs: &PathBuf,
+    expected_yaml_dump_abs: &PathBuf,
+) {
+    let mut db = setup_database(None);
+    load_sqlite_database(&mut db, expected_sql_dump_abs);
+    let zamm_db = ZammDatabase(Mutex::new(Some(db)));
+    write_database_contents(&zamm_db, expected_yaml_dump_abs)
+        .await
+        .unwrap();
+}
+
+async fn setup_gold_db_files(
+    expected_yaml_dump: impl AsRef<Path>,
+    actual_yaml_dump: impl AsRef<Path>,
+    expected_sql_dump: impl AsRef<Path>,
+    actual_sql_dump: impl AsRef<Path>,
+) {
+    let expected_yaml_dump_abs = expected_yaml_dump.as_ref().absolutize().unwrap();
+    let actual_yaml_dump_abs = actual_yaml_dump.as_ref().absolutize().unwrap();
+    let expected_sql_dump_abs = expected_sql_dump.as_ref().absolutize().unwrap();
+    let actual_sql_dump_abs = actual_sql_dump.as_ref().absolutize().unwrap();
+
+    if !expected_yaml_dump_abs.exists() && !expected_sql_dump_abs.exists() {
+        copy_missing_gold_file(&expected_yaml_dump_abs, &actual_yaml_dump_abs);
+        copy_missing_gold_file(&expected_sql_dump_abs, &actual_sql_dump_abs);
+        panic!(
+            "Copied gold files to {}",
+            expected_yaml_dump_abs.parent().unwrap().display()
+        );
+    } else if !expected_yaml_dump_abs.exists() && expected_sql_dump_abs.exists() {
+        dump_sql_to_yaml(
+            &expected_sql_dump_abs.to_path_buf(),
+            &expected_yaml_dump_abs.to_path_buf(),
+        )
+        .await;
+        panic!(
+            "Dumped YAML from SQL to {}",
+            expected_yaml_dump_abs.display()
+        );
+    } else {
+        if !expected_yaml_dump_abs.exists() {
+            panic!("No YAML dump found at {}", expected_yaml_dump_abs.display());
+        }
+        if !expected_sql_dump_abs.exists() {
+            panic!("No SQL dump found at {}", expected_sql_dump_abs.display());
         }
     }
 }
@@ -356,8 +391,23 @@ where
                 let temp_db_file = temp_db_dir.join("db.sqlite3");
 
                 let test_db = setup_zamm_db(Some(&temp_db_file));
-                if let Some(initial_contents) = sample.db_start_dump() {
-                    read_database_contents(&test_db, &initial_contents)
+                if let Some(initial_yaml_dump) = sample.db_start_dump() {
+                    let initial_yaml_dump_abs = Path::new(&initial_yaml_dump)
+                        .absolutize()
+                        .unwrap()
+                        .to_path_buf();
+                    if !initial_yaml_dump_abs.exists() {
+                        let initial_sql_dump_abs =
+                            initial_yaml_dump_abs.with_extension("sql");
+                        dump_sql_to_yaml(&initial_sql_dump_abs, &initial_yaml_dump_abs)
+                            .await;
+                        panic!(
+                            "Dumped YAML from SQL to {}",
+                            initial_yaml_dump_abs.display()
+                        );
+                    }
+
+                    read_database_contents(&test_db, &initial_yaml_dump)
                         .await
                         .unwrap();
                 }
@@ -424,12 +474,13 @@ where
                 .unwrap();
             dump_sqlite_database(&db_info.temp_db_file, &actual_db_sql_dump);
 
-            copy_file_if_missing(
+            setup_gold_db_files(
                 sample.db_end_dump("yaml"),
                 &actual_db_yaml_dump,
-                false,
-            );
-            copy_file_if_missing(sample.db_end_dump("sql"), &actual_db_sql_dump, true);
+                sample.db_end_dump("sql"),
+                &actual_db_sql_dump,
+            )
+            .await;
 
             compare_files(
                 sample.db_end_dump("yaml"),
