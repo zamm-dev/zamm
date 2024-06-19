@@ -5,8 +5,6 @@ use crate::models::llm_calls::various::{
     ConversationMetadata, Llm, LlmCallReference, Request, Response, TokenMetadata,
     VariantMetadata,
 };
-#[cfg(test)]
-use crate::models::llm_calls::{NewLlmCallFollowUp, NewLlmCallRow, NewLlmCallVariant};
 use chrono::naive::NaiveDateTime;
 use serde::{Deserialize, Serialize};
 
@@ -22,46 +20,6 @@ pub struct LlmCall {
     pub conversation: ConversationMetadata,
     #[serde(skip_serializing_if = "VariantMetadata::is_default", default)]
     pub variation: VariantMetadata,
-}
-
-#[cfg(test)]
-impl LlmCall {
-    pub fn as_sql_row(&self) -> NewLlmCallRow {
-        NewLlmCallRow {
-            id: &self.id,
-            timestamp: &self.timestamp,
-            provider: &self.llm.provider,
-            llm_requested: &self.llm.requested,
-            llm: &self.llm.name,
-            temperature: &self.request.temperature,
-            prompt_tokens: self.tokens.prompt.as_ref(),
-            response_tokens: self.tokens.response.as_ref(),
-            total_tokens: self.tokens.total.as_ref(),
-            prompt: &self.request.prompt,
-            completion: &self.response.completion,
-        }
-    }
-
-    pub fn as_follow_up_row(&self) -> Option<NewLlmCallFollowUp> {
-        self.conversation
-            .previous_call
-            .as_ref()
-            .map(|call| NewLlmCallFollowUp {
-                previous_call_id: &call.id,
-                next_call_id: &self.id,
-            })
-    }
-
-    pub fn as_variant_rows(&self) -> Vec<NewLlmCallVariant> {
-        self.variation
-            .variants
-            .iter()
-            .map(|variant| NewLlmCallVariant {
-                canonical_id: &self.id,
-                variant_id: &variant.id,
-            })
-            .collect()
-    }
 }
 
 pub type LlmCallLeftJoinResult = (

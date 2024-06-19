@@ -23,6 +23,25 @@ pub struct LlmCallRow {
     pub completion: ChatMessage,
 }
 
+#[cfg(test)]
+impl LlmCallRow {
+    pub fn as_insertable(&self) -> NewLlmCallRow {
+        NewLlmCallRow {
+            id: &self.id,
+            timestamp: &self.timestamp,
+            provider: &self.provider,
+            llm_requested: &self.llm_requested,
+            llm: &self.llm,
+            temperature: &self.temperature,
+            prompt_tokens: self.prompt_tokens.as_ref(),
+            response_tokens: self.response_tokens.as_ref(),
+            total_tokens: self.total_tokens.as_ref(),
+            prompt: &self.prompt,
+            completion: &self.completion,
+        }
+    }
+}
+
 #[derive(Insertable)]
 #[diesel(table_name = llm_calls)]
 pub struct NewLlmCallRow<'a> {

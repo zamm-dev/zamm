@@ -1,12 +1,14 @@
-api_keys: []
 llm_calls:
-- id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a74
-  timestamp: 2024-01-16T08:50:19.738093890
-  llm:
-    name: gpt-4-0613
-    requested: gpt-4
+  instances:
+  - id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a74
+    timestamp: 2024-01-16T08:50:19.738093890
     provider: OpenAI
-  request:
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 32
+    response_tokens: 12
+    total_tokens: 44
     prompt:
       type: Chat
       messages:
@@ -14,26 +16,18 @@ llm_calls:
         text: You are ZAMM, a chat program. Respond in first person.
       - role: Human
         text: Hello, does this work?
-    temperature: 1.0
-  response:
     completion:
       role: AI
       text: Yes, it works. How can I assist you today?
-  tokens:
-    prompt: 32
-    response: 12
-    total: 44
-  conversation:
-    next_calls:
-    - id: c13c1e67-2de3-48de-a34c-a32079c03316
-      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
-- id: c13c1e67-2de3-48de-a34c-a32079c03316
-  timestamp: 2024-01-16T09:50:19.738093890
-  llm:
-    name: gpt-4-0613
-    requested: gpt-4
+  - id: c13c1e67-2de3-48de-a34c-a32079c03316
+    timestamp: 2024-01-16T09:50:19.738093890
     provider: OpenAI
-  request:
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 57
+    response_tokens: 22
+    total_tokens: 79
     prompt:
       type: Chat
       messages:
@@ -45,31 +39,18 @@ llm_calls:
         text: Yes, it works. How can I assist you today?
       - role: Human
         text: Tell me something funny.
-    temperature: 1.0
-  response:
     completion:
       role: AI
       text: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
-  tokens:
-    prompt: 57
-    response: 22
-    total: 79
-  conversation:
-    previous_call:
-      id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a74
-      snippet: Yes, it works. How can I assist you today?
-    next_calls:
-    - id: 0e6bcadf-2b41-43d9-b4cf-81008d4f4771
-      snippet: 'Sure, here is a simple Python script that will print out the joke: ```python print("Why don''t scientists trust atoms? Because...'
-    - id: 63b5c02e-b864-4efe-a286-fbef48b152ef
-      snippet: 'Sure, here is a simple Rust program that prints out the joke: ```rust fn main() { println!("Why don''t scientists trust...'
-- id: 0e6bcadf-2b41-43d9-b4cf-81008d4f4771
-  timestamp: 2024-05-23T09:30:37.854241700
-  llm:
-    name: gpt-4-0613
-    requested: gpt-4
+  - id: 0e6bcadf-2b41-43d9-b4cf-81008d4f4771
+    timestamp: 2024-05-23T09:30:37.854241700
     provider: OpenAI
-  request:
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 98
+    response_tokens: 46
+    total_tokens: 144
     prompt:
       type: Chat
       messages:
@@ -85,8 +66,6 @@ llm_calls:
         text: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
       - role: Human
         text: Write me a Python script that prints that joke out.
-    temperature: 1.0
-  response:
     completion:
       role: AI
       text: |-
@@ -97,21 +76,15 @@ llm_calls:
         ```
 
         Just run this script and it will display the joke.
-  tokens:
-    prompt: 98
-    response: 46
-    total: 144
-  conversation:
-    previous_call:
-      id: c13c1e67-2de3-48de-a34c-a32079c03316
-      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
-- id: 63b5c02e-b864-4efe-a286-fbef48b152ef
-  timestamp: 2024-05-23T09:34:38.572764500
-  llm:
-    name: gpt-4-0613
-    requested: gpt-4
+  - id: 63b5c02e-b864-4efe-a286-fbef48b152ef
+    timestamp: 2024-05-23T09:34:38.572764500
     provider: OpenAI
-  request:
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 98
+    response_tokens: 58
+    total_tokens: 156
     prompt:
       type: Chat
       messages:
@@ -127,8 +100,6 @@ llm_calls:
         text: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
       - role: Human
         text: Write me a Rust script that prints that joke out.
-    temperature: 1.0
-  response:
     completion:
       role: AI
       text: |-
@@ -140,11 +111,10 @@ llm_calls:
         }
         ```
         To run this program, you'd simply compile and run the Rust file containing this code.
-  tokens:
-    prompt: 98
-    response: 58
-    total: 156
-  conversation:
-    previous_call:
-      id: c13c1e67-2de3-48de-a34c-a32079c03316
-      snippet: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
+  follow_ups:
+  - previous_call_id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a74
+    next_call_id: c13c1e67-2de3-48de-a34c-a32079c03316
+  - previous_call_id: c13c1e67-2de3-48de-a34c-a32079c03316
+    next_call_id: 0e6bcadf-2b41-43d9-b4cf-81008d4f4771
+  - previous_call_id: c13c1e67-2de3-48de-a34c-a32079c03316
+    next_call_id: 63b5c02e-b864-4efe-a286-fbef48b152ef

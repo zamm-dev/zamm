@@ -1,13 +1,13 @@
 use crate::commands::errors::ZammResult;
 use crate::models::llm_calls::{
-    ChatMessage, EntityId, LlmCall, LlmCallLeftJoinResult, NewLlmCallFollowUp,
-    NewLlmCallRow, NewLlmCallVariant,
+    LlmCallFollowUp, LlmCallRow, LlmCallVariant, NewLlmCallFollowUp, NewLlmCallRow,
+    NewLlmCallVariant,
 };
 use crate::models::{ApiKey, NewApiKey};
 use crate::schema::{api_keys, llm_call_follow_ups, llm_call_variants, llm_calls};
-use crate::views::{llm_call_named_follow_ups, llm_call_named_variants};
 use crate::ZammDatabase;
 use anyhow::anyhow;
+use diesel::connection::SimpleConnection;
 use diesel::prelude::*;
 use path_absolutize::Absolutize;
 use std::fs;
@@ -15,9 +15,28 @@ use std::path::PathBuf;
 use tokio::sync::MutexGuard;
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
+pub struct LlmCallData {
+    instances: Vec<LlmCallRow>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    follow_ups: Vec<LlmCallFollowUp>,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    variants: Vec<LlmCallVariant>,
+}
+
+impl LlmCallData {
+    pub fn is_default(&self) -> bool {
+        self.instances.is_empty()
+            && self.follow_ups.is_empty()
+            && self.variants.is_empty()
+    }
+}
+
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct DatabaseContents {
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
     api_keys: Vec<ApiKey>,
-    llm_calls: Vec<LlmCall>,
+    #[serde(skip_serializing_if = "LlmCallData::is_default", default)]
+    llm_calls: LlmCallData,
 }
 
 impl DatabaseContents {
@@ -26,20 +45,26 @@ impl DatabaseContents {
     }
 
     pub fn insertable_llm_calls(&self) -> Vec<NewLlmCallRow> {
-        self.llm_calls.iter().map(|k| k.as_sql_row()).collect()
+        self.llm_calls
+            .instances
+            .iter()
+            .map(|k| k.as_insertable())
+            .collect()
     }
 
     pub fn insertable_call_follow_ups(&self) -> Vec<NewLlmCallFollowUp> {
         self.llm_calls
+            .follow_ups
             .iter()
-            .filter_map(|k| k.as_follow_up_row())
+            .map(|k| k.as_insertable())
             .collect()
     }
 
     pub fn insertable_call_variants(&self) -> Vec<NewLlmCallVariant> {
         self.llm_calls
+            .variants
             .iter()
-            .flat_map(|k| k.as_variant_rows())
+            .map(|k| k.as_insertable())
             .collect()
     }
 }
@@ -51,52 +76,17 @@ pub async fn get_database_contents(
         &mut zamm_db.0.lock().await;
     let db = db_mutex.as_mut().ok_or(anyhow!("Error getting db"))?;
     let api_keys = api_keys::table.load::<ApiKey>(db)?;
-    let llm_call_left_joins = llm_calls::table
-        .left_join(
-            llm_call_named_follow_ups::dsl::llm_call_named_follow_ups
-                .on(llm_calls::id.eq(llm_call_named_follow_ups::next_call_id)),
-        )
-        .left_join(
-            llm_call_named_variants::dsl::llm_call_named_variants
-                .on(llm_calls::id.eq(llm_call_named_variants::variant_id)),
-        )
-        .select((
-            llm_calls::all_columns,
-            llm_call_named_follow_ups::previous_call_id.nullable(),
-            llm_call_named_follow_ups::previous_call_completion.nullable(),
-            llm_call_named_variants::canonical_id.nullable(),
-            llm_call_named_variants::canonical_completion.nullable(),
-        ))
-        .get_results::<LlmCallLeftJoinResult>(db)?;
-    let llm_calls_result: ZammResult<Vec<LlmCall>> = llm_call_left_joins
-        .into_iter()
-        .map(|lf| {
-            let llm_call_id = lf.0.id.clone();
-            let next_calls_result: Vec<(EntityId, ChatMessage)> =
-                llm_call_named_follow_ups::table
-                    .select((
-                        llm_call_named_follow_ups::next_call_id,
-                        llm_call_named_follow_ups::next_call_completion,
-                    ))
-                    .filter(
-                        llm_call_named_follow_ups::previous_call_id.eq(&llm_call_id),
-                    )
-                    .load::<(EntityId, ChatMessage)>(db)?;
-            let canonical_id = lf.3.clone().unwrap_or(llm_call_id);
-            let variants_result: Vec<(EntityId, ChatMessage)> =
-                llm_call_named_variants::table
-                    .select((
-                        llm_call_named_variants::variant_id,
-                        llm_call_named_variants::variant_completion,
-                    ))
-                    .filter(llm_call_named_variants::canonical_id.eq(canonical_id))
-                    .load::<(EntityId, ChatMessage)>(db)?;
-            Ok((lf, next_calls_result, variants_result).into())
-        })
-        .collect();
+    let llm_calls_instances = llm_calls::table.load::<LlmCallRow>(db)?;
+    let follow_ups = llm_call_follow_ups::table.load::<LlmCallFollowUp>(db)?;
+    let variants = llm_call_variants::table.load::<LlmCallVariant>(db)?;
+
     Ok(DatabaseContents {
         api_keys,
-        llm_calls: llm_calls_result?,
+        llm_calls: LlmCallData {
+            instances: llm_calls_instances,
+            follow_ups,
+            variants,
+        },
     })
 }
 
@@ -140,6 +130,12 @@ pub async fn read_database_contents(
         Ok(())
     })?;
     Ok(())
+}
+
+pub fn load_sqlite_database(conn: &mut SqliteConnection, dump_path: &PathBuf) {
+    let dump = fs::read_to_string(dump_path).expect("Error reading dump file");
+    conn.batch_execute(&dump)
+        .expect("Error loading dump into database");
 }
 
 pub fn dump_sqlite_database(db_path: &PathBuf, dump_path: &PathBuf) {
