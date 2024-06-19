@@ -1,4 +1,3 @@
 api_keys:
 - service: OpenAI
   api_key: 0p3n41-4p1-k3y
-llm_calls: []
