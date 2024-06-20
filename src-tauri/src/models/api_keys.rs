@@ -14,7 +14,6 @@ pub struct ApiKey {
     pub api_key: String,
 }
 
-#[cfg(test)]
 impl ApiKey {
     pub fn as_insertable(&self) -> NewApiKey {
         NewApiKey {

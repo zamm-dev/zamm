@@ -26,8 +26,8 @@ use tokio::sync::Mutex;
 
 use cli::{Cli, Commands};
 use commands::{
-    chat, get_api_call, get_api_calls, get_api_keys, get_preferences, get_system_info,
-    play_sound, set_api_key, set_preferences,
+    chat, export_db, get_api_call, get_api_calls, get_api_keys, get_preferences,
+    get_system_info, import_db, play_sound, set_api_key, set_preferences,
 };
 use upgrades::handle_app_upgrades;
 
@@ -51,6 +51,8 @@ fn main() {
                     chat,
                     get_api_call,
                     get_api_calls,
+                    import_db,
+                    export_db,
                 ],
                 "../src-svelte/src/lib/bindings.ts",
             )
@@ -89,6 +91,8 @@ fn main() {
                     chat,
                     get_api_call,
                     get_api_calls,
+                    import_db,
+                    export_db,
                 ])
                 .run(tauri::generate_context!())
                 .expect("error while running tauri application");

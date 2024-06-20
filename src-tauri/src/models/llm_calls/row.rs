@@ -23,7 +23,6 @@ pub struct LlmCallRow {
     pub completion: ChatMessage,
 }
 
-#[cfg(test)]
 impl LlmCallRow {
     pub fn as_insertable(&self) -> NewLlmCallRow {
         NewLlmCallRow {

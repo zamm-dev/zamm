@@ -92,11 +92,13 @@ pub async fn get_database_contents(
 
 pub async fn write_database_contents(
     zamm_db: &ZammDatabase,
-    file_path: &PathBuf,
+    file_path: &str,
 ) -> ZammResult<()> {
+    let file_path_buf = PathBuf::from(file_path);
+    let file_path_abs = file_path_buf.absolutize()?;
     let db_contents = get_database_contents(zamm_db).await?;
     let serialized = serde_yaml::to_string(&db_contents)?;
-    fs::write(file_path, serialized)?;
+    fs::write(file_path_abs, serialized)?;
     Ok(())
 }
 

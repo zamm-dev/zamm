@@ -4,9 +4,8 @@ use specta::specta;
 use specta::Type;
 
 use std::include_bytes;
-use std::thread;
-
 use std::io::Cursor;
+use std::thread;
 
 use crate::commands::errors::ZammResult;
 
