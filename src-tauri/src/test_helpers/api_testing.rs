@@ -1,10 +1,10 @@
 use crate::commands::errors::ZammResult;
+use crate::models::database_contents::{
+    read_database_contents, write_database_contents,
+};
 use crate::sample_call::{Disk, SampleCall};
 use crate::test_helpers::database::{setup_database, setup_zamm_db};
-use crate::test_helpers::database_contents::{
-    dump_sqlite_database, load_sqlite_database, read_database_contents,
-    write_database_contents,
-};
+use crate::test_helpers::sqlite::{dump_sqlite_database, load_sqlite_database};
 use crate::test_helpers::temp_files::get_temp_test_dir;
 use crate::ZammDatabase;
 use path_absolutize::Absolutize;
