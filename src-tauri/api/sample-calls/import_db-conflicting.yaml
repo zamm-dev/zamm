@@ -1,0 +1,15 @@
+request:
+  - import_db
+  - >
+    {
+      "path": "conflicting-db.yaml"
+    }
+response:
+  message: "null"
+sideEffects:
+  disk:
+    startStateDirectory: db-import-export/conflicting
+    endStateDirectory: db-import-export/conflicting
+  database:
+    startStateDump: conversation-edited
+    endStateDump: conversation-edited-2

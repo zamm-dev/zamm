@@ -127,18 +127,49 @@ pub async fn read_database_contents(
         anyhow!("Error reading file at {}: {}", &file_path_abs.display(), e)
     })?;
     let db_contents: DatabaseContents = serde_yaml::from_str(&serialized)?;
+
+    let new_llm_calls: Vec<NewLlmCallRow> = db_contents
+        .insertable_llm_calls()
+        .into_iter()
+        .filter(|call| {
+            llm_calls::table
+                .filter(llm_calls::id.eq(&call.id))
+                .count()
+                .get_result::<i64>(db)
+                .unwrap_or(0)
+                == 0
+        })
+        .collect();
+    let new_llm_call_ids = new_llm_calls.iter().map(|call| call.id).collect::<Vec<_>>();
+    let new_llm_call_follow_ups: Vec<NewLlmCallFollowUp> = db_contents
+        .insertable_call_follow_ups()
+        .into_iter()
+        .filter(|follow_up| {
+            new_llm_call_ids.contains(&follow_up.previous_call_id)
+                || new_llm_call_ids.contains(&follow_up.next_call_id)
+        })
+        .collect();
+    let new_llm_call_variants: Vec<NewLlmCallVariant> = db_contents
+        .insertable_call_variants()
+        .into_iter()
+        .filter(|variant| {
+            new_llm_call_ids.contains(&variant.canonical_id)
+                || new_llm_call_ids.contains(&variant.variant_id)
+        })
+        .collect();
+
     db.transaction::<(), diesel::result::Error, _>(|conn| {
         diesel::insert_into(api_keys::table)
             .values(&db_contents.insertable_api_keys())
             .execute(conn)?;
         diesel::insert_into(llm_calls::table)
-            .values(&db_contents.insertable_llm_calls())
+            .values(&new_llm_calls)
             .execute(conn)?;
         diesel::insert_into(llm_call_follow_ups::table)
-            .values(&db_contents.insertable_call_follow_ups())
+            .values(&new_llm_call_follow_ups)
             .execute(conn)?;
         diesel::insert_into(llm_call_variants::table)
-            .values(&db_contents.insertable_call_variants())
+            .values(&new_llm_call_variants)
             .execute(conn)?;
         Ok(())
     })?;

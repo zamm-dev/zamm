@@ -92,4 +92,13 @@ mod tests {
         )
         .await;
     }
+
+    #[tokio::test]
+    async fn test_import_db_conflicting() {
+        check_get_api_call_sample(
+            function_name!(),
+            "./api/sample-calls/import_db-conflicting.yaml",
+        )
+        .await;
+    }
 }
