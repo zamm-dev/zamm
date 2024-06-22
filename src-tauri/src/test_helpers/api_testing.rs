@@ -13,6 +13,7 @@ use rvcr::{VCRMiddleware, VCRMode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::ffi::OsString;
+use std::fs::ReadDir;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 use tokio::sync::Mutex;
@@ -137,19 +138,29 @@ fn compare_files(
     assert_eq!(expected_file_str, replaced_actual_str);
 }
 
+fn debuggable_read_dir(dir: impl AsRef<Path>) -> ReadDir {
+    fs::read_dir(&dir).unwrap_or_else(|e| {
+        panic!(
+            "TEST CODE unable to read directory at {:?}: {}",
+            dir.as_ref().display(),
+            e
+        )
+    })
+}
+
 fn compare_dir_all(
     expected_output_dir: impl AsRef<Path>,
     actual_output_dir: impl AsRef<Path>,
     output_replacements: &HashMap<String, String>,
 ) {
     let mut expected_outputs = vec![];
-    for entry in fs::read_dir(expected_output_dir).unwrap() {
+    for entry in debuggable_read_dir(expected_output_dir) {
         let entry = entry.unwrap();
         expected_outputs.push(entry);
     }
 
     let mut actual_outputs = vec![];
-    for entry in fs::read_dir(actual_output_dir).unwrap() {
+    for entry in debuggable_read_dir(actual_output_dir) {
         let entry = entry.unwrap();
         actual_outputs.push(entry);
     }

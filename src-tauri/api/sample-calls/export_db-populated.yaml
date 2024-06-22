@@ -1,0 +1,14 @@
+request:
+  - export_db
+  - >
+    {
+      "path": "test-folder/exported-db.yaml"
+    }
+response:
+  message: "null"
+sideEffects:
+  disk:
+    endStateDirectory: db-import-export/conversation-edited-2
+  database:
+    startStateDump: conversation-edited-2
+    endStateDump: conversation-edited-2

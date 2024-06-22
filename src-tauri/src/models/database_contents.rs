@@ -98,7 +98,18 @@ pub async fn write_database_contents(
     let file_path_abs = file_path_buf.absolutize()?;
     let db_contents = get_database_contents(zamm_db).await?;
     let serialized = serde_yaml::to_string(&db_contents)?;
-    fs::write(file_path_abs, serialized)?;
+    if let Some(parent) = file_path_abs.parent() {
+        fs::create_dir_all(parent).map_err(|e| {
+            anyhow!(
+                "Error creating parent directory {}: {}",
+                parent.display(),
+                e
+            )
+        })?;
+    }
+    fs::write(&file_path_abs, serialized).map_err(|e| {
+        anyhow!("Error exporting to {}: {}", &file_path_abs.display(), e)
+    })?;
     Ok(())
 }
 
