@@ -192,6 +192,11 @@
                 logo="mingcute.svg"
                 url="https://www.mingcute.com/"
               />
+              <Creditor
+                name="Streamline"
+                logo="streamline.svg"
+                url="https://www.streamlinehq.com/"
+              />
             </Grid>
           </SubInfoBox>
         </div>

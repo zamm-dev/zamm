@@ -87,6 +87,10 @@ const components: ComponentTestConfig[] = [
     variants: ["small", "large"],
   },
   {
+    path: ["reusable", "warning"],
+    variants: ["short", "long"],
+  },
+  {
     path: ["layout", "background"],
     variants: [
       {
