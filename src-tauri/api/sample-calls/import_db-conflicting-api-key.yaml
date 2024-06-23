@@ -5,7 +5,17 @@ request:
       "path": "different.zamm.yaml"
     }
 response:
-  message: "null"
+  message: >
+    {
+      "imported": {
+        "num_api_keys": 0,
+        "num_llm_calls": 0
+      },
+      "ignored": {
+        "num_api_keys": 1,
+        "num_llm_calls": 0
+      }
+    }
 sideEffects:
   disk:
     startStateDirectory: db-import-export/different-api-key

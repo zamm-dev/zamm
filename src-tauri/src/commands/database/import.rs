@@ -1,3 +1,4 @@
+use crate::commands::database::metadata::DatabaseCounts;
 use crate::commands::errors::ZammResult;
 use crate::models::llm_calls::{NewLlmCallFollowUp, NewLlmCallRow, NewLlmCallVariant};
 use crate::models::{DatabaseContents, NewApiKey};
@@ -12,10 +13,16 @@ use std::path::PathBuf;
 use tauri::State;
 use tokio::sync::MutexGuard;
 
+#[derive(Debug, Default, serde::Serialize, serde::Deserialize, specta::Type)]
+pub struct DatabaseImportCounts {
+    pub imported: DatabaseCounts,
+    pub ignored: DatabaseCounts,
+}
+
 pub async fn read_database_contents(
     zamm_db: &ZammDatabase,
     file_path: &str,
-) -> ZammResult<()> {
+) -> ZammResult<DatabaseImportCounts> {
     let db_mutex: &mut MutexGuard<'_, Option<SqliteConnection>> =
         &mut zamm_db.0.lock().await;
     let db = db_mutex.as_mut().ok_or(anyhow!("Error getting db"))?;
@@ -84,10 +91,23 @@ pub async fn read_database_contents(
             .execute(conn)?;
         Ok(())
     })?;
-    Ok(())
+    Ok(DatabaseImportCounts {
+        imported: DatabaseCounts {
+            num_api_keys: new_api_keys.len() as i32,
+            num_llm_calls: new_llm_calls.len() as i32,
+        },
+        ignored: DatabaseCounts {
+            num_api_keys: (db_contents.api_keys.len() - new_api_keys.len()) as i32,
+            num_llm_calls: (db_contents.llm_calls.instances.len() - new_llm_calls.len())
+                as i32,
+        },
+    })
 }
 
-async fn import_db_helper(zamm_db: &ZammDatabase, path: &str) -> ZammResult<()> {
+async fn import_db_helper(
+    zamm_db: &ZammDatabase,
+    path: &str,
+) -> ZammResult<DatabaseImportCounts> {
     read_database_contents(zamm_db, path).await
 }
 
@@ -96,7 +116,7 @@ async fn import_db_helper(zamm_db: &ZammDatabase, path: &str) -> ZammResult<()> 
 pub async fn import_db(
     database: State<'_, ZammDatabase>,
     path: &str,
-) -> ZammResult<()> {
+) -> ZammResult<DatabaseImportCounts> {
     import_db_helper(&database, path).await
 }
 
@@ -120,7 +140,9 @@ mod tests {
         test_fn_name: &'static str,
     }
 
-    impl SampleCallTestCase<ImportDbRequest, ZammResult<()>> for ImportDbTestCase {
+    impl SampleCallTestCase<ImportDbRequest, ZammResult<DatabaseImportCounts>>
+        for ImportDbTestCase
+    {
         const EXPECTED_API_CALL: &'static str = "import_db";
         const CALL_HAS_ARGS: bool = true;
 
@@ -132,7 +154,7 @@ mod tests {
             &mut self,
             args: &Option<ImportDbRequest>,
             side_effects: &SideEffectsHelpers,
-        ) -> ZammResult<()> {
+        ) -> ZammResult<DatabaseImportCounts> {
             import_db_helper(
                 side_effects.db.as_ref().unwrap(),
                 &args.as_ref().unwrap().path,
@@ -143,7 +165,7 @@ mod tests {
         fn serialize_result(
             &self,
             sample: &SampleCall,
-            result: &ZammResult<()>,
+            result: &ZammResult<DatabaseImportCounts>,
         ) -> String {
             ZammResultReturn::serialize_result(self, sample, result)
         }
@@ -152,13 +174,13 @@ mod tests {
             &self,
             sample: &SampleCall,
             args: Option<&ImportDbRequest>,
-            result: &ZammResult<()>,
+            result: &ZammResult<DatabaseImportCounts>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl ZammResultReturn<ImportDbRequest, ()> for ImportDbTestCase {}
+    impl ZammResultReturn<ImportDbRequest, DatabaseImportCounts> for ImportDbTestCase {}
 
     async fn check_get_api_call_sample(test_fn_name: &'static str, file_prefix: &str) {
         let mut test_case = ImportDbTestCase { test_fn_name };
