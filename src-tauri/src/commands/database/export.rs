@@ -1,3 +1,4 @@
+use crate::commands::database::metadata::DatabaseCounts;
 use crate::commands::errors::ZammResult;
 use crate::models::llm_calls::{LlmCallFollowUp, LlmCallRow, LlmCallVariant};
 use crate::models::{ApiKey, DatabaseContents, LlmCallData};
@@ -45,7 +46,7 @@ pub async fn write_database_contents(
     zamm_db: &ZammDatabase,
     file_path: &str,
     save_version: bool,
-) -> ZammResult<()> {
+) -> ZammResult<DatabaseCounts> {
     let file_path_buf = PathBuf::from(file_path);
     let file_path_abs = file_path_buf.absolutize()?;
     let db_contents = get_database_contents(zamm_db, save_version).await?;
@@ -62,10 +63,16 @@ pub async fn write_database_contents(
     fs::write(&file_path_abs, serialized).map_err(|e| {
         anyhow!("Error exporting to {}: {}", &file_path_abs.display(), e)
     })?;
-    Ok(())
+    Ok(DatabaseCounts {
+        num_api_keys: db_contents.api_keys.len() as i32,
+        num_llm_calls: db_contents.llm_calls.instances.len() as i32,
+    })
 }
 
-async fn export_db_helper(zamm_db: &ZammDatabase, path: &str) -> ZammResult<()> {
+async fn export_db_helper(
+    zamm_db: &ZammDatabase,
+    path: &str,
+) -> ZammResult<DatabaseCounts> {
     write_database_contents(zamm_db, path, true).await
 }
 
@@ -74,7 +81,7 @@ async fn export_db_helper(zamm_db: &ZammDatabase, path: &str) -> ZammResult<()> 
 pub async fn export_db(
     database: State<'_, ZammDatabase>,
     path: String,
-) -> ZammResult<()> {
+) -> ZammResult<DatabaseCounts> {
     export_db_helper(&database, &path).await
 }
 
@@ -98,7 +105,9 @@ mod tests {
         test_fn_name: &'static str,
     }
 
-    impl SampleCallTestCase<ExportDbRequest, ZammResult<()>> for ExportDbTestCase {
+    impl SampleCallTestCase<ExportDbRequest, ZammResult<DatabaseCounts>>
+        for ExportDbTestCase
+    {
         const EXPECTED_API_CALL: &'static str = "export_db";
         const CALL_HAS_ARGS: bool = true;
 
@@ -110,7 +119,7 @@ mod tests {
             &mut self,
             args: &Option<ExportDbRequest>,
             side_effects: &SideEffectsHelpers,
-        ) -> ZammResult<()> {
+        ) -> ZammResult<DatabaseCounts> {
             export_db_helper(
                 side_effects.db.as_ref().unwrap(),
                 &args.as_ref().unwrap().path,
@@ -121,7 +130,7 @@ mod tests {
         fn serialize_result(
             &self,
             sample: &SampleCall,
-            result: &ZammResult<()>,
+            result: &ZammResult<DatabaseCounts>,
         ) -> String {
             ZammResultReturn::serialize_result(self, sample, result)
         }
@@ -130,13 +139,13 @@ mod tests {
             &self,
             sample: &SampleCall,
             args: Option<&ExportDbRequest>,
-            result: &ZammResult<()>,
+            result: &ZammResult<DatabaseCounts>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl ZammResultReturn<ExportDbRequest, ()> for ExportDbTestCase {}
+    impl ZammResultReturn<ExportDbRequest, DatabaseCounts> for ExportDbTestCase {}
 
     async fn check_get_api_call_sample(test_fn_name: &'static str, file_prefix: &str) {
         let mut test_case = ExportDbTestCase { test_fn_name };
