@@ -1,4 +1,4 @@
-mod database;
+pub mod database;
 pub mod errors;
 mod keys;
 mod llms;
