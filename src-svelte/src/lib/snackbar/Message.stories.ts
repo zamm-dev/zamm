@@ -3,7 +3,7 @@ import type { StoryObj } from "@storybook/svelte";
 
 export default {
   component: MessageComponent,
-  title: "Layout/Snackbar",
+  title: "Layout/Snackbar/Message",
   argTypes: {},
 };
 
@@ -12,14 +12,29 @@ const Template = ({ ...args }) => ({
   props: args,
 });
 
-export const Message: StoryObj = Template.bind({}) as any;
-Message.args = {
+export const Error: StoryObj = Template.bind({}) as any;
+Error.args = {
   message: "Something is wrong.",
+  messageType: "error",
   dismiss: () => {
     console.log("Dismiss button clicked.");
   },
 };
-Message.parameters = {
+Error.parameters = {
+  viewport: {
+    defaultViewport: "mobile1",
+  },
+};
+
+export const Info: StoryObj = Template.bind({}) as any;
+Info.args = {
+  message: "Something is known.",
+  messageType: "info",
+  dismiss: () => {
+    console.log("Dismiss button clicked.");
+  },
+};
+Info.parameters = {
   viewport: {
     defaultViewport: "mobile1",
   },

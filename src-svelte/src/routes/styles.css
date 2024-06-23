@@ -51,7 +51,10 @@
   --color-text: rgba(0, 0, 0, 1);
   --color-header: rgba(255, 0, 0, 1);
   --color-faded: rgba(0, 0, 0, 0.5);
-  --color-error: #FF0000;
+  --color-error-background: hsla(0, 100%, 50%, 1);
+  --color-error-shadow: hsla(0, 100%, 40%, 1);
+  --color-info-background: hsla(200, 100%, 50%, 1);
+  --color-info-shadow: hsla(200, 100%, 40%, 1);
   --color-caution: #FF8C00;
   --color-caution-background: hsla(40, 100%, 80%, 1);
   --color-hover: hsla(60, 100%, 50%, 0.2);
