@@ -59,6 +59,10 @@ const components: ComponentTestConfig[] = [
     variants: ["regular", "disabled"],
   },
   {
+    path: ["reusable", "button", "group"],
+    variants: ["wide", "narrow"],
+  },
+  {
     path: ["reusable", "infobox"],
     variants: [
       "regular",
@@ -204,7 +208,7 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["screens", "llm-call", "individual", "actions"],
-    variants: ["narrow", "wide"],
+    variants: ["wide"],
     screenshotEntireBody: true,
   },
   {
