@@ -67,7 +67,7 @@ async fn dump_sql_to_yaml(
     let mut db = setup_database(None);
     load_sqlite_database(&mut db, expected_sql_dump_abs);
     let zamm_db = ZammDatabase(Mutex::new(Some(db)));
-    write_database_contents(&zamm_db, expected_yaml_dump_abs.to_str().unwrap())
+    write_database_contents(&zamm_db, expected_yaml_dump_abs.to_str().unwrap(), false)
         .await
         .unwrap();
 }
@@ -480,9 +480,13 @@ where
             let db_info = test_db_info.unwrap();
             let actual_db_yaml_dump = db_info.temp_db_dir.join("dump.yaml");
             let actual_db_sql_dump = db_info.temp_db_dir.join("dump.sql");
-            write_database_contents(test_db, actual_db_yaml_dump.to_str().unwrap())
-                .await
-                .unwrap();
+            write_database_contents(
+                test_db,
+                actual_db_yaml_dump.to_str().unwrap(),
+                false,
+            )
+            .await
+            .unwrap();
             dump_sqlite_database(&db_info.temp_db_file, &actual_db_sql_dump);
 
             setup_gold_db_files(

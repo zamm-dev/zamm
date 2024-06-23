@@ -7,7 +7,7 @@ use crate::models::database_contents::write_database_contents;
 use crate::ZammDatabase;
 
 async fn export_db_helper(zamm_db: &ZammDatabase, path: &str) -> ZammResult<()> {
-    write_database_contents(zamm_db, path).await
+    write_database_contents(zamm_db, path, true).await
 }
 
 #[tauri::command(async)]
@@ -89,6 +89,15 @@ mod tests {
         check_get_api_call_sample(
             function_name!(),
             "./api/sample-calls/export_db-populated.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_export_db_api_key() {
+        check_get_api_call_sample(
+            function_name!(),
+            "./api/sample-calls/export_db-api-key.yaml",
         )
         .await;
     }

@@ -33,6 +33,8 @@ impl LlmCallData {
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize)]
 pub struct DatabaseContents {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    zamm_version: Option<String>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     api_keys: Vec<ApiKey>,
     #[serde(skip_serializing_if = "LlmCallData::is_default", default)]
@@ -71,16 +73,24 @@ impl DatabaseContents {
 
 pub async fn get_database_contents(
     zamm_db: &ZammDatabase,
+    save_version: bool,
 ) -> ZammResult<DatabaseContents> {
     let db_mutex: &mut MutexGuard<'_, Option<SqliteConnection>> =
         &mut zamm_db.0.lock().await;
     let db = db_mutex.as_mut().ok_or(anyhow!("Error getting db"))?;
+
+    let zamm_version = if save_version {
+        Some(env!("CARGO_PKG_VERSION").to_string())
+    } else {
+        None
+    };
     let api_keys = api_keys::table.load::<ApiKey>(db)?;
     let llm_calls_instances = llm_calls::table.load::<LlmCallRow>(db)?;
     let follow_ups = llm_call_follow_ups::table.load::<LlmCallFollowUp>(db)?;
     let variants = llm_call_variants::table.load::<LlmCallVariant>(db)?;
 
     Ok(DatabaseContents {
+        zamm_version,
         api_keys,
         llm_calls: LlmCallData {
             instances: llm_calls_instances,
@@ -93,10 +103,11 @@ pub async fn get_database_contents(
 pub async fn write_database_contents(
     zamm_db: &ZammDatabase,
     file_path: &str,
+    save_version: bool,
 ) -> ZammResult<()> {
     let file_path_buf = PathBuf::from(file_path);
     let file_path_abs = file_path_buf.absolutize()?;
-    let db_contents = get_database_contents(zamm_db).await?;
+    let db_contents = get_database_contents(zamm_db, save_version).await?;
     let serialized = serde_yaml::to_string(&db_contents)?;
     if let Some(parent) = file_path_abs.parent() {
         fs::create_dir_all(parent).map_err(|e| {

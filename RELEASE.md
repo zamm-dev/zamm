@@ -9,9 +9,12 @@
 7. Download and install the latest version from the release webpage to ensure that everything works as expected
 8. Submit release to HN, and update blog post with link to HN post
 9. Bump version number in:
-   - `src-tauri/Cargo.toml`
-   - `src-tauri/Cargo.lock`
-   - `src-tauri/tauri.conf.json`
-   - `src-tauri/api/sample-disk-writes/preferences/version-init/preferences.toml`
-   - `src-tauri/api/sample-disk-writes/preferences/version-update/preferences.toml`
+   - [`src-tauri/Cargo.toml`](/src-tauri/Cargo.toml)
+   - [`src-tauri/Cargo.lock`](/src-tauri/Cargo.lock)
+   - [`src-tauri/tauri.conf.json`](/src-tauri/tauri.conf.json)
+   - [`src-tauri/api/sample-disk-writes/preferences/version-init/preferences.toml`](/src-tauri/api/sample-disk-writes/preferences/version-init/preferences.toml)
+   - [`src-tauri/api/sample-disk-writes/preferences/version-update/preferences.toml`](/src-tauri/api/sample-disk-writes/preferences/version-update/preferences.toml)
+   - [`src-tauri/api/sample-disk-writes/db-import-export/conflicting-llm-call/conflicting-db.yaml`](/src-tauri/api/sample-disk-writes/db-import-export/conflicting-llm-call/conflicting-db.yaml)
+   - [`src-tauri/api/sample-disk-writes/db-import-export/conversation-edited-2/test-folder/exported-db.yaml`](/src-tauri/api/sample-disk-writes/db-import-export/conversation-edited-2/test-folder/exported-db.yaml)
+   - [`src-tauri/api/sample-disk-writes/db-import-export/different-api-key/different.zamm.yaml`](/src-tauri/api/sample-disk-writes/db-import-export/different-api-key/different.zamm.yaml)
 10. Update the end-to-end screenshot
