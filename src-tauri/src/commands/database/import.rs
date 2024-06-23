@@ -94,10 +94,28 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_import_db_conflicting() {
+    async fn test_import_db_api_key() {
         check_get_api_call_sample(
             function_name!(),
-            "./api/sample-calls/import_db-conflicting.yaml",
+            "./api/sample-calls/import_db-api-key.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_import_db_conflicting_llm_call() {
+        check_get_api_call_sample(
+            function_name!(),
+            "./api/sample-calls/import_db-conflicting-llm-call.yaml",
+        )
+        .await;
+    }
+
+    #[tokio::test]
+    async fn test_import_db_conflicting_api_key() {
+        check_get_api_call_sample(
+            function_name!(),
+            "./api/sample-calls/import_db-conflicting-api-key.yaml",
         )
         .await;
     }

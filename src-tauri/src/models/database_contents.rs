@@ -128,6 +128,18 @@ pub async fn read_database_contents(
     })?;
     let db_contents: DatabaseContents = serde_yaml::from_str(&serialized)?;
 
+    let new_api_keys: Vec<NewApiKey> = db_contents
+        .insertable_api_keys()
+        .into_iter()
+        .filter(|key| {
+            api_keys::table
+                .filter(api_keys::service.eq(&key.service))
+                .count()
+                .get_result::<i64>(db)
+                .unwrap_or(0)
+                == 0
+        })
+        .collect();
     let new_llm_calls: Vec<NewLlmCallRow> = db_contents
         .insertable_llm_calls()
         .into_iter()
@@ -160,7 +172,7 @@ pub async fn read_database_contents(
 
     db.transaction::<(), diesel::result::Error, _>(|conn| {
         diesel::insert_into(api_keys::table)
-            .values(&db_contents.insertable_api_keys())
+            .values(&new_api_keys)
             .execute(conn)?;
         diesel::insert_into(llm_calls::table)
             .values(&new_llm_calls)

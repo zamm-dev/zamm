@@ -1,0 +1,15 @@
+request:
+  - import_db
+  - >
+    {
+      "path": "different.zamm.yaml"
+    }
+response:
+  message: "null"
+sideEffects:
+  disk:
+    startStateDirectory: db-import-export/different-api-key
+    endStateDirectory: db-import-export/different-api-key
+  database:
+    startStateDump: openai-api-key
+    endStateDump: openai-api-key
