@@ -54,11 +54,11 @@ export function getApiCalls(offset: number) {
 }
 
 export function importDb(path: string) {
-  return invoke()<null>("import_db", { path });
+  return invoke()<DatabaseImportCounts>("import_db", { path });
 }
 
 export function exportDb(path: string) {
-  return invoke()<null>("export_db", { path });
+  return invoke()<DatabaseCounts>("export_db", { path });
 }
 
 export type TokenMetadata = {
@@ -79,6 +79,7 @@ export type VariantMetadata = {
 };
 export type Sound = "Switch" | "Whoosh";
 export type Prompt = { type: "Chat" } & ChatPrompt;
+export type DatabaseCounts = { num_api_keys: number; num_llm_calls: number };
 export type Service = "OpenAI";
 export type Preferences = {
   version?: string | null;
@@ -119,6 +120,10 @@ export type ChatArgs = {
   canonical_id?: string | null;
 };
 export type LlmCallReference = { id: EntityId; snippet: string };
+export type DatabaseImportCounts = {
+  imported: DatabaseCounts;
+  ignored: DatabaseCounts;
+};
 export type LlmCall = {
   id: EntityId;
   timestamp: string;
