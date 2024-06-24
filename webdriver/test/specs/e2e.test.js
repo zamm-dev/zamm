@@ -100,6 +100,8 @@ describe("App", function () {
     await browser.pause(1000); // for data to be imported
     await findAndClick('a[title="API Calls"]');
     await findAndClick('a[title="Dashboard"]');
+    // click twice to reset the saved navigation to the "New API Call" page
+    await findAndClick('a[title="API Calls"]');
     await findAndClick('a[title="API Calls"]');
     await browser.pause(500); // for API calls to load
     expect(
