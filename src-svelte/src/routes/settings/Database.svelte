@@ -28,12 +28,14 @@
   }
 
   async function importData() {
-    const filePath = await open({
-      title: "Import ZAMM data",
-      directory: false,
-      multiple: false,
-      filters: [ZAMM_DB_FILTER, { name: "All Files", extensions: ["*"] }],
-    });
+    const filePath =
+      window.WEBDRIVER_FILE_PATH ??
+      (await open({
+        title: "Import ZAMM data",
+        directory: false,
+        multiple: false,
+        filters: [ZAMM_DB_FILTER, { name: "All Files", extensions: ["*"] }],
+      }));
     if (filePath === null) {
       return;
     }
