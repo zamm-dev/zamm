@@ -7,8 +7,7 @@
 </script>
 
 <div class={"snackbar " + messageType} role="alertdialog">
-  {message}
-  <button on:click={dismiss} title="Dismiss">
+  {message}<button on:click={dismiss} title="Dismiss">
     <IconClose />
   </button>
 </div>
