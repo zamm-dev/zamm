@@ -562,3 +562,78 @@ where
         check_zamm_result(sample, result)
     }
 }
+
+#[macro_export]
+macro_rules! impl_result_test_case {
+    ($test_case:ident, $api_call_name:ident, $has_args:ident, $req_type:ident, $resp_type:ty) => {
+        struct $test_case {
+            test_fn_name: &'static str,
+        }
+
+        impl $crate::test_helpers::SampleCallTestCase<$req_type, ZammResult<$resp_type>>
+            for $test_case
+        {
+            const EXPECTED_API_CALL: &'static str = stringify!($api_call_name);
+            const CALL_HAS_ARGS: bool = $has_args;
+
+            fn temp_test_subdirectory(&self) -> String {
+                $crate::test_helpers::api_testing::standard_test_subdir(
+                    Self::EXPECTED_API_CALL,
+                    self.test_fn_name,
+                )
+            }
+
+            async fn make_request(
+                &mut self,
+                args: &$req_type,
+                side_effects: &$crate::test_helpers::SideEffectsHelpers,
+            ) -> ZammResult<$resp_type> {
+                make_request_helper(args, side_effects).await
+            }
+
+            fn serialize_result(
+                &self,
+                sample: &$crate::sample_call::SampleCall,
+                result: &ZammResult<$resp_type>,
+            ) -> String {
+                $crate::test_helpers::ZammResultReturn::serialize_result(
+                    self, sample, result,
+                )
+            }
+
+            async fn check_result(
+                &self,
+                sample: &$crate::sample_call::SampleCall,
+                args: &$req_type,
+                result: &ZammResult<$resp_type>,
+            ) {
+                $crate::test_helpers::ZammResultReturn::check_result(
+                    self, sample, args, result,
+                )
+                .await
+            }
+        }
+
+        impl $crate::test_helpers::ZammResultReturn<$req_type, $resp_type>
+            for $test_case
+        {
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! check_sample {
+    ($test_case:ident, $test_name:ident, $sample_call_file:expr) => {
+        #[tokio::test]
+        async fn $test_name() {
+            let mut test_case = $test_case {
+                test_fn_name: stdext::function_name!(),
+            };
+            $crate::test_helpers::SampleCallTestCase::check_sample_call(
+                &mut test_case,
+                $sample_call_file,
+            )
+            .await;
+        }
+    };
+}

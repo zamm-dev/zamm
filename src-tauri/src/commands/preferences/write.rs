@@ -72,111 +72,57 @@ pub fn set_preferences(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sample_call::SampleCall;
-    use crate::test_helpers::api_testing::standard_test_subdir;
-    use crate::test_helpers::{
-        SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
-    };
+    use crate::test_helpers::SideEffectsHelpers;
+    use crate::{check_sample, impl_result_test_case};
     use serde::{Deserialize, Serialize};
-    use stdext::function_name;
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct SetPreferencesRequest {
         preferences: Preferences,
     }
 
-    struct SetPreferencesTestCase {
-        test_fn_name: &'static str,
+    async fn make_request_helper(
+        args: &SetPreferencesRequest,
+        side_effects: &SideEffectsHelpers,
+    ) -> ZammResult<()> {
+        set_preferences_helper(&side_effects.disk, &args.preferences)
     }
 
-    impl SampleCallTestCase<SetPreferencesRequest, ZammResult<()>>
-        for SetPreferencesTestCase
-    {
-        const EXPECTED_API_CALL: &'static str = "set_preferences";
-        const CALL_HAS_ARGS: bool = true;
+    impl_result_test_case!(
+        SetPreferencesTestCase,
+        set_preferences,
+        true,
+        SetPreferencesRequest,
+        ()
+    );
 
-        fn temp_test_subdirectory(&self) -> String {
-            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
-        }
+    check_sample!(
+        SetPreferencesTestCase,
+        test_set_preferences_sound_off_without_file,
+        "./api/sample-calls/set_preferences-sound-off.yaml"
+    );
 
-        async fn make_request(
-            &mut self,
-            args: &SetPreferencesRequest,
-            side_effects: &SideEffectsHelpers,
-        ) -> ZammResult<()> {
-            set_preferences_helper(&side_effects.disk, &args.preferences)
-        }
+    check_sample!(
+        SetPreferencesTestCase,
+        test_set_preferences_sound_on_with_extra_settings,
+        "./api/sample-calls/set_preferences-sound-on.yaml"
+    );
 
-        fn serialize_result(
-            &self,
-            sample: &SampleCall,
-            result: &ZammResult<()>,
-        ) -> String {
-            ZammResultReturn::serialize_result(self, sample, result)
-        }
+    check_sample!(
+        SetPreferencesTestCase,
+        test_set_preferences_volume_partial,
+        "./api/sample-calls/set_preferences-volume-partial.yaml"
+    );
 
-        async fn check_result(
-            &self,
-            sample: &SampleCall,
-            args: &SetPreferencesRequest,
-            result: &ZammResult<()>,
-        ) {
-            ZammResultReturn::check_result(self, sample, args, result).await
-        }
-    }
+    check_sample!(
+        SetPreferencesTestCase,
+        test_set_preferences_transparency_on,
+        "./api/sample-calls/set_preferences-transparency-on.yaml"
+    );
 
-    impl ZammResultReturn<SetPreferencesRequest, ()> for SetPreferencesTestCase {}
-
-    async fn check_set_preferences_sample(
-        test_fn_name: &'static str,
-        file_prefix: &str,
-    ) {
-        let mut test_case = SetPreferencesTestCase { test_fn_name };
-        test_case.check_sample_call(file_prefix).await;
-    }
-
-    #[tokio::test]
-    async fn test_set_preferences_sound_off_without_file() {
-        check_set_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/set_preferences-sound-off.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_set_preferences_sound_on_with_extra_settings() {
-        check_set_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/set_preferences-sound-on.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_set_preferences_volume_partial() {
-        check_set_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/set_preferences-volume-partial.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_set_preferences_transparency_on() {
-        check_set_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/set_preferences-transparency-on.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_set_preferences_transparency_off() {
-        check_set_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/set_preferences-transparency-off.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        SetPreferencesTestCase,
+        test_set_preferences_transparency_off,
+        "./api/sample-calls/set_preferences-transparency-off.yaml"
+    );
 }

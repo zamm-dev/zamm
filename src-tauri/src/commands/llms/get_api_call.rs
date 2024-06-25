@@ -68,97 +68,50 @@ pub async fn get_api_call(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sample_call::SampleCall;
-    use crate::test_helpers::api_testing::standard_test_subdir;
-    use crate::test_helpers::{
-        SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
-    };
-    use serde::{Deserialize, Serialize};
-    use stdext::function_name;
+    use crate::test_helpers::SideEffectsHelpers;
+    use crate::{check_sample, impl_result_test_case};
 
-    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
     struct GetApiCallRequest {
         id: String,
     }
 
-    struct GetApiCallTestCase {
-        test_fn_name: &'static str,
+    async fn make_request_helper(
+        args: &GetApiCallRequest,
+        side_effects: &SideEffectsHelpers,
+    ) -> ZammResult<LlmCall> {
+        get_api_call_helper(side_effects.db.as_ref().unwrap(), &args.id).await
     }
 
-    impl SampleCallTestCase<GetApiCallRequest, ZammResult<LlmCall>> for GetApiCallTestCase {
-        const EXPECTED_API_CALL: &'static str = "get_api_call";
-        const CALL_HAS_ARGS: bool = true;
+    impl_result_test_case!(
+        GetApiCallTestCase,
+        get_api_call,
+        true,
+        GetApiCallRequest,
+        LlmCall
+    );
 
-        fn temp_test_subdirectory(&self) -> String {
-            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
-        }
+    check_sample!(
+        GetApiCallTestCase,
+        test_no_links,
+        "./api/sample-calls/get_api_call-no-links.yaml"
+    );
 
-        async fn make_request(
-            &mut self,
-            args: &GetApiCallRequest,
-            side_effects: &SideEffectsHelpers,
-        ) -> ZammResult<LlmCall> {
-            get_api_call_helper(side_effects.db.as_ref().unwrap(), &args.id).await
-        }
+    check_sample!(
+        GetApiCallTestCase,
+        test_start_conversation,
+        "./api/sample-calls/get_api_call-start-conversation.yaml"
+    );
 
-        fn serialize_result(
-            &self,
-            sample: &SampleCall,
-            result: &ZammResult<LlmCall>,
-        ) -> String {
-            ZammResultReturn::serialize_result(self, sample, result)
-        }
+    check_sample!(
+        GetApiCallTestCase,
+        test_continued_conversation,
+        "./api/sample-calls/get_api_call-continue-conversation.yaml"
+    );
 
-        async fn check_result(
-            &self,
-            sample: &SampleCall,
-            args: &GetApiCallRequest,
-            result: &ZammResult<LlmCall>,
-        ) {
-            ZammResultReturn::check_result(self, sample, args, result).await
-        }
-    }
-
-    impl ZammResultReturn<GetApiCallRequest, LlmCall> for GetApiCallTestCase {}
-
-    async fn check_get_api_call_sample(test_fn_name: &'static str, file_prefix: &str) {
-        let mut test_case = GetApiCallTestCase { test_fn_name };
-        test_case.check_sample_call(file_prefix).await;
-    }
-
-    #[tokio::test]
-    async fn test_get_api_call_no_links() {
-        check_get_api_call_sample(
-            function_name!(),
-            "./api/sample-calls/get_api_call-no-links.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_get_api_call_start_conversation() {
-        check_get_api_call_sample(
-            function_name!(),
-            "./api/sample-calls/get_api_call-start-conversation.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_get_api_call_continued_conversation() {
-        check_get_api_call_sample(
-            function_name!(),
-            "./api/sample-calls/get_api_call-continue-conversation.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_get_api_call_edit() {
-        check_get_api_call_sample(
-            function_name!(),
-            "./api/sample-calls/get_api_call-edit.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        GetApiCallTestCase,
+        test_edit,
+        "./api/sample-calls/get_api_call-edit.yaml"
+    );
 }

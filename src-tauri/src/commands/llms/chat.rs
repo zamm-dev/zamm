@@ -171,6 +171,7 @@ pub async fn chat(
 mod tests {
     use super::*;
 
+    use crate::check_sample;
     use crate::sample_call::SampleCall;
     use crate::setup::api_keys::ApiKeys;
     use crate::test_helpers::api_testing::standard_test_subdir;
@@ -180,7 +181,6 @@ mod tests {
     use rvcr::VCRMode;
     use std::collections::HashMap;
     use std::env;
-    use stdext::function_name;
     use tokio::sync::Mutex;
 
     fn to_yaml_string<T: Serialize>(obj: &T) -> String {
@@ -194,6 +194,10 @@ mod tests {
 
     struct ChatTestCase {
         test_fn_name: &'static str,
+    }
+
+    fn parse_response(response_str: &str) -> LightweightLlmCall {
+        serde_json::from_str(response_str).unwrap()
     }
 
     impl SampleCallTestCase<ChatRequest, ZammResult<LightweightLlmCall>> for ChatTestCase {
@@ -269,94 +273,49 @@ mod tests {
         }
     }
 
-    impl ZammResultReturn<ChatRequest, LightweightLlmCall> for ChatTestCase {
-        fn serialize_result(
-            &self,
-            sample: &SampleCall,
-            result: &ZammResult<LightweightLlmCall>,
-        ) -> String {
-            let expected_llm_call = parse_response(&sample.response.message);
-            // swap out non-deterministic parts before JSON comparison
-            let deterministic_llm_call = LightweightLlmCall {
-                id: expected_llm_call.id,
-                timestamp: expected_llm_call.timestamp,
-                ..result.as_ref().unwrap().clone()
-            };
-            serde_json::to_string_pretty(&deterministic_llm_call).unwrap()
-        }
-    }
+    impl ZammResultReturn<ChatRequest, LightweightLlmCall> for ChatTestCase {}
 
-    fn parse_response(response_str: &str) -> LightweightLlmCall {
-        serde_json::from_str(response_str).unwrap()
-    }
+    check_sample!(
+        ChatTestCase,
+        test_start_conversation,
+        "api/sample-calls/chat-start-conversation.yaml"
+    );
 
-    async fn test_llm_api_call(test_fn_name: &'static str, sample_path: &str) {
-        let mut test_case = ChatTestCase { test_fn_name };
-        test_case.check_sample_call(sample_path).await;
-    }
+    check_sample!(
+        ChatTestCase,
+        test_continue_conversation,
+        "api/sample-calls/chat-continue-conversation.yaml"
+    );
 
-    #[tokio::test]
-    async fn test_start_conversation() {
-        test_llm_api_call(
-            function_name!(),
-            "api/sample-calls/chat-start-conversation.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        ChatTestCase,
+        test_manual_conversation_recreation,
+        "api/sample-calls/chat-manual-conversation-recreation.yaml"
+    );
 
-    #[tokio::test]
-    async fn test_continue_conversation() {
-        test_llm_api_call(
-            function_name!(),
-            "api/sample-calls/chat-continue-conversation.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        ChatTestCase,
+        test_fork_conversation_step_1,
+        "api/sample-calls/chat-fork-conversation-python.yaml"
+    );
 
-    #[tokio::test]
-    async fn test_manual_conversation_recreation() {
-        test_llm_api_call(
-            function_name!(),
-            "api/sample-calls/chat-manual-conversation-recreation.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        ChatTestCase,
+        test_fork_conversation_step_2,
+        "api/sample-calls/chat-fork-conversation-rust.yaml"
+    );
 
-    #[tokio::test]
-    async fn test_fork_conversation_step_1() {
-        test_llm_api_call(
-            function_name!(),
-            "api/sample-calls/chat-fork-conversation-python.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        ChatTestCase,
+        test_edit_conversation,
+        "api/sample-calls/chat-edit-conversation.yaml"
+    );
 
-    #[tokio::test]
-    async fn test_fork_conversation_step_2() {
-        test_llm_api_call(
-            function_name!(),
-            "api/sample-calls/chat-fork-conversation-rust.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_edit_conversation() {
-        test_llm_api_call(
-            function_name!(),
-            "api/sample-calls/chat-edit-conversation.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_re_edit_conversation() {
-        // this test checks that if we edit a variant, the new variant gets linked to
-        // the original canonical call, not to the variant that was edited
-        test_llm_api_call(
-            function_name!(),
-            "api/sample-calls/chat-re-edit-conversation.yaml",
-        )
-        .await;
-    }
+    // this test checks that if we edit a variant, the new variant gets linked to
+    // the original canonical call, not to the variant that was edited
+    check_sample!(
+        ChatTestCase,
+        test_re_edit_conversation,
+        "api/sample-calls/chat-re-edit-conversation.yaml"
+    );
 }
