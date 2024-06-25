@@ -73,7 +73,7 @@ mod tests {
 
         async fn make_request(
             &mut self,
-            _: &Option<()>,
+            _: &(),
             side_effects: &SideEffectsHelpers,
         ) -> Preferences {
             get_preferences_helper(&side_effects.disk)
@@ -90,7 +90,7 @@ mod tests {
         async fn check_result(
             &self,
             sample: &SampleCall,
-            args: Option<&()>,
+            args: &(),
             result: &Preferences,
         ) {
             DirectReturn::check_result(self, sample, args, result).await

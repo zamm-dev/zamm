@@ -206,11 +206,9 @@ mod tests {
 
         async fn make_request(
             &mut self,
-            args: &Option<ChatRequest>,
+            args: &ChatRequest,
             side_effects: &SideEffectsHelpers,
         ) -> ZammResult<LightweightLlmCall> {
-            let actual_request = args.as_ref().unwrap().clone();
-
             let network_helper = side_effects.network.as_ref().unwrap();
             let api_keys = match network_helper.mode {
                 VCRMode::Record => ZammApiKeys(Mutex::new(ApiKeys {
@@ -224,7 +222,7 @@ mod tests {
             chat_helper(
                 &api_keys,
                 side_effects.db.as_ref().unwrap(),
-                actual_request.args,
+                args.args.clone(),
                 network_helper.network_client.clone(),
             )
             .await
@@ -264,7 +262,7 @@ mod tests {
         async fn check_result(
             &self,
             sample: &SampleCall,
-            args: Option<&ChatRequest>,
+            args: &ChatRequest,
             result: &ZammResult<LightweightLlmCall>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await

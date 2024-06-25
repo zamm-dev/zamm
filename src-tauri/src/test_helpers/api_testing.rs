@@ -199,7 +199,7 @@ where
     U: Serialize,
 {
     pub sample: SampleCall,
-    pub args: Option<T>,
+    pub args: T,
     pub result: U,
 }
 
@@ -298,15 +298,11 @@ where
         unimplemented!()
     }
 
-    async fn make_request(
-        &mut self,
-        args: &Option<T>,
-        side_effects: &SideEffectsHelpers,
-    ) -> U;
+    async fn make_request(&mut self, args: &T, side_effects: &SideEffectsHelpers) -> U;
 
     fn serialize_result(&self, sample: &SampleCall, result: &U) -> String;
 
-    async fn check_result(&self, sample: &SampleCall, args: Option<&T>, result: &U);
+    async fn check_result(&self, sample: &SampleCall, args: &T, result: &U);
 
     fn get_temp_dir(&self) -> PathBuf {
         get_temp_test_dir(&self.temp_test_subdirectory())
@@ -443,9 +439,9 @@ where
 
         // make the call
         let args = if Self::CALL_HAS_ARGS {
-            Some(self.parse_args(&sample.request[1]))
+            self.parse_args(&sample.request[1])
         } else {
-            None
+            self.parse_args("null")
         };
         let result = self.make_request(&args, &side_effects_helpers).await;
         env::set_current_dir(current_dir).unwrap();
@@ -460,7 +456,7 @@ where
         let replaced_actual_json = apply_replacements(&actual_json, &replacements);
         let expected_json = sample.response.message.trim();
         assert_eq!(replaced_actual_json, expected_json);
-        self.check_result(&sample, args.as_ref(), &result).await;
+        self.check_result(&sample, &args, &result).await;
 
         // check the call against disk side-effects
         if let Some(test_disk_dir) = &side_effects_helpers.disk {
@@ -524,8 +520,7 @@ where
         serde_json::to_string_pretty(result).unwrap()
     }
 
-    async fn check_result(&self, _sample: &SampleCall, _args: Option<&T>, _result: &U) {
-    }
+    async fn check_result(&self, _sample: &SampleCall, _args: &T, _result: &U) {}
 }
 
 pub fn serialize_zamm_result<T>(result: &ZammResult<T>) -> String
@@ -561,7 +556,7 @@ where
     async fn check_result(
         &self,
         sample: &SampleCall,
-        _args: Option<&T>,
+        _args: &T,
         result: &ZammResult<U>,
     ) {
         check_zamm_result(sample, result)

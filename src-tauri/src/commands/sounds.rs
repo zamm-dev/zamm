@@ -9,7 +9,7 @@ use std::thread;
 
 use crate::commands::errors::ZammResult;
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
 pub enum Sound {
     Switch,
     Whoosh,
@@ -61,11 +61,10 @@ mod tests {
 
         async fn make_request(
             &mut self,
-            args: &Option<PlaySoundRequest>,
+            args: &PlaySoundRequest,
             _: &SideEffectsHelpers,
         ) {
-            let actual_args = args.as_ref().unwrap().clone();
-            play_sound(actual_args.sound, actual_args.volume, actual_args.speed);
+            play_sound(args.sound, args.volume, args.speed);
         }
 
         fn serialize_result(&self, sample: &SampleCall, result: &()) -> String {
@@ -75,7 +74,7 @@ mod tests {
         async fn check_result(
             &self,
             sample: &SampleCall,
-            args: Option<&PlaySoundRequest>,
+            args: &PlaySoundRequest,
             result: &(),
         ) {
             DirectReturn::check_result(self, sample, args, result).await

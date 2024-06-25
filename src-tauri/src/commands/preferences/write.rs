@@ -101,13 +101,10 @@ mod tests {
 
         async fn make_request(
             &mut self,
-            args: &Option<SetPreferencesRequest>,
+            args: &SetPreferencesRequest,
             side_effects: &SideEffectsHelpers,
         ) -> ZammResult<()> {
-            set_preferences_helper(
-                &side_effects.disk,
-                &args.as_ref().unwrap().preferences,
-            )
+            set_preferences_helper(&side_effects.disk, &args.preferences)
         }
 
         fn serialize_result(
@@ -121,7 +118,7 @@ mod tests {
         async fn check_result(
             &self,
             sample: &SampleCall,
-            args: Option<&SetPreferencesRequest>,
+            args: &SetPreferencesRequest,
             result: &ZammResult<()>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await

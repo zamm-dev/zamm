@@ -152,14 +152,10 @@ mod tests {
 
         async fn make_request(
             &mut self,
-            args: &Option<ImportDbRequest>,
+            args: &ImportDbRequest,
             side_effects: &SideEffectsHelpers,
         ) -> ZammResult<DatabaseImportCounts> {
-            import_db_helper(
-                side_effects.db.as_ref().unwrap(),
-                &args.as_ref().unwrap().path,
-            )
-            .await
+            import_db_helper(side_effects.db.as_ref().unwrap(), &args.path).await
         }
 
         fn serialize_result(
@@ -173,7 +169,7 @@ mod tests {
         async fn check_result(
             &self,
             sample: &SampleCall,
-            args: Option<&ImportDbRequest>,
+            args: &ImportDbRequest,
             result: &ZammResult<DatabaseImportCounts>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await

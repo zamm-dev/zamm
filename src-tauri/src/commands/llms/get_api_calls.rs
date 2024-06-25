@@ -67,14 +67,10 @@ mod tests {
 
         async fn make_request(
             &mut self,
-            args: &Option<GetApiCallsRequest>,
+            args: &GetApiCallsRequest,
             side_effects: &SideEffectsHelpers,
         ) -> ZammResult<Vec<LightweightLlmCall>> {
-            get_api_calls_helper(
-                side_effects.db.as_ref().unwrap(),
-                args.as_ref().unwrap().offset,
-            )
-            .await
+            get_api_calls_helper(side_effects.db.as_ref().unwrap(), args.offset).await
         }
 
         fn serialize_result(
@@ -88,7 +84,7 @@ mod tests {
         async fn check_result(
             &self,
             sample: &SampleCall,
-            args: Option<&GetApiCallsRequest>,
+            args: &GetApiCallsRequest,
             result: &ZammResult<Vec<LightweightLlmCall>>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await
