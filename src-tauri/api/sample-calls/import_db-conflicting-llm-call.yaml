@@ -1,0 +1,25 @@
+request:
+  - import_db
+  - >
+    {
+      "path": "conflicting-db.yaml"
+    }
+response:
+  message: >
+    {
+      "imported": {
+        "num_api_keys": 0,
+        "num_llm_calls": 1
+      },
+      "ignored": {
+        "num_api_keys": 0,
+        "num_llm_calls": 1
+      }
+    }
+sideEffects:
+  disk:
+    startStateDirectory: db-import-export/conflicting-llm-call
+    endStateDirectory: db-import-export/conflicting-llm-call
+  database:
+    startStateDump: conversation-edited
+    endStateDump: conversation-edited-2

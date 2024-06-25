@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Settings from "./Settings.svelte";
+  import Page from "./Page.svelte";
 </script>
 
-<Settings />
+<Page />

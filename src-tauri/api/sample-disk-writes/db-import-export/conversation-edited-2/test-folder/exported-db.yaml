@@ -1,0 +1,172 @@
+zamm_version: 0.1.5
+llm_calls:
+  instances:
+  - id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a74
+    timestamp: 2024-01-16T08:50:19.738093890
+    provider: OpenAI
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 32
+    response_tokens: 12
+    total_tokens: 44
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: Hello, does this work?
+    completion:
+      role: AI
+      text: Yes, it works. How can I assist you today?
+  - id: c13c1e67-2de3-48de-a34c-a32079c03316
+    timestamp: 2024-01-16T09:50:19.738093890
+    provider: OpenAI
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 57
+    response_tokens: 22
+    total_tokens: 79
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: Hello, does this work?
+      - role: AI
+        text: Yes, it works. How can I assist you today?
+      - role: Human
+        text: Tell me something funny.
+    completion:
+      role: AI
+      text: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
+  - id: 0e6bcadf-2b41-43d9-b4cf-81008d4f4771
+    timestamp: 2024-05-23T09:30:37.854241700
+    provider: OpenAI
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 98
+    response_tokens: 46
+    total_tokens: 144
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: Hello, does this work?
+      - role: AI
+        text: Yes, it works. How can I assist you today?
+      - role: Human
+        text: Tell me something funny.
+      - role: AI
+        text: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
+      - role: Human
+        text: Write me a Python script that prints that joke out.
+    completion:
+      role: AI
+      text: |-
+        Sure, here is a simple Python script that will print out the joke:
+
+        ```python
+        print("Why don't scientists trust atoms? Because they make up everything!")
+        ```
+
+        Just run this script and it will display the joke.
+  - id: 63b5c02e-b864-4efe-a286-fbef48b152ef
+    timestamp: 2024-05-23T09:34:38.572764500
+    provider: OpenAI
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 98
+    response_tokens: 58
+    total_tokens: 156
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: Hello, does this work?
+      - role: AI
+        text: Yes, it works. How can I assist you today?
+      - role: Human
+        text: Tell me something funny.
+      - role: AI
+        text: 'Sure, here''s a joke for you: Why don''t scientists trust atoms? Because they make up everything!'
+      - role: Human
+        text: Write me a Rust script that prints that joke out.
+    completion:
+      role: AI
+      text: |-
+        Sure, here is a simple Rust program that prints out the joke:
+
+        ```rust
+        fn main() {
+            println!("Why don't scientists trust atoms? Because they make up everything!");
+        }
+        ```
+        To run this program, you'd simply compile and run the Rust file containing this code.
+  - id: f39a5017-89d4-45ec-bcbb-25c2bd43cfc1
+    timestamp: 2024-06-08T06:20:40.601356700
+    provider: OpenAI
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 58
+    response_tokens: 25
+    total_tokens: 83
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: Hello, does this work?
+      - role: AI
+        text: Yes, it works. How can I assist you today?
+      - role: Human
+        text: Tell me a funny joke.
+    completion:
+      role: AI
+      text: "Sure, here is a light-hearted joke for you: \n\nWhy don't scientists trust atoms?\n\nBecause they make up everything!"
+  - id: 7a35a4cf-f3d9-4388-bca8-2fe6e78c9648
+    timestamp: 2024-06-08T09:40:22.392223700
+    provider: OpenAI
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 59
+    response_tokens: 19
+    total_tokens: 78
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: Hello, does this really work?
+      - role: AI
+        text: Yes, it works. How can I assist you today?
+      - role: Human
+        text: Tell me a funny joke.
+    completion:
+      role: AI
+      text: 'Sure, here you go: Why don''t scientists trust atoms? Because they make up everything!'
+  follow_ups:
+  - previous_call_id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a74
+    next_call_id: c13c1e67-2de3-48de-a34c-a32079c03316
+  - previous_call_id: c13c1e67-2de3-48de-a34c-a32079c03316
+    next_call_id: 0e6bcadf-2b41-43d9-b4cf-81008d4f4771
+  - previous_call_id: c13c1e67-2de3-48de-a34c-a32079c03316
+    next_call_id: 63b5c02e-b864-4efe-a286-fbef48b152ef
+  variants:
+  - canonical_id: c13c1e67-2de3-48de-a34c-a32079c03316
+    variant_id: f39a5017-89d4-45ec-bcbb-25c2bd43cfc1
+  - canonical_id: c13c1e67-2de3-48de-a34c-a32079c03316
+    variant_id: 7a35a4cf-f3d9-4388-bca8-2fe6e78c9648

@@ -1,0 +1,24 @@
+request:
+  - import_db
+  - >
+    {
+      "path": "test-folder/exported-db.yaml"
+    }
+response:
+  message: >
+    {
+      "imported": {
+        "num_api_keys": 0,
+        "num_llm_calls": 6
+      },
+      "ignored": {
+        "num_api_keys": 0,
+        "num_llm_calls": 0
+      }
+    }
+sideEffects:
+  disk:
+    startStateDirectory: db-import-export/conversation-edited-2
+    endStateDirectory: db-import-export/conversation-edited-2
+  database:
+    endStateDump: conversation-edited-2

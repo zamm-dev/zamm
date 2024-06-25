@@ -87,6 +87,10 @@ const components: ComponentTestConfig[] = [
     variants: ["small", "large"],
   },
   {
+    path: ["reusable", "warning"],
+    variants: ["short", "long"],
+  },
+  {
     path: ["layout", "background"],
     variants: [
       {
@@ -108,8 +112,8 @@ const components: ComponentTestConfig[] = [
     variants: ["dashboard-selected", "settings-selected", "credits-selected"],
   },
   {
-    path: ["layout", "snackbar"],
-    variants: ["message"],
+    path: ["layout", "snackbar", "message"],
+    variants: ["error", "info"],
     screenshotEntireBody: true,
   },
   {

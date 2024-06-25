@@ -17,7 +17,6 @@ pub struct LlmCallFollowUp {
     pub next_call_id: EntityId,
 }
 
-#[cfg(test)]
 impl LlmCallFollowUp {
     pub fn as_insertable(&self) -> NewLlmCallFollowUp {
         NewLlmCallFollowUp {
@@ -41,7 +40,6 @@ pub struct LlmCallVariant {
     pub variant_id: EntityId,
 }
 
-#[cfg(test)]
 impl LlmCallVariant {
     pub fn as_insertable(&self) -> NewLlmCallVariant {
         NewLlmCallVariant {

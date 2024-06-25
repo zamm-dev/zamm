@@ -1,10 +1,8 @@
+use crate::commands::database::{read_database_contents, write_database_contents};
 use crate::commands::errors::ZammResult;
 use crate::sample_call::{Disk, SampleCall};
 use crate::test_helpers::database::{setup_database, setup_zamm_db};
-use crate::test_helpers::database_contents::{
-    dump_sqlite_database, load_sqlite_database, read_database_contents,
-    write_database_contents,
-};
+use crate::test_helpers::sqlite::{dump_sqlite_database, load_sqlite_database};
 use crate::test_helpers::temp_files::get_temp_test_dir;
 use crate::ZammDatabase;
 use path_absolutize::Absolutize;
@@ -13,6 +11,7 @@ use rvcr::{VCRMiddleware, VCRMode};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::ffi::OsString;
+use std::fs::ReadDir;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 use tokio::sync::Mutex;
@@ -61,12 +60,12 @@ fn copy_missing_gold_file(expected_path_abs: &Path, actual_path_abs: &Path) {
 
 async fn dump_sql_to_yaml(
     expected_sql_dump_abs: &PathBuf,
-    expected_yaml_dump_abs: &PathBuf,
+    expected_yaml_dump_abs: &Path,
 ) {
     let mut db = setup_database(None);
     load_sqlite_database(&mut db, expected_sql_dump_abs);
     let zamm_db = ZammDatabase(Mutex::new(Some(db)));
-    write_database_contents(&zamm_db, expected_yaml_dump_abs)
+    write_database_contents(&zamm_db, expected_yaml_dump_abs.to_str().unwrap(), false)
         .await
         .unwrap();
 }
@@ -92,7 +91,7 @@ async fn setup_gold_db_files(
     } else if !expected_yaml_dump_abs.exists() && expected_sql_dump_abs.exists() {
         dump_sql_to_yaml(
             &expected_sql_dump_abs.to_path_buf(),
-            &expected_yaml_dump_abs.to_path_buf(),
+            &expected_yaml_dump_abs,
         )
         .await;
         panic!(
@@ -137,19 +136,29 @@ fn compare_files(
     assert_eq!(expected_file_str, replaced_actual_str);
 }
 
+fn debuggable_read_dir(dir: impl AsRef<Path>) -> ReadDir {
+    fs::read_dir(&dir).unwrap_or_else(|e| {
+        panic!(
+            "TEST CODE unable to read directory at {:?}: {}",
+            dir.as_ref().display(),
+            e
+        )
+    })
+}
+
 fn compare_dir_all(
     expected_output_dir: impl AsRef<Path>,
     actual_output_dir: impl AsRef<Path>,
     output_replacements: &HashMap<String, String>,
 ) {
     let mut expected_outputs = vec![];
-    for entry in fs::read_dir(expected_output_dir).unwrap() {
+    for entry in debuggable_read_dir(expected_output_dir) {
         let entry = entry.unwrap();
         expected_outputs.push(entry);
     }
 
     let mut actual_outputs = vec![];
-    for entry in fs::read_dir(actual_output_dir).unwrap() {
+    for entry in debuggable_read_dir(actual_output_dir) {
         let entry = entry.unwrap();
         actual_outputs.push(entry);
     }
@@ -469,9 +478,13 @@ where
             let db_info = test_db_info.unwrap();
             let actual_db_yaml_dump = db_info.temp_db_dir.join("dump.yaml");
             let actual_db_sql_dump = db_info.temp_db_dir.join("dump.sql");
-            write_database_contents(test_db, &actual_db_yaml_dump)
-                .await
-                .unwrap();
+            write_database_contents(
+                test_db,
+                actual_db_yaml_dump.to_str().unwrap(),
+                false,
+            )
+            .await
+            .unwrap();
             dump_sqlite_database(&db_info.temp_db_file, &actual_db_sql_dump);
 
             setup_gold_db_files(

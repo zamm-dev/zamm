@@ -3,11 +3,11 @@
 
   export let dismiss: () => void;
   export let message: string;
+  export let messageType: "error" | "info";
 </script>
 
-<div class="snackbar" role="alertdialog">
-  {message}
-  <button on:click={dismiss} title="Dismiss">
+<div class={"snackbar " + messageType} role="alertdialog">
+  {message}<button on:click={dismiss} title="Dismiss">
     <IconClose />
   </button>
 </div>
@@ -18,12 +18,20 @@
     display: flex;
     justify-content: space-between;
     gap: 1rem;
-    background-color: var(--color-error);
     color: white;
     border-radius: 4px;
-    filter: drop-shadow(0px 1px 4px #cc0000);
     width: fit-content;
     margin: 0 auto;
+  }
+
+  .snackbar.error {
+    background-color: var(--color-error-background);
+    filter: drop-shadow(0px 1px 4px var(--color-error-shadow));
+  }
+
+  .snackbar.info {
+    background-color: var(--color-info-background);
+    filter: drop-shadow(0px 1px 4px var(--color-info-shadow));
   }
 
   button {

@@ -1,0 +1,49 @@
+zamm_version: 0.1.5
+llm_calls:
+  instances:
+  - id: 0e6bcadf-2b41-43d9-b4cf-81008d4f4771
+    timestamp: 2024-05-23T09:30:37.854241700
+    provider: OpenAI
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 98
+    response_tokens: 46
+    total_tokens: 144
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: This is something completely different
+    completion:
+      role: AI
+      text: Sure sounds like you might be losing some data!
+  - id: 7a35a4cf-f3d9-4388-bca8-2fe6e78c9648
+    timestamp: 2024-06-08T09:40:22.392223700
+    provider: OpenAI
+    llm_requested: gpt-4
+    llm: gpt-4-0613
+    temperature: 1.0
+    prompt_tokens: 59
+    response_tokens: 19
+    total_tokens: 78
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: Hello, does this really work?
+      - role: AI
+        text: Yes, it works. How can I assist you today?
+      - role: Human
+        text: Tell me a funny joke.
+    completion:
+      role: AI
+      text: 'Sure, here you go: Why don''t scientists trust atoms? Because they make up everything!'
+  follow_ups:
+  - previous_call_id: d5ad1e49-f57f-4481-84fb-4d70ba8a7a74
+    next_call_id: 0e6bcadf-2b41-43d9-b4cf-81008d4f4771
+  variants:
+  - canonical_id: c13c1e67-2de3-48de-a34c-a32079c03316
+    variant_id: 7a35a4cf-f3d9-4388-bca8-2fe6e78c9648

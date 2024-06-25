@@ -4,6 +4,7 @@
   interface SnackbarMessage {
     id: number;
     msg: string;
+    messageType: "error" | "info";
   }
 
   export const snackbars: Writable<SnackbarMessage[]> = writable([]);
@@ -21,18 +22,28 @@
 
   let nextId = 0;
 
-  export function snackbarError(error: string | Error) {
-    const msg = error instanceof Error ? error.message : error;
-
-    console.warn(msg);
+  function addMessage(newMessage: string, newMessageType: "error" | "info") {
     animateDurationMs = baseAnimationDurationMs;
     const id = nextId++;
-    snackbars.update((current) => [...current, { id, msg }]);
+    snackbars.update((current) => [
+      ...current,
+      { id, msg: newMessage, messageType: newMessageType },
+    ]);
 
     // Auto-dismiss after 'duration'
     setTimeout(() => {
       dismiss(id);
     }, messageDurationMs);
+  }
+
+  export function snackbarError(error: string | Error) {
+    const msg = error instanceof Error ? error.message : error;
+    console.warn(msg);
+    addMessage(msg, "error");
+  }
+
+  export function snackbarInfo(info: string) {
+    addMessage(info, "info");
   }
 
   // Function to manually dismiss a snackbar
@@ -60,7 +71,11 @@
       out:fade|global={{ duration: $standardDuration }}
       animate:flip={{ duration: animateDurationMs }}
     >
-      <Message dismiss={() => dismiss(snackbar.id)} message={snackbar.msg} />
+      <Message
+        dismiss={() => dismiss(snackbar.id)}
+        message={snackbar.msg}
+        messageType={snackbar.messageType}
+      />
     </div>
   {/each}
 </div>

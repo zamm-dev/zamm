@@ -53,6 +53,14 @@ export function getApiCalls(offset: number) {
   return invoke()<LightweightLlmCall[]>("get_api_calls", { offset });
 }
 
+export function importDb(path: string) {
+  return invoke()<DatabaseImportCounts>("import_db", { path });
+}
+
+export function exportDb(path: string) {
+  return invoke()<DatabaseCounts>("export_db", { path });
+}
+
 export type TokenMetadata = {
   prompt: number | null;
   response: number | null;
@@ -69,7 +77,9 @@ export type VariantMetadata = {
   variants?: LlmCallReference[];
   sibling_variants?: LlmCallReference[];
 };
+export type Sound = "Switch" | "Whoosh";
 export type Prompt = { type: "Chat" } & ChatPrompt;
+export type DatabaseCounts = { num_api_keys: number; num_llm_calls: number };
 export type Service = "OpenAI";
 export type Preferences = {
   version?: string | null;
@@ -84,16 +94,6 @@ export type LightweightLlmCall = {
   id: EntityId;
   timestamp: string;
   response_message: ChatMessage;
-};
-export type LlmCall = {
-  id: EntityId;
-  timestamp: string;
-  llm: Llm;
-  request: Request;
-  response: Response;
-  tokens: TokenMetadata;
-  conversation?: ConversationMetadata;
-  variation?: VariantMetadata;
 };
 export type ApiKeys = { openai: string | null };
 export type OS = "Mac" | "Linux" | "Windows";
@@ -120,4 +120,17 @@ export type ChatArgs = {
   canonical_id?: string | null;
 };
 export type LlmCallReference = { id: EntityId; snippet: string };
-export type Sound = "Switch" | "Whoosh";
+export type DatabaseImportCounts = {
+  imported: DatabaseCounts;
+  ignored: DatabaseCounts;
+};
+export type LlmCall = {
+  id: EntityId;
+  timestamp: string;
+  llm: Llm;
+  request: Request;
+  response: Response;
+  tokens: TokenMetadata;
+  conversation?: ConversationMetadata;
+  variation?: VariantMetadata;
+};
