@@ -54,124 +54,68 @@ pub fn get_preferences(app_handle: tauri::AppHandle) -> Preferences {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sample_call::SampleCall;
-    use crate::test_helpers::api_testing::standard_test_subdir;
-    use crate::test_helpers::{DirectReturn, SampleCallTestCase, SideEffectsHelpers};
-    use stdext::function_name;
+    use crate::test_helpers::SideEffectsHelpers;
+    use crate::{check_sample, impl_direct_test_case};
 
-    struct GetPreferencesTestCase {
-        test_fn_name: &'static str,
+    async fn make_request_helper(
+        _: &(),
+        side_effects: &SideEffectsHelpers,
+    ) -> Preferences {
+        get_preferences_helper(&side_effects.disk)
     }
 
-    impl SampleCallTestCase<(), Preferences> for GetPreferencesTestCase {
-        const EXPECTED_API_CALL: &'static str = "get_preferences";
-        const CALL_HAS_ARGS: bool = false;
-
-        fn temp_test_subdirectory(&self) -> String {
-            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
-        }
-
-        async fn make_request(
-            &mut self,
-            _: &Option<()>,
-            side_effects: &SideEffectsHelpers,
-        ) -> Preferences {
-            get_preferences_helper(&side_effects.disk)
-        }
-
-        fn serialize_result(
-            &self,
-            sample: &SampleCall,
-            result: &Preferences,
-        ) -> String {
-            DirectReturn::serialize_result(self, sample, result)
-        }
-
-        async fn check_result(
-            &self,
-            sample: &SampleCall,
-            args: Option<&()>,
-            result: &Preferences,
-        ) {
-            DirectReturn::check_result(self, sample, args, result).await
-        }
-    }
-
-    impl DirectReturn<(), Preferences> for GetPreferencesTestCase {}
-
-    async fn check_get_preferences_sample<'a>(
-        test_fn_name: &'static str,
-        file_prefix: &str,
-    ) {
-        let mut test_case = GetPreferencesTestCase { test_fn_name };
-        test_case.check_sample_call(file_prefix).await;
-    }
+    impl_direct_test_case!(
+        GetPreferencesTestCase,
+        get_preferences,
+        false,
+        (),
+        Preferences
+    );
 
     #[cfg(not(target_os = "windows"))]
-    #[tokio::test]
-    async fn test_get_preferences_without_file() {
-        check_get_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/get_preferences-no-file.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        GetPreferencesTestCase,
+        test_without_file,
+        "./api/sample-calls/get_preferences-no-file.yaml"
+    );
 
     #[cfg(target_os = "windows")]
-    #[tokio::test]
-    async fn test_get_preferences_without_file() {
-        check_get_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/get_preferences-no-file-windows.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        GetPreferencesTestCase,
+        test_without_file,
+        "./api/sample-calls/get_preferences-no-file-windows.yaml"
+    );
 
     #[cfg(not(target_os = "windows"))]
-    #[tokio::test]
-    async fn test_get_preferences_with_sound_override() {
-        check_get_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/get_preferences-sound-override.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        GetPreferencesTestCase,
+        test_sound_override,
+        "./api/sample-calls/get_preferences-sound-override.yaml"
+    );
 
     #[cfg(not(target_os = "windows"))]
-    #[tokio::test]
-    async fn test_get_preferences_with_volume_override() {
-        check_get_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/get_preferences-volume-override.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        GetPreferencesTestCase,
+        test_volume_override,
+        "./api/sample-calls/get_preferences-volume-override.yaml"
+    );
 
-    #[tokio::test]
-    async fn test_get_preferences_with_transparency_off() {
-        check_get_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/get_preferences-transparency-off.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        GetPreferencesTestCase,
+        test_transparency_off,
+        "./api/sample-calls/get_preferences-transparency-off.yaml"
+    );
 
-    #[tokio::test]
-    async fn test_get_preferences_with_transparency_on() {
-        check_get_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/get_preferences-transparency-on.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        GetPreferencesTestCase,
+        test_transparency_on,
+        "./api/sample-calls/get_preferences-transparency-on.yaml"
+    );
 
     #[cfg(not(target_os = "windows"))]
-    #[tokio::test]
-    async fn test_get_preferences_with_extra_settings() {
-        check_get_preferences_sample(
-            function_name!(),
-            "./api/sample-calls/get_preferences-extra-settings.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        GetPreferencesTestCase,
+        test_extra_settings,
+        "./api/sample-calls/get_preferences-extra-settings.yaml"
+    );
 }

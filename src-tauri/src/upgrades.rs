@@ -138,7 +138,7 @@ mod tests {
 
         async fn make_request(
             &mut self,
-            _: &Option<()>,
+            _: &(),
             side_effects: &SideEffectsHelpers,
         ) -> ZammResult<()> {
             handle_app_upgrades(&side_effects.disk, side_effects.db.as_ref().unwrap())
@@ -156,7 +156,7 @@ mod tests {
         async fn check_result(
             &self,
             sample: &SampleCall,
-            args: Option<&()>,
+            args: &(),
             result: &ZammResult<()>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await

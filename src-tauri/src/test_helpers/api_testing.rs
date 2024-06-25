@@ -199,7 +199,7 @@ where
     U: Serialize,
 {
     pub sample: SampleCall,
-    pub args: Option<T>,
+    pub args: T,
     pub result: U,
 }
 
@@ -298,15 +298,11 @@ where
         unimplemented!()
     }
 
-    async fn make_request(
-        &mut self,
-        args: &Option<T>,
-        side_effects: &SideEffectsHelpers,
-    ) -> U;
+    async fn make_request(&mut self, args: &T, side_effects: &SideEffectsHelpers) -> U;
 
     fn serialize_result(&self, sample: &SampleCall, result: &U) -> String;
 
-    async fn check_result(&self, sample: &SampleCall, args: Option<&T>, result: &U);
+    async fn check_result(&self, sample: &SampleCall, args: &T, result: &U);
 
     fn get_temp_dir(&self) -> PathBuf {
         get_temp_test_dir(&self.temp_test_subdirectory())
@@ -443,9 +439,9 @@ where
 
         // make the call
         let args = if Self::CALL_HAS_ARGS {
-            Some(self.parse_args(&sample.request[1]))
+            self.parse_args(&sample.request[1])
         } else {
-            None
+            self.parse_args("null")
         };
         let result = self.make_request(&args, &side_effects_helpers).await;
         env::set_current_dir(current_dir).unwrap();
@@ -460,7 +456,7 @@ where
         let replaced_actual_json = apply_replacements(&actual_json, &replacements);
         let expected_json = sample.response.message.trim();
         assert_eq!(replaced_actual_json, expected_json);
-        self.check_result(&sample, args.as_ref(), &result).await;
+        self.check_result(&sample, &args, &result).await;
 
         // check the call against disk side-effects
         if let Some(test_disk_dir) = &side_effects_helpers.disk {
@@ -524,8 +520,7 @@ where
         serde_json::to_string_pretty(result).unwrap()
     }
 
-    async fn check_result(&self, _sample: &SampleCall, _args: Option<&T>, _result: &U) {
-    }
+    async fn check_result(&self, _sample: &SampleCall, _args: &T, _result: &U) {}
 }
 
 pub fn serialize_zamm_result<T>(result: &ZammResult<T>) -> String
@@ -561,9 +556,139 @@ where
     async fn check_result(
         &self,
         sample: &SampleCall,
-        _args: Option<&T>,
+        _args: &T,
         result: &ZammResult<U>,
     ) {
         check_zamm_result(sample, result)
     }
+}
+
+#[macro_export]
+macro_rules! impl_direct_test_case {
+    ($test_case:ident, $api_call_name:ident, $has_args:ident, $req_type:ty, $resp_type:ty) => {
+        struct $test_case {
+            test_fn_name: &'static str,
+        }
+
+        impl $crate::test_helpers::SampleCallTestCase<$req_type, $resp_type>
+            for $test_case
+        {
+            const EXPECTED_API_CALL: &'static str = stringify!($api_call_name);
+            const CALL_HAS_ARGS: bool = $has_args;
+
+            fn temp_test_subdirectory(&self) -> String {
+                $crate::test_helpers::api_testing::standard_test_subdir(
+                    Self::EXPECTED_API_CALL,
+                    self.test_fn_name,
+                )
+            }
+
+            async fn make_request(
+                &mut self,
+                args: &$req_type,
+                side_effects: &$crate::test_helpers::SideEffectsHelpers,
+            ) -> $resp_type {
+                make_request_helper(args, side_effects).await
+            }
+
+            fn serialize_result(
+                &self,
+                sample: &$crate::sample_call::SampleCall,
+                result: &$resp_type,
+            ) -> String {
+                $crate::test_helpers::DirectReturn::serialize_result(
+                    self, sample, result,
+                )
+            }
+
+            async fn check_result(
+                &self,
+                sample: &$crate::sample_call::SampleCall,
+                args: &$req_type,
+                result: &$resp_type,
+            ) {
+                $crate::test_helpers::DirectReturn::check_result(
+                    self, sample, args, result,
+                )
+                .await
+            }
+        }
+
+        impl $crate::test_helpers::DirectReturn<$req_type, $resp_type> for $test_case {}
+    };
+}
+
+#[macro_export]
+macro_rules! impl_result_test_case {
+    ($test_case:ident, $api_call_name:ident, $has_args:ident, $req_type:ty, $resp_type:ty) => {
+        struct $test_case {
+            test_fn_name: &'static str,
+        }
+
+        impl $crate::test_helpers::SampleCallTestCase<$req_type, ZammResult<$resp_type>>
+            for $test_case
+        {
+            const EXPECTED_API_CALL: &'static str = stringify!($api_call_name);
+            const CALL_HAS_ARGS: bool = $has_args;
+
+            fn temp_test_subdirectory(&self) -> String {
+                $crate::test_helpers::api_testing::standard_test_subdir(
+                    Self::EXPECTED_API_CALL,
+                    self.test_fn_name,
+                )
+            }
+
+            async fn make_request(
+                &mut self,
+                args: &$req_type,
+                side_effects: &$crate::test_helpers::SideEffectsHelpers,
+            ) -> ZammResult<$resp_type> {
+                make_request_helper(args, side_effects).await
+            }
+
+            fn serialize_result(
+                &self,
+                sample: &$crate::sample_call::SampleCall,
+                result: &ZammResult<$resp_type>,
+            ) -> String {
+                $crate::test_helpers::ZammResultReturn::serialize_result(
+                    self, sample, result,
+                )
+            }
+
+            async fn check_result(
+                &self,
+                sample: &$crate::sample_call::SampleCall,
+                args: &$req_type,
+                result: &ZammResult<$resp_type>,
+            ) {
+                $crate::test_helpers::ZammResultReturn::check_result(
+                    self, sample, args, result,
+                )
+                .await
+            }
+        }
+
+        impl $crate::test_helpers::ZammResultReturn<$req_type, $resp_type>
+            for $test_case
+        {
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! check_sample {
+    ($test_case:ident, $test_name:ident, $sample_call_file:expr) => {
+        #[tokio::test]
+        async fn $test_name() {
+            let mut test_case = $test_case {
+                test_fn_name: stdext::function_name!(),
+            };
+            $crate::test_helpers::SampleCallTestCase::check_sample_call(
+                &mut test_case,
+                $sample_call_file,
+            )
+            .await;
+        }
+    };
 }

@@ -9,7 +9,7 @@ use std::thread;
 
 use crate::commands::errors::ZammResult;
 
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
 pub enum Sound {
     Switch,
     Whoosh,
@@ -41,8 +41,8 @@ fn play_sound_async(sound: Sound, volume: f32, speed: f32) -> ZammResult<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sample_call::SampleCall;
-    use crate::test_helpers::{DirectReturn, SampleCallTestCase, SideEffectsHelpers};
+    use crate::test_helpers::SideEffectsHelpers;
+    use crate::{check_sample, impl_direct_test_case};
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct PlaySoundRequest {
@@ -51,51 +51,21 @@ mod tests {
         speed: f32,
     }
 
-    struct PlaySoundTestCase {
-        // pass
+    async fn make_request_helper(args: &PlaySoundRequest, _: &SideEffectsHelpers) {
+        play_sound(args.sound, args.volume, args.speed);
     }
 
-    impl SampleCallTestCase<PlaySoundRequest, ()> for PlaySoundTestCase {
-        const EXPECTED_API_CALL: &'static str = "play_sound";
-        const CALL_HAS_ARGS: bool = true;
+    impl_direct_test_case!(PlaySoundTestCase, play_sound, true, PlaySoundRequest, ());
 
-        async fn make_request(
-            &mut self,
-            args: &Option<PlaySoundRequest>,
-            _: &SideEffectsHelpers,
-        ) {
-            let actual_args = args.as_ref().unwrap().clone();
-            play_sound(actual_args.sound, actual_args.volume, actual_args.speed);
-        }
+    check_sample!(
+        PlaySoundTestCase,
+        test_switch,
+        "./api/sample-calls/play_sound-switch.yaml"
+    );
 
-        fn serialize_result(&self, sample: &SampleCall, result: &()) -> String {
-            DirectReturn::serialize_result(self, sample, result)
-        }
-
-        async fn check_result(
-            &self,
-            sample: &SampleCall,
-            args: Option<&PlaySoundRequest>,
-            result: &(),
-        ) {
-            DirectReturn::check_result(self, sample, args, result).await
-        }
-    }
-
-    impl DirectReturn<PlaySoundRequest, ()> for PlaySoundTestCase {}
-
-    async fn check_play_sound_sample(file_prefix: &str) {
-        let mut test_case = PlaySoundTestCase {};
-        test_case.check_sample_call(file_prefix).await;
-    }
-
-    #[tokio::test]
-    async fn test_play_switch() {
-        check_play_sound_sample("./api/sample-calls/play_sound-switch.yaml").await;
-    }
-
-    #[tokio::test]
-    async fn test_play_whoosh() {
-        check_play_sound_sample("./api/sample-calls/play_sound-whoosh.yaml").await;
-    }
+    check_sample!(
+        PlaySoundTestCase,
+        test_whoosh,
+        "./api/sample-calls/play_sound-whoosh.yaml"
+    );
 }

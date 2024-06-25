@@ -1,3 +1,4 @@
+#[macro_use]
 pub mod api_testing;
 pub mod database;
 pub mod sqlite;

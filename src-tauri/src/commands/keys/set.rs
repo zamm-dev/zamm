@@ -133,17 +133,15 @@ pub mod tests {
 
         async fn make_request(
             &mut self,
-            args: &Option<SetApiKeyRequest>,
+            args: &SetApiKeyRequest,
             side_effects: &SideEffectsHelpers,
         ) -> ZammResult<()> {
-            let request = args.as_ref().unwrap();
-
             set_api_key_helper(
                 self.api_keys,
                 side_effects.db.as_ref().unwrap(),
-                request.filename.as_deref(),
-                &request.service,
-                request.api_key.clone(),
+                args.filename.as_deref(),
+                &args.service,
+                args.api_key.clone(),
             )
             .await
         }
@@ -167,7 +165,7 @@ pub mod tests {
         async fn check_result(
             &self,
             sample: &SampleCall,
-            args: Option<&SetApiKeyRequest>,
+            args: &SetApiKeyRequest,
             result: &ZammResult<()>,
         ) {
             check_zamm_result(sample, result);
@@ -175,11 +173,10 @@ pub mod tests {
             // check that the API call actually modified the in-memory API keys,
             // regardless of success or failure
             let existing_api_keys = &self.api_keys.0.lock().await;
-            let actual_args = args.unwrap();
-            if actual_args.api_key.is_empty() {
+            if args.api_key.is_empty() {
                 assert_eq!(existing_api_keys.openai, None);
             } else {
-                let arg_api_key = Some(actual_args.api_key.clone());
+                let arg_api_key = Some(args.api_key.clone());
                 assert_eq!(existing_api_keys.openai, arg_api_key);
             }
         }

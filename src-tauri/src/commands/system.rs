@@ -119,11 +119,7 @@ mod tests {
         const EXPECTED_API_CALL: &'static str = "get_system_info";
         const CALL_HAS_ARGS: bool = false;
 
-        async fn make_request(
-            &mut self,
-            _: &Option<()>,
-            _: &SideEffectsHelpers,
-        ) -> SystemInfo {
+        async fn make_request(&mut self, _: &(), _: &SideEffectsHelpers) -> SystemInfo {
             self.system_info.clone()
         }
 
@@ -134,7 +130,7 @@ mod tests {
         async fn check_result(
             &self,
             sample: &SampleCall,
-            args: Option<&()>,
+            args: &(),
             result: &SystemInfo,
         ) {
             DirectReturn::check_result(self, sample, args, result).await

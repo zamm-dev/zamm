@@ -123,103 +123,51 @@ pub async fn import_db(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sample_call::SampleCall;
-    use crate::test_helpers::api_testing::standard_test_subdir;
-    use crate::test_helpers::{
-        SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
-    };
+    use crate::test_helpers::SideEffectsHelpers;
+    use crate::{check_sample, impl_result_test_case};
     use serde::{Deserialize, Serialize};
-    use stdext::function_name;
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct ImportDbRequest {
         path: String,
     }
 
-    struct ImportDbTestCase {
-        test_fn_name: &'static str,
+    async fn make_request_helper(
+        args: &ImportDbRequest,
+        side_effects: &SideEffectsHelpers,
+    ) -> ZammResult<DatabaseImportCounts> {
+        import_db_helper(side_effects.db.as_ref().unwrap(), &args.path).await
     }
 
-    impl SampleCallTestCase<ImportDbRequest, ZammResult<DatabaseImportCounts>>
-        for ImportDbTestCase
-    {
-        const EXPECTED_API_CALL: &'static str = "import_db";
-        const CALL_HAS_ARGS: bool = true;
+    impl_result_test_case!(
+        ImportDbTestCase,
+        import_db,
+        true,
+        ImportDbRequest,
+        DatabaseImportCounts
+    );
 
-        fn temp_test_subdirectory(&self) -> String {
-            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
-        }
+    check_sample!(
+        ImportDbTestCase,
+        test_initially_empty,
+        "./api/sample-calls/import_db-initially-empty.yaml"
+    );
 
-        async fn make_request(
-            &mut self,
-            args: &Option<ImportDbRequest>,
-            side_effects: &SideEffectsHelpers,
-        ) -> ZammResult<DatabaseImportCounts> {
-            import_db_helper(
-                side_effects.db.as_ref().unwrap(),
-                &args.as_ref().unwrap().path,
-            )
-            .await
-        }
+    check_sample!(
+        ImportDbTestCase,
+        test_api_key,
+        "./api/sample-calls/import_db-api-key.yaml"
+    );
 
-        fn serialize_result(
-            &self,
-            sample: &SampleCall,
-            result: &ZammResult<DatabaseImportCounts>,
-        ) -> String {
-            ZammResultReturn::serialize_result(self, sample, result)
-        }
+    check_sample!(
+        ImportDbTestCase,
+        test_conflicting_llm_call,
+        "./api/sample-calls/import_db-conflicting-llm-call.yaml"
+    );
 
-        async fn check_result(
-            &self,
-            sample: &SampleCall,
-            args: Option<&ImportDbRequest>,
-            result: &ZammResult<DatabaseImportCounts>,
-        ) {
-            ZammResultReturn::check_result(self, sample, args, result).await
-        }
-    }
-
-    impl ZammResultReturn<ImportDbRequest, DatabaseImportCounts> for ImportDbTestCase {}
-
-    async fn check_get_api_call_sample(test_fn_name: &'static str, file_prefix: &str) {
-        let mut test_case = ImportDbTestCase { test_fn_name };
-        test_case.check_sample_call(file_prefix).await;
-    }
-
-    #[tokio::test]
-    async fn test_import_db_initially_empty() {
-        check_get_api_call_sample(
-            function_name!(),
-            "./api/sample-calls/import_db-initially-empty.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_import_db_api_key() {
-        check_get_api_call_sample(
-            function_name!(),
-            "./api/sample-calls/import_db-api-key.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_import_db_conflicting_llm_call() {
-        check_get_api_call_sample(
-            function_name!(),
-            "./api/sample-calls/import_db-conflicting-llm-call.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_import_db_conflicting_api_key() {
-        check_get_api_call_sample(
-            function_name!(),
-            "./api/sample-calls/import_db-conflicting-api-key.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        ImportDbTestCase,
+        test_conflicting_api_key,
+        "./api/sample-calls/import_db-conflicting-api-key.yaml"
+    );
 }

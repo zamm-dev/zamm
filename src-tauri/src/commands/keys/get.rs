@@ -34,7 +34,7 @@ pub mod tests {
 
         async fn make_request(
             &mut self,
-            _: &Option<()>,
+            _: &(),
             _: &SideEffectsHelpers,
         ) -> ZammResult<ApiKeys> {
             Ok(get_api_keys_helper(self.api_keys).await)
@@ -51,7 +51,7 @@ pub mod tests {
         async fn check_result(
             &self,
             sample: &SampleCall,
-            args: Option<&()>,
+            args: &(),
             result: &ZammResult<ApiKeys>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await

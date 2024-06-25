@@ -38,115 +38,57 @@ pub async fn get_api_calls(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::sample_call::SampleCall;
-    use crate::test_helpers::api_testing::standard_test_subdir;
-    use crate::test_helpers::{
-        SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
-    };
+    use crate::test_helpers::SideEffectsHelpers;
+    use crate::{check_sample, impl_result_test_case};
     use serde::{Deserialize, Serialize};
-    use stdext::function_name;
 
     #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
     struct GetApiCallsRequest {
         offset: i32,
     }
 
-    struct GetApiCallsTestCase {
-        test_fn_name: &'static str,
+    async fn make_request_helper(
+        args: &GetApiCallsRequest,
+        side_effects: &SideEffectsHelpers,
+    ) -> ZammResult<Vec<LightweightLlmCall>> {
+        get_api_calls_helper(side_effects.db.as_ref().unwrap(), args.offset).await
     }
 
-    impl SampleCallTestCase<GetApiCallsRequest, ZammResult<Vec<LightweightLlmCall>>>
-        for GetApiCallsTestCase
-    {
-        const EXPECTED_API_CALL: &'static str = "get_api_calls";
-        const CALL_HAS_ARGS: bool = true;
+    impl_result_test_case!(
+        GetApiCallsTestCase,
+        get_api_calls,
+        true,
+        GetApiCallsRequest,
+        Vec<LightweightLlmCall>
+    );
 
-        fn temp_test_subdirectory(&self) -> String {
-            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
-        }
+    check_sample!(
+        GetApiCallsTestCase,
+        test_empty_list,
+        "./api/sample-calls/get_api_calls-empty.yaml"
+    );
 
-        async fn make_request(
-            &mut self,
-            args: &Option<GetApiCallsRequest>,
-            side_effects: &SideEffectsHelpers,
-        ) -> ZammResult<Vec<LightweightLlmCall>> {
-            get_api_calls_helper(
-                side_effects.db.as_ref().unwrap(),
-                args.as_ref().unwrap().offset,
-            )
-            .await
-        }
+    check_sample!(
+        GetApiCallsTestCase,
+        test_partial_list,
+        "./api/sample-calls/get_api_calls-small.yaml"
+    );
 
-        fn serialize_result(
-            &self,
-            sample: &SampleCall,
-            result: &ZammResult<Vec<LightweightLlmCall>>,
-        ) -> String {
-            ZammResultReturn::serialize_result(self, sample, result)
-        }
+    check_sample!(
+        GetApiCallsTestCase,
+        test_full_list,
+        "./api/sample-calls/get_api_calls-full.yaml"
+    );
 
-        async fn check_result(
-            &self,
-            sample: &SampleCall,
-            args: Option<&GetApiCallsRequest>,
-            result: &ZammResult<Vec<LightweightLlmCall>>,
-        ) {
-            ZammResultReturn::check_result(self, sample, args, result).await
-        }
-    }
+    check_sample!(
+        GetApiCallsTestCase,
+        test_offset,
+        "./api/sample-calls/get_api_calls-offset.yaml"
+    );
 
-    impl ZammResultReturn<GetApiCallsRequest, Vec<LightweightLlmCall>>
-        for GetApiCallsTestCase
-    {
-    }
-
-    async fn check_get_api_calls_sample(test_fn_name: &'static str, file_prefix: &str) {
-        let mut test_case = GetApiCallsTestCase { test_fn_name };
-        test_case.check_sample_call(file_prefix).await;
-    }
-
-    #[tokio::test]
-    async fn test_get_api_calls_empty() {
-        check_get_api_calls_sample(
-            function_name!(),
-            "./api/sample-calls/get_api_calls-empty.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_get_api_calls_less_than_10() {
-        check_get_api_calls_sample(
-            function_name!(),
-            "./api/sample-calls/get_api_calls-small.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_get_api_calls_full() {
-        check_get_api_calls_sample(
-            function_name!(),
-            "./api/sample-calls/get_api_calls-full.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_get_api_calls_offset() {
-        check_get_api_calls_sample(
-            function_name!(),
-            "./api/sample-calls/get_api_calls-offset.yaml",
-        )
-        .await;
-    }
-
-    #[tokio::test]
-    async fn test_get_api_calls_offset_empty() {
-        check_get_api_calls_sample(
-            function_name!(),
-            "./api/sample-calls/get_api_calls-offset-empty.yaml",
-        )
-        .await;
-    }
+    check_sample!(
+        GetApiCallsTestCase,
+        test_empty_offset,
+        "./api/sample-calls/get_api_calls-offset-empty.yaml"
+    );
 }
