@@ -1075,6 +1075,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "duct"
+version = "0.13.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4ab5718d1224b63252cd0c6f74f6480f9ffeb117438a2e0f5cf6d9a4798929c"
+dependencies = [
+ "libc",
+ "once_cell",
+ "os_pipe",
+ "shared_child",
+]
+
+[[package]]
 name = "dunce"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5604,6 +5616,7 @@ dependencies = [
  "diesel",
  "diesel_migrations",
  "directories",
+ "duct",
  "futures",
  "libsqlite3-sys",
  "mockall",
