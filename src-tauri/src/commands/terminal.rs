@@ -13,6 +13,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_capture_command_output() {
+        #[cfg(target_os = "windows")]
+        let output = capture_command_output("cmd", &["/C", "echo hello world"])
+            .await
+            .unwrap();
+        #[cfg(not(target_os = "windows"))]
         let output = capture_command_output("echo", &["hello", "world"])
             .await
             .unwrap();
@@ -27,6 +32,10 @@ mod tests {
         )
         .await
         .unwrap();
+
+        #[cfg(target_os = "windows")]
+        assert_eq!(output, "stdout\r\nstderr\r\nstdout");
+        #[cfg(not(target_os = "windows"))]
         assert_eq!(output, "stdout\nstderr\nstdout");
     }
 }
