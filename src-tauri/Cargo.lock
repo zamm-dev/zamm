@@ -146,6 +146,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "96d30a06541fbafbc7f82ed10c06164cfbd2c401138f6addd8404629c4b16711"
 
 [[package]]
+name = "asciicast"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4521e5a844fab4639ec32b21de3a2639f7c2783ba6bb9daead2672b6a298ed7b"
+dependencies = [
+ "chrono",
+ "serde",
+ "serde_derive",
+ "serde_json",
+]
+
+[[package]]
 name = "async-convert"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5609,6 +5621,7 @@ name = "zamm"
 version = "0.1.7"
 dependencies = [
  "anyhow",
+ "asciicast",
  "async-openai",
  "cfg-if",
  "chrono",

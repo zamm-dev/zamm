@@ -44,6 +44,7 @@ clap = { version = "4.5.4", features = ["derive"] }
 version-compare = "0.2.0"
 ollama-rs = "0.2.0"
 duct = "0.13.7"
+asciicast = "0.2.2"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
