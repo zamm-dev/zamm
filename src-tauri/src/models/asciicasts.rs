@@ -1,4 +1,5 @@
 use crate::models::llm_calls::EntityId;
+use crate::models::os::OS;
 use crate::schema::asciicasts;
 use anyhow::anyhow;
 use asciicast::{Entry, Header};
@@ -11,29 +12,29 @@ use diesel::sql_types::Text;
 use diesel::sqlite::Sqlite;
 
 #[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
-pub struct AsciiCast {
+pub struct AsciiCastData {
     pub header: Header,
     pub entries: Vec<Entry>,
 }
 
 #[derive(Queryable, Selectable, Debug, serde::Serialize, serde::Deserialize)]
 #[diesel(table_name = asciicasts)]
-pub struct AsciiCastRow {
+pub struct AsciiCast {
     pub id: EntityId,
     pub timestamp: NaiveDateTime,
     pub command: String,
-    pub shell: Option<String>,
+    pub os: Option<OS>,
     pub cast: String,
 }
 
-impl AsciiCastRow {
+impl AsciiCast {
     #[allow(dead_code)]
     pub fn as_insertable(&self) -> NewAsciiCast {
         NewAsciiCast {
             id: &self.id,
             timestamp: &self.timestamp,
             command: &self.command,
-            shell: self.shell.as_deref(),
+            os: self.os,
             cast: &self.cast,
         }
     }
@@ -45,11 +46,11 @@ pub struct NewAsciiCast<'a> {
     pub id: &'a EntityId,
     pub timestamp: &'a NaiveDateTime,
     pub command: &'a str,
-    pub shell: Option<&'a str>,
+    pub os: Option<OS>,
     pub cast: &'a str,
 }
 
-impl ToSql<Text, Sqlite> for AsciiCast
+impl ToSql<Text, Sqlite> for AsciiCastData
 where
     String: ToSql<Text, Sqlite>,
 {
@@ -66,7 +67,7 @@ where
     }
 }
 
-impl<DB> FromSql<Text, DB> for AsciiCast
+impl<DB> FromSql<Text, DB> for AsciiCastData
 where
     DB: Backend,
     String: FromSql<Text, DB>,
@@ -79,7 +80,7 @@ where
         let entries = lines
             .map(serde_json::from_str)
             .collect::<Result<Vec<Entry>, _>>()?;
-        Ok(AsciiCast { header, entries })
+        Ok(AsciiCastData { header, entries })
     }
 }
 
@@ -88,7 +89,6 @@ mod tests {
     use super::*;
     use crate::test_helpers::database::setup_database;
     use asciicast::{Entry, EventType, Header};
-
     use uuid::Uuid;
 
     #[test]
@@ -118,15 +118,15 @@ mod tests {
                 event_data: "hello".to_string(),
             },
         ];
-        let cast = AsciiCast { header, entries };
+        let cast = AsciiCastData { header, entries };
 
-        let row = AsciiCastRow {
+        let row = AsciiCast {
             id: EntityId {
                 uuid: Uuid::new_v4(),
             },
             timestamp: chrono::Utc::now().naive_utc(),
             command: "echo hello".to_string(),
-            shell: None,
+            os: Some(OS::Mac),
             cast: serde_json::to_string(&cast).unwrap(),
         };
 
@@ -135,12 +135,12 @@ mod tests {
             .execute(&mut conn)
             .unwrap();
 
-        let result = asciicasts::table.first::<AsciiCastRow>(&mut conn).unwrap();
+        let result = asciicasts::table.first::<AsciiCast>(&mut conn).unwrap();
 
         assert_eq!(result.id, row.id);
         assert_eq!(result.timestamp, row.timestamp);
         assert_eq!(result.command, row.command);
-        assert_eq!(result.shell, row.shell);
+        assert_eq!(result.os, row.os);
         assert_eq!(result.cast, row.cast);
     }
 }
