@@ -1,16 +1,10 @@
+use crate::models::os::{get_os, OS};
 use crate::models::shell::{get_shell, Shell};
 use serde::{Deserialize, Serialize};
 use specta::specta;
 use specta::Type;
 
 use std::env;
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
-pub enum OS {
-    Mac,
-    Linux,
-    Windows,
-}
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
 pub struct SystemInfo {
@@ -22,21 +16,6 @@ pub struct SystemInfo {
 
 fn get_zamm_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
-}
-
-fn get_os() -> Option<OS> {
-    #[cfg(target_os = "linux")]
-    return Some(OS::Linux);
-    #[cfg(target_os = "macos")]
-    return Some(OS::Mac);
-    #[cfg(target_os = "windows")]
-    return Some(OS::Windows);
-    #[cfg(not(any(
-        target_os = "linux",
-        target_os = "macos",
-        target_os = "windows"
-    )))]
-    return None;
 }
 
 fn get_relative_profile_init_file() -> Option<String> {
@@ -114,13 +93,6 @@ mod tests {
         let zamm_version = get_zamm_version();
         println!("Determined Zamm version to be {}", zamm_version);
         assert!(!zamm_version.is_empty());
-    }
-
-    #[test]
-    fn test_can_determine_os() {
-        let os = get_os();
-        println!("Determined OS to be {:?}", os);
-        assert!(os.is_some());
     }
 
     #[cfg(not(target_os = "windows"))]

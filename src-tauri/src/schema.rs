@@ -12,7 +12,7 @@ diesel::table! {
         id -> Text,
         timestamp -> Timestamp,
         command -> Text,
-        shell -> Nullable<Text>,
+        os -> Nullable<Text>,
         cast -> Text,
     }
 }
