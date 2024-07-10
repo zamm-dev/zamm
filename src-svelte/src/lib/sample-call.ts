@@ -22,6 +22,7 @@ export interface SideEffects {
   database?: Database;
   disk?: Disk;
   network?: Network;
+  terminal?: Terminal;
 }
 
 export interface Database {
@@ -35,6 +36,10 @@ export interface Disk {
 }
 
 export interface Network {
+  recordingFile: string;
+}
+
+export interface Terminal {
   recordingFile: string;
 }
 
@@ -255,6 +260,7 @@ const typeMap: any = {
       { json: "database", js: "database", typ: u(undefined, r("Database")) },
       { json: "disk", js: "disk", typ: u(undefined, r("Disk")) },
       { json: "network", js: "network", typ: u(undefined, r("Network")) },
+      { json: "terminal", js: "terminal", typ: u(undefined, r("Terminal")) },
     ],
     false,
   ),
@@ -277,4 +283,5 @@ const typeMap: any = {
     false,
   ),
   Network: o([{ json: "recordingFile", js: "recordingFile", typ: "" }], false),
+  Terminal: o([{ json: "recordingFile", js: "recordingFile", typ: "" }], false),
 };
