@@ -2,6 +2,7 @@ use crate::commands::errors::ZammResult;
 use crate::commands::terminal::{command_args_to_string, ActualTerminal, Terminal};
 use crate::models::asciicasts::AsciiCastData;
 use asciicast::EventType;
+use async_trait::async_trait;
 use rvcr::VCRMode;
 
 pub struct TestTerminal {
@@ -11,7 +12,7 @@ pub struct TestTerminal {
 }
 
 impl TestTerminal {
-    fn new(recording_file: &str) -> Self {
+    pub fn new(recording_file: &str) -> Self {
         let mode = match std::fs::metadata(recording_file) {
             Ok(_) => VCRMode::Replay,
             Err(_) => VCRMode::Record,
@@ -36,6 +37,7 @@ impl Drop for TestTerminal {
     }
 }
 
+#[async_trait]
 impl Terminal for TestTerminal {
     async fn run_command(
         &mut self,
