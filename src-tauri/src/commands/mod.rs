@@ -5,7 +5,7 @@ mod llms;
 pub mod preferences;
 mod sounds;
 mod system;
-mod terminal;
+pub mod terminal;
 
 pub use database::{export_db, import_db};
 pub use errors::Error;
