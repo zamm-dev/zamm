@@ -1,5 +1,5 @@
 use crate::commands::errors::ZammResult;
-use crate::commands::terminal::{command_args_to_string, ActualTerminal, Terminal};
+use crate::commands::terminal::{ActualTerminal, Terminal};
 use crate::models::asciicasts::AsciiCastData;
 use asciicast::EventType;
 use async_trait::async_trait;
@@ -39,22 +39,17 @@ impl Drop for TestTerminal {
 
 #[async_trait]
 impl Terminal for TestTerminal {
-    async fn run_command(
-        &mut self,
-        command: &str,
-        args: &[&str],
-    ) -> ZammResult<String> {
-        let actual_command = command_args_to_string(command, args);
+    async fn run_command(&mut self, command: &str) -> ZammResult<String> {
         match self.mode {
             VCRMode::Record => {
                 let mut actual_terminal = ActualTerminal::new();
-                let actual_output = actual_terminal.run_command(command, args).await?;
+                let actual_output = actual_terminal.run_command(command).await?;
                 self.cast = actual_terminal.session_data.clone();
                 Ok(actual_output)
             }
             VCRMode::Replay => {
                 let expected_command = self.cast.header.command.as_ref().unwrap();
-                assert_eq!(&actual_command, expected_command);
+                assert_eq!(command, expected_command);
 
                 assert_eq!(self.cast.entries.len(), 1);
                 let entry = &self.cast.entries[0];
@@ -73,7 +68,7 @@ mod tests {
     async fn test_terminal_replay() {
         let mut terminal = TestTerminal::new("api/sample-terminal-sessions/date.cast");
         let output = terminal
-            .run_command("date", &["+%A %B %e, %Y %R %z"])
+            .run_command("date \"+%A %B %e, %Y %R %z\"")
             .await
             .unwrap();
         assert_eq!(output, "Tuesday July  9, 2024 21:03 +0700");
