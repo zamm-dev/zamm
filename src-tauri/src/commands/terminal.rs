@@ -1,5 +1,6 @@
 use super::errors::ZammResult;
 use crate::models::asciicasts::AsciiCastData;
+use async_trait::async_trait;
 use duct::cmd;
 
 pub fn command_args_to_string(command: &str, args: &[&str]) -> String {
@@ -16,6 +17,7 @@ pub fn command_args_to_string(command: &str, args: &[&str]) -> String {
     format!("{} {}", command, escaped_args.join(" "))
 }
 
+#[async_trait]
 pub trait Terminal {
     async fn run_command(&mut self, command: &str, args: &[&str])
         -> ZammResult<String>;
@@ -34,6 +36,7 @@ impl ActualTerminal {
     }
 }
 
+#[async_trait]
 impl Terminal for ActualTerminal {
     async fn run_command(
         &mut self,

@@ -1,9 +1,11 @@
 use crate::commands::database::{read_database_contents, write_database_contents};
 use crate::commands::errors::ZammResult;
+use crate::commands::terminal::Terminal;
 use crate::sample_call::{Disk, SampleCall};
 use crate::test_helpers::database::{setup_database, setup_zamm_db};
 use crate::test_helpers::sqlite::{dump_sqlite_database, load_sqlite_database};
 use crate::test_helpers::temp_files::get_temp_test_dir;
+use crate::test_helpers::terminal::TestTerminal;
 use crate::ZammDatabase;
 use path_absolutize::Absolutize;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
@@ -237,6 +239,7 @@ pub struct SideEffectsHelpers {
     pub disk: Option<PathBuf>,
     pub db: Option<ZammDatabase>,
     pub network: Option<NetworkHelper>,
+    pub terminal: Option<Box<dyn Terminal>>,
 }
 
 pub fn standard_test_subdir(api_call: &str, test_fn_name: &str) -> String {
@@ -257,6 +260,19 @@ impl SampleCall {
             .recording_file;
 
         format!("api/sample-network-requests/{}", recording_file)
+    }
+
+    pub fn terminal_recording(&self) -> String {
+        let recording_file = &self
+            .side_effects
+            .as_ref()
+            .unwrap()
+            .terminal
+            .as_ref()
+            .unwrap()
+            .recording_file;
+
+        format!("api/sample-terminal-sessions/{}", recording_file)
     }
 
     pub fn db_start_dump(&self) -> Option<String> {
@@ -410,6 +426,14 @@ where
                     network_client,
                     mode: vcr_mode,
                 });
+            }
+
+            // prepare terminal if necessary
+            if side_effects.terminal.is_some() {
+                let recording_path = PathBuf::from(sample.terminal_recording());
+                let terminal =
+                    Box::new(TestTerminal::new(recording_path.to_str().unwrap()));
+                side_effects_helpers.terminal = Some(terminal);
             }
 
             // prepare db if necessary
