@@ -1,3 +1,4 @@
+use crate::commands::errors::ZammResult;
 use crate::models::llm_calls::EntityId;
 use crate::models::os::OS;
 use crate::schema::asciicasts;
@@ -10,11 +11,68 @@ use diesel::prelude::*;
 use diesel::serialize::{self, IsNull, Output, ToSql};
 use diesel::sql_types::Text;
 use diesel::sqlite::Sqlite;
+use std::fmt;
+use std::fmt::{Display, Formatter};
 
-#[derive(Debug, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct AsciiCastData {
     pub header: Header,
     pub entries: Vec<Entry>,
+}
+
+impl AsciiCastData {
+    #[allow(dead_code)]
+    pub fn new() -> Self {
+        Self {
+            header: Header {
+                version: 2,
+                width: 80,
+                height: 24,
+                timestamp: None,
+                duration: None,
+                idle_time_limit: None,
+                command: None,
+                title: None,
+                env: None,
+            },
+            entries: Vec::new(),
+        }
+    }
+
+    #[allow(dead_code)]
+    pub fn load(file: &str) -> ZammResult<Self> {
+        let contents = std::fs::read_to_string(file)?;
+        AsciiCastData::parse(&contents)
+    }
+
+    #[allow(dead_code)]
+    pub fn save(&self, file: &str) -> ZammResult<()> {
+        let contents = format!("{}", self);
+        std::fs::write(file, contents)?;
+        Ok(())
+    }
+
+    pub fn parse(contents: &str) -> ZammResult<Self> {
+        let mut lines = contents.lines();
+        let header_str = lines.next().ok_or(anyhow!("Empty cast"))?;
+        let header: Header = serde_json::from_str(header_str)?;
+        let entries = lines
+            .map(serde_json::from_str)
+            .collect::<Result<Vec<Entry>, _>>()?;
+        Ok(Self { header, entries })
+    }
+}
+
+impl Display for AsciiCastData {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let header = serde_json::to_string(&self.header).map_err(|_| fmt::Error)?;
+        let entries = self
+            .entries
+            .iter()
+            .map(|entry| serde_json::to_string(entry).map_err(|_| fmt::Error))
+            .collect::<Result<Vec<String>, _>>()?;
+        write!(f, "{}\n{}", header, entries.join("\n"))
+    }
 }
 
 #[derive(Queryable, Selectable, Debug, serde::Serialize, serde::Deserialize)]
@@ -55,13 +113,7 @@ where
     String: ToSql<Text, Sqlite>,
 {
     fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Sqlite>) -> serialize::Result {
-        let header_str = serde_json::to_string(&self.header)?;
-        let entries_str = self
-            .entries
-            .iter()
-            .map(serde_json::to_string)
-            .collect::<Result<Vec<String>, _>>()?;
-        let json_str = format!("{}\n{}", header_str, entries_str.join("\n"));
+        let json_str = format!("{}", self);
         out.set_value(json_str);
         Ok(IsNull::No)
     }
@@ -74,13 +126,7 @@ where
 {
     fn from_sql(bytes: DB::RawValue<'_>) -> deserialize::Result<Self> {
         let json_str = String::from_sql(bytes)?;
-        let mut lines = json_str.lines();
-        let header_str = lines.next().ok_or(anyhow!("Empty cast"))?;
-        let header: Header = serde_json::from_str(header_str)?;
-        let entries = lines
-            .map(serde_json::from_str)
-            .collect::<Result<Vec<Entry>, _>>()?;
-        Ok(AsciiCastData { header, entries })
+        AsciiCastData::parse(&json_str).map_err(Into::into)
     }
 }
 
