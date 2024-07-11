@@ -1,7 +1,7 @@
 use specta::specta;
 
 use crate::commands::errors::ZammResult;
-use crate::commands::terminal::models::{ActualTerminal, Terminal};
+use crate::commands::terminal::{ActualTerminal, Terminal};
 
 async fn run_command_helper(
     terminal: &mut dyn Terminal,
@@ -11,7 +11,6 @@ async fn run_command_helper(
     Ok(output)
 }
 
-#[allow(dead_code)]
 #[tauri::command(async)]
 #[specta]
 pub async fn run_command(command: String) -> ZammResult<String> {

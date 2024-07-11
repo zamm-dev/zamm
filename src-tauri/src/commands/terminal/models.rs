@@ -5,7 +5,7 @@ use async_trait::async_trait;
 use duct::cmd;
 
 #[async_trait]
-pub trait Terminal {
+pub trait Terminal: Send + Sync {
     async fn run_command(&mut self, command: &str) -> ZammResult<String>;
 }
 
@@ -14,7 +14,6 @@ pub struct ActualTerminal {
 }
 
 impl ActualTerminal {
-    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             session_data: AsciiCastData::new(),
