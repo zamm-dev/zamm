@@ -21,7 +21,6 @@ pub struct AsciiCastData {
 }
 
 impl AsciiCastData {
-    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {
             header: Header {
