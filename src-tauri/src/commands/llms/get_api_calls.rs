@@ -49,7 +49,7 @@ mod tests {
 
     async fn make_request_helper(
         args: &GetApiCallsRequest,
-        side_effects: &SideEffectsHelpers,
+        side_effects: &mut SideEffectsHelpers,
     ) -> ZammResult<Vec<LightweightLlmCall>> {
         get_api_calls_helper(side_effects.db.as_ref().unwrap(), args.offset).await
     }

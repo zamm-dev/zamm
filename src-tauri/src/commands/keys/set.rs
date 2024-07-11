@@ -134,7 +134,7 @@ pub mod tests {
         async fn make_request(
             &mut self,
             args: &SetApiKeyRequest,
-            side_effects: &SideEffectsHelpers,
+            side_effects: &mut SideEffectsHelpers,
         ) -> ZammResult<()> {
             set_api_key_helper(
                 self.api_keys,

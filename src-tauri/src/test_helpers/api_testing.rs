@@ -337,7 +337,11 @@ where
         unimplemented!()
     }
 
-    async fn make_request(&mut self, args: &T, side_effects: &SideEffectsHelpers) -> U;
+    async fn make_request(
+        &mut self,
+        args: &T,
+        side_effects: &mut SideEffectsHelpers,
+    ) -> U;
 
     fn serialize_result(&self, sample: &SampleCall, result: &U) -> String;
 
@@ -488,7 +492,7 @@ where
         } else {
             self.parse_args("null")
         };
-        let result = self.make_request(&args, &side_effects_helpers).await;
+        let result = self.make_request(&args, &mut side_effects_helpers).await;
         env::set_current_dir(current_dir).unwrap();
         let replacements = self.output_replacements(&sample, &result);
         println!("Replacements:");
@@ -631,7 +635,7 @@ macro_rules! impl_direct_test_case {
             async fn make_request(
                 &mut self,
                 args: &$req_type,
-                side_effects: &$crate::test_helpers::SideEffectsHelpers,
+                side_effects: &mut $crate::test_helpers::SideEffectsHelpers,
             ) -> $resp_type {
                 make_request_helper(args, side_effects).await
             }
@@ -686,7 +690,7 @@ macro_rules! impl_result_test_case {
             async fn make_request(
                 &mut self,
                 args: &$req_type,
-                side_effects: &$crate::test_helpers::SideEffectsHelpers,
+                side_effects: &mut $crate::test_helpers::SideEffectsHelpers,
             ) -> ZammResult<$resp_type> {
                 make_request_helper(args, side_effects).await
             }

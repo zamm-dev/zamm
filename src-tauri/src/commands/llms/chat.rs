@@ -249,7 +249,7 @@ mod tests {
         async fn make_request(
             &mut self,
             args: &ChatRequest,
-            side_effects: &SideEffectsHelpers,
+            side_effects: &mut SideEffectsHelpers,
         ) -> ZammResult<LightweightLlmCall> {
             let network_helper = side_effects.network.as_ref().unwrap();
             let api_keys = match network_helper.mode {

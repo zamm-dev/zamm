@@ -150,7 +150,7 @@ mod tests {
 
     async fn make_request_helper(
         args: &ImportDbRequest,
-        side_effects: &SideEffectsHelpers,
+        side_effects: &mut SideEffectsHelpers,
     ) -> ZammResult<DatabaseImportCounts> {
         import_db_helper(side_effects.db.as_ref().unwrap(), &args.path).await
     }

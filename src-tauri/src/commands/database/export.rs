@@ -99,7 +99,7 @@ mod tests {
 
     async fn make_request_helper(
         args: &ExportDbRequest,
-        side_effects: &SideEffectsHelpers,
+        side_effects: &mut SideEffectsHelpers,
     ) -> ZammResult<DatabaseCounts> {
         export_db_helper(side_effects.db.as_ref().unwrap(), &args.path).await
     }
