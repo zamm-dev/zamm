@@ -1,0 +1,1 @@
+INSERT INTO asciicasts VALUES('38a5e2ea-2222-4913-9b20-2a1c682ab358','2024-07-09 14:03:28','date "+%A %B %e, %Y %R %z"','Linux',replace('{"version":2,"width":80,"height":24,"timestamp":1720533808,"command":"date \"+%A %B %e, %Y %R %z\""}\n[0.004,"o","Tuesday July  9, 2024 21:03 +0700"]','\n',char(10)));

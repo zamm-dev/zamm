@@ -2,7 +2,9 @@ use crate::commands::database::metadata::DatabaseCounts;
 use crate::commands::errors::ZammResult;
 use crate::models::llm_calls::{NewLlmCallFollowUp, NewLlmCallRow, NewLlmCallVariant};
 use crate::models::{DatabaseContents, NewApiKey};
-use crate::schema::{api_keys, llm_call_follow_ups, llm_call_variants, llm_calls};
+use crate::schema::{
+    api_keys, asciicasts, llm_call_follow_ups, llm_call_variants, llm_calls,
+};
 use crate::ZammDatabase;
 use anyhow::anyhow;
 use diesel::prelude::*;
@@ -75,6 +77,7 @@ pub async fn read_database_contents(
                 || new_llm_call_ids.contains(&variant.variant_id)
         })
         .collect();
+    let new_terminal_sessions = db_contents.insertable_terminal_sessions();
 
     db.transaction::<(), diesel::result::Error, _>(|conn| {
         diesel::insert_into(api_keys::table)
@@ -88,6 +91,9 @@ pub async fn read_database_contents(
             .execute(conn)?;
         diesel::insert_into(llm_call_variants::table)
             .values(&new_llm_call_variants)
+            .execute(conn)?;
+        diesel::insert_into(asciicasts::table)
+            .values(&new_terminal_sessions)
             .execute(conn)?;
         Ok(())
     })?;
