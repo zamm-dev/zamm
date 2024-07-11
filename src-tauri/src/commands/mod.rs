@@ -14,3 +14,5 @@ pub use llms::{chat, get_api_call, get_api_calls};
 pub use preferences::{get_preferences, set_preferences};
 pub use sounds::play_sound;
 pub use system::get_system_info;
+#[allow(unused_imports)]
+pub use terminal::run_command;

@@ -1,6 +1,5 @@
 use specta::specta;
 use std::fs;
-
 use std::path::PathBuf;
 
 use crate::commands::errors::ZammResult;
