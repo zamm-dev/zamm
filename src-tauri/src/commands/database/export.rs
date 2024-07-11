@@ -1,8 +1,11 @@
 use crate::commands::database::metadata::DatabaseCounts;
 use crate::commands::errors::ZammResult;
+use crate::models::asciicasts::AsciiCast;
 use crate::models::llm_calls::{LlmCallFollowUp, LlmCallRow, LlmCallVariant};
 use crate::models::{ApiKey, DatabaseContents, LlmCallData};
-use crate::schema::{api_keys, llm_call_follow_ups, llm_call_variants, llm_calls};
+use crate::schema::{
+    api_keys, asciicasts, llm_call_follow_ups, llm_call_variants, llm_calls,
+};
 use crate::ZammDatabase;
 use anyhow::anyhow;
 use diesel::prelude::*;
@@ -30,6 +33,7 @@ pub async fn get_database_contents(
     let llm_calls_instances = llm_calls::table.load::<LlmCallRow>(db)?;
     let follow_ups = llm_call_follow_ups::table.load::<LlmCallFollowUp>(db)?;
     let variants = llm_call_variants::table.load::<LlmCallVariant>(db)?;
+    let terminal_sessions = asciicasts::table.load::<AsciiCast>(db)?;
 
     Ok(DatabaseContents {
         zamm_version,
@@ -39,6 +43,7 @@ pub async fn get_database_contents(
             follow_ups,
             variants,
         },
+        terminal_sessions,
     })
 }
 

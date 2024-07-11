@@ -6,7 +6,8 @@ use anyhow::anyhow;
 use asciicast::{Entry, Header};
 use chrono::naive::NaiveDateTime;
 use diesel::backend::Backend;
-use diesel::deserialize::{self, FromSql};
+use diesel::deserialize::{self, FromSql, FromSqlRow};
+use diesel::expression::AsExpression;
 use diesel::prelude::*;
 use diesel::serialize::{self, IsNull, Output, ToSql};
 use diesel::sql_types::Text;
@@ -14,10 +15,25 @@ use diesel::sqlite::Sqlite;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    AsExpression,
+    FromSqlRow,
+    serde::Serialize,
+    serde::Deserialize,
+)]
+#[diesel(sql_type = Text)]
 pub struct AsciiCastData {
     pub header: Header,
     pub entries: Vec<Entry>,
+}
+
+impl Default for AsciiCastData {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl AsciiCastData {
@@ -81,7 +97,7 @@ pub struct AsciiCast {
     pub timestamp: NaiveDateTime,
     pub command: String,
     pub os: Option<OS>,
-    pub cast: String,
+    pub cast: AsciiCastData,
 }
 
 impl AsciiCast {
@@ -104,7 +120,7 @@ pub struct NewAsciiCast<'a> {
     pub timestamp: &'a NaiveDateTime,
     pub command: &'a str,
     pub os: Option<OS>,
-    pub cast: &'a str,
+    pub cast: &'a AsciiCastData,
 }
 
 impl ToSql<Text, Sqlite> for AsciiCastData
@@ -134,17 +150,19 @@ mod tests {
     use super::*;
     use crate::test_helpers::database::setup_database;
     use asciicast::{Entry, EventType, Header};
+    use chrono::SubsecRound;
     use uuid::Uuid;
 
     #[test]
     fn test_ascii_cast_round_trip() {
         let mut conn = setup_database(None);
+        let timestamp = chrono::Utc::now().trunc_subsecs(0);
 
         let header = Header {
             version: 2,
             width: 80,
             height: 24,
-            timestamp: None,
+            timestamp: Some(timestamp),
             duration: Some(1.0),
             idle_time_limit: None,
             command: Some("echo hello".to_string()),
@@ -169,10 +187,10 @@ mod tests {
             id: EntityId {
                 uuid: Uuid::new_v4(),
             },
-            timestamp: chrono::Utc::now().naive_utc(),
+            timestamp: timestamp.naive_utc(),
             command: "echo hello".to_string(),
             os: Some(OS::Mac),
-            cast: serde_json::to_string(&cast).unwrap(),
+            cast: cast.clone(),
         };
 
         diesel::insert_into(asciicasts::table)

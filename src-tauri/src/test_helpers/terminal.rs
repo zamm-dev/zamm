@@ -58,6 +58,10 @@ impl Terminal for TestTerminal {
             }
         }
     }
+
+    fn get_cast(&self) -> &AsciiCastData {
+        &self.cast
+    }
 }
 
 #[cfg(test)]

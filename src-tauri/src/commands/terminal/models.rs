@@ -7,6 +7,7 @@ use duct::cmd;
 #[async_trait]
 pub trait Terminal: Send + Sync {
     async fn run_command(&mut self, command: &str) -> ZammResult<String>;
+    fn get_cast(&self) -> &AsciiCastData;
 }
 
 pub struct ActualTerminal {
@@ -44,6 +45,10 @@ impl Terminal for ActualTerminal {
             event_data: output.clone(),
         });
         Ok(output)
+    }
+
+    fn get_cast(&self) -> &AsciiCastData {
+        &self.session_data
     }
 }
 

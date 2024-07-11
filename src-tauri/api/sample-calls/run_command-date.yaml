@@ -6,7 +6,13 @@ request:
     }
 response:
   message: >
-    "Tuesday July  9, 2024 21:03 +0700"
+    {
+      "id": "38a5e2ea-2222-4913-9b20-2a1c682ab358",
+      "timestamp": "2024-07-09T14:03:28",
+      "output": "Tuesday July  9, 2024 21:03 +0700"
+    }
 sideEffects:
+  database:
+    endStateDump: command-run-date
   terminal:
     recordingFile: date.cast

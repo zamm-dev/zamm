@@ -1,50 +1,176 @@
-use specta::specta;
-
 use crate::commands::errors::ZammResult;
 use crate::commands::terminal::{ActualTerminal, Terminal};
+use crate::models::asciicasts::NewAsciiCast;
+use crate::models::llm_calls::EntityId;
+use crate::models::os::get_os;
+use crate::schema::asciicasts::{self};
+use crate::ZammDatabase;
+use anyhow::anyhow;
+use chrono::naive::NaiveDateTime;
+use diesel::RunQueryDsl;
+use serde::{Deserialize, Serialize};
+use specta::specta;
+use tauri::State;
+use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
+pub struct RunCommandResponse {
+    pub id: EntityId,
+    pub timestamp: NaiveDateTime,
+    pub output: String,
+}
 
 async fn run_command_helper(
+    zamm_db: &ZammDatabase,
     terminal: &mut dyn Terminal,
     command: &str,
-) -> ZammResult<String> {
+) -> ZammResult<RunCommandResponse> {
+    let db = &mut zamm_db.0.lock().await;
+
     let output = terminal.run_command(command).await?;
-    Ok(output)
+    let new_session_id = EntityId {
+        uuid: Uuid::new_v4(),
+    };
+    let cast = terminal.get_cast();
+    let timestamp = cast
+        .header
+        .timestamp
+        .map(|t| t.naive_utc())
+        .ok_or_else(|| anyhow!("No timestamp in cast"))?;
+
+    if let Some(conn) = db.as_mut() {
+        let command = cast
+            .header
+            .command
+            .clone()
+            .ok_or_else(|| anyhow!("No command in cast"))?;
+        diesel::insert_into(asciicasts::table)
+            .values(NewAsciiCast {
+                id: &new_session_id,
+                timestamp: &timestamp,
+                command: &command,
+                os: get_os(),
+                cast,
+            })
+            .execute(conn)?;
+    }
+
+    Ok(RunCommandResponse {
+        id: new_session_id,
+        timestamp,
+        output,
+    })
 }
 
 #[tauri::command(async)]
 #[specta]
-pub async fn run_command(command: String) -> ZammResult<String> {
+pub async fn run_command(
+    database: State<'_, ZammDatabase>,
+    command: String,
+) -> ZammResult<RunCommandResponse> {
     let mut terminal = ActualTerminal::new();
-    run_command_helper(&mut terminal, &command).await
+    run_command_helper(&database, &mut terminal, &command).await
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use crate::test_helpers::SideEffectsHelpers;
-    use crate::{check_sample, impl_result_test_case};
+    use crate::check_sample;
+    use crate::sample_call::SampleCall;
+    use crate::test_helpers::api_testing::standard_test_subdir;
+    use crate::test_helpers::{
+        SampleCallTestCase, SideEffectsHelpers, ZammResultReturn,
+    };
+    use std::collections::HashMap;
 
     #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
     struct RunCommandRequest {
         command: String,
     }
 
-    async fn make_request_helper(
-        args: &RunCommandRequest,
-        side_effects: &mut SideEffectsHelpers,
-    ) -> ZammResult<String> {
-        let terminal_mut = side_effects.terminal.as_mut().unwrap();
-        run_command_helper(&mut **terminal_mut, &args.command).await
+    struct RunCommandTestCase {
+        test_fn_name: &'static str,
     }
 
-    impl_result_test_case!(
-        RunCommandTestCase,
-        run_command,
-        true,
-        RunCommandRequest,
-        String
-    );
+    fn to_yaml_string<T: Serialize>(obj: &T) -> String {
+        serde_yaml::to_string(obj).unwrap().trim().to_string()
+    }
+
+    fn parse_response(response_str: &str) -> RunCommandResponse {
+        serde_json::from_str(response_str).unwrap()
+    }
+
+    impl SampleCallTestCase<RunCommandRequest, ZammResult<RunCommandResponse>>
+        for RunCommandTestCase
+    {
+        const EXPECTED_API_CALL: &'static str = "run_command";
+        const CALL_HAS_ARGS: bool = true;
+
+        fn temp_test_subdirectory(&self) -> String {
+            standard_test_subdir(Self::EXPECTED_API_CALL, self.test_fn_name)
+        }
+
+        async fn make_request(
+            &mut self,
+            args: &RunCommandRequest,
+            side_effects: &mut SideEffectsHelpers,
+        ) -> ZammResult<RunCommandResponse> {
+            let terminal_mut = side_effects.terminal.as_mut().unwrap();
+            run_command_helper(
+                side_effects.db.as_ref().unwrap(),
+                &mut **terminal_mut,
+                &args.command,
+            )
+            .await
+        }
+
+        fn output_replacements(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<RunCommandResponse>,
+        ) -> HashMap<String, String> {
+            let expected_output = parse_response(&sample.response.message);
+            let actual_output = result.as_ref().unwrap();
+            let expected_output_timestamp = to_yaml_string(&expected_output.timestamp);
+            let actual_output_timestamp = to_yaml_string(&actual_output.timestamp);
+            HashMap::from([
+                (
+                    to_yaml_string(&actual_output.id),
+                    to_yaml_string(&expected_output.id),
+                ),
+                (
+                    // sqlite dump produces timestamps with space instead of T
+                    actual_output_timestamp.replace('T', " "),
+                    expected_output_timestamp.replace('T', " "),
+                ),
+                (actual_output_timestamp, expected_output_timestamp),
+                #[cfg(target_os = "windows")]
+                ("Windows".to_string(), "Linux".to_string()),
+                #[cfg(target_os = "macos")]
+                ("Mac".to_string(), "Linux".to_string()),
+            ])
+        }
+
+        fn serialize_result(
+            &self,
+            sample: &SampleCall,
+            result: &ZammResult<RunCommandResponse>,
+        ) -> String {
+            ZammResultReturn::serialize_result(self, sample, result)
+        }
+
+        async fn check_result(
+            &self,
+            sample: &SampleCall,
+            args: &RunCommandRequest,
+            result: &ZammResult<RunCommandResponse>,
+        ) {
+            ZammResultReturn::check_result(self, sample, args, result).await
+        }
+    }
+
+    impl ZammResultReturn<RunCommandRequest, RunCommandResponse> for RunCommandTestCase {}
 
     check_sample!(
         RunCommandTestCase,
