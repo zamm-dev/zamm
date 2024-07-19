@@ -1,20 +1,8 @@
-<script lang="ts">
-  import { onMount } from "svelte";
-  import { derived } from "svelte/store";
-  import { standardDuration, newEmStore } from "$lib/preferences";
-  import prand from "pure-rand";
-
-  const rng = prand.xoroshiro128plus(8650539321744612);
+<script lang="ts" context="module">
   const CHAR_GAP = 2;
-  let charEm = newEmStore(26);
-  let textFont = derived(
-    charEm,
-    ($charEm) => $charEm + "px 'Zhi Mang Xing', sans-serif",
-  );
-  let blockSize = derived(charEm, ($charEm) => $charEm + CHAR_GAP);
   const ANIMATES_PER_CHAR = 2;
   const STATIC_INITIAL_DRAWS = 100;
-  const DDJ = [
+  export const DDJ = [
     "道可道非常道",
     "名可名非常名",
     "无名天地之始",
@@ -26,8 +14,27 @@
     "玄之又玄",
     "众妙之门",
   ];
+
+  export function getDdjLineNumber(column: number, numFullColumns: number) {
+    return (numFullColumns - 1 - column + DDJ.length) % DDJ.length;
+  }
+</script>
+
+<script lang="ts">
+  import { onMount } from "svelte";
+  import { derived } from "svelte/store";
+  import { standardDuration, newEmStore } from "$lib/preferences";
+  import prand from "pure-rand";
+
+  const rng = prand.xoroshiro128plus(8650539321744612);
   export let animated = false;
   $: animateIntervalMs = $standardDuration / 2;
+  let charEm = newEmStore(26);
+  let textFont = derived(
+    charEm,
+    ($charEm) => $charEm + "px 'Zhi Mang Xing', sans-serif",
+  );
+  let blockSize = derived(charEm, ($charEm) => $charEm + CHAR_GAP);
   let background: HTMLDivElement | null = null;
   let canvas: HTMLCanvasElement | null = null;
   let ctx: CanvasRenderingContext2D | null = null;
@@ -35,6 +42,7 @@
   let dropsPosition: number[] = [];
   let dropsAnimateCounter: number[] = [];
   let numColumns = 0;
+  let numFullColumns = 0;
   let numRows = 0;
 
   function stopAnimating() {
@@ -70,7 +78,10 @@
 
     canvas.width = background.clientWidth;
     canvas.height = background.clientHeight;
+    // note that BLOCK_SIZE already contains CHAR_GAP
+    // this is just adding CHAR_GAP-sized left padding to the animation
     numColumns = Math.ceil((canvas.width - CHAR_GAP) / $blockSize);
+    numFullColumns = Math.round((canvas.width - CHAR_GAP) / $blockSize - 0.1);
     numRows = Math.ceil(canvas.height / $blockSize);
 
     ctx = canvas.getContext("2d");
@@ -104,7 +115,7 @@
     ctx.font = $textFont;
 
     for (var column = 0; column < dropsPosition.length; column++) {
-      const textLine = DDJ[column % DDJ.length];
+      const textLine = DDJ[getDdjLineNumber(column, numFullColumns)];
       const textCharacter = textLine[dropsPosition[column] % textLine.length];
       ctx.fillText(
         textCharacter,
