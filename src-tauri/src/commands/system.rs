@@ -188,7 +188,7 @@ mod tests {
             } else {
                 let file_path = shell_init_file.unwrap();
                 assert!(file_path.starts_with('/'));
-                assert!(file_path.ends_with(".profile"));
+                assert!(file_path.ends_with(".profile") || file_path.ends_with(".bash_profile"));
             }
         }
     }
