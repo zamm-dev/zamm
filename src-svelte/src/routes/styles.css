@@ -78,6 +78,12 @@
   font-size: 18px;
 }
 
+@media only screen and (-webkit-min-device-pixel-ratio: 2) {
+  :root {
+    font-size: 14px;
+  }
+}
+
 td, th {
   padding: 0;
 }

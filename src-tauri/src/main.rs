@@ -13,13 +13,14 @@ mod test_helpers;
 mod upgrades;
 mod views;
 
+use anyhow::anyhow;
 use clap::Parser;
 use diesel::sqlite::SqliteConnection;
 use futures::executor;
 use setup::api_keys::{setup_api_keys, ApiKeys};
 #[cfg(debug_assertions)]
 use specta::collect_types;
-use tauri::Manager;
+use tauri::{LogicalSize, Manager, Size};
 #[cfg(debug_assertions)]
 use tauri_specta::ts;
 use tokio::sync::Mutex;
@@ -76,6 +77,16 @@ fn main() {
                                 eprintln!("Continuing with unchanged data");
                             });
                     });
+
+                    #[cfg(target_os = "macos")]
+                    {
+                        app.get_window("main")
+                            .ok_or(anyhow!("No main window"))?
+                            .set_size(Size::Logical(LogicalSize {
+                                width: 600.0,
+                                height: 450.0,
+                            }))?;
+                    }
 
                     Ok(())
                 })
