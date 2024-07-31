@@ -53,6 +53,7 @@ describe("Switch drag test", () => {
     const url = `http://localhost:6006/?path=/story/reusable-switch--${initialState}`;
     await page.goto(url);
 
+    await page.waitForSelector("#storybook-preview-iframe");
     const maybeFrame = page.frame({ name: "storybook-preview-iframe" });
     if (!maybeFrame) {
       throw new Error("Could not find Storybook iframe");
