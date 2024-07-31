@@ -51,6 +51,7 @@ describe("Slider drag test", () => {
       `http://localhost:6006/?path=/story/reusable-slider--${variant}`,
     );
 
+    await page.waitForSelector("#storybook-preview-iframe");
     const maybeFrame = page.frame({ name: "storybook-preview-iframe" });
     if (!maybeFrame) {
       throw new Error("Could not find Storybook iframe");
