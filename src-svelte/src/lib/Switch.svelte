@@ -10,7 +10,7 @@
 
 <script lang="ts">
   import { playSoundEffect } from "./sound";
-  import { animationSpeed } from "./preferences";
+  import { animationSpeed, ROOT_EM } from "./preferences";
   import getComponentId from "./label-id";
   import {
     draggable,
@@ -18,10 +18,7 @@
     type DragEventData,
   } from "@neodrag/svelte";
 
-  const rootFontSize = parseFloat(
-    getComputedStyle(document.documentElement).fontSize,
-  );
-  const switchSize = 1 * rootFontSize;
+  const switchSize = 1 * ROOT_EM;
   const labelWidth = 3 * switchSize;
   const offLeft = -labelWidth;
   const onLeft = 0;

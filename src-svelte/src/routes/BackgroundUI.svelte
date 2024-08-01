@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { standardDuration } from "$lib/preferences";
+  import { standardDuration, getAdjustedFontSize } from "$lib/preferences";
   import prand from "pure-rand";
 
   const rng = prand.xoroshiro128plus(8650539321744612);
-  const CHAR_EM = 26;
+  const CHAR_EM = getAdjustedFontSize(26);
   const CHAR_GAP = 2;
   const TEXT_FONT = CHAR_EM + "px 'Zhi Mang Xing', sans-serif";
   const BLOCK_SIZE = CHAR_EM + CHAR_GAP;
