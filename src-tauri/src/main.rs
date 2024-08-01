@@ -13,14 +13,13 @@ mod test_helpers;
 mod upgrades;
 mod views;
 
-use anyhow::anyhow;
 use clap::Parser;
 use diesel::sqlite::SqliteConnection;
 use futures::executor;
 use setup::api_keys::{setup_api_keys, ApiKeys};
 #[cfg(debug_assertions)]
 use specta::collect_types;
-use tauri::{LogicalSize, Manager, Size};
+use tauri::Manager;
 #[cfg(debug_assertions)]
 use tauri_specta::ts;
 use tokio::sync::Mutex;
@@ -81,8 +80,8 @@ fn main() {
                     #[cfg(target_os = "macos")]
                     {
                         app.get_window("main")
-                            .ok_or(anyhow!("No main window"))?
-                            .set_size(Size::Logical(LogicalSize {
+                            .ok_or(anyhow::anyhow!("No main window"))?
+                            .set_size(tauri::Size::Logical(tauri::LogicalSize {
                                 width: 600.0,
                                 height: 450.0,
                             }))?;
