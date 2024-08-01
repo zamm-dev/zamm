@@ -18,7 +18,7 @@ update-local-screenshots:
 	cp -r screenshots/local/testing/actual/* screenshots/baseline/
 
 quick-test:
-	yarn vitest --pool=forks --exclude src/routes/storybook.test.ts run
+	yarn vitest --pool=forks --exclude src/routes/storybook.test.ts
 
 test:
 	yarn test
