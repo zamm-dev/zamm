@@ -209,26 +209,27 @@
 
   .conversation-links {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 0.5rem;
   }
 
   .conversation.previous-links,
   .conversation.next-links {
-    flex: 1;
+    flex: none;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
   }
 
-  @media (max-width: 46rem) {
+  @media (min-width: 46rem),
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 34.5rem) {
     .conversation-links {
-      flex-direction: column;
+      flex-direction: row;
     }
 
     .conversation.previous-links,
     .conversation.next-links {
-      flex: none;
+      flex: 1;
     }
   }
 

@@ -12,6 +12,7 @@
 
   .button-container {
     display: flex;
+    flex-direction: column;
   }
 
   .button-container :global(.left-end) {
@@ -22,9 +23,10 @@
     --cut-bottom-right: 8px;
   }
 
-  @media (max-width: 35rem) {
+  @media (min-width: 35rem),
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 26rem) {
     .button-container {
-      flex-direction: column;
+      flex-direction: row;
     }
   }
 </style>

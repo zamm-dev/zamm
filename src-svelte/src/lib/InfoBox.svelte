@@ -244,7 +244,12 @@
   import getComponentId from "./label-id";
   import RoundDef from "./RoundDef.svelte";
   import { cubicInOut, cubicOut, linear } from "svelte/easing";
-  import { animationSpeed, animationsOn, transparencyOn } from "./preferences";
+  import {
+    animationSpeed,
+    animationsOn,
+    transparencyOn,
+    getAdjustedFontSize,
+  } from "./preferences";
   import { fade, type TransitionConfig } from "svelte/transition";
   import { firstAppLoad, firstPageLoad } from "./firstPageLoad";
   import { SubAnimation, PropertyAnimation } from "$lib/animation-timing";
@@ -267,7 +272,7 @@
     const parentNode = node.parentNode as Element;
     const actualWidth = parentNode.clientWidth;
     const actualHeight = parentNode.clientHeight;
-    const heightPerTitleLinePx = 26;
+    const heightPerTitleLinePx = getAdjustedFontSize(26);
     const titleHeight = (titleElement as HTMLElement).clientHeight;
     // multiply by 1.3 to account for small pixel differences between browsers
     const titleIsMultiline = titleHeight > heightPerTitleLinePx * 1.3;

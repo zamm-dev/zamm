@@ -77,6 +77,16 @@ fn main() {
                             });
                     });
 
+                    #[cfg(target_os = "macos")]
+                    {
+                        app.get_window("main")
+                            .ok_or(anyhow::anyhow!("No main window"))?
+                            .set_size(tauri::Size::Logical(tauri::LogicalSize {
+                                width: 600.0,
+                                height: 450.0,
+                            }))?;
+                    }
+
                     Ok(())
                 })
                 .manage(ZammDatabase(Mutex::new(possible_db)))

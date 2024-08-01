@@ -235,7 +235,8 @@
   }
 
   /* this takes sidebar width into account */
-  @media (min-width: 46rem) {
+  @media (min-width: 46rem),
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 34.5rem) {
     .credits-container
       :global(.sub-info-box:last-child .creditor:nth-last-child(2)) {
       padding-bottom: 0;
@@ -243,7 +244,8 @@
   }
 
   /* this takes sidebar width into account */
-  @media (min-width: 64rem) {
+  @media (min-width: 64rem),
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 48rem) {
     .credits-container
       :global(.sub-info-box:last-child .creditor:nth-last-child(3)) {
       padding-bottom: 0;

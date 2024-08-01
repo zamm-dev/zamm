@@ -119,7 +119,8 @@
   }
 
   /* this takes sidebar width into account */
-  @media (min-width: 52rem) {
+  @media (min-width: 52rem),
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 39rem) {
     .container :global(.sub-info-box .content) {
       grid-template-columns: 1fr 1fr;
     }

@@ -91,7 +91,8 @@
     width: 14rem;
   }
 
-  @media (min-width: 46rem) {
+  @media (min-width: 46rem),
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 34.5rem) {
     .creditor {
       padding: 0.75rem;
     }
