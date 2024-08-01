@@ -194,7 +194,8 @@
     cursor: pointer;
   }
 
-  @media (min-width: 52rem) {
+  @media (min-width: 52rem),
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 39rem) {
     label {
       white-space: nowrap;
     }
