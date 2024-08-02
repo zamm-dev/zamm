@@ -24,7 +24,7 @@
   }
 
   @media (min-width: 35rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 26rem) {
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 29rem) {
     .button-container {
       flex-direction: row;
     }

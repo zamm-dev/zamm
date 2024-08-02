@@ -195,7 +195,7 @@
   }
 
   @media (min-width: 52rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 39rem) {
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 43.5rem) {
     label {
       white-space: nowrap;
     }
