@@ -12,7 +12,7 @@
 
   /* this takes sidebar width into account */
   @media (min-width: 46rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 34.5rem) {
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 38.5rem) {
     .credits-grid {
       grid-template-columns: 1fr 1fr;
       justify-items: end;
@@ -21,7 +21,7 @@
 
   /* this takes sidebar width into account */
   @media (min-width: 55rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 41rem) {
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 46rem) {
     .credits-grid {
       justify-items: center;
     }
@@ -29,7 +29,7 @@
 
   /* this takes sidebar width into account */
   @media (min-width: 64rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 48rem) {
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 53.5rem) {
     .credits-grid {
       grid-template-columns: 1fr 1fr 1fr;
       justify-items: center;

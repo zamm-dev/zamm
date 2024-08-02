@@ -222,7 +222,7 @@
   }
 
   @media (min-width: 46rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 34.5rem) {
+    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 38.5rem) {
     .conversation-links {
       flex-direction: row;
     }
