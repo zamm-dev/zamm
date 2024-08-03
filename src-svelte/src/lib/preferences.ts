@@ -1,4 +1,4 @@
-import { writable, derived } from "svelte/store";
+import { writable, derived, get } from "svelte/store";
 
 export const animationsOn = writable(true);
 export const transparencyOn = writable(false);
@@ -14,6 +14,7 @@ export const standardDuration = derived(
 );
 
 const STANDARD_ROOT_EM = 18;
+export const rootEm = writable(18);
 
 function getRootFontSize() {
   const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
@@ -25,8 +26,14 @@ function getRootFontSize() {
   return rem;
 }
 
-export const ROOT_EM = getRootFontSize();
+export function updateRootFontSize() {
+  rootEm.set(getRootFontSize());
+}
 
 export function getAdjustedFontSize(fontSize: number) {
-  return Math.round(fontSize * (ROOT_EM / STANDARD_ROOT_EM));
+  return Math.round(fontSize * (get(rootEm) / STANDARD_ROOT_EM));
+}
+
+export function newEmStore(initialValue: number) {
+  return derived(rootEm, (_) => getAdjustedFontSize(initialValue));
 }

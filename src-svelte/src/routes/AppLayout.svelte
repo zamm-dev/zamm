@@ -14,6 +14,7 @@
     transparencyOn,
     volume,
     animationsOn,
+    updateRootFontSize,
   } from "$lib/preferences";
 
   export let currentRoute: string;
@@ -46,6 +47,8 @@
     if (prefs.transparency_on != null) {
       transparencyOn.set(prefs.transparency_on);
     }
+
+    updateRootFontSize();
 
     ready = true;
   });
