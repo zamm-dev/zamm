@@ -192,6 +192,7 @@
   label {
     flex: 1;
     cursor: pointer;
+    text-align: left;
   }
 
   @media (min-width: 52rem) {

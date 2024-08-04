@@ -206,6 +206,7 @@
   .label {
     white-space: nowrap;
     flex: 1;
+    text-align: left;
   }
 
   .slider {
