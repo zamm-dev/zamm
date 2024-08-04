@@ -21,6 +21,13 @@ const preview = {
             height: "650px",
           },
         },
+        tallerSmallMobile: {
+          name: "Taller Small Mobile",
+          styles: {
+            width: "320px",
+            height: "650px",
+          },
+        },
       },
     },
   },

@@ -16,7 +16,7 @@ const Template = ({ ...args }) => ({
 export const TinyPhoneScreen: StoryObj = Template.bind({}) as any;
 TinyPhoneScreen.parameters = {
   viewport: {
-    defaultViewport: "mobile1",
+    defaultViewport: "tallerSmallMobile",
   },
 };
 
