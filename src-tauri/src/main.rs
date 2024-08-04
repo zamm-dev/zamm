@@ -25,6 +25,7 @@ use tauri_specta::ts;
 use tokio::sync::Mutex;
 
 use cli::{Cli, Commands};
+#[cfg(target_os = "macos")]
 use commands::preferences::get_preferences_file_contents;
 use commands::{
     chat, export_db, get_api_call, get_api_calls, get_api_keys, get_preferences,
