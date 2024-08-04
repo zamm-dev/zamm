@@ -10,7 +10,7 @@
 
 <script lang="ts">
   import { playSoundEffect } from "./sound";
-  import { animationSpeed, ROOT_EM } from "./preferences";
+  import { animationSpeed, rootEm } from "./preferences";
   import getComponentId from "./label-id";
   import {
     draggable,
@@ -18,7 +18,7 @@
     type DragEventData,
   } from "@neodrag/svelte";
 
-  const switchSize = 1 * ROOT_EM;
+  const switchSize = 1 * $rootEm;
   const labelWidth = 3 * switchSize;
   const offLeft = -labelWidth;
   const onLeft = 0;
@@ -192,11 +192,17 @@
   label {
     flex: 1;
     cursor: pointer;
+    text-align: left;
   }
 
-  @media (min-width: 52rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 43.5rem) {
+  @media (min-width: 52rem) {
     label {
+      white-space: nowrap;
+    }
+  }
+
+  @media (min-width: 43.5rem) {
+    :global(.high-dpi-adjust) label {
       white-space: nowrap;
     }
   }

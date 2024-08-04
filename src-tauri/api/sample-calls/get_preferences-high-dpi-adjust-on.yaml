@@ -1,0 +1,10 @@
+request: ["get_preferences"]
+response:
+  message: >
+    {
+      "high_dpi_adjust": true
+    }
+sideEffects:
+  disk:
+    startStateDirectory: preferences/high-dpi-adjust-on
+    endStateDirectory: preferences/high-dpi-adjust-on

@@ -4,7 +4,12 @@ import "@testing-library/jest-dom";
 import { act, getByLabelText, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import Settings from "./Settings.svelte";
-import { soundOn, volume, transparencyOn } from "$lib/preferences";
+import {
+  soundOn,
+  volume,
+  transparencyOn,
+  highDpiAdjust,
+} from "$lib/preferences";
 import {
   parseSampleCall,
   type ParsedCall,
@@ -124,6 +129,34 @@ describe("Settings", () => {
     );
     await act(() => userEvent.click(transparencySwitch));
     expect(get(transparencyOn)).toBe(false);
+    expect(tauriInvokeMock).toHaveReturnedTimes(4);
+    expect(playback.unmatchedCalls.length).toBe(0);
+  });
+
+  test("can toggle high-dpi on and off while saving setting", async () => {
+    render(Settings, {});
+    expect(get(highDpiAdjust)).toBe(false);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    const otherVisualsRegion = screen.getByRole("region", {
+      name: "Other visual effects",
+    });
+    const highDpiSwitch = getByLabelText(otherVisualsRegion, "High DPI adjust");
+    playback.addCalls(playSwitchSoundCall);
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/set_preferences-high-dpi-adjust-on.yaml",
+    );
+    await act(() => userEvent.click(highDpiSwitch));
+    expect(get(highDpiAdjust)).toBe(true);
+    expect(tauriInvokeMock).toHaveReturnedTimes(2);
+    expect(playback.unmatchedCalls.length).toBe(0);
+
+    playback.addCalls(playSwitchSoundCall);
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/set_preferences-high-dpi-adjust-off.yaml",
+    );
+    await act(() => userEvent.click(highDpiSwitch));
+    expect(get(highDpiAdjust)).toBe(false);
     expect(tauriInvokeMock).toHaveReturnedTimes(4);
     expect(playback.unmatchedCalls.length).toBe(0);
   });

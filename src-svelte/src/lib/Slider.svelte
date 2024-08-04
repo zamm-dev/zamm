@@ -6,12 +6,12 @@
     type DragOptions,
     type DragEventData,
   } from "@neodrag/svelte";
-  import { ROOT_EM } from "./preferences";
+  import { rootEm } from "./preferences";
 
   const sliderId = getComponentId("slider");
   const transitionAnimation =
     `transition: ` + `transform var(--standard-duration) ease-out;`;
-  const overshoot = 0.4 * ROOT_EM; // how much overshoot to allow per-side
+  const overshoot = 0.4 * $rootEm; // how much overshoot to allow per-side
 
   export let label: string | undefined = undefined;
   export let min = 0;
@@ -206,6 +206,7 @@
   .label {
     white-space: nowrap;
     flex: 1;
+    text-align: left;
   }
 
   .slider {

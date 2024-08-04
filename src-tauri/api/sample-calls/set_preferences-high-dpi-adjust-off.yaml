@@ -1,0 +1,13 @@
+request:
+  - set_preferences
+  - >
+    {
+      "preferences": {
+        "high_dpi_adjust": false
+      }
+    }
+response:
+  message: "null"
+sideEffects:
+  disk:
+    endStateDirectory: preferences/high-dpi-adjust-off

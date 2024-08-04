@@ -23,9 +23,14 @@
     --cut-bottom-right: 8px;
   }
 
-  @media (min-width: 35rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 29rem) {
+  @media (min-width: 35rem) {
     .button-container {
+      flex-direction: row;
+    }
+  }
+
+  @media (min-width: 29rem) {
+    :global(.high-dpi-adjust) .button-container {
       flex-direction: row;
     }
   }

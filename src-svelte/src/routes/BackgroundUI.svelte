@@ -1,13 +1,17 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { standardDuration, getAdjustedFontSize } from "$lib/preferences";
+  import { derived } from "svelte/store";
+  import { standardDuration, newEmStore } from "$lib/preferences";
   import prand from "pure-rand";
 
   const rng = prand.xoroshiro128plus(8650539321744612);
-  const CHAR_EM = getAdjustedFontSize(26);
   const CHAR_GAP = 2;
-  const TEXT_FONT = CHAR_EM + "px 'Zhi Mang Xing', sans-serif";
-  const BLOCK_SIZE = CHAR_EM + CHAR_GAP;
+  let charEm = newEmStore(26);
+  let textFont = derived(
+    charEm,
+    ($charEm) => $charEm + "px 'Zhi Mang Xing', sans-serif",
+  );
+  let blockSize = derived(charEm, ($charEm) => $charEm + CHAR_GAP);
   const ANIMATES_PER_CHAR = 2;
   const STATIC_INITIAL_DRAWS = 100;
   const DDJ = [
@@ -66,8 +70,8 @@
 
     canvas.width = background.clientWidth;
     canvas.height = background.clientHeight;
-    numColumns = Math.ceil((canvas.width - CHAR_GAP) / BLOCK_SIZE);
-    numRows = Math.ceil(canvas.height / BLOCK_SIZE);
+    numColumns = Math.ceil((canvas.width - CHAR_GAP) / $blockSize);
+    numRows = Math.ceil(canvas.height / $blockSize);
 
     ctx = canvas.getContext("2d");
     if (!ctx) {
@@ -97,15 +101,15 @@
     ctx.fillStyle = "#FAF9F633";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = "#D5CDB4C0";
-    ctx.font = TEXT_FONT;
+    ctx.font = $textFont;
 
     for (var column = 0; column < dropsPosition.length; column++) {
       const textLine = DDJ[column % DDJ.length];
       const textCharacter = textLine[dropsPosition[column] % textLine.length];
       ctx.fillText(
         textCharacter,
-        CHAR_GAP + column * BLOCK_SIZE,
-        dropsPosition[column] * BLOCK_SIZE,
+        CHAR_GAP + column * $blockSize,
+        dropsPosition[column] * $blockSize,
       );
 
       if (dropsPosition[column] > numRows) {
@@ -137,11 +141,14 @@
       "url(/public-fonts/zhi-mang-xing.ttf)",
     );
     document.fonts.add(fontFile);
+    let charEmUnsubscribe: () => void | undefined;
 
     fontFile.load().then(
       () => {
-        resizeCanvas();
         window.addEventListener("resize", resizeCanvas);
+        charEmUnsubscribe = charEm.subscribe(() => {
+          setTimeout(resizeCanvas, 100);
+        });
       },
       (err) => {
         console.error(err);
@@ -151,6 +158,9 @@
     return () => {
       stopAnimating();
       window.removeEventListener("resize", resizeCanvas);
+      if (charEmUnsubscribe) {
+        charEmUnsubscribe();
+      }
     };
   });
 

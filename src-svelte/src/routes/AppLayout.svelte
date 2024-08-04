@@ -12,46 +12,65 @@
     backgroundAnimation,
     animationSpeed,
     transparencyOn,
+    highDpiAdjust,
     volume,
     animationsOn,
+    rootEm,
   } from "$lib/preferences";
 
   export let currentRoute: string;
   let ready = false;
 
-  onMount(async () => {
-    const prefs = await getPreferences();
-    if (prefs.sound_on != null) {
-      soundOn.set(prefs.sound_on);
-    }
+  onMount(() => {
+    const rootEmUnsubscribe = rootEm.subscribe((value) => {
+      document.documentElement.style.fontSize = `${value}px`;
+    });
 
-    if (prefs.volume != null) {
-      volume.set(prefs.volume);
-    }
+    const updatePrefs = async () => {
+      const prefs = await getPreferences();
 
-    if (prefs.animations_on != null) {
-      animationsOn.set(prefs.animations_on);
-    }
+      if (prefs.sound_on != null) {
+        soundOn.set(prefs.sound_on);
+      }
 
-    if (prefs.background_animation == null) {
-      backgroundAnimation.set(true);
-    } else {
-      backgroundAnimation.set(prefs.background_animation);
-    }
+      if (prefs.volume != null) {
+        volume.set(prefs.volume);
+      }
 
-    if (prefs.animation_speed != null) {
-      animationSpeed.set(prefs.animation_speed);
-    }
+      if (prefs.animations_on != null) {
+        animationsOn.set(prefs.animations_on);
+      }
 
-    if (prefs.transparency_on != null) {
-      transparencyOn.set(prefs.transparency_on);
-    }
+      if (prefs.background_animation == null) {
+        backgroundAnimation.set(true);
+      } else {
+        backgroundAnimation.set(prefs.background_animation);
+      }
 
-    ready = true;
+      if (prefs.animation_speed != null) {
+        animationSpeed.set(prefs.animation_speed);
+      }
+
+      if (prefs.transparency_on != null) {
+        transparencyOn.set(prefs.transparency_on);
+      }
+
+      if (prefs.high_dpi_adjust != null) {
+        highDpiAdjust.set(prefs.high_dpi_adjust);
+      }
+
+      ready = true;
+    };
+
+    updatePrefs();
+
+    return () => {
+      rootEmUnsubscribe();
+    };
   });
 </script>
 
-<div id="app">
+<div id="app" class:high-dpi-adjust={$highDpiAdjust}>
   <AnimationControl>
     <Sidebar />
 

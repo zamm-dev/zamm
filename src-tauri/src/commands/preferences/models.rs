@@ -20,6 +20,8 @@ pub struct Preferences {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub transparency_on: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub high_dpi_adjust: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub sound_on: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub volume: Option<f64>,

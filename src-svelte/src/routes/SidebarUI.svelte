@@ -5,7 +5,7 @@
   import IconHeartFill from "~icons/ph/heart-fill";
   import IconDatabase from "~icons/fa6-solid/database";
   import { playSoundEffect } from "$lib/sound";
-  import { animationSpeed } from "$lib/preferences";
+  import { animationSpeed, rootEm } from "$lib/preferences";
   import { onMount } from "svelte";
 
   const routes: App.Route[] = [
@@ -111,10 +111,14 @@
         transitionDuration = REGULAR_TRANSITION_DURATION;
       }, 10);
     };
-    updateIndicator();
+    const rootEmUnsubscribe = rootEm.subscribe(() => {
+      // update 100ms later in case browser takes time to update
+      setTimeout(updateIndicator, 100);
+    });
     window.addEventListener("resize", updateIndicator);
 
     return () => {
+      rootEmUnsubscribe();
       window.removeEventListener("resize", updateIndicator);
     };
   });

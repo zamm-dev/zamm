@@ -221,14 +221,24 @@
     gap: 0.5rem;
   }
 
-  @media (min-width: 46rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 38.5rem) {
+  @media (min-width: 46rem) {
     .conversation-links {
       flex-direction: row;
     }
 
     .conversation.previous-links,
     .conversation.next-links {
+      flex: 1;
+    }
+  }
+
+  @media (min-width: 38.5rem) {
+    :global(.high-dpi-adjust) .conversation-links {
+      flex-direction: row;
+    }
+
+    :global(.high-dpi-adjust) .conversation.previous-links,
+    :global(.high-dpi-adjust) .conversation.next-links {
       flex: 1;
     }
   }
