@@ -1,6 +1,8 @@
 <script lang="ts">
   import BackgroundUI from "./BackgroundUI.svelte";
-  import { backgroundAnimation } from "$lib/preferences";
+  import { animationsOn, backgroundAnimation } from "$lib/preferences";
+
+  $: animated = $animationsOn && $backgroundAnimation;
 </script>
 
-<BackgroundUI bind:animated={$backgroundAnimation} />
+<BackgroundUI bind:animated />
