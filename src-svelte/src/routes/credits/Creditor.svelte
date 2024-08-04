@@ -91,9 +91,14 @@
     width: 14rem;
   }
 
-  @media (min-width: 46rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 38.5rem) {
+  @media (min-width: 46rem) {
     .creditor {
+      padding: 0.75rem;
+    }
+  }
+
+  @media (min-width: 38.5rem) {
+    :global(.high-dpi-adjust) .creditor {
       padding: 0.75rem;
     }
   }

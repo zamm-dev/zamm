@@ -194,9 +194,14 @@
     cursor: pointer;
   }
 
-  @media (min-width: 52rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 43.5rem) {
+  @media (min-width: 52rem) {
     label {
+      white-space: nowrap;
+    }
+  }
+
+  @media (min-width: 43.5rem) {
+    :global(.high-dpi-adjust) label {
       white-space: nowrap;
     }
   }

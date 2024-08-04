@@ -9,6 +9,7 @@ import {
   animationsOn,
   animationSpeed,
   transparencyOn,
+  highDpiAdjust,
 } from "$lib/preferences";
 import { TauriInvokePlayback } from "$lib/sample-call-testing";
 import { tickFor } from "$lib/test-helpers";
@@ -127,6 +128,21 @@ describe("AppLayout", () => {
     render(AppLayout, { currentRoute: "/" });
     await waitFor(() => {
       expect(get(transparencyOn)).toBe(true);
+    });
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+  });
+
+  test("will set high DPI adjust if preference overridden", async () => {
+    expect(get(highDpiAdjust)).toBe(false);
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/get_preferences-high-dpi-adjust-on.yaml",
+    );
+
+    render(AppLayout, { currentRoute: "/" });
+    await waitFor(() => {
+      expect(get(highDpiAdjust)).toBe(true);
     });
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
   });

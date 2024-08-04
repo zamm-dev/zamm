@@ -25,6 +25,7 @@ use tauri_specta::ts;
 use tokio::sync::Mutex;
 
 use cli::{Cli, Commands};
+use commands::preferences::get_preferences_file_contents;
 use commands::{
     chat, export_db, get_api_call, get_api_calls, get_api_keys, get_preferences,
     get_system_info, import_db, play_sound, set_api_key, set_preferences,
@@ -79,12 +80,17 @@ fn main() {
 
                     #[cfg(target_os = "macos")]
                     {
-                        app.get_window("main")
-                            .ok_or(anyhow::anyhow!("No main window"))?
-                            .set_size(tauri::Size::Logical(tauri::LogicalSize {
-                                width: 666.6,  // 800 * 0.8333...
-                                height: 500.0, // 600 * 0.8333...
-                            }))?;
+                        let prefs = get_preferences_file_contents(&config_dir)?;
+                        if prefs.high_dpi_adjust.is_none()
+                            || prefs.high_dpi_adjust.unwrap()
+                        {
+                            app.get_window("main")
+                                .ok_or(anyhow::anyhow!("No main window"))?
+                                .set_size(tauri::Size::Logical(tauri::LogicalSize {
+                                    width: 666.6,  // 800 * 0.8333...
+                                    height: 500.0, // 600 * 0.8333...
+                                }))?;
+                        }
                     }
 
                     Ok(())

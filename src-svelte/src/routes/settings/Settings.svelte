@@ -7,6 +7,7 @@
     animationsOn,
     animationSpeed,
     transparencyOn,
+    highDpiAdjust,
     backgroundAnimation,
     soundOn,
     volume,
@@ -34,6 +35,12 @@
   const onTransparencyToggle = (newValue: boolean) => {
     setPreferences({
       transparency_on: newValue,
+    });
+  };
+
+  const onHighDpiAdjust = (newValue: boolean) => {
+    setPreferences({
+      high_dpi_adjust: newValue,
     });
   };
 
@@ -80,6 +87,11 @@
         bind:toggledOn={$transparencyOn}
         onToggle={onTransparencyToggle}
       />
+      <SettingsSwitch
+        label="High DPI adjust"
+        bind:toggledOn={$highDpiAdjust}
+        onToggle={onHighDpiAdjust}
+      />
     </SubInfoBox>
   </div>
 
@@ -119,9 +131,14 @@
   }
 
   /* this takes sidebar width into account */
-  @media (min-width: 52rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 43.5rem) {
+  @media (min-width: 52rem) {
     .container :global(.sub-info-box .content) {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  @media (min-width: 43.5rem) {
+    :global(.high-dpi-adjust) .container :global(.sub-info-box .content) {
       grid-template-columns: 1fr 1fr;
     }
   }

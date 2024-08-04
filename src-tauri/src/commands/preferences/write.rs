@@ -98,31 +98,43 @@ mod tests {
 
     check_sample!(
         SetPreferencesTestCase,
-        test_set_preferences_sound_off_without_file,
+        test_sound_off_without_file,
         "./api/sample-calls/set_preferences-sound-off.yaml"
     );
 
     check_sample!(
         SetPreferencesTestCase,
-        test_set_preferences_sound_on_with_extra_settings,
+        test_sound_on_with_extra_settings,
         "./api/sample-calls/set_preferences-sound-on.yaml"
     );
 
     check_sample!(
         SetPreferencesTestCase,
-        test_set_preferences_volume_partial,
+        test_volume_partial,
         "./api/sample-calls/set_preferences-volume-partial.yaml"
     );
 
     check_sample!(
         SetPreferencesTestCase,
-        test_set_preferences_transparency_on,
+        test_transparency_on,
         "./api/sample-calls/set_preferences-transparency-on.yaml"
     );
 
     check_sample!(
         SetPreferencesTestCase,
-        test_set_preferences_transparency_off,
+        test_transparency_off,
         "./api/sample-calls/set_preferences-transparency-off.yaml"
+    );
+
+    check_sample!(
+        SetPreferencesTestCase,
+        test_high_dpi_adjust_on,
+        "./api/sample-calls/set_preferences-high-dpi-adjust-on.yaml"
+    );
+
+    check_sample!(
+        SetPreferencesTestCase,
+        test_high_dpi_adjust_off,
+        "./api/sample-calls/set_preferences-high-dpi-adjust-on.yaml"
     );
 }

@@ -141,11 +141,14 @@
       "url(/public-fonts/zhi-mang-xing.ttf)",
     );
     document.fonts.add(fontFile);
+    let charEmUnsubscribe: () => void | undefined;
 
     fontFile.load().then(
       () => {
-        resizeCanvas();
         window.addEventListener("resize", resizeCanvas);
+        charEmUnsubscribe = charEm.subscribe(() => {
+          setTimeout(resizeCanvas, 100);
+        });
       },
       (err) => {
         console.error(err);
@@ -155,6 +158,9 @@
     return () => {
       stopAnimating();
       window.removeEventListener("resize", resizeCanvas);
+      if (charEmUnsubscribe) {
+        charEmUnsubscribe();
+      }
     };
   });
 

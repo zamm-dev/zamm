@@ -77,7 +77,6 @@ export type VariantMetadata = {
   variants?: LlmCallReference[];
   sibling_variants?: LlmCallReference[];
 };
-export type Sound = "Switch" | "Whoosh";
 export type Prompt = { type: "Chat" } & ChatPrompt;
 export type DatabaseCounts = { num_api_keys: number; num_llm_calls: number };
 export type Service = "OpenAI";
@@ -87,6 +86,7 @@ export type Preferences = {
   background_animation?: boolean | null;
   animation_speed?: number | null;
   transparency_on?: boolean | null;
+  high_dpi_adjust?: boolean | null;
   sound_on?: boolean | null;
   volume?: number | null;
 };
@@ -120,6 +120,7 @@ export type ChatArgs = {
   canonical_id?: string | null;
 };
 export type LlmCallReference = { id: EntityId; snippet: string };
+export type Sound = "Switch" | "Whoosh";
 export type DatabaseImportCounts = {
   imported: DatabaseCounts;
   ignored: DatabaseCounts;

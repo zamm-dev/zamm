@@ -235,18 +235,32 @@
   }
 
   /* this takes sidebar width into account */
-  @media (min-width: 46rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 38.5rem) {
+  @media (min-width: 46rem) {
     .credits-container
       :global(.sub-info-box:last-child .creditor:nth-last-child(2)) {
       padding-bottom: 0;
     }
   }
 
+  @media (min-width: 38.5rem) {
+    :global(.high-dpi-adjust)
+      .credits-container
+      :global(.sub-info-box:last-child .creditor:nth-last-child(2)) {
+      padding-bottom: 0;
+    }
+  }
+
   /* this takes sidebar width into account */
-  @media (min-width: 64rem),
-    only screen and (-webkit-min-device-pixel-ratio: 2) and (min-width: 53.5rem) {
+  @media (min-width: 64rem) {
     .credits-container
+      :global(.sub-info-box:last-child .creditor:nth-last-child(3)) {
+      padding-bottom: 0;
+    }
+  }
+
+  @media (min-width: 53.5rem) {
+    :global(.high-dpi-adjust)
+      .credits-container
       :global(.sub-info-box:last-child .creditor:nth-last-child(3)) {
       padding-bottom: 0;
     }
