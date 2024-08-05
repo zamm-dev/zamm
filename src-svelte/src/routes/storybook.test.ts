@@ -70,6 +70,10 @@ const components: ComponentTestConfig[] = [
         name: "transparent",
         browser: "chromium",
         selector: ".screenshot-container",
+        additionalAction: async (_) => {
+          // wait for background to load; probably due to fonts
+          await new Promise((r) => setTimeout(r, 2_000));
+        },
       },
     ],
     screenshotEntireBody: true,
