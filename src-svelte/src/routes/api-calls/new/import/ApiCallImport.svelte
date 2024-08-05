@@ -120,12 +120,21 @@
 </script>
 
 <InfoBox title="Import API Call" fullHeight>
-  <p>
-    Import an existing conversation from LM Studio's "Export" &gt; "Copy as
-    JSON" feature:
-  </p>
+  <p>Import an existing conversation by:</p>
+  <ul>
+    <li>
+      Copy-pasting Ollama terminal output, starting with "
+      <pre>&gt;&gt;&gt; </pre>
+      "
+    </li>
+    <li>Clicking LM Studio's "Export" button &gt; "Copy as JSON"</li>
+  </ul>
 
-  <textarea rows="10" bind:value={importData}></textarea>
+  <textarea
+    rows="10"
+    bind:value={importData}
+    placeholder="Paste your conversation here..."
+  ></textarea>
 
   <div class="action">
     <Button on:click={importConversation}>Import</Button>
@@ -133,6 +142,24 @@
 </InfoBox>
 
 <style>
+  p {
+    margin: 0;
+  }
+
+  ul {
+    margin: 0 0 0.5rem 0;
+  }
+
+  p,
+  ul {
+    text-align: left;
+  }
+
+  pre {
+    display: inline;
+    font-family: var(--font-mono);
+  }
+
   textarea {
     box-sizing: border-box;
     width: 100%;
