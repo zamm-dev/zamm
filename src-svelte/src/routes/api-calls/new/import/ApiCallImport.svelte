@@ -122,7 +122,7 @@
 <InfoBox title="Import API Call" fullHeight>
   <p>Import an existing conversation by:</p>
   <ul>
-    <li>
+    <li class="atomic-reveal">
       Copy-pasting Ollama terminal output, starting with "
       <pre>&gt;&gt;&gt; </pre>
       "
@@ -136,7 +136,7 @@
     placeholder="Paste your conversation here..."
   ></textarea>
 
-  <div class="action">
+  <div class="action atomic-reveal">
     <Button on:click={importConversation}>Import</Button>
   </div>
 </InfoBox>
