@@ -26,6 +26,7 @@
   import InfoBox from "$lib/InfoBox.svelte";
   import PromptComponent from "../[slug]/Prompt.svelte";
   import Button from "$lib/controls/Button.svelte";
+  import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import { chat } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import { goto } from "$app/navigation";
@@ -59,6 +60,12 @@
 </script>
 
 <InfoBox title="New API Call">
+  <EmptyPlaceholder>
+    Manually build an API call below, or <a href="/api-calls/new/import/"
+      >import one</a
+    > from another source.
+  </EmptyPlaceholder>
+
   {#if $canonicalRef}
     <div class="canonical-display">
       <span class="label">Original API call:</span>
