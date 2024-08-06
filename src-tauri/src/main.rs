@@ -87,8 +87,15 @@ fn main() {
                         app.get_window("main")
                             .ok_or(anyhow::anyhow!("No main window"))?
                             .set_size(tauri::Size::Logical(tauri::LogicalSize {
-                                width: 666.6,  // 800 * 0.8333...
-                                height: 500.0, // 600 * 0.8333...
+                                width: 708.0,  // 850 * 0.8333...
+                                height: 541.0, // 650 * 0.8333...
+                            }))?;
+                    } else {
+                        app.get_window("main")
+                            .ok_or(anyhow::anyhow!("No main window"))?
+                            .set_size(tauri::Size::Logical(tauri::LogicalSize {
+                                width: 850.0,
+                                height: 650.0,
                             }))?;
                     }
 
