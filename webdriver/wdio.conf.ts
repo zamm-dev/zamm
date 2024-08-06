@@ -36,6 +36,14 @@ exports.config = {
       stdio: [null, process.stdout, process.stderr],
     })),
 
+  before: (
+    _capabilities: Record<string, unknown>[],
+    _specs: string[],
+    browser: WebdriverIO.Browser,
+  ) => {
+    browser.setWindowSize(850, 650);
+  },
+
   // clean up the `tauri-driver` process we spawned at the start of the session
   afterSession: () => tauriDriver.kill(),
 
@@ -44,7 +52,7 @@ exports.config = {
       "image-comparison",
       {
         baselineFolder: join(process.cwd(), "./screenshots/baseline/"),
-        formatImageName: "{tag}-{width}x{height}",
+        formatImageName: "{tag}",
         screenshotPath: join(process.cwd(), "./screenshots/testing/"),
         savePerInstance: true,
         autoSaveBaseline: true,
