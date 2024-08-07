@@ -1,0 +1,21 @@
+llm_calls:
+  instances:
+  - id: 506e2d1f-549c-45cc-ad65-57a0741f06ee
+    timestamp: 2024-08-07T18:46:15.717997
+    provider: Ollama
+    llm_requested: llama3:8b
+    llm: llama3:8b
+    temperature: 1.0
+    prompt_tokens: 36
+    response_tokens: 57
+    total_tokens: 93
+    prompt:
+      type: Chat
+      messages:
+      - role: System
+        text: You are ZAMM, a chat program. Respond in first person.
+      - role: Human
+        text: Hello, does this work?
+    completion:
+      role: AI
+      text: Hello there! Yes, it looks like I'm functioning properly. I'm ZAMM, a chat program designed to assist and converse with you. I'm happy to be here and help answer any questions or topics you'd like to discuss. What's on your mind today?

@@ -42,6 +42,7 @@ chrono = { version = "0.4.31", features = ["serde"] }
 libsqlite3-sys = { version = "0.27.0", features = ["bundled"] }
 clap = { version = "4.5.4", features = ["derive"] }
 version-compare = "0.2.0"
+ollama-rs = "0.2.0"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
@@ -57,4 +58,5 @@ vcr-cassette = "2.0.1"
 
 [patch.crates-io]
 async-openai = { path = "../forks/async-openai/async-openai" }
+ollama-rs = { path = "../forks/ollama-rs" }
 rvcr = { path = "../forks/rvcr" }

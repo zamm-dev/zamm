@@ -1,5 +1,6 @@
-use crate::models::ApiKey;
 use crate::schema::api_keys;
+use crate::{commands::errors::ZammResult, models::ApiKey};
+use anyhow::anyhow;
 use diesel;
 use diesel::deserialize::FromSqlRow;
 use diesel::expression::AsExpression;
@@ -28,6 +29,7 @@ use strum_macros::{Display, EnumString};
 #[strum(serialize_all = "snake_case")]
 pub enum Service {
     OpenAI,
+    Ollama,
 }
 
 #[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
@@ -36,15 +38,23 @@ pub struct ApiKeys {
 }
 
 impl ApiKeys {
-    pub fn update(&mut self, service: &Service, key: String) {
+    pub fn update(&mut self, service: &Service, key: String) -> ZammResult<()> {
         match service {
-            Service::OpenAI => self.openai = Some(key),
+            Service::OpenAI => {
+                self.openai = Some(key);
+                Ok(())
+            }
+            Service::Ollama => Err(anyhow!("Ollama doesn't take API keys").into()),
         }
     }
 
-    pub fn remove(&mut self, service: &Service) {
+    pub fn remove(&mut self, service: &Service) -> ZammResult<()> {
         match service {
-            Service::OpenAI => self.openai = None,
+            Service::OpenAI => {
+                self.openai = None;
+                Ok(())
+            }
+            Service::Ollama => Err(anyhow!("Ollama doesn't take API keys").into()),
         }
     }
 }
@@ -57,7 +67,9 @@ pub fn setup_api_keys(possible_db: &mut Option<SqliteConnection>) -> ApiKeys {
             api_keys::table.load(conn);
         if let Ok(api_keys_rows) = load_result {
             for api_key in api_keys_rows {
-                api_keys.update(&api_key.service, api_key.api_key);
+                if let Err(e) = api_keys.update(&api_key.service, api_key.api_key) {
+                    eprintln!("Error reading API key for {}: {}", api_key.service, e);
+                }
             }
         }
     }

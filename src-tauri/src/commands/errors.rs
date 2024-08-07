@@ -133,6 +133,11 @@ pub enum Error {
         source: async_openai::error::OpenAIError,
     },
     #[error(transparent)]
+    Ollama {
+        #[from]
+        source: ollama_rs::error::OllamaError,
+    },
+    #[error(transparent)]
     Tauri {
         #[from]
         source: tauri::Error,

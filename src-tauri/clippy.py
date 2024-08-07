@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-SEPARATOR = "warning: `async-openai` (lib) generated "
+SEPARATOR = "warning: `ollama-rs` (lib) generated "
 
 clippy_command = "cargo clippy --color never --manifest-path src-tauri/Cargo.toml --fix --allow-dirty --allow-staged --all-targets --all-features -- -Dwarnings"
 clippy_process = subprocess.Popen(

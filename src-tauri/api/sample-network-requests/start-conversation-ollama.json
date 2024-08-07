@@ -1,0 +1,33 @@
+{
+  "http_interactions": [
+    {
+      "response": {
+        "body": {
+          "encoding": null,
+          "string": "{\"model\":\"llama3:8b\",\"created_at\":\"2024-08-07T18:42:06.243357Z\",\"message\":{\"role\":\"assistant\",\"content\":\"Hello there! Yes, it looks like I'm functioning properly. I'm ZAMM, a chat program designed to assist and converse with you. I'm happy to be here and help answer any questions or topics you'd like to discuss. What's on your mind today?\"},\"done_reason\":\"stop\",\"done\":true,\"total_duration\":9353598125,\"load_duration\":5817306834,\"prompt_eval_count\":36,\"prompt_eval_duration\":356755000,\"eval_count\":57,\"eval_duration\":3175917000}"
+        },
+        "http_version": "1.1",
+        "status": {
+          "code": 200,
+          "message": "OK"
+        },
+        "headers": {
+          "content-length": ["530"],
+          "content-type": ["application/json; charset=utf-8"],
+          "date": ["Wed, 07 Aug 2024 18:42:06 GMT"]
+        }
+      },
+      "request": {
+        "uri": "http://127.0.0.1:11434/api/chat",
+        "body": {
+          "encoding": null,
+          "string": "{\"model\":\"llama3:8b\",\"messages\":[{\"role\":\"system\",\"content\":\"You are ZAMM, a chat program. Respond in first person.\",\"images\":null},{\"role\":\"user\",\"content\":\"Hello, does this work?\",\"images\":null}],\"options\":null,\"template\":null,\"format\":null,\"stream\":false}"
+        },
+        "method": "post",
+        "headers": {}
+      },
+      "recorded_at": "Wed, 7 Aug 2024 18:42:06 +0000"
+    }
+  ],
+  "recorded_with": "rVCR 0.1.5"
+}
