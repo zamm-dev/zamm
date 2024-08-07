@@ -28,6 +28,7 @@ use strum_macros::{Display, EnumString};
 #[strum(serialize_all = "snake_case")]
 pub enum Service {
     OpenAI,
+    Ollama,
     #[strum(default)]
     Unknown(String),
 }
@@ -44,6 +45,7 @@ impl ApiKeys {
                 self.openai = Some(key);
                 Ok(())
             }
+            Service::Ollama => Err(anyhow!("Ollama doesn't take API keys").into()),
             Service::Unknown(_) => {
                 Err(anyhow!("Can't update API keys for unknown service").into())
             }
@@ -56,6 +58,7 @@ impl ApiKeys {
                 self.openai = None;
                 Ok(())
             }
+            Service::Ollama => Err(anyhow!("Ollama doesn't take API keys").into()),
             Service::Unknown(_) => {
                 Err(anyhow!("Can't delete API keys for unknown service").into())
             }

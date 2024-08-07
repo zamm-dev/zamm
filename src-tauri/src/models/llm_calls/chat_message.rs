@@ -11,6 +11,9 @@ use diesel::expression::AsExpression;
 use diesel::serialize::{self, IsNull, Output, ToSql};
 use diesel::sql_types::Text;
 use diesel::sqlite::Sqlite;
+use ollama_rs::generation::chat::{
+    ChatMessage as OllamaChatMessage, MessageRole as OllamaMessageRole,
+};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -87,6 +90,17 @@ impl TryFrom<ChatCompletionResponseMessage> for ChatMessage {
     }
 }
 
+impl From<OllamaChatMessage> for ChatMessage {
+    fn from(message: OllamaChatMessage) -> Self {
+        let text = message.content;
+        match message.role {
+            OllamaMessageRole::System => ChatMessage::System { text },
+            OllamaMessageRole::User => ChatMessage::Human { text },
+            OllamaMessageRole::Assistant => ChatMessage::AI { text },
+        }
+    }
+}
+
 impl From<ChatMessage> for ChatCompletionRequestMessage {
     fn from(val: ChatMessage) -> Self {
         match val {
@@ -111,6 +125,16 @@ impl From<ChatMessage> for ChatCompletionRequestMessage {
                     ..Default::default()
                 },
             ),
+        }
+    }
+}
+
+impl From<ChatMessage> for OllamaChatMessage {
+    fn from(val: ChatMessage) -> Self {
+        match val {
+            ChatMessage::System { text } => OllamaChatMessage::system(text),
+            ChatMessage::Human { text } => OllamaChatMessage::user(text),
+            ChatMessage::AI { text } => OllamaChatMessage::assistant(text),
         }
     }
 }
