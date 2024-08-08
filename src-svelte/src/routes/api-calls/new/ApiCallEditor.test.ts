@@ -122,4 +122,52 @@ describe("API call editor", () => {
       "/api-calls/f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
     );
   });
+
+  test("can make a call to Llama 3", async () => {
+    render(ApiCallEditor, {});
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/chat-start-conversation-ollama.yaml",
+    );
+
+    await setNewMessage(
+      "System",
+      "You are ZAMM, a chat program. Respond in first person.",
+    );
+    await addNewMessage();
+    await setNewMessage("Human", "Hello, does this work?");
+
+    const providerSelect = screen.getByRole("combobox", { name: "Provider:" });
+    await userEvent.selectOptions(providerSelect, "Ollama");
+
+    await userEvent.click(screen.getByRole("button", { name: "Submit" }));
+    expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(get(mockStores.page).url.pathname).toEqual(
+      "/api-calls/506e2d1f-549c-45cc-ad65-57a0741f06ee",
+    );
+  });
+
+  test("will update model list when provider changes", async () => {
+    render(ApiCallEditor, {});
+
+    const providerSelect = screen.getByRole("combobox", { name: "Provider:" });
+    const modelSelect = screen.getByRole("combobox", { name: "Model:" });
+    expect(providerSelect).toHaveValue("OpenAI");
+    expect(modelSelect).toHaveValue("gpt-4");
+
+    await userEvent.selectOptions(providerSelect, "Ollama");
+    expect(providerSelect).toHaveValue("Ollama");
+    expect(modelSelect).toHaveValue("llama3:8b");
+
+    // test that model can change without affecting provider
+    await userEvent.selectOptions(modelSelect, "gemma2:9b");
+    expect(providerSelect).toHaveValue("Ollama");
+    expect(modelSelect).toHaveValue("gemma2:9b");
+
+    // test that we can switch things back
+    await userEvent.selectOptions(providerSelect, "OpenAI");
+    expect(providerSelect).toHaveValue("OpenAI");
+    expect(modelSelect).toHaveValue("gpt-4");
+  });
 });
