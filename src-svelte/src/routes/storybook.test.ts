@@ -190,7 +190,7 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["screens", "llm-call", "new"],
-    variants: ["blank", "edit-continued-conversation", "busy"],
+    variants: ["blank", "edit-continued-conversation", "busy", "with-emoji"],
     screenshotEntireBody: true,
   },
   {

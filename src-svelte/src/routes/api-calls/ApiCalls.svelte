@@ -6,6 +6,7 @@
   import { onMount } from "svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import IconAdd from "~icons/mingcute/add-fill";
+  import ApiCallReference from "$lib/ApiCallReference.svelte";
 
   const PAGE_SIZE = 50;
   const MIN_MESSAGE_WIDTH = "5rem";
@@ -82,6 +83,13 @@
       });
   }
 
+  function asReference(call: LightweightLlmCall) {
+    return {
+      id: call.id,
+      snippet: call.response_message.text.trim(),
+    };
+  }
+
   onMount(() => {
     resizeMessageWidth();
     window.addEventListener("resize", resizeMessageWidth);
@@ -115,7 +123,13 @@
             <a href={`/api-calls/${call.id}`}>
               <div class="message instance">
                 <div class="text-container">
-                  <div class="text">{call.response_message.text}</div>
+                  <div class="text">
+                    <ApiCallReference
+                      selfContained
+                      nolink
+                      apiCall={asReference(call)}
+                    />
+                  </div>
                 </div>
                 <div class="time">{formatTimestamp(call.timestamp)}</div>
               </div>

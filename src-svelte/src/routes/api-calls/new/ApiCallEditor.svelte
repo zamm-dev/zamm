@@ -190,6 +190,7 @@
     flex-direction: row;
     gap: 0.5rem;
     grid-column: span 2;
+    align-items: center;
   }
 
   .canonical-display .label {

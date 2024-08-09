@@ -207,6 +207,10 @@
     height: 50%;
   }
 
+  .variation-links li :global(span.nolink) {
+    font-style: italic;
+  }
+
   .conversation-links {
     display: flex;
     flex-direction: column;

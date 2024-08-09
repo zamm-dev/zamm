@@ -2,6 +2,7 @@ import ApiCallEditorComponent from "./ApiCallEditor.svelte";
 import type { StoryObj } from "@storybook/svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
 import { CONTINUE_CONVERSATION_CALL } from "../[slug]/sample-calls";
+import { EMOJI_CANONICAL_REF } from "./test.data";
 
 export default {
   component: ApiCallEditorComponent,
@@ -46,6 +47,20 @@ Busy.parameters = {
           "Because they make up everything!",
       },
       prompt: CONTINUE_CONVERSATION_CALL.request.prompt,
+    },
+  },
+};
+
+// note: this also applies to the API calls list, but it's easier to test here
+export const WithEmoji: StoryObj = Template.bind({}) as any;
+WithEmoji.parameters = {
+  stores: {
+    apiCallEditing: {
+      canonicalRef: EMOJI_CANONICAL_REF,
+      prompt: {
+        type: "Chat",
+        messages: [{ role: "System", text: "" }],
+      },
     },
   },
 };
