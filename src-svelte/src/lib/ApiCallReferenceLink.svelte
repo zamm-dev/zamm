@@ -6,7 +6,7 @@
 </script>
 
 {#if nolink}
-  <span>{apiCall.snippet}</span>
+  <span class="nolink">{apiCall.snippet}</span>
 {:else}
   <a href="/api-calls/{apiCall.id}">{apiCall.snippet}</a>
 {/if}
@@ -19,9 +19,6 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-  }
-
-  span {
-    font-style: italic;
+    line-height: 1.22rem;
   }
 </style>
