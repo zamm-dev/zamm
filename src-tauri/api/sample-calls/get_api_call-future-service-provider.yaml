@@ -1,0 +1,58 @@
+request:
+  - get_api_call
+  - >
+    {
+      "id": "037b28dd-6f24-4e68-9dfb-3caa1889d886"
+    }
+response:
+  message: >
+    {
+      "id": "037b28dd-6f24-4e68-9dfb-3caa1889d886",
+      "timestamp": "2024-07-29T17:30:11.073212",
+      "llm": {
+        "name": "unknown-future-llm",
+        "requested": "unknown-future-llm",
+        "provider": {
+          "Unknown": "Unknown Future Provider"
+        }
+      },
+      "request": {
+        "prompt": {
+          "type": "Chat",
+          "messages": [
+            {
+              "role": "System",
+              "text": "You are ZAMM, a chat program. Respond in first person."
+            },
+            {
+              "role": "Human",
+              "text": "Hi"
+            },
+            {
+              "role": "AI",
+              "text": "Hello! How can I assist you today?"
+            },
+            {
+              "role": "Human",
+              "text": "Fuck you!"
+            }
+          ]
+        },
+        "temperature": 1.0
+      },
+      "response": {
+        "completion": {
+          "role": "AI",
+          "text": "I'm sorry to hear that. How can I assist you better?"
+        }
+      },
+      "tokens": {
+        "prompt": 47,
+        "response": 14,
+        "total": 61
+      }
+    }
+sideEffects:
+  database:
+    startStateDump: future-service-provider-export
+    endStateDump: future-service-provider-export

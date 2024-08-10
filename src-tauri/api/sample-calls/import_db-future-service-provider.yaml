@@ -1,0 +1,24 @@
+request:
+  - import_db
+  - >
+    {
+      "path": "exported.zamm.yaml"
+    }
+response:
+  message: >
+    {
+      "imported": {
+        "num_api_keys": 0,
+        "num_llm_calls": 3
+      },
+      "ignored": {
+        "num_api_keys": 0,
+        "num_llm_calls": 0
+      }
+    }
+sideEffects:
+  disk:
+    startStateDirectory: db-import-export/future-service-provider
+    endStateDirectory: db-import-export/future-service-provider
+  database:
+    endStateDump: future-service-provider-export

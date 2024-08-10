@@ -61,7 +61,7 @@ async fn set_api_key_helper(
             } else {
                 diesel::replace_into(api_keys::table)
                     .values(crate::models::NewApiKey {
-                        service: *service,
+                        service: service.clone(),
                         api_key: &api_key,
                     })
                     .execute(conn)?;
@@ -72,9 +72,9 @@ async fn set_api_key_helper(
 
     // assign ownership of new API key string to in-memory API keys
     if api_key.is_empty() {
-        api_keys.remove(service);
+        api_keys.remove(service)?;
     } else {
-        api_keys.update(service, api_key);
+        api_keys.update(service, api_key)?;
     }
 
     // if any errors exist, return one of them

@@ -49,12 +49,26 @@
     };
   }
 
+  function extractProvider(apiCall: LlmCall | undefined) {
+    if (!apiCall) {
+      return;
+    }
+
+    const provider = apiCall.llm.provider;
+    if (typeof provider === "string") {
+      return provider;
+    } else {
+      return provider["Unknown"];
+    }
+  }
+
   $: updateDisplayStrings(apiCall);
   $: previousCall = apiCall?.conversation?.previous_call;
   $: nextCalls = apiCall?.conversation?.next_calls ?? [];
   $: thisAsRef = getThisAsRef(apiCall);
   $: variants =
     apiCall?.variation?.variants ?? apiCall?.variation?.sibling_variants ?? [];
+  $: provider = extractProvider(apiCall);
 </script>
 
 <InfoBox title="API Call">
@@ -74,6 +88,9 @@
           {apiCall?.llm.requested ?? "Unknown"}
           {#if apiCall?.llm.requested !== apiCall?.llm.name}
             → {apiCall?.llm.name}
+          {/if}
+          {#if provider}
+            (via {provider})
           {/if}
         </td>
       </tr>

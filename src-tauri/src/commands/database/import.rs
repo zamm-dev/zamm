@@ -170,4 +170,10 @@ mod tests {
         test_conflicting_api_key,
         "./api/sample-calls/import_db-conflicting-api-key.yaml"
     );
+
+    check_sample!(
+        ImportDbTestCase,
+        test_future_service_provider,
+        "./api/sample-calls/import_db-future-service-provider.yaml"
+    );
 }

@@ -62,12 +62,27 @@ async fn dump_sql_to_yaml(
     expected_sql_dump_abs: &PathBuf,
     expected_yaml_dump_abs: &Path,
 ) {
-    let mut db = setup_database(None);
-    load_sqlite_database(&mut db, expected_sql_dump_abs);
-    let zamm_db = ZammDatabase(Mutex::new(Some(db)));
+    let zamm_db = ZammDatabase(Mutex::new(Some(setup_database(None))));
+    load_sqlite_database(&zamm_db, expected_sql_dump_abs).await;
     write_database_contents(&zamm_db, expected_yaml_dump_abs.to_str().unwrap(), false)
         .await
         .unwrap();
+}
+
+async fn dump_yaml_to_sql(
+    expected_yaml_dump_abs: &Path,
+    expected_sql_dump_abs: &PathBuf,
+) {
+    let sqlite3_db_file = expected_sql_dump_abs.with_extension("sqlite3");
+    let db = setup_database(Some(&sqlite3_db_file));
+    let zamm_db = ZammDatabase(Mutex::new(Some(db)));
+
+    let yaml_dump_abs_str = expected_yaml_dump_abs.to_str().unwrap();
+    read_database_contents(&zamm_db, yaml_dump_abs_str)
+        .await
+        .unwrap();
+    dump_sqlite_database(&sqlite3_db_file, expected_sql_dump_abs);
+    fs::remove_file(sqlite3_db_file).unwrap();
 }
 
 async fn setup_gold_db_files(
@@ -98,13 +113,16 @@ async fn setup_gold_db_files(
             "Dumped YAML from SQL to {}",
             expected_yaml_dump_abs.display()
         );
-    } else {
-        if !expected_yaml_dump_abs.exists() {
-            panic!("No YAML dump found at {}", expected_yaml_dump_abs.display());
-        }
-        if !expected_sql_dump_abs.exists() {
-            panic!("No SQL dump found at {}", expected_sql_dump_abs.display());
-        }
+    } else if expected_yaml_dump_abs.exists() && !expected_sql_dump_abs.exists() {
+        dump_yaml_to_sql(
+            &expected_yaml_dump_abs,
+            &expected_sql_dump_abs.to_path_buf(),
+        )
+        .await;
+        panic!(
+            "Dumped SQL from YAML to {}",
+            expected_sql_dump_abs.display()
+        );
     }
 }
 
@@ -401,9 +419,9 @@ where
                         .absolutize()
                         .unwrap()
                         .to_path_buf();
+                    let initial_sql_dump_abs =
+                        initial_yaml_dump_abs.with_extension("sql");
                     if !initial_yaml_dump_abs.exists() {
-                        let initial_sql_dump_abs =
-                            initial_yaml_dump_abs.with_extension("sql");
                         dump_sql_to_yaml(&initial_sql_dump_abs, &initial_yaml_dump_abs)
                             .await;
                         panic!(
@@ -412,9 +430,7 @@ where
                         );
                     }
 
-                    read_database_contents(&test_db, &initial_yaml_dump)
-                        .await
-                        .unwrap();
+                    load_sqlite_database(&test_db, &initial_sql_dump_abs).await;
                 }
 
                 side_effects_helpers.db = Some(test_db);

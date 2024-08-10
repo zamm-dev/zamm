@@ -216,6 +216,7 @@ const components: ComponentTestConfig[] = [
         tallWindow: true,
       },
       "variant",
+      "future-service-provider",
     ],
     screenshotEntireBody: true,
   },

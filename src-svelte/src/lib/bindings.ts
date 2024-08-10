@@ -77,9 +77,18 @@ export type VariantMetadata = {
   variants?: LlmCallReference[];
   sibling_variants?: LlmCallReference[];
 };
+export type ChatArgs = {
+  provider: Service;
+  llm: string;
+  temperature?: number | null;
+  prompt: ChatMessage[];
+  previous_call_id?: string | null;
+  canonical_id?: string | null;
+};
 export type Prompt = { type: "Chat" } & ChatPrompt;
+export type ApiKeys = { openai: string | null };
 export type DatabaseCounts = { num_api_keys: number; num_llm_calls: number };
-export type Service = "OpenAI";
+export type Service = "OpenAI" | { Unknown: string };
 export type Preferences = {
   version?: string | null;
   animations_on?: boolean | null;
@@ -95,7 +104,6 @@ export type LightweightLlmCall = {
   timestamp: string;
   response_message: ChatMessage;
 };
-export type ApiKeys = { openai: string | null };
 export type OS = "Mac" | "Linux" | "Windows";
 export type EntityId = string;
 export type Shell = "Bash" | "Zsh" | "PowerShell";
@@ -110,14 +118,6 @@ export type Response = { completion: ChatMessage };
 export type ConversationMetadata = {
   previous_call?: LlmCallReference | null;
   next_calls?: LlmCallReference[];
-};
-export type ChatArgs = {
-  provider: Service;
-  llm: string;
-  temperature?: number | null;
-  prompt: ChatMessage[];
-  previous_call_id?: string | null;
-  canonical_id?: string | null;
 };
 export type LlmCallReference = { id: EntityId; snippet: string };
 export type Sound = "Switch" | "Whoosh";

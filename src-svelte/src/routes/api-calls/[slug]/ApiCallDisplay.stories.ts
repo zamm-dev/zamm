@@ -6,6 +6,7 @@ import {
   KHMER_CALL,
   LOTS_OF_CODE_CALL,
   VARIANT_CALL,
+  FUTURE_SERVICE_PROVIDER_CALL,
 } from "./sample-calls";
 
 export default {
@@ -56,6 +57,13 @@ LotsOfCode.args = {
 export const Variant: StoryObj = Template.bind({}) as any;
 Variant.args = {
   apiCall: VARIANT_CALL,
+  dateTimeLocale: "en-GB",
+  timeZone: "Asia/Phnom_Penh",
+};
+
+export const FutureServiceProvider: StoryObj = Template.bind({}) as any;
+FutureServiceProvider.args = {
+  apiCall: FUTURE_SERVICE_PROVIDER_CALL,
   dateTimeLocale: "en-GB",
   timeZone: "Asia/Phnom_Penh",
 };
