@@ -6,7 +6,7 @@ import {
   KHMER_CALL,
   LOTS_OF_CODE_CALL,
   VARIANT_CALL,
-  FUTURE_SERVICE_PROVIDER_CALL,
+  UNKNOWN_PROVIDER_PROMPT_CALL,
 } from "./sample-calls";
 
 export default {
@@ -61,9 +61,9 @@ Variant.args = {
   timeZone: "Asia/Phnom_Penh",
 };
 
-export const FutureServiceProvider: StoryObj = Template.bind({}) as any;
-FutureServiceProvider.args = {
-  apiCall: FUTURE_SERVICE_PROVIDER_CALL,
+export const UnknownProviderPrompt: StoryObj = Template.bind({}) as any;
+UnknownProviderPrompt.args = {
+  apiCall: UNKNOWN_PROVIDER_PROMPT_CALL,
   dateTimeLocale: "en-GB",
   timeZone: "Asia/Phnom_Penh",
 };

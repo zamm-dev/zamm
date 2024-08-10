@@ -252,7 +252,7 @@ export const VARIANT_CALL = {
   },
 };
 
-export const FUTURE_SERVICE_PROVIDER_CALL = {
+export const UNKNOWN_PROVIDER_PROMPT_CALL = {
   id: "037b28dd-6f24-4e68-9dfb-3caa1889d886",
   timestamp: "2024-07-29T17:30:11.073212",
   llm: {
@@ -264,25 +264,7 @@ export const FUTURE_SERVICE_PROVIDER_CALL = {
   },
   request: {
     prompt: {
-      type: "Chat",
-      messages: [
-        {
-          role: "System",
-          text: "You are ZAMM, a chat program. Respond in first person.",
-        },
-        {
-          role: "Human",
-          text: "Hi",
-        },
-        {
-          role: "AI",
-          text: "Hello! How can I assist you today?",
-        },
-        {
-          role: "Human",
-          text: "Fuck you!",
-        },
-      ],
+      type: "Unknown",
     },
     temperature: 1.0,
   },

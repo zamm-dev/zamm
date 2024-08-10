@@ -16,6 +16,11 @@
       return;
     }
 
+    if (apiCall.request.prompt.type === "Unknown") {
+      snackbarError("Can't edit unknown prompt type");
+      return;
+    }
+
     canonicalRef.set({
       id: apiCall.id,
       snippet: apiCall.response.completion.text,
@@ -28,6 +33,11 @@
   function restoreConversation() {
     if (!apiCall) {
       snackbarError("API call not yet loaded");
+      return;
+    }
+
+    if (apiCall.request.prompt.type === "Unknown") {
+      snackbarError("Can't restore unknown prompt type");
       return;
     }
 

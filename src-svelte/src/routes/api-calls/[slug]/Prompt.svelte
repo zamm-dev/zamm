@@ -1,10 +1,10 @@
 <script lang="ts">
   import autosize from "autosize";
   import SubInfoBox from "$lib/SubInfoBox.svelte";
-  import { type Prompt } from "$lib/bindings";
   import { onMount } from "svelte";
+  import type { ChatPromptVariant } from "$lib/additionalTypes";
 
-  export let prompt: Prompt;
+  export let prompt: ChatPromptVariant;
   export let editable = false;
   let textareas: HTMLTextAreaElement[] = [];
 

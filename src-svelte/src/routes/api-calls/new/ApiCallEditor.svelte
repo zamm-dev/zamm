@@ -1,14 +1,15 @@
 <script lang="ts" context="module">
-  import type { Prompt as PromptType, LlmCallReference } from "$lib/bindings";
+  import type { LlmCallReference } from "$lib/bindings";
+  import type { ChatPromptVariant } from "$lib/additionalTypes";
   import { writable } from "svelte/store";
 
   export const canonicalRef = writable<LlmCallReference | undefined>(undefined);
-  export const prompt = writable<PromptType>({
+  export const prompt = writable<ChatPromptVariant>({
     type: "Chat",
     messages: [{ role: "System", text: "" }],
   });
 
-  export function getDefaultApiCall(): PromptType {
+  export function getDefaultApiCall(): ChatPromptVariant {
     return {
       type: "Chat",
       messages: [{ role: "System", text: "" }],

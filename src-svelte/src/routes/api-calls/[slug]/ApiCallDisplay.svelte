@@ -7,6 +7,7 @@
   import IconRightArrow from "~icons/mingcute/right-fill";
   import Prompt from "./Prompt.svelte";
   import ApiCallReference from "$lib/ApiCallReference.svelte";
+  import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
 
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
@@ -110,7 +111,14 @@
       </tr>
     </table>
 
-    <Prompt prompt={apiCall.request.prompt} />
+    {#if apiCall.request.prompt.type === "Chat"}
+      <Prompt prompt={apiCall.request.prompt} />
+    {:else}
+      <EmptyPlaceholder
+        >Prompt not shown because it is from an incompatible future version of
+        ZAMM.</EmptyPlaceholder
+      >
+    {/if}
 
     <SubInfoBox subheading="Response">
       <pre class="response">{apiCall?.response.completion.text ??
