@@ -1,0 +1,16 @@
+request:
+  - import_db
+  - >
+    {
+      "path": "unknown-provider-prompt.zamm.yaml"
+    }
+response:
+  success: false
+  message: >
+    "Cannot import from ZAMM version 99.0.0. Data contains unknown prompt types."
+sideEffects:
+  disk:
+    startStateDirectory: db-import-export/forward-compatibility
+    endStateDirectory: db-import-export/forward-compatibility
+  database:
+    endStateDump: empty

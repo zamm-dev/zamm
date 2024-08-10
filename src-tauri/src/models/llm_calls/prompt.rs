@@ -31,6 +31,8 @@ pub struct ChatPrompt {
 #[serde(tag = "type")]
 pub enum Prompt {
     Chat(ChatPrompt),
+    #[serde(other)]
+    Unknown,
 }
 
 impl Deref for ChatPrompt {

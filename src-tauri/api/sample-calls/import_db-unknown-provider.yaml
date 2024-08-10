@@ -2,7 +2,7 @@ request:
   - import_db
   - >
     {
-      "path": "exported.zamm.yaml"
+      "path": "unknown-provider.zamm.yaml"
     }
 response:
   message: >
@@ -18,7 +18,7 @@ response:
     }
 sideEffects:
   disk:
-    startStateDirectory: db-import-export/future-service-provider
-    endStateDirectory: db-import-export/future-service-provider
+    startStateDirectory: db-import-export/forward-compatibility
+    endStateDirectory: db-import-export/forward-compatibility
   database:
-    endStateDump: future-service-provider-export
+    endStateDump: unknown-provider-import

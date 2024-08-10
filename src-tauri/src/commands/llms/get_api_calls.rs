@@ -96,7 +96,7 @@ mod tests {
     // the presence of unknown future providers in one of the API calls
     check_sample!(
         GetApiCallsTestCase,
-        test_unknown_future_provider,
-        "./api/sample-calls/get_api_calls-unknown-future-provider.yaml"
+        test_unknown_provider_promptr,
+        "./api/sample-calls/get_api_calls-unknown-provider-prompt.yaml"
     );
 }

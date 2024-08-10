@@ -52,16 +52,7 @@ llm_calls:
     response_tokens: 14
     total_tokens: 61
     prompt:
-      type: Chat
-      messages:
-      - role: System
-        text: You are ZAMM, a chat program. Respond in first person.
-      - role: Human
-        text: Hi
-      - role: AI
-        text: Hello! How can I assist you today?
-      - role: Human
-        text: Fuck you!
+      type: Unknown
     completion:
       role: AI
       text: I'm sorry to hear that. How can I assist you better?

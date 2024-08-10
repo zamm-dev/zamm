@@ -118,6 +118,6 @@ mod tests {
     check_sample!(
         GetApiCallTestCase,
         test_future_service_provider,
-        "./api/sample-calls/get_api_call-future-service-provider.yaml"
+        "./api/sample-calls/get_api_call-unknown-provider-prompt.yaml"
     );
 }

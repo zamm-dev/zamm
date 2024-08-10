@@ -18,25 +18,7 @@ response:
       },
       "request": {
         "prompt": {
-          "type": "Chat",
-          "messages": [
-            {
-              "role": "System",
-              "text": "You are ZAMM, a chat program. Respond in first person."
-            },
-            {
-              "role": "Human",
-              "text": "Hi"
-            },
-            {
-              "role": "AI",
-              "text": "Hello! How can I assist you today?"
-            },
-            {
-              "role": "Human",
-              "text": "Fuck you!"
-            }
-          ]
+          "type": "Unknown"
         },
         "temperature": 1.0
       },
@@ -54,5 +36,5 @@ response:
     }
 sideEffects:
   database:
-    startStateDump: future-service-provider-export
-    endStateDump: future-service-provider-export
+    startStateDump: unknown-provider-prompt-export
+    endStateDump: unknown-provider-prompt-export

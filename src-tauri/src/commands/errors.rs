@@ -81,6 +81,12 @@ pub enum SerdeError {
 }
 
 #[derive(thiserror::Error, Debug)]
+pub enum ImportError {
+    #[error("Data contains unknown prompt types.")]
+    UnknownPromptType {},
+}
+
+#[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Failed to spawn sidecar at {expected_path}: {tauri_error}")]
     SidecarSpawn {
@@ -100,6 +106,16 @@ pub enum Error {
     UnexpectedOpenAiResponse { reason: String },
     #[error("Missing API key for {service}")]
     MissingApiKey { service: Service },
+    #[error("Cannot import from ZAMM version {version}. {import_error}")]
+    FutureZammImport {
+        version: String,
+        import_error: ImportError,
+    },
+    #[error(transparent)]
+    GenericImport {
+        #[from]
+        source: ImportError,
+    },
     #[error("Lock poisoned")]
     Poison {},
     #[error(transparent)]
