@@ -92,8 +92,6 @@ mod tests {
         "./api/sample-calls/get_api_calls-offset-empty.yaml"
     );
 
-    // API should end up returning the same thing as `get_api_calls-small.yaml` despite
-    // the presence of unknown future providers in one of the API calls
     check_sample!(
         GetApiCallsTestCase,
         test_unknown_provider_promptr,
