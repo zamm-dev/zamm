@@ -1,6 +1,8 @@
 use crate::commands::database::metadata::DatabaseCounts;
-use crate::commands::errors::ZammResult;
-use crate::models::llm_calls::{NewLlmCallFollowUp, NewLlmCallRow, NewLlmCallVariant};
+use crate::commands::errors::{Error, ImportError, ZammResult};
+use crate::models::llm_calls::{
+    NewLlmCallFollowUp, NewLlmCallRow, NewLlmCallVariant, Prompt,
+};
 use crate::models::{DatabaseContents, NewApiKey};
 use crate::schema::{api_keys, llm_call_follow_ups, llm_call_variants, llm_calls};
 use crate::ZammDatabase;
@@ -75,6 +77,20 @@ pub async fn read_database_contents(
                 || new_llm_call_ids.contains(&variant.variant_id)
         })
         .collect();
+
+    if new_llm_calls
+        .iter()
+        .any(|call| matches!(call.prompt, Prompt::Unknown))
+    {
+        if let Some(import_version) = db_contents.zamm_version {
+            return Err(Error::FutureZammImport {
+                version: import_version,
+                import_error: ImportError::UnknownPromptType {},
+            });
+        } else {
+            return Err(ImportError::UnknownPromptType {}.into());
+        }
+    }
 
     db.transaction::<(), diesel::result::Error, _>(|conn| {
         diesel::insert_into(api_keys::table)
@@ -169,5 +185,17 @@ mod tests {
         ImportDbTestCase,
         test_conflicting_api_key,
         "./api/sample-calls/import_db-conflicting-api-key.yaml"
+    );
+
+    check_sample!(
+        ImportDbTestCase,
+        test_unknown_provider,
+        "./api/sample-calls/import_db-unknown-provider.yaml"
+    );
+
+    check_sample!(
+        ImportDbTestCase,
+        test_unknown_provider_prompt,
+        "./api/sample-calls/import_db-unknown-provider-prompt.yaml"
     );
 }

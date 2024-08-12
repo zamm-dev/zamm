@@ -11,13 +11,9 @@ import {
   getDefaultApiCall,
   prompt,
 } from "../../routes/api-calls/new/ApiCallEditor.svelte";
-import type {
-  SystemInfo,
-  ChatMessage,
-  Prompt,
-  LlmCallReference,
-} from "$lib/bindings";
+import type { SystemInfo, ChatMessage, LlmCallReference } from "$lib/bindings";
 import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
+import type { ChatPromptVariant } from "$lib/additionalTypes";
 
 interface Preferences {
   animationsOn?: boolean;
@@ -27,7 +23,7 @@ interface Preferences {
 
 interface ApiCallEditing {
   canonicalRef: LlmCallReference;
-  prompt: Prompt;
+  prompt: ChatPromptVariant;
 }
 
 interface Stores {

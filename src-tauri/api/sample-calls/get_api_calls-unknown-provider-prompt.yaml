@@ -1,0 +1,38 @@
+request:
+  - get_api_calls
+  - >
+    {
+      "offset": 0
+    }
+response:
+  message: >
+    [
+      {
+        "id": "037b28dd-6f24-4e68-9dfb-3caa1889d886",
+        "timestamp": "2024-07-29T17:30:11.073212",
+        "response_message": {
+          "role": "AI",
+          "text": "I'm sorry to hear that. How can I assist you better?"
+        }
+      },
+      {
+        "id": "c13c1e67-2de3-48de-a34c-a32079c03316",
+        "timestamp": "2024-01-16T09:50:19.738093890",
+        "response_message": {
+          "role": "AI",
+          "text": "Sure, here's a joke for you: Why don't scientists trust atoms? Because they make up everything!"
+        }
+      },
+      {
+        "id": "d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
+        "timestamp": "2024-01-16T08:50:19.738093890",
+        "response_message": {
+          "role": "AI",
+          "text": "Yes, it works. How can I assist you today?"
+        }
+      }
+    ]
+sideEffects:
+  database:
+    startStateDump: unknown-provider-prompt
+    endStateDump: unknown-provider-prompt-export

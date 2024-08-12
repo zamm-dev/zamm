@@ -251,3 +251,32 @@ export const VARIANT_CALL = {
     ],
   },
 };
+
+export const UNKNOWN_PROVIDER_PROMPT_CALL = {
+  id: "037b28dd-6f24-4e68-9dfb-3caa1889d886",
+  timestamp: "2024-07-29T17:30:11.073212",
+  llm: {
+    name: "unknown-future-llm",
+    requested: "unknown-future-llm",
+    provider: {
+      Unknown: "Unknown Future Provider",
+    },
+  },
+  request: {
+    prompt: {
+      type: "Unknown",
+    },
+    temperature: 1.0,
+  },
+  response: {
+    completion: {
+      role: "AI",
+      text: "I'm sorry to hear that. How can I assist you better?",
+    },
+  },
+  tokens: {
+    prompt: 47,
+    response: 14,
+    total: 61,
+  },
+};

@@ -7,6 +7,7 @@ use crate::models::llm_calls::{
 use crate::schema::{llm_call_follow_ups, llm_call_variants, llm_calls};
 use crate::setup::api_keys::Service;
 use crate::{ZammApiKeys, ZammDatabase};
+use anyhow::anyhow;
 use async_openai::config::OpenAIConfig;
 use async_openai::types::{
     ChatCompletionRequestMessage, CreateChatCompletionRequestArgs,
@@ -52,9 +53,10 @@ async fn chat_helper(
                 api_keys.openai.as_ref().ok_or(Error::MissingApiKey {
                     service: Service::OpenAI,
                 })?;
-            OpenAIConfig::new().with_api_key(openai_api_key)
+            Ok(OpenAIConfig::new().with_api_key(openai_api_key))
         }
-    };
+        Service::Unknown(_) => Err(anyhow!("Unknown service provider requested")),
+    }?;
 
     let requested_model = args.llm;
     let requested_temperature = args.temperature.unwrap_or(1.0);

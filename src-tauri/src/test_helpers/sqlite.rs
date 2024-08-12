@@ -1,10 +1,11 @@
+use crate::ZammDatabase;
 use diesel::connection::SimpleConnection;
-use diesel::prelude::*;
-
 use std::fs;
 use std::path::PathBuf;
 
-pub fn load_sqlite_database(conn: &mut SqliteConnection, dump_path: &PathBuf) {
+pub async fn load_sqlite_database(zamm_db: &ZammDatabase, dump_path: &PathBuf) {
+    let db = &mut zamm_db.0.lock().await;
+    let conn = db.as_mut().unwrap();
     let dump = fs::read_to_string(dump_path).expect("Error reading dump file");
     conn.batch_execute(&dump)
         .expect("Error loading dump into database");

@@ -1,4 +1,4 @@
-import type { Prompt } from "$lib/bindings";
+import type { ChatPromptVariant } from "$lib/additionalTypes";
 
 export const EDIT_CANONICAL_REF = {
   id: "c13c1e67-2de3-48de-a34c-a32079c03316",
@@ -7,7 +7,7 @@ export const EDIT_CANONICAL_REF = {
     "Because they make up everything!",
 };
 
-export const EDIT_PROMPT: Prompt = {
+export const EDIT_PROMPT: ChatPromptVariant = {
   type: "Chat",
   messages: [
     {

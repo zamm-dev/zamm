@@ -216,6 +216,7 @@ const components: ComponentTestConfig[] = [
         tallWindow: true,
       },
       "variant",
+      "unknown-provider-prompt",
     ],
     screenshotEntireBody: true,
   },

@@ -38,6 +38,7 @@ async fn upgrade_to_v_0_1_4(zamm_db: &ZammDatabase) -> ZammResult<()> {
                     // message, the initial human message, the initial AI reply, and
                     // the human follow-up
                     Prompt::Chat(chat_prompt) => chat_prompt.messages.len() >= 4,
+                    _ => false,
                 }
             })
             .collect();
@@ -54,6 +55,7 @@ async fn upgrade_to_v_0_1_4(zamm_db: &ZammDatabase) -> ZammResult<()> {
                 let previous_completion = &chat_prompt.messages[length - 2];
                 (previous_prompt, previous_completion)
             }
+            _ => continue,
         };
 
         let prior_api_call: Option<EntityId> = llm_calls::table

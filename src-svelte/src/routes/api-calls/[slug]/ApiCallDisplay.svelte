@@ -7,6 +7,7 @@
   import IconRightArrow from "~icons/mingcute/right-fill";
   import Prompt from "./Prompt.svelte";
   import ApiCallReference from "$lib/ApiCallReference.svelte";
+  import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
 
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
@@ -49,12 +50,26 @@
     };
   }
 
+  function extractProvider(apiCall: LlmCall | undefined) {
+    if (!apiCall) {
+      return;
+    }
+
+    const provider = apiCall.llm.provider;
+    if (typeof provider === "string") {
+      return provider;
+    } else {
+      return provider["Unknown"];
+    }
+  }
+
   $: updateDisplayStrings(apiCall);
   $: previousCall = apiCall?.conversation?.previous_call;
   $: nextCalls = apiCall?.conversation?.next_calls ?? [];
   $: thisAsRef = getThisAsRef(apiCall);
   $: variants =
     apiCall?.variation?.variants ?? apiCall?.variation?.sibling_variants ?? [];
+  $: provider = extractProvider(apiCall);
 </script>
 
 <InfoBox title="API Call">
@@ -75,6 +90,9 @@
           {#if apiCall?.llm.requested !== apiCall?.llm.name}
             → {apiCall?.llm.name}
           {/if}
+          {#if provider}
+            (via {provider})
+          {/if}
         </td>
       </tr>
       <tr>
@@ -93,7 +111,14 @@
       </tr>
     </table>
 
-    <Prompt prompt={apiCall.request.prompt} />
+    {#if apiCall.request.prompt.type === "Chat"}
+      <Prompt prompt={apiCall.request.prompt} />
+    {:else}
+      <EmptyPlaceholder
+        >Prompt not shown because it is from an incompatible future version of
+        ZAMM.</EmptyPlaceholder
+      >
+    {/if}
 
     <SubInfoBox subheading="Response">
       <pre class="response">{apiCall?.response.completion.text ??

@@ -17,7 +17,7 @@ pub struct ApiKey {
 impl ApiKey {
     pub fn as_insertable(&self) -> NewApiKey {
         NewApiKey {
-            service: self.service,
+            service: self.service.clone(),
             api_key: &self.api_key,
         }
     }

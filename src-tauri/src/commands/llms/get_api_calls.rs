@@ -91,4 +91,10 @@ mod tests {
         test_empty_offset,
         "./api/sample-calls/get_api_calls-offset-empty.yaml"
     );
+
+    check_sample!(
+        GetApiCallsTestCase,
+        test_unknown_provider_promptr,
+        "./api/sample-calls/get_api_calls-unknown-provider-prompt.yaml"
+    );
 }
