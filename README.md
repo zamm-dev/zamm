@@ -1,6 +1,6 @@
 # ZAMM
 
-![Dashboard](/webdriver/screenshots/baseline/desktop_wry/welcome-screen-800x600.png)
+![Dashboard](/webdriver/screenshots/baseline/desktop_wry/welcome-screen.png)
 
 This is an incomplete, experimental AI chat app.
 
