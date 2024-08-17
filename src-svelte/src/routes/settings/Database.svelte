@@ -2,6 +2,7 @@
   import InfoBox from "$lib/InfoBox.svelte";
   import { importDb, exportDb, type DatabaseCounts } from "$lib/bindings";
   import { snackbarInfo, snackbarError } from "$lib/snackbar/Snackbar.svelte";
+  import { systemInfo } from "$lib/system-info";
   import Button from "$lib/controls/Button.svelte";
   import ButtonGroup from "$lib/controls/ButtonGroup.svelte";
   import Warning from "$lib/Warning.svelte";
@@ -10,6 +11,11 @@
   const ZAMM_DB_FILTER: DialogFilter = {
     name: "ZAMM Database",
     extensions: ["zamm.yaml"],
+  };
+
+  const MAC_ZAMM_DB_FILTER: DialogFilter = {
+    name: "ZAMM Database",
+    extensions: ["yaml"],
   };
 
   function nounify(counts: DatabaseCounts): string {
@@ -28,13 +34,18 @@
   }
 
   async function importData() {
+    const defaultImportFilter =
+      $systemInfo?.os === "Mac" ? MAC_ZAMM_DB_FILTER : ZAMM_DB_FILTER;
     const filePath =
       window.WEBDRIVER_FILE_PATH ??
       (await open({
         title: "Import ZAMM data",
         directory: false,
         multiple: false,
-        filters: [ZAMM_DB_FILTER, { name: "All Files", extensions: ["*"] }],
+        filters: [
+          defaultImportFilter,
+          { name: "All Files", extensions: ["*"] },
+        ],
       }));
     if (filePath === null) {
       return;
