@@ -156,6 +156,21 @@ describe("Chat conversation", () => {
     });
   });
 
+  test("persists chat text after returning to it", async () => {
+    render(PersistentChatView, {});
+    const message = "testing chat text persistence";
+    const chatInput = screen.getByLabelText("Chat with the AI:");
+    expect(chatInput).toHaveValue("");
+    await userEvent.type(chatInput, message);
+    expect(chatInput).toHaveValue(message);
+
+    await userEvent.click(screen.getByRole("button", { name: "Remount" }));
+    await waitFor(() => {
+      const newChatInput = screen.getByLabelText("Chat with the AI:");
+      expect(newChatInput).toHaveValue(message);
+    });
+  });
+
   test("listens for updates to conversation store", async () => {
     render(Chat, {});
     expect(

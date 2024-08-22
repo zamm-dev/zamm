@@ -2,17 +2,19 @@
   import { writable } from "svelte/store";
   import { type ChatMessage } from "$lib/bindings";
 
-  const initialMessage: ChatMessage = {
+  export const DEFAULT_SYSTEM_MESSAGE: ChatMessage = {
     role: "System",
     text: "You are ZAMM, a chat program. Respond in first person.",
   };
 
   export const lastMessageId = writable<string | undefined>(undefined);
-  export const conversation = writable<ChatMessage[]>([initialMessage]);
+  export const conversation = writable<ChatMessage[]>([DEFAULT_SYSTEM_MESSAGE]);
+  export const nextChatMessage = writable<string>("");
 
   export function resetConversation() {
     lastMessageId.set(undefined);
-    conversation.set([initialMessage]);
+    conversation.set([DEFAULT_SYSTEM_MESSAGE]);
+    nextChatMessage.set("");
   }
 </script>
 
@@ -26,7 +28,6 @@
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import Form from "./Form.svelte";
 
-  export let initialMessage = "";
   export let expectingResponse = false;
   export let showMostRecentMessage = true;
   let messageComponents: Message[] = [];
@@ -127,7 +128,7 @@
     <Form
       {sendChatMessage}
       chatBusy={expectingResponse}
-      currentMessage={initialMessage}
+      bind:currentMessage={$nextChatMessage}
       onTextInputResize={resizeConversationView}
     />
   </div>
