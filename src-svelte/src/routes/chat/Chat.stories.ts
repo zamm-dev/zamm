@@ -36,7 +36,9 @@ Empty.parameters = {
 export const NotEmpty: StoryObj = Template.bind({}) as any;
 NotEmpty.parameters = {
   stores: {
-    conversation,
+    chat: {
+      conversation,
+    },
   },
   viewport: {
     defaultViewport: "smallTablet",
@@ -44,15 +46,16 @@ NotEmpty.parameters = {
 };
 
 export const MultilineChat: StoryObj = Template.bind({}) as any;
-MultilineChat.args = {
-  initialMessage:
-    "This is what happens when the user types in so much text, " +
-    "it wraps around and turns the text input area into a multiline input. " +
-    "The send button's height should grow in line with the overall text area height.",
-};
 MultilineChat.parameters = {
   stores: {
-    conversation,
+    chat: {
+      conversation,
+      nextChatMessage:
+        "This is what happens when the user types in so much text, " +
+        "it wraps around and turns the text input area into a multiline input. " +
+        "The send button's height should grow in line with the overall text area " +
+        "height.",
+    },
   },
   viewport: {
     defaultViewport: "smallTablet",
@@ -60,8 +63,11 @@ MultilineChat.parameters = {
 };
 
 export const ExtraLongInput: StoryObj = Template.bind({}) as any;
-ExtraLongInput.args = {
-  initialMessage: `Hey, I have this definition for a book object:
+ExtraLongInput.parameters = {
+  stores: {
+    chat: {
+      conversation,
+      nextChatMessage: `Hey, I have this definition for a book object:
 
 \`\`\`python
 class Book:
@@ -78,10 +84,7 @@ class Book:
 \`\`\`
 
 Do you have any code comments for me?`,
-};
-ExtraLongInput.parameters = {
-  stores: {
-    conversation,
+    },
   },
   viewport: {
     defaultViewport: "smallTablet",
@@ -94,7 +97,9 @@ BottomScrollIndicator.args = {
 };
 BottomScrollIndicator.parameters = {
   stores: {
-    conversation,
+    chat: {
+      conversation,
+    },
   },
   viewport: {
     defaultViewport: "smallTablet",
@@ -104,7 +109,9 @@ BottomScrollIndicator.parameters = {
 export const FullMessageWidth: StoryObj = Template.bind({}) as any;
 FullMessageWidth.parameters = {
   stores: {
-    conversation,
+    chat: {
+      conversation,
+    },
   },
   viewport: {
     defaultViewport: "mobile1",
@@ -117,7 +124,9 @@ TypingIndicator.args = {
 };
 TypingIndicator.parameters = {
   stores: {
-    conversation: shortConversation,
+    chat: {
+      conversation: shortConversation,
+    },
   },
   viewport: {
     defaultViewport: "smallTablet",
@@ -130,7 +139,9 @@ TypingIndicatorStatic.args = {
 };
 TypingIndicatorStatic.parameters = {
   stores: {
-    conversation: shortConversation,
+    chat: {
+      conversation: shortConversation,
+    },
   },
   preferences: {
     animationsOn: false,
