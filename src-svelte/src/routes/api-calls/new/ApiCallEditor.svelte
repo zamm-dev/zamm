@@ -23,6 +23,8 @@
     type: "Chat",
     messages: [{ role: "System", text: "" }],
   });
+  export const provider = writable<"OpenAI" | "Ollama">("OpenAI");
+  export const llm = writable<string>("gpt-4");
 
   export function getDefaultApiCall(): ChatPromptVariant {
     return {
@@ -31,9 +33,15 @@
     };
   }
 
-  export function resetNewApiCall() {
+  function resetApiCallConversation() {
     canonicalRef.set(undefined);
     prompt.set(getDefaultApiCall());
+  }
+
+  export function resetNewApiCall() {
+    resetApiCallConversation();
+    provider.set("OpenAI");
+    llm.set("gpt-4");
   }
 </script>
 
@@ -46,16 +54,10 @@
   import { chat } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import { goto } from "$app/navigation";
+  import { onMount } from "svelte";
 
   export let expectingResponse = false;
-  let provider: "OpenAI" | "Ollama" = "OpenAI";
-  let llm = "gpt-4";
   let selectModels = OPENAI_MODELS;
-
-  function onProviderChange(newProvider: string) {
-    selectModels = newProvider === "OpenAI" ? OPENAI_MODELS : OLLAMA_MODELS;
-    llm = selectModels[0].apiName;
-  }
 
   async function submitApiCall() {
     if (expectingResponse) {
@@ -66,13 +68,13 @@
 
     try {
       const createdLlmCall = await chat({
-        provider,
-        llm,
+        provider: $provider,
+        llm: $llm,
         temperature: null,
         canonical_id: $canonicalRef?.id,
         prompt: $prompt.messages,
       });
-      resetNewApiCall();
+      resetApiCallConversation();
 
       goto(`/api-calls/${createdLlmCall.id}`);
     } catch (error) {
@@ -82,7 +84,22 @@
     }
   }
 
-  $: onProviderChange(provider);
+  onMount(() => {
+    let initial = true;
+
+    const unsubscribeProvider = provider.subscribe((newProvider: string) => {
+      if (initial) {
+        initial = false;
+        selectModels = newProvider === "OpenAI" ? OPENAI_MODELS : OLLAMA_MODELS;
+        return;
+      }
+
+      selectModels = newProvider === "OpenAI" ? OPENAI_MODELS : OLLAMA_MODELS;
+      llm.set(selectModels[0].apiName);
+    });
+
+    return unsubscribeProvider;
+  });
 </script>
 
 <InfoBox title="New API Call">
@@ -96,7 +113,7 @@
     <div class="setting">
       <label for="provider">Provider: </label>
       <div class="select-wrapper">
-        <select name="provider" id="provider" bind:value={provider}>
+        <select name="provider" id="provider" bind:value={$provider}>
           <option value="OpenAI">OpenAI</option>
           <option value="Ollama">Ollama</option>
         </select>
@@ -106,7 +123,7 @@
     <div class="setting">
       <label for="model">Model: </label>
       <div class="select-wrapper">
-        <select name="model" id="model" bind:value={llm}>
+        <select name="model" id="model" bind:value={$llm}>
           {#each selectModels as model}
             <option value={model.apiName}>{model.humanName}</option>
           {/each}
