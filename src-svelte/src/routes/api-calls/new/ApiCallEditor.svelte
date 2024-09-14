@@ -9,7 +9,8 @@
   }
 
   const OPENAI_MODELS: Model[] = [
-    { apiName: "gpt-4", humanName: "GPT 4" },
+    { apiName: "gpt-4", humanName: "GPT-4" },
+    { apiName: "gpt-4o", humanName: "GPT-4o" },
     { apiName: "gpt-4o-mini", humanName: "GPT-4o mini" },
   ];
 
