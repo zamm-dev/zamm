@@ -12,6 +12,20 @@ export const EMOJI_CANONICAL_REF = {
   snippet: `Ah, excellent question, General! 🤔`,
 };
 
+export const START_PROMPT: ChatPromptVariant = {
+  type: "Chat",
+  messages: [
+    {
+      role: "System",
+      text: "You are ZAMM, a chat program. Respond in first person.",
+    },
+    {
+      role: "Human",
+      text: "Hello, does this work?",
+    },
+  ],
+};
+
 export const EDIT_PROMPT: ChatPromptVariant = {
   type: "Chat",
   messages: [
