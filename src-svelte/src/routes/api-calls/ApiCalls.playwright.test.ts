@@ -22,17 +22,20 @@ describe("Api Calls endless scroll test", () => {
     browser = await chromium.launch({ headless: true });
     context = await browser.newContext();
     context.setDefaultTimeout(PLAYWRIGHT_TIMEOUT);
-    page = await context.newPage();
+  });
 
+  afterAll(async () => {
+    await browser.close();
+  });
+
+  beforeEach(async () => {
+    page = await context.newPage();
+    page.setDefaultTimeout(PLAYWRIGHT_TIMEOUT);
     if (DEBUG_LOGGING) {
       page.on("console", (msg) => {
         console.log(msg);
       });
     }
-  });
-
-  afterAll(async () => {
-    await browser.close();
   });
 
   const getScrollElement = async () => {
@@ -61,7 +64,9 @@ describe("Api Calls endless scroll test", () => {
     const lastMessageContainer = apiCallsScrollElement.locator(
       "a:nth-last-child(2) .message.instance .text-container",
     );
-    await expect(lastMessageContainer).toHaveText(expectedValue);
+    await expect(lastMessageContainer).toHaveText(expectedValue, {
+      timeout: PLAYWRIGHT_TIMEOUT,
+    });
   };
 
   test(

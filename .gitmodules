@@ -6,7 +6,10 @@
 	url = https://github.com/amosjyng/neodrag.git
 [submodule "forks/async-openai"]
 	path = forks/async-openai
-	url = git@github.com:amosjyng/async-openai.git
+	url = https://github.com/amosjyng/async-openai.git
 [submodule "forks/rvcr"]
 	path = forks/rvcr
-	url = git@github.com:amosjyng/rvcr.git
+	url = https://github.com/amosjyng/rvcr.git
+[submodule "forks/ollama-rs"]
+	path = forks/ollama-rs
+	url = https://github.com/zamm-dev/ollama-rs.git

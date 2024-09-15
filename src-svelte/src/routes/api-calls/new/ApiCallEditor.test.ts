@@ -1,10 +1,12 @@
 import { expect, test, vi, type Mock } from "vitest";
 import "@testing-library/jest-dom";
 
-import { render, screen } from "@testing-library/svelte";
+import { render, screen, waitFor } from "@testing-library/svelte";
 import ApiCallEditor, {
   canonicalRef,
   prompt,
+  provider,
+  llm,
   resetNewApiCall,
 } from "./ApiCallEditor.svelte";
 import userEvent from "@testing-library/user-event";
@@ -12,6 +14,7 @@ import { TauriInvokePlayback } from "$lib/sample-call-testing";
 import { get } from "svelte/store";
 import { mockStores } from "../../../vitest-mocks/stores";
 import { EDIT_CANONICAL_REF, EDIT_PROMPT } from "./test.data";
+import PersistentApiCallEditorView from "./PersistentApiCallEditorView.svelte";
 
 describe("API call editor", () => {
   let tauriInvokeMock: Mock;
@@ -39,7 +42,7 @@ describe("API call editor", () => {
     expect(screen.getAllByRole("listitem").length).toBe(numMessages + 1);
   }
 
-  async function setNewMessage(role: string, message: string) {
+  async function getLastMessageComponents() {
     const messageDivs = screen.getAllByRole("listitem");
     const lastMessageDiv = messageDivs[messageDivs.length - 1];
 
@@ -49,6 +52,22 @@ describe("API call editor", () => {
     if (roleToggle === null) {
       throw new Error("Role toggle not found");
     }
+
+    const messageInput = lastMessageDiv.querySelector("textarea");
+    if (messageInput === null) {
+      throw new Error("Message input not found");
+    }
+
+    return {
+      lastMessageDiv,
+      roleToggle,
+      messageInput,
+    };
+  }
+
+  async function setNewMessage(role: string, message: string) {
+    const { roleToggle, messageInput } = await getLastMessageComponents();
+
     for (let i = 0; i < 3; i++) {
       if (roleToggle.textContent === role) {
         break;
@@ -57,10 +76,6 @@ describe("API call editor", () => {
     }
     expect(roleToggle.textContent).toBe(role);
 
-    const messageInput = lastMessageDiv.querySelector("textarea");
-    if (messageInput === null) {
-      throw new Error("Message input not found");
-    }
     if (messageInput.value !== "") {
       await userEvent.clear(messageInput);
     }
@@ -121,5 +136,94 @@ describe("API call editor", () => {
     expect(get(mockStores.page).url.pathname).toEqual(
       "/api-calls/f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
     );
+  });
+
+  test("can make a call to Llama 3", async () => {
+    render(ApiCallEditor, {});
+    expect(tauriInvokeMock).not.toHaveBeenCalled();
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/chat-start-conversation-ollama.yaml",
+    );
+
+    await setNewMessage(
+      "System",
+      "You are ZAMM, a chat program. Respond in first person.",
+    );
+    await addNewMessage();
+    await setNewMessage("Human", "Hello, does this work?");
+
+    const providerSelect = screen.getByRole("combobox", { name: "Provider:" });
+    await userEvent.selectOptions(providerSelect, "Ollama");
+
+    await userEvent.click(screen.getByRole("button", { name: "Submit" }));
+    expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(get(mockStores.page).url.pathname).toEqual(
+      "/api-calls/506e2d1f-549c-45cc-ad65-57a0741f06ee",
+    );
+
+    // test that the provider is preserved
+    expect(get(provider)).toEqual("Ollama");
+    expect(get(llm)).toEqual("llama3:8b");
+  });
+
+  test("will update model list when provider changes", async () => {
+    render(ApiCallEditor, {});
+
+    const providerSelect = screen.getByRole("combobox", { name: "Provider:" });
+    const modelSelect = screen.getByRole("combobox", { name: "Model:" });
+    expect(providerSelect).toHaveValue("OpenAI");
+    expect(modelSelect).toHaveValue("gpt-4");
+
+    await userEvent.selectOptions(providerSelect, "Ollama");
+    expect(providerSelect).toHaveValue("Ollama");
+    expect(modelSelect).toHaveValue("llama3:8b");
+
+    // test that model can change without affecting provider
+    await userEvent.selectOptions(modelSelect, "gemma2:9b");
+    expect(providerSelect).toHaveValue("Ollama");
+    expect(modelSelect).toHaveValue("gemma2:9b");
+
+    // test that we can switch things back
+    await userEvent.selectOptions(providerSelect, "OpenAI");
+    expect(providerSelect).toHaveValue("OpenAI");
+    expect(modelSelect).toHaveValue("gpt-4");
+  });
+
+  test("will preserve all settings on page change", async () => {
+    render(PersistentApiCallEditorView, {});
+
+    // get controls
+    const { roleToggle, messageInput } = await getLastMessageComponents();
+    const providerSelect = screen.getByRole("combobox", { name: "Provider:" });
+    const modelSelect = screen.getByRole("combobox", { name: "Model:" });
+    // make changes
+    await userEvent.selectOptions(providerSelect, "Ollama");
+    await userEvent.selectOptions(modelSelect, "gemma2:9b");
+    await userEvent.click(roleToggle);
+    await userEvent.type(messageInput, "Hello, does this work?");
+    // affirm changes
+    expect(roleToggle.textContent).toBe("Human");
+    expect(messageInput).toHaveValue("Hello, does this work?");
+    expect(providerSelect).toHaveValue("Ollama");
+    expect(modelSelect).toHaveValue("gemma2:9b");
+
+    await userEvent.click(screen.getByRole("button", { name: "Remount" }));
+    await waitFor(async () => {
+      const {
+        roleToggle: refreshedRoleToggle,
+        messageInput: refreshedMessageInput,
+      } = await getLastMessageComponents();
+      const refreshedProviderSelect = screen.getByRole("combobox", {
+        name: "Provider:",
+      });
+      const refreshedModelSelect = screen.getByRole("combobox", {
+        name: "Model:",
+      });
+      expect(refreshedRoleToggle.textContent).toBe("Human");
+      expect(refreshedMessageInput).toHaveValue("Hello, does this work?");
+      expect(refreshedProviderSelect).toHaveValue("Ollama");
+      expect(refreshedModelSelect).toHaveValue("gemma2:9b");
+    });
   });
 });

@@ -2,7 +2,12 @@
   import InfoBox from "$lib/InfoBox.svelte";
   import { type LlmCall } from "$lib/bindings";
   import { lastMessageId, conversation } from "../../chat/Chat.svelte";
-  import { canonicalRef, prompt } from "../new/ApiCallEditor.svelte";
+  import {
+    canonicalRef,
+    prompt,
+    provider,
+    llm,
+  } from "../new/ApiCallEditor.svelte";
   import { goto } from "$app/navigation";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import Button from "$lib/controls/Button.svelte";
@@ -26,6 +31,10 @@
       snippet: apiCall.response.completion.text,
     });
     prompt.set(apiCall.request.prompt);
+    if (typeof apiCall.llm.provider === "string") {
+      provider.set(apiCall.llm.provider);
+    }
+    llm.set(apiCall.llm.requested);
 
     goto("/api-calls/new/");
   }

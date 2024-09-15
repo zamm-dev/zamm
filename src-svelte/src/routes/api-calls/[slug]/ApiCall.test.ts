@@ -11,10 +11,16 @@ import {
 import {
   canonicalRef,
   prompt,
+  provider,
+  llm,
   getDefaultApiCall,
   resetNewApiCall,
 } from "../new/ApiCallEditor.svelte";
-import { EDIT_CANONICAL_REF, EDIT_PROMPT } from "../new/test.data";
+import {
+  EDIT_CANONICAL_REF,
+  EDIT_PROMPT,
+  START_PROMPT,
+} from "../new/test.data";
 import { TauriInvokePlayback } from "$lib/sample-call-testing";
 import ApiCall from "./ApiCall.svelte";
 import { get } from "svelte/store";
@@ -176,6 +182,39 @@ describe("Individual API call", () => {
       expect(get(prompt)).toEqual(EDIT_PROMPT);
     });
     expect(get(canonicalRef)).toEqual(EDIT_CANONICAL_REF);
+    expect(get(provider)).toEqual("OpenAI");
+    expect(get(llm)).toEqual("gpt-4");
+    expect(get(mockStores.page).url.pathname).toEqual("/api-calls/new/");
+  });
+
+  test("can edit Ollama API call", async () => {
+    playback.addSamples(
+      "../src-tauri/api/sample-calls/get_api_call-ollama.yaml",
+    );
+    render(ApiCall, { id: "506e2d1f-549c-45cc-ad65-57a0741f06ee" });
+    // everything else is the same as the previous test, starting now ...
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    await waitFor(() => {
+      screen.getByText("Hello, does this work?");
+    });
+    expect(get(canonicalRef)).toBeUndefined();
+    expect(get(prompt)).toEqual(getDefaultApiCall());
+    expect(get(mockStores.page).url.pathname).toEqual("/");
+
+    const editButton = await waitFor(() => screen.getByText("Edit API call"));
+    userEvent.click(editButton);
+    await waitFor(() => {
+      expect(get(prompt)).toEqual(START_PROMPT);
+    });
+    expect(get(canonicalRef)).toEqual({
+      id: "506e2d1f-549c-45cc-ad65-57a0741f06ee",
+      snippet:
+        // eslint-disable-next-line max-len
+        "Hello there! Yes, it looks like I'm functioning properly. I'm ZAMM, a chat program designed to assist and converse with you. I'm happy to be here and help answer any questions or topics you'd like to discuss. What's on your mind today?",
+    });
+    // ... until now
+    expect(get(provider)).toEqual("Ollama");
+    expect(get(llm)).toEqual("llama3:8b");
     expect(get(mockStores.page).url.pathname).toEqual("/api-calls/new/");
   });
 });

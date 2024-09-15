@@ -151,6 +151,11 @@ fn compare_files(
     let actual_file_str = String::from_utf8(actual_file).unwrap();
 
     let replaced_actual_str = apply_replacements(&actual_file_str, output_replacements);
+    println!(
+        "Comparing {} to {}",
+        expected_path_abs.display(),
+        actual_path_abs.display()
+    );
     assert_eq!(expected_file_str, replaced_actual_str);
 }
 

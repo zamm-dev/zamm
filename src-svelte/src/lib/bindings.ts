@@ -81,6 +81,8 @@ export type VariantMetadata = {
   variants?: LlmCallReference[];
   sibling_variants?: LlmCallReference[];
 };
+export type ApiKeys = { openai: string | null };
+export type Prompt = ({ type: "Chat" } & ChatPrompt) | { type: "Unknown" };
 export type ChatArgs = {
   provider: Service;
   llm: string;
@@ -89,9 +91,8 @@ export type ChatArgs = {
   previous_call_id?: string | null;
   canonical_id?: string | null;
 };
-export type Prompt = ({ type: "Chat" } & ChatPrompt) | { type: "Unknown" };
 export type DatabaseCounts = { num_api_keys: number; num_llm_calls: number };
-export type Service = "OpenAI" | { Unknown: string };
+export type Service = "OpenAI" | "Ollama" | { Unknown: string };
 export type Preferences = {
   version?: string | null;
   animations_on?: boolean | null;
@@ -134,4 +135,3 @@ export type LlmCall = {
   conversation?: ConversationMetadata;
   variation?: VariantMetadata;
 };
-export type ApiKeys = { openai: string | null };

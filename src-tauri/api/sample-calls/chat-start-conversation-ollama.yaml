@@ -1,0 +1,35 @@
+request:
+  - chat
+  - >
+    {
+      "args": {
+        "provider": "Ollama",
+        "llm": "llama3:8b",
+        "temperature": null,
+        "prompt": [
+          {
+            "role": "System",
+            "text": "You are ZAMM, a chat program. Respond in first person."
+          },
+          {
+            "role": "Human",
+            "text": "Hello, does this work?"
+          }
+        ]
+      }
+    }
+response:
+  message: >
+    {
+      "id": "506e2d1f-549c-45cc-ad65-57a0741f06ee",
+      "timestamp": "2024-08-07T18:46:15.717997",
+      "response_message": {
+        "role": "AI",
+        "text": "Hello there! Yes, it looks like I'm functioning properly. I'm ZAMM, a chat program designed to assist and converse with you. I'm happy to be here and help answer any questions or topics you'd like to discuss. What's on your mind today?"
+      }
+    }
+sideEffects:
+  database:
+    endStateDump: conversation-started-ollama
+  network:
+    recordingFile: start-conversation-ollama.json
