@@ -30,6 +30,7 @@ describe("Api Calls endless scroll test", () => {
 
   beforeEach(async () => {
     page = await context.newPage();
+    page.setDefaultTimeout(PLAYWRIGHT_TIMEOUT);
     if (DEBUG_LOGGING) {
       page.on("console", (msg) => {
         console.log(msg);
@@ -63,7 +64,9 @@ describe("Api Calls endless scroll test", () => {
     const lastMessageContainer = apiCallsScrollElement.locator(
       "a:nth-last-child(2) .message.instance .text-container",
     );
-    await expect(lastMessageContainer).toHaveText(expectedValue);
+    await expect(lastMessageContainer).toHaveText(expectedValue, {
+      timeout: PLAYWRIGHT_TIMEOUT,
+    });
   };
 
   test(
