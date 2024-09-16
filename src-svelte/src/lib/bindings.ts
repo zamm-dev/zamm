@@ -61,6 +61,10 @@ export function exportDb(path: string) {
   return invoke()<DatabaseCounts>("export_db", { path });
 }
 
+export function runCommand(command: string) {
+  return invoke()<RunCommandResponse>("run_command", { command });
+}
+
 export type TokenMetadata = {
   prompt: number | null;
   response: number | null;
@@ -72,16 +76,13 @@ export type ChatMessage =
   | { role: "Human"; text: string }
   | { role: "AI"; text: string };
 export type Llm = { name: string; requested: string; provider: Service };
-export type DatabaseImportCounts = {
-  imported: DatabaseCounts;
-  ignored: DatabaseCounts;
-};
 export type VariantMetadata = {
   canonical?: LlmCallReference | null;
   variants?: LlmCallReference[];
   sibling_variants?: LlmCallReference[];
 };
 export type ApiKeys = { openai: string | null };
+export type Shell = "Bash" | "Zsh" | "PowerShell";
 export type Prompt = ({ type: "Chat" } & ChatPrompt) | { type: "Unknown" };
 export type ChatArgs = {
   provider: Service;
@@ -93,6 +94,13 @@ export type ChatArgs = {
 };
 export type DatabaseCounts = { num_api_keys: number; num_llm_calls: number };
 export type Service = "OpenAI" | "Ollama" | { Unknown: string };
+export type OS = "Mac" | "Linux" | "Windows";
+export type SystemInfo = {
+  zamm_version: string;
+  os: OS | null;
+  shell: Shell | null;
+  shell_init_file: string | null;
+};
 export type Preferences = {
   version?: string | null;
   animations_on?: boolean | null;
@@ -108,17 +116,18 @@ export type LightweightLlmCall = {
   timestamp: string;
   response_message: ChatMessage;
 };
-export type OS = "Mac" | "Linux" | "Windows";
-export type EntityId = string;
-export type Shell = "Bash" | "Zsh" | "PowerShell";
-export type SystemInfo = {
-  zamm_version: string;
-  os: OS | null;
-  shell: Shell | null;
-  shell_init_file: string | null;
+export type RunCommandResponse = {
+  id: EntityId;
+  timestamp: string;
+  output: string;
 };
+export type EntityId = string;
 export type ChatPrompt = { messages: ChatMessage[] };
 export type Response = { completion: ChatMessage };
+export type DatabaseImportCounts = {
+  imported: DatabaseCounts;
+  ignored: DatabaseCounts;
+};
 export type ConversationMetadata = {
   previous_call?: LlmCallReference | null;
   next_calls?: LlmCallReference[];
