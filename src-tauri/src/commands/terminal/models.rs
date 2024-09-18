@@ -4,9 +4,8 @@ use anyhow::anyhow;
 use async_trait::async_trait;
 use rexpect::session::PtySession;
 use rexpect::spawn;
+use rexpect::ReadUntil;
 use std::sync::{Arc, Mutex};
-use std::thread::sleep;
-use std::time::Duration;
 
 #[async_trait]
 pub trait Terminal: Send + Sync {
@@ -27,27 +26,16 @@ impl ActualTerminal {
         }
     }
 
-    fn drain_read_buffer(&mut self) -> ZammResult<String> {
-        let mut output = String::new();
-        if let Some(session) = self.session.as_mut() {
-            let reader = &mut session.lock()?.reader;
-            while let Some(chunk) = reader.try_read() {
-                output.push(chunk);
-            }
-        }
-        Ok(output)
-    }
-
     fn read_updates(&mut self) -> ZammResult<String> {
-        let mut output = String::new();
-        loop {
-            sleep(Duration::from_millis(100));
-            let new_output = self.drain_read_buffer()?;
-            if new_output.is_empty() {
-                break;
-            }
-            output.push_str(&new_output);
-        }
+        let session = self.session.as_mut().ok_or(anyhow!("No session"))?;
+        let reader = &mut session.lock()?.reader;
+        let output = match reader.read_until(&ReadUntil::EOF) {
+            Ok((_, output)) => output,
+            Err(e) => match e {
+                rexpect::error::Error::Timeout { got, .. } => got,
+                _ => return Err(e.into()),
+            },
+        };
 
         let output_time = chrono::Utc::now();
         let duration = output_time
@@ -77,7 +65,7 @@ impl Terminal for ActualTerminal {
         let starting_time = chrono::Utc::now();
         self.session_data.header.timestamp = Some(starting_time);
 
-        let session = spawn(command, Some(1_000))?;
+        let session = spawn(command, Some(100))?;
         self.session = Some(Arc::new(Mutex::new(session)));
 
         let result = self.read_updates()?;
