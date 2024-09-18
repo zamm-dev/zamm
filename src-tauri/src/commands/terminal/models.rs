@@ -1,8 +1,7 @@
 use crate::commands::errors::ZammResult;
 use crate::models::asciicasts::AsciiCastData;
-use anyhow::anyhow;
 use async_trait::async_trait;
-use duct::cmd;
+use rexpect::spawn;
 
 #[async_trait]
 pub trait Terminal: Send + Sync {
@@ -25,18 +24,13 @@ impl ActualTerminal {
 #[async_trait]
 impl Terminal for ActualTerminal {
     async fn run_command(&mut self, command: &str) -> ZammResult<String> {
-        let cmd_and_args = shlex::split(command)
-            .ok_or_else(|| anyhow!("Failed to split command '{}'", command))?;
         self.session_data.header.command = Some(command.to_string());
 
         let starting_time = chrono::Utc::now();
         self.session_data.header.timestamp = Some(starting_time);
 
-        let parsed_cmd = cmd_and_args
-            .first()
-            .ok_or_else(|| anyhow!("Failed to get command"))?;
-        let parsed_args = &cmd_and_args[1..];
-        let output = cmd(parsed_cmd, parsed_args).stderr_to_stdout().read()?;
+        let mut session = spawn(command, None)?;
+        let output = session.exp_eof()?;
         let output_time = chrono::Utc::now();
         let duration = output_time - starting_time;
         self.session_data.entries.push(asciicast::Entry {
@@ -66,7 +60,7 @@ mod tests {
             .unwrap();
         #[cfg(not(target_os = "windows"))]
         let output = terminal.run_command("echo hello world").await.unwrap();
-        assert_eq!(output, "hello world");
+        assert_eq!(output, "hello world\r\n");
     }
 
     #[tokio::test]
@@ -77,9 +71,6 @@ mod tests {
             .await
             .unwrap();
 
-        #[cfg(target_os = "windows")]
-        assert_eq!(output, "stdout\r\nstderr\r\nstdout");
-        #[cfg(not(target_os = "windows"))]
-        assert_eq!(output, "stdout\nstderr\nstdout");
+        assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\n");
     }
 }

@@ -144,6 +144,11 @@ pub enum Error {
         source: reqwest::Error,
     },
     #[error(transparent)]
+    Rexpect {
+        #[from]
+        source: rexpect::error::Error,
+    },
+    #[error(transparent)]
     OpenAI {
         #[from]
         source: async_openai::error::OpenAIError,
