@@ -2,9 +2,9 @@ use crate::commands::errors::ZammResult;
 use crate::models::asciicasts::AsciiCastData;
 use anyhow::anyhow;
 use async_trait::async_trait;
+use chrono::DateTime;
 use rexpect::session::PtySession;
 use rexpect::spawn;
-use rexpect::ReadUntil;
 use std::sync::{Arc, Mutex};
 
 #[async_trait]
@@ -26,30 +26,58 @@ impl ActualTerminal {
         }
     }
 
+    fn start_time(&self) -> ZammResult<DateTime<chrono::Utc>> {
+        let result = self
+            .session_data
+            .header
+            .timestamp
+            .ok_or(anyhow!("No timestamp"))?;
+        Ok(result)
+    }
+
     fn read_updates(&mut self) -> ZammResult<String> {
-        let session = self.session.as_mut().ok_or(anyhow!("No session"))?;
-        let reader = &mut session.lock()?.reader;
-        let output = match reader.read_until(&ReadUntil::EOF) {
-            Ok((_, output)) => output,
-            Err(e) => match e {
-                rexpect::error::Error::Timeout { got, .. } => got,
-                _ => return Err(e.into()),
-            },
+        let output = {
+            let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
+            let mut session = session_mutex.lock()?;
+            match session.exp_eof() {
+                Ok(output) => output,
+                Err(e) => match e {
+                    rexpect::error::Error::Timeout { got, .. } => got
+                        .replace("`\\n`\n", "\n")
+                        .replace("`\\r`", "\r")
+                        .replace("`^`", "\u{1b}"),
+                    _ => return Err(e.into()),
+                },
+            }
         };
 
         let output_time = chrono::Utc::now();
-        let duration = output_time
-            - self
-                .session_data
-                .header
-                .timestamp
-                .ok_or(anyhow!("No timestamp"))?;
+        let relative_time = output_time - self.start_time()?;
         self.session_data.entries.push(asciicast::Entry {
-            time: duration.num_milliseconds() as f64 / 1000.0,
+            time: relative_time.num_milliseconds() as f64 / 1000.0,
             event_type: asciicast::EventType::Output,
             event_data: output.clone(),
         });
         Ok(output)
+    }
+
+    #[cfg(test)]
+    async fn send_input(&mut self, input: &str) -> ZammResult<String> {
+        let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
+        {
+            let mut session = session_mutex.lock()?;
+            session.send(input)?;
+            session.flush()?;
+        }
+
+        let relative_time = chrono::Utc::now() - self.start_time()?;
+        self.session_data.entries.push(asciicast::Entry {
+            time: relative_time.num_milliseconds() as f64 / 1000.0,
+            event_type: asciicast::EventType::Input,
+            event_data: input.to_string(),
+        });
+
+        self.read_updates()
     }
 }
 
@@ -111,5 +139,17 @@ mod tests {
         let output = terminal.run_command("bash").await.unwrap();
 
         assert!(output.ends_with("bash-3.2$ "), "Output: {}", output);
+    }
+
+    #[tokio::test]
+    async fn test_capture_interaction() {
+        let mut terminal = ActualTerminal::new();
+        terminal.run_command("bash").await.unwrap();
+
+        let output = terminal
+            .send_input("python api/sample-terminal-sessions/interleaved.py\n")
+            .await
+            .unwrap();
+        assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\n");
     }
 }
