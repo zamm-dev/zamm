@@ -6,6 +6,8 @@ use chrono::DateTime;
 use rexpect::session::PtySession;
 use rexpect::spawn;
 use std::sync::{Arc, Mutex};
+use std::thread::sleep;
+use std::time::Duration;
 
 #[async_trait]
 pub trait Terminal: Send + Sync {
@@ -35,21 +37,27 @@ impl ActualTerminal {
         Ok(result)
     }
 
-    fn read_updates(&mut self) -> ZammResult<String> {
-        let output = {
-            let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
-            let mut session = session_mutex.lock()?;
-            match session.exp_eof() {
-                Ok(output) => output,
-                Err(e) => match e {
-                    rexpect::error::Error::Timeout { got, .. } => got
-                        .replace("`\\n`\n", "\n")
-                        .replace("`\\r`", "\r")
-                        .replace("`^`", "\u{1b}"),
-                    _ => return Err(e.into()),
-                },
+    fn drain_read_buffer(&mut self) -> ZammResult<String> {
+        let mut output = String::new();
+        if let Some(session) = self.session.as_mut() {
+            let reader = &mut session.lock()?.reader;
+            while let Some(chunk) = reader.try_read() {
+                output.push(chunk);
             }
-        };
+        }
+        Ok(output)
+    }
+
+    fn read_updates(&mut self) -> ZammResult<String> {
+        let mut output = String::new();
+        loop {
+            sleep(Duration::from_millis(100));
+            let new_output = self.drain_read_buffer()?;
+            if new_output.is_empty() {
+                break;
+            }
+            output.push_str(&new_output);
+        }
 
         let output_time = chrono::Utc::now();
         let relative_time = output_time - self.start_time()?;
@@ -150,6 +158,6 @@ mod tests {
             .send_input("python api/sample-terminal-sessions/interleaved.py\n")
             .await
             .unwrap();
-        assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\n");
+        assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\nbash-3.2$ ");
     }
 }
