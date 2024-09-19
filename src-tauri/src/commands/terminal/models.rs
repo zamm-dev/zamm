@@ -101,7 +101,7 @@ impl Terminal for ActualTerminal {
         let starting_time = chrono::Utc::now();
         self.session_data.header.timestamp = Some(starting_time);
 
-        let session = spawn(command, Some(100))?;
+        let session = spawn(command, Some(0))?;
         self.session = Some(Arc::new(Mutex::new(session)));
 
         let result = self.read_updates()?;
