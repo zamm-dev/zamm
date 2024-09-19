@@ -49,15 +49,28 @@ impl ActualTerminal {
     }
 
     pub fn read_updates(&mut self) -> ZammResult<String> {
-        let mut output = String::new();
-        loop {
-            sleep(Duration::from_millis(100));
-            let new_output = self.drain_read_buffer()?;
-            if new_output.is_empty() {
-                break;
+        let output = {
+            let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
+            let output_until_eof = {
+                let mut session = session_mutex.lock()?;
+                session.exp_eof().ok()
+            };
+            match output_until_eof {
+                Some(full_output) => full_output,
+                None => {
+                    let mut interim_output = String::new();
+                    loop {
+                        sleep(Duration::from_millis(100));
+                        let new_output = self.drain_read_buffer()?;
+                        if new_output.is_empty() {
+                            break;
+                        }
+                        interim_output.push_str(&new_output);
+                    }
+                    interim_output
+                }
             }
-            output.push_str(&new_output);
-        }
+        };
 
         if !output.is_empty() {
             let output_time = chrono::Utc::now();
@@ -103,7 +116,7 @@ impl Terminal for ActualTerminal {
         let starting_time = chrono::Utc::now();
         self.session_data.header.timestamp = Some(starting_time);
 
-        let session = spawn(command, Some(0))?;
+        let session = spawn(command, Some(100))?;
         self.session = Some(Arc::new(Mutex::new(session)));
 
         let result = self.read_updates()?;
