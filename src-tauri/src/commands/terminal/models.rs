@@ -48,7 +48,7 @@ impl ActualTerminal {
         Ok(output)
     }
 
-    fn read_updates(&mut self) -> ZammResult<String> {
+    pub fn read_updates(&mut self) -> ZammResult<String> {
         let mut output = String::new();
         loop {
             sleep(Duration::from_millis(100));
@@ -59,13 +59,15 @@ impl ActualTerminal {
             output.push_str(&new_output);
         }
 
-        let output_time = chrono::Utc::now();
-        let relative_time = output_time - self.start_time()?;
-        self.session_data.entries.push(asciicast::Entry {
-            time: relative_time.num_milliseconds() as f64 / 1000.0,
-            event_type: asciicast::EventType::Output,
-            event_data: output.clone(),
-        });
+        if !output.is_empty() {
+            let output_time = chrono::Utc::now();
+            let relative_time = output_time - self.start_time()?;
+            self.session_data.entries.push(asciicast::Entry {
+                time: relative_time.num_milliseconds() as f64 / 1000.0,
+                event_type: asciicast::EventType::Output,
+                event_data: output.clone(),
+            });
+        }
         Ok(output)
     }
 
@@ -128,6 +130,7 @@ mod tests {
         #[cfg(not(target_os = "windows"))]
         let output = terminal.run_command("echo hello world").await.unwrap();
         assert_eq!(output, "hello world\r\n");
+        assert_eq!(terminal.get_cast().entries.len(), 1);
     }
 
     #[tokio::test]
@@ -139,6 +142,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\n");
+        assert_eq!(terminal.get_cast().entries.len(), 1);
     }
 
     #[tokio::test]
@@ -147,6 +151,15 @@ mod tests {
         let output = terminal.run_command("bash").await.unwrap();
 
         assert!(output.ends_with("bash-3.2$ "), "Output: {}", output);
+        assert_eq!(terminal.get_cast().entries.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn test_no_entry_on_empty_capture() {
+        let mut terminal = ActualTerminal::new();
+        terminal.run_command("bash").await.unwrap();
+        terminal.read_updates().unwrap();
+        assert_eq!(terminal.get_cast().entries.len(), 1);
     }
 
     #[tokio::test]
@@ -159,5 +172,6 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\nbash-3.2$ ");
+        assert_eq!(terminal.get_cast().entries.len(), 3);
     }
 }
