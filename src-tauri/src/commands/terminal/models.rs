@@ -12,6 +12,7 @@ use std::time::Duration;
 #[async_trait]
 pub trait Terminal: Send + Sync {
     async fn run_command(&mut self, command: &str) -> ZammResult<String>;
+    fn read_updates(&mut self) -> ZammResult<String>;
     fn get_cast(&self) -> &AsciiCastData;
 }
 
@@ -44,42 +45,6 @@ impl ActualTerminal {
             while let Some(chunk) = reader.try_read() {
                 output.push(chunk);
             }
-        }
-        Ok(output)
-    }
-
-    pub fn read_updates(&mut self) -> ZammResult<String> {
-        let output = {
-            let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
-            let output_until_eof = {
-                let mut session = session_mutex.lock()?;
-                session.exp_eof().ok()
-            };
-            match output_until_eof {
-                Some(full_output) => full_output,
-                None => {
-                    let mut interim_output = String::new();
-                    loop {
-                        sleep(Duration::from_millis(100));
-                        let new_output = self.drain_read_buffer()?;
-                        if new_output.is_empty() {
-                            break;
-                        }
-                        interim_output.push_str(&new_output);
-                    }
-                    interim_output
-                }
-            }
-        };
-
-        if !output.is_empty() {
-            let output_time = chrono::Utc::now();
-            let relative_time = output_time - self.start_time()?;
-            self.session_data.entries.push(asciicast::Entry {
-                time: relative_time.num_milliseconds() as f64 / 1000.0,
-                event_type: asciicast::EventType::Output,
-                event_data: output.clone(),
-            });
         }
         Ok(output)
     }
@@ -121,6 +86,42 @@ impl Terminal for ActualTerminal {
 
         let result = self.read_updates()?;
         Ok(result)
+    }
+
+    fn read_updates(&mut self) -> ZammResult<String> {
+        let output = {
+            let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
+            let output_until_eof = {
+                let mut session = session_mutex.lock()?;
+                session.exp_eof().ok()
+            };
+            match output_until_eof {
+                Some(full_output) => full_output,
+                None => {
+                    let mut interim_output = String::new();
+                    loop {
+                        sleep(Duration::from_millis(100));
+                        let new_output = self.drain_read_buffer()?;
+                        if new_output.is_empty() {
+                            break;
+                        }
+                        interim_output.push_str(&new_output);
+                    }
+                    interim_output
+                }
+            }
+        };
+
+        if !output.is_empty() {
+            let output_time = chrono::Utc::now();
+            let relative_time = output_time - self.start_time()?;
+            self.session_data.entries.push(asciicast::Entry {
+                time: relative_time.num_milliseconds() as f64 / 1000.0,
+                event_type: asciicast::EventType::Output,
+                event_data: output.clone(),
+            });
+        }
+        Ok(output)
     }
 
     fn get_cast(&self) -> &AsciiCastData {

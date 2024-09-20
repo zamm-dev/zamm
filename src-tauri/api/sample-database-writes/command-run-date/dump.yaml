@@ -1,6 +1,6 @@
 terminal_sessions:
 - id: 38a5e2ea-2222-4913-9b20-2a1c682ab358
-  timestamp: 2024-07-09T14:03:28
+  timestamp: 2024-09-20T11:23:53
   command: date "+%A %B %e, %Y %R %z"
   os: Linux
   cast:
@@ -8,9 +8,9 @@ terminal_sessions:
       version: 2
       width: 80
       height: 24
-      timestamp: 1720533808
+      timestamp: 1726831433
       command: date "+%A %B %e, %Y %R %z"
     entries:
-    - - 0.004
+    - - 0.102
       - 'o'
-      - Tuesday July  9, 2024 21:03 +0700
+      - "Friday September 20, 2024 18:23 +0700\r\n"

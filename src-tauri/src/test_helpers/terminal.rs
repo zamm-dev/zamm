@@ -3,36 +3,45 @@ use crate::commands::terminal::{ActualTerminal, Terminal};
 use crate::models::asciicasts::AsciiCastData;
 use asciicast::EventType;
 use async_trait::async_trait;
-use rvcr::VCRMode;
+use either::Either::{self, Left, Right};
+use std::thread::sleep;
+use std::time::Duration;
 
 pub struct TestTerminal {
-    mode: VCRMode,
     recording_file: String,
-    cast: AsciiCastData,
+    terminal: Either<AsciiCastData, ActualTerminal>,
+    entry_index: usize,
 }
 
 impl TestTerminal {
     pub fn new(recording_file: &str) -> Self {
-        let mode = match std::fs::metadata(recording_file) {
-            Ok(_) => VCRMode::Replay,
-            Err(_) => VCRMode::Record,
-        };
-        let cast = match mode {
-            VCRMode::Record => AsciiCastData::new(),
-            VCRMode::Replay => AsciiCastData::load(recording_file).unwrap(),
+        let terminal = match std::fs::metadata(recording_file) {
+            Ok(_) => Either::Left(AsciiCastData::load(recording_file).unwrap()),
+            Err(_) => Either::Right(ActualTerminal::new()),
         };
         Self {
-            mode,
             recording_file: recording_file.to_string(),
-            cast,
+            terminal,
+            entry_index: 0,
+        }
+    }
+
+    fn next_entry(&mut self) -> &asciicast::Entry {
+        match &self.terminal {
+            Left(cast) => {
+                let entry = &cast.entries[self.entry_index];
+                self.entry_index += 1;
+                entry
+            }
+            Right(_) => panic!("Expected recording"),
         }
     }
 }
 
 impl Drop for TestTerminal {
     fn drop(&mut self) {
-        if self.mode == VCRMode::Record {
-            self.cast.save(&self.recording_file).unwrap();
+        if let Right(terminal) = &self.terminal {
+            terminal.get_cast().save(&self.recording_file).unwrap();
         }
     }
 }
@@ -40,27 +49,35 @@ impl Drop for TestTerminal {
 #[async_trait]
 impl Terminal for TestTerminal {
     async fn run_command(&mut self, command: &str) -> ZammResult<String> {
-        match self.mode {
-            VCRMode::Record => {
-                let mut actual_terminal = ActualTerminal::new();
-                let actual_output = actual_terminal.run_command(command).await?;
-                self.cast = actual_terminal.session_data.clone();
-                Ok(actual_output)
-            }
-            VCRMode::Replay => {
-                let expected_command = self.cast.header.command.as_ref().unwrap();
+        match &mut self.terminal {
+            Left(cast) => {
+                let expected_command = cast.header.command.as_ref().unwrap();
                 assert_eq!(command, expected_command);
 
-                assert_eq!(self.cast.entries.len(), 1);
-                let entry = &self.cast.entries[0];
+                let entry = self.next_entry();
                 assert_eq!(entry.event_type, EventType::Output);
                 Ok(entry.event_data.clone())
             }
+            Right(actual_terminal) => actual_terminal.run_command(command).await,
+        }
+    }
+
+    fn read_updates(&mut self) -> ZammResult<String> {
+        match &mut self.terminal {
+            Left(_) => {
+                let entry = self.next_entry();
+                assert_eq!(entry.event_type, EventType::Output);
+                Ok(entry.event_data.clone())
+            }
+            Right(actual_terminal) => actual_terminal.read_updates(),
         }
     }
 
     fn get_cast(&self) -> &AsciiCastData {
-        &self.cast
+        match &self.terminal {
+            Left(cast) => cast,
+            Right(actual_terminal) => actual_terminal.get_cast(),
+        }
     }
 }
 
@@ -75,6 +92,19 @@ mod tests {
             .run_command("date \"+%A %B %e, %Y %R %z\"")
             .await
             .unwrap();
-        assert_eq!(output, "Tuesday July  9, 2024 21:03 +0700");
+        assert_eq!(output, "Friday September 20, 2024 18:23 +0700\r\n");
+    }
+
+    #[tokio::test]
+    async fn test_terminal_pause() {
+        let mut terminal = TestTerminal::new("api/sample-terminal-sessions/pause.cast");
+        terminal
+            .run_command("python api/sample-terminal-sessions/pause.py")
+            .await
+            .unwrap();
+
+        sleep(Duration::from_millis(1_000));
+        let output = terminal.read_updates().unwrap();
+        assert_eq!(output, "Second\r\n");
     }
 }
