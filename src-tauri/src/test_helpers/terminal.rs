@@ -73,6 +73,21 @@ impl Terminal for TestTerminal {
         }
     }
 
+    async fn send_input(&mut self, input: &str) -> ZammResult<String> {
+        match &mut self.terminal {
+            Left(_) => {
+                let input_entry = self.next_entry();
+                assert_eq!(input_entry.event_type, EventType::Input);
+                assert_eq!(input_entry.event_data, input);
+
+                let output_entry = self.next_entry();
+                assert_eq!(output_entry.event_type, EventType::Output);
+                Ok(output_entry.event_data.clone())
+            }
+            Right(actual_terminal) => actual_terminal.send_input(input).await,
+        }
+    }
+
     fn get_cast(&self) -> &AsciiCastData {
         match &self.terminal {
             Left(cast) => cast,
@@ -106,5 +121,16 @@ mod tests {
         sleep(Duration::from_millis(1_000));
         let output = terminal.read_updates().unwrap();
         assert_eq!(output, "Second\r\n");
+    }
+
+    #[tokio::test]
+    async fn test_interactivity() {
+        let mut terminal = TestTerminal::new("api/sample-terminal-sessions/bash.cast");
+        terminal.run_command("bash").await.unwrap();
+        let output = terminal
+            .send_input("python api/sample-terminal-sessions/interleaved.py\n")
+            .await
+            .unwrap();
+        assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\nbash-3.2$ ");
     }
 }

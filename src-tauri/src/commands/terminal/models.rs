@@ -13,6 +13,7 @@ use std::time::Duration;
 pub trait Terminal: Send + Sync {
     async fn run_command(&mut self, command: &str) -> ZammResult<String>;
     fn read_updates(&mut self) -> ZammResult<String>;
+    async fn send_input(&mut self, input: &str) -> ZammResult<String>;
     fn get_cast(&self) -> &AsciiCastData;
 }
 
@@ -47,25 +48,6 @@ impl ActualTerminal {
             }
         }
         Ok(output)
-    }
-
-    #[cfg(test)]
-    async fn send_input(&mut self, input: &str) -> ZammResult<String> {
-        let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
-        {
-            let mut session = session_mutex.lock()?;
-            session.send(input)?;
-            session.flush()?;
-        }
-
-        let relative_time = chrono::Utc::now() - self.start_time()?;
-        self.session_data.entries.push(asciicast::Entry {
-            time: relative_time.num_milliseconds() as f64 / 1000.0,
-            event_type: asciicast::EventType::Input,
-            event_data: input.to_string(),
-        });
-
-        self.read_updates()
     }
 }
 
@@ -122,6 +104,24 @@ impl Terminal for ActualTerminal {
             });
         }
         Ok(output)
+    }
+
+    async fn send_input(&mut self, input: &str) -> ZammResult<String> {
+        let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
+        {
+            let mut session = session_mutex.lock()?;
+            session.send(input)?;
+            session.flush()?;
+        }
+
+        let relative_time = chrono::Utc::now() - self.start_time()?;
+        self.session_data.entries.push(asciicast::Entry {
+            time: relative_time.num_milliseconds() as f64 / 1000.0,
+            event_type: asciicast::EventType::Input,
+            event_data: input.to_string(),
+        });
+
+        self.read_updates()
     }
 
     fn get_cast(&self) -> &AsciiCastData {
