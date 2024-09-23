@@ -3,8 +3,10 @@ use crate::models::asciicasts::AsciiCastData;
 use anyhow::anyhow;
 use async_trait::async_trait;
 use chrono::DateTime;
-use rexpect::session::PtySession;
-use rexpect::spawn;
+use portable_pty::{
+    native_pty_system, Child, CommandBuilder, MasterPty, PtySize, SlavePty,
+};
+use std::io::{Read, Write};
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
@@ -17,8 +19,51 @@ pub trait Terminal: Send + Sync {
     fn get_cast(&self) -> &AsciiCastData;
 }
 
+struct PtySession {
+    #[allow(dead_code)]
+    master: Box<dyn MasterPty + Send>,
+    #[allow(dead_code)]
+    slave: Box<dyn SlavePty + Send>,
+    #[allow(dead_code)]
+    child: Box<dyn Child + Send + Sync>,
+    reader: Box<dyn Read + Send>,
+    writer: Box<dyn Write + Send>,
+}
+
+impl PtySession {
+    fn new(command: &str) -> ZammResult<Self> {
+        let cmd_and_args = shlex::split(command)
+            .ok_or_else(|| anyhow!("Failed to split command '{}'", command))?;
+        let parsed_cmd = cmd_and_args
+            .first()
+            .ok_or_else(|| anyhow!("Failed to get command"))?;
+        let parsed_args = &cmd_and_args[1..];
+        let mut cmd_builder = CommandBuilder::new(parsed_cmd);
+        cmd_builder.args(parsed_args);
+        let current_dir = std::env::current_dir()?;
+        cmd_builder.cwd(current_dir);
+
+        let session = native_pty_system().openpty(PtySize {
+            rows: 24,
+            cols: 80,
+            pixel_width: 0,
+            pixel_height: 0,
+        })?;
+        let child = session.slave.spawn_command(cmd_builder)?;
+        let reader = session.master.try_clone_reader()?;
+        let writer = session.master.take_writer()?;
+        Ok(Self {
+            master: session.master,
+            slave: session.slave,
+            child,
+            reader,
+            writer,
+        })
+    }
+}
+
 pub struct ActualTerminal {
-    pub session: Option<Arc<Mutex<PtySession>>>,
+    session: Option<Arc<Mutex<PtySession>>>,
     pub session_data: AsciiCastData,
 }
 
@@ -38,17 +83,6 @@ impl ActualTerminal {
             .ok_or(anyhow!("No timestamp"))?;
         Ok(result)
     }
-
-    fn drain_read_buffer(&mut self) -> ZammResult<String> {
-        let mut output = String::new();
-        if let Some(session) = self.session.as_mut() {
-            let reader = &mut session.lock()?.reader;
-            while let Some(chunk) = reader.try_read() {
-                output.push(chunk);
-            }
-        }
-        Ok(output)
-    }
 }
 
 #[async_trait]
@@ -63,7 +97,7 @@ impl Terminal for ActualTerminal {
         let starting_time = chrono::Utc::now();
         self.session_data.header.timestamp = Some(starting_time);
 
-        let session = spawn(command, Some(100))?;
+        let session = PtySession::new(command)?;
         self.session = Some(Arc::new(Mutex::new(session)));
 
         let result = self.read_updates()?;
@@ -73,25 +107,16 @@ impl Terminal for ActualTerminal {
     fn read_updates(&mut self) -> ZammResult<String> {
         let output = {
             let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
-            let output_until_eof = {
-                let mut session = session_mutex.lock()?;
-                session.exp_eof().ok()
-            };
-            match output_until_eof {
-                Some(full_output) => full_output,
-                None => {
-                    let mut interim_output = String::new();
-                    loop {
-                        sleep(Duration::from_millis(100));
-                        let new_output = self.drain_read_buffer()?;
-                        if new_output.is_empty() {
-                            break;
-                        }
-                        interim_output.push_str(&new_output);
-                    }
-                    interim_output
-                }
+            let mut session = session_mutex.lock()?;
+            let mut partial_output = String::new();
+            let buf = &mut [0; 1024];
+            let mut bytes_read = session.reader.read(buf)?;
+            while bytes_read > 0 {
+                partial_output.push_str(&String::from_utf8_lossy(&buf[..bytes_read]));
+                sleep(Duration::from_millis(100));
+                bytes_read = session.reader.read(buf)?;
             }
+            partial_output
         };
 
         if !output.is_empty() {
@@ -110,8 +135,8 @@ impl Terminal for ActualTerminal {
         let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
         {
             let mut session = session_mutex.lock()?;
-            session.send(input)?;
-            session.flush()?;
+            session.writer.write_all(input.as_bytes())?;
+            session.writer.flush()?;
         }
 
         let relative_time = chrono::Utc::now() - self.start_time()?;
