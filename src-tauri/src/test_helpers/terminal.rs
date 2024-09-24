@@ -131,6 +131,9 @@ mod tests {
             .send_input("python api/sample-terminal-sessions/interleaved.py\n")
             .await
             .unwrap();
-        assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\nbash-3.2$ ");
+        assert_eq!(
+            output,
+            "python api/sample-terminal-sessions/interleaved.py\r\nstdout\r\nstderr\r\nstdout\r\nbash-3.2$ "
+        );
     }
 }

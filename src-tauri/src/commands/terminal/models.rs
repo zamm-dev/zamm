@@ -7,8 +7,10 @@ use portable_pty::{
     native_pty_system, Child, CommandBuilder, MasterPty, PtySize, SlavePty,
 };
 use std::io::{Read, Write};
+use std::sync::mpsc;
+use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, Mutex};
-use std::thread::sleep;
+use std::thread::{sleep, spawn};
 use std::time::Duration;
 
 #[async_trait]
@@ -26,8 +28,8 @@ struct PtySession {
     slave: Box<dyn SlavePty + Send>,
     #[allow(dead_code)]
     child: Box<dyn Child + Send + Sync>,
-    reader: Box<dyn Read + Send>,
     writer: Box<dyn Write + Send>,
+    input_receiver: Receiver<char>,
 }
 
 impl PtySession {
@@ -49,15 +51,28 @@ impl PtySession {
             pixel_width: 0,
             pixel_height: 0,
         })?;
+
+        let (tx, rx): (Sender<char>, Receiver<char>) = mpsc::channel();
+        let mut reader = session.master.try_clone_reader()?;
+        spawn(move || {
+            let buf = &mut [0; 1];
+            loop {
+                let bytes_read = reader.read(buf).unwrap();
+                if bytes_read == 0 {
+                    break;
+                }
+                tx.send(buf[0] as char).unwrap();
+            }
+        });
+
         let child = session.slave.spawn_command(cmd_builder)?;
-        let reader = session.master.try_clone_reader()?;
         let writer = session.master.take_writer()?;
         Ok(Self {
             master: session.master,
             slave: session.slave,
             child,
-            reader,
             writer,
+            input_receiver: rx,
         })
     }
 }
@@ -83,6 +98,16 @@ impl ActualTerminal {
             .ok_or(anyhow!("No timestamp"))?;
         Ok(result)
     }
+
+    fn read_once(&mut self) -> ZammResult<String> {
+        let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
+        let session = session_mutex.lock()?;
+        let mut partial_output = String::new();
+        while let Ok(c) = session.input_receiver.try_recv() {
+            partial_output.push(c);
+        }
+        Ok(partial_output)
+    }
 }
 
 #[async_trait]
@@ -106,15 +131,14 @@ impl Terminal for ActualTerminal {
 
     fn read_updates(&mut self) -> ZammResult<String> {
         let output = {
-            let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
-            let mut session = session_mutex.lock()?;
             let mut partial_output = String::new();
-            let buf = &mut [0; 1024];
-            let mut bytes_read = session.reader.read(buf)?;
-            while bytes_read > 0 {
-                partial_output.push_str(&String::from_utf8_lossy(&buf[..bytes_read]));
+            loop {
                 sleep(Duration::from_millis(100));
-                bytes_read = session.reader.read(buf)?;
+                let partial = self.read_once()?;
+                if partial.is_empty() {
+                    break;
+                }
+                partial_output.push_str(&partial);
             }
             partial_output
         };
@@ -210,7 +234,7 @@ mod tests {
             .send_input("python api/sample-terminal-sessions/interleaved.py\n")
             .await
             .unwrap();
-        assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\nbash-3.2$ ");
+        assert_eq!(output, "python api/sample-terminal-sessions/interleaved.py\r\nstdout\r\nstderr\r\nstdout\r\nbash-3.2$ ");
         assert_eq!(terminal.get_cast().entries.len(), 3);
     }
 }
