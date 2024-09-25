@@ -26,10 +26,10 @@ struct PtySession {
     master: Box<dyn MasterPty + Send>,
     #[allow(dead_code)]
     slave: Box<dyn SlavePty + Send>,
-    #[allow(dead_code)]
     child: Box<dyn Child + Send + Sync>,
     writer: Box<dyn Write + Send>,
     input_receiver: Receiver<char>,
+    exit_code: Option<u32>,
 }
 
 impl PtySession {
@@ -73,6 +73,7 @@ impl PtySession {
             child,
             writer,
             input_receiver: rx,
+            exit_code: None,
         })
     }
 }
@@ -107,6 +108,27 @@ impl ActualTerminal {
             partial_output.push(c);
         }
         Ok(partial_output)
+    }
+
+    #[allow(dead_code)]
+    fn exit_code(&self) -> Option<u32> {
+        let session_mutex = self.session.as_ref().unwrap();
+        let mut session = session_mutex.lock().unwrap();
+        match session.exit_code {
+            Some(code) => Some(code),
+            None => {
+                let status = session
+                    .child
+                    .try_wait()
+                    .unwrap_or(None)
+                    .map(|status| status.exit_code());
+                if let Some(code) = status {
+                    session.exit_code = Some(code);
+                    // todo: record exit code and total runtime
+                }
+                status
+            }
+        }
     }
 }
 
@@ -194,6 +216,7 @@ mod tests {
         let output = terminal.run_command("echo hello world").await.unwrap();
         assert_eq!(output, "hello world\r\n");
         assert_eq!(terminal.get_cast().entries.len(), 1);
+        assert_eq!(terminal.exit_code(), Some(0));
     }
 
     #[tokio::test]
@@ -206,6 +229,7 @@ mod tests {
 
         assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\n");
         assert_eq!(terminal.get_cast().entries.len(), 1);
+        assert_eq!(terminal.exit_code(), Some(0));
     }
 
     #[tokio::test]
@@ -215,6 +239,7 @@ mod tests {
 
         assert!(output.ends_with("bash-3.2$ "), "Output: {}", output);
         assert_eq!(terminal.get_cast().entries.len(), 1);
+        assert_eq!(terminal.exit_code(), None);
     }
 
     #[tokio::test]
@@ -236,5 +261,6 @@ mod tests {
             .unwrap();
         assert_eq!(output, "python api/sample-terminal-sessions/interleaved.py\r\nstdout\r\nstderr\r\nstdout\r\nbash-3.2$ ");
         assert_eq!(terminal.get_cast().entries.len(), 3);
+        assert_eq!(terminal.exit_code(), None);
     }
 }
