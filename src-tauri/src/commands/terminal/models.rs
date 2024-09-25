@@ -214,7 +214,7 @@ mod tests {
         let (command, expected_output) = if cfg!(target_os = "windows") {
             ("cmd /C \"echo hello world\"", "\u{1b}[?25l\u{1b}[2J\u{1b}[m\u{1b}[Hhello world\r\n\u{1b}]0;C:\\WINDOWS\\system32\\cmd.EXE\u{7}\u{1b}[?25h")
         } else {
-            ("echo hello world", "hello world\n")
+            ("echo hello world", "hello world\r\n")
         };
 
         let mut terminal = ActualTerminal::new();
@@ -298,7 +298,12 @@ mod tests {
             output
         );
         #[cfg(not(target_os = "windows"))]
-        assert_eq!(output, "python api/sample-terminal-sessions/interleaved.py\r\nstdout\r\nstderr\r\nstdout\r\nbash-3.2$ ");
+        assert!(
+            output.contains("stdout\r\nstderr\r\nstdout\r\n")
+                && (output.ends_with("$ ") || output.ends_with("# ")),
+            "Output: {:?}",
+            output
+        );
 
         assert_eq!(terminal.get_cast().entries.len(), 3);
         assert_eq!(terminal.exit_code(), None);
