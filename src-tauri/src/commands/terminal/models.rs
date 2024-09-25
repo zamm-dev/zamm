@@ -204,17 +204,22 @@ impl Terminal for ActualTerminal {
 mod tests {
     use super::*;
 
+    #[cfg(target_os = "windows")]
+    const SHELL_COMMAND: &str = "cmd";
+    #[cfg(not(target_os = "windows"))]
+    const SHELL_COMMAND: &str = "bash";
+
     #[tokio::test]
     async fn test_capture_command_output() {
+        let (command, expected_output) = if cfg!(target_os = "windows") {
+            ("cmd /C \"echo hello world\"", "\u{1b}[?25l\u{1b}[2J\u{1b}[m\u{1b}[Hhello world\r\n\u{1b}]0;C:\\WINDOWS\\system32\\cmd.EXE\u{7}\u{1b}[?25h")
+        } else {
+            ("echo hello world", "hello world\n")
+        };
+
         let mut terminal = ActualTerminal::new();
-        #[cfg(target_os = "windows")]
-        let output = terminal
-            .run_command("cmd /C \"echo hello world\"")
-            .await
-            .unwrap();
-        #[cfg(not(target_os = "windows"))]
-        let output = terminal.run_command("echo hello world").await.unwrap();
-        assert_eq!(output, "hello world\r\n");
+        let output = terminal.run_command(command).await.unwrap();
+        assert_eq!(output, expected_output);
         assert_eq!(terminal.get_cast().entries.len(), 1);
         assert_eq!(terminal.exit_code(), Some(0));
     }
@@ -227,7 +232,16 @@ mod tests {
             .await
             .unwrap();
 
+        // No trailing newline on Windows
+        #[cfg(target_os = "windows")]
+        assert!(
+            output.contains("stdout\r\nstderr\r\nstdout"),
+            "Output: {:?}",
+            output
+        );
+        #[cfg(not(target_os = "windows"))]
         assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\n");
+
         assert_eq!(terminal.get_cast().entries.len(), 1);
         assert_eq!(terminal.exit_code(), Some(0));
     }
@@ -235,9 +249,24 @@ mod tests {
     #[tokio::test]
     async fn test_capture_output_without_blocking() {
         let mut terminal = ActualTerminal::new();
-        let output = terminal.run_command("bash").await.unwrap();
+        let output = terminal.run_command(SHELL_COMMAND).await.unwrap();
 
-        assert!(output.ends_with("bash-3.2$ "), "Output: {}", output);
+        // Windows output contains a whole lot of control characters, so we don't test
+        // directly with `starts_with` or `ends_with` here
+        #[cfg(target_os = "windows")]
+        assert!(
+            output.contains("(c) Microsoft Corporation. All rights reserved.")
+                && output.contains("src-tauri>"),
+            "Output: {:?}",
+            output
+        );
+        #[cfg(not(target_os = "windows"))]
+        assert!(
+            output.ends_with("$ ") || output.ends_with("# "),
+            "Output: {}",
+            output
+        );
+
         assert_eq!(terminal.get_cast().entries.len(), 1);
         assert_eq!(terminal.exit_code(), None);
     }
@@ -245,21 +274,32 @@ mod tests {
     #[tokio::test]
     async fn test_no_entry_on_empty_capture() {
         let mut terminal = ActualTerminal::new();
-        terminal.run_command("bash").await.unwrap();
+        terminal.run_command(SHELL_COMMAND).await.unwrap();
         terminal.read_updates().unwrap();
         assert_eq!(terminal.get_cast().entries.len(), 1);
     }
 
     #[tokio::test]
     async fn test_capture_interaction() {
-        let mut terminal = ActualTerminal::new();
-        terminal.run_command("bash").await.unwrap();
+        let input = if cfg!(target_os = "windows") {
+            "python api/sample-terminal-sessions/interleaved.py\r\n"
+        } else {
+            "python api/sample-terminal-sessions/interleaved.py\n"
+        };
 
-        let output = terminal
-            .send_input("python api/sample-terminal-sessions/interleaved.py\n")
-            .await
-            .unwrap();
+        let mut terminal = ActualTerminal::new();
+        terminal.run_command(SHELL_COMMAND).await.unwrap();
+
+        let output = terminal.send_input(input).await.unwrap();
+        #[cfg(target_os = "windows")]
+        assert!(
+            output.contains("stdout\r\nstderr\r\nstdout"),
+            "Output: {:?}",
+            output
+        );
+        #[cfg(not(target_os = "windows"))]
         assert_eq!(output, "python api/sample-terminal-sessions/interleaved.py\r\nstdout\r\nstderr\r\nstdout\r\nbash-3.2$ ");
+
         assert_eq!(terminal.get_cast().entries.len(), 3);
         assert_eq!(terminal.exit_code(), None);
     }
