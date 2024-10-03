@@ -27,6 +27,20 @@ pub struct EntityId {
     pub uuid: Uuid,
 }
 
+impl Default for EntityId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl EntityId {
+    pub fn new() -> Self {
+        EntityId {
+            uuid: Uuid::new_v4(),
+        }
+    }
+}
+
 impl Deref for EntityId {
     type Target = Uuid;
 

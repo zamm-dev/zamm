@@ -18,7 +18,7 @@ pub trait Terminal: Send + Sync {
     async fn run_command(&mut self, command: &str) -> ZammResult<String>;
     fn read_updates(&mut self) -> ZammResult<String>;
     async fn send_input(&mut self, input: &str) -> ZammResult<String>;
-    fn get_cast(&self) -> &AsciiCastData;
+    fn get_cast(&self) -> AsciiCastData;
 }
 
 struct PtySession {
@@ -195,8 +195,8 @@ impl Terminal for ActualTerminal {
         self.read_updates()
     }
 
-    fn get_cast(&self) -> &AsciiCastData {
-        &self.session_data
+    fn get_cast(&self) -> AsciiCastData {
+        self.session_data.clone()
     }
 }
 

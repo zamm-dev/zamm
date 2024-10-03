@@ -1,17 +1,16 @@
 use crate::commands::errors::ZammResult;
-use crate::commands::terminal::{ActualTerminal, Terminal};
+use crate::commands::terminal::ActualTerminal;
 use crate::models::asciicasts::NewAsciiCast;
 use crate::models::llm_calls::EntityId;
 use crate::models::os::get_os;
 use crate::schema::asciicasts::{self};
-use crate::ZammDatabase;
+use crate::{ZammDatabase, ZammTerminalSessions};
 use anyhow::anyhow;
 use chrono::naive::NaiveDateTime;
 use diesel::RunQueryDsl;
 use serde::{Deserialize, Serialize};
 use specta::specta;
 use tauri::State;
-use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct RunCommandResponse {
@@ -22,15 +21,17 @@ pub struct RunCommandResponse {
 
 async fn run_command_helper(
     zamm_db: &ZammDatabase,
-    terminal: &mut dyn Terminal,
+    zamm_sessions: &ZammTerminalSessions,
+    session_id: &EntityId,
     command: &str,
 ) -> ZammResult<RunCommandResponse> {
     let db = &mut zamm_db.0.lock().await;
+    let mut sessions = zamm_sessions.0.lock().await;
+    let terminal = sessions
+        .get_mut(session_id)
+        .ok_or_else(|| anyhow!("No session found"))?;
 
     let output = terminal.run_command(command).await?;
-    let new_session_id = EntityId {
-        uuid: Uuid::new_v4(),
-    };
     let cast = terminal.get_cast();
     let timestamp = cast
         .header
@@ -46,17 +47,17 @@ async fn run_command_helper(
             .ok_or_else(|| anyhow!("No command in cast"))?;
         diesel::insert_into(asciicasts::table)
             .values(NewAsciiCast {
-                id: &new_session_id,
+                id: session_id,
                 timestamp: &timestamp,
                 command: &command,
                 os: get_os(),
-                cast,
+                cast: &cast,
             })
             .execute(conn)?;
     }
 
     Ok(RunCommandResponse {
-        id: new_session_id,
+        id: session_id.clone(),
         timestamp,
         output,
     })
@@ -66,10 +67,18 @@ async fn run_command_helper(
 #[specta]
 pub async fn run_command(
     database: State<'_, ZammDatabase>,
+    sessions: State<'_, ZammTerminalSessions>,
     command: String,
 ) -> ZammResult<RunCommandResponse> {
-    let mut terminal = ActualTerminal::new();
-    run_command_helper(&database, &mut terminal, &command).await
+    let terminal = ActualTerminal::new();
+    let new_session_id = EntityId::new();
+    sessions
+        .0
+        .lock()
+        .await
+        .insert(new_session_id.clone(), Box::new(terminal));
+
+    run_command_helper(&database, &sessions, &new_session_id, &command).await
 }
 
 #[cfg(test)]
@@ -116,10 +125,11 @@ mod tests {
             args: &RunCommandRequest,
             side_effects: &mut SideEffectsHelpers,
         ) -> ZammResult<RunCommandResponse> {
-            let terminal_mut = side_effects.terminal.as_mut().unwrap();
+            let terminal_helper = side_effects.terminal.as_ref().unwrap();
             run_command_helper(
                 side_effects.db.as_ref().unwrap(),
-                &mut **terminal_mut,
+                &terminal_helper.sessions,
+                &terminal_helper.mock_session_id,
                 &args.command,
             )
             .await
@@ -134,6 +144,20 @@ mod tests {
             let actual_output = result.as_ref().unwrap();
             let expected_output_timestamp = to_yaml_string(&expected_output.timestamp);
             let actual_output_timestamp = to_yaml_string(&actual_output.timestamp);
+            let expected_os = if sample
+                .side_effects
+                .as_ref()
+                .unwrap()
+                .terminal
+                .as_ref()
+                .unwrap()
+                .recording_file
+                .ends_with("bash.cast")
+            {
+                "Mac"
+            } else {
+                "Linux"
+            };
             HashMap::from([
                 (
                     to_yaml_string(&actual_output.id),
@@ -146,9 +170,11 @@ mod tests {
                 ),
                 (actual_output_timestamp, expected_output_timestamp),
                 #[cfg(target_os = "windows")]
-                ("Windows".to_string(), "Linux".to_string()),
+                ("Windows".to_string(), expected_os.to_string()),
                 #[cfg(target_os = "macos")]
-                ("Mac".to_string(), "Linux".to_string()),
+                ("Mac".to_string(), expected_os.to_string()),
+                #[cfg(target_os = "linux")]
+                ("Linux".to_string(), expected_os.to_string()),
             ])
         }
 
@@ -176,5 +202,11 @@ mod tests {
         RunCommandTestCase,
         test_date,
         "./api/sample-calls/run_command-date.yaml"
+    );
+
+    check_sample!(
+        RunCommandTestCase,
+        test_start_bash,
+        "./api/sample-calls/run_command-bash.yaml"
     );
 }

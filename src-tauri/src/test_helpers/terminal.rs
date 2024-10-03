@@ -3,6 +3,7 @@ use crate::commands::terminal::{ActualTerminal, Terminal};
 use crate::models::asciicasts::AsciiCastData;
 use asciicast::EventType;
 use async_trait::async_trait;
+
 use either::Either::{self, Left, Right};
 use std::thread::sleep;
 use std::time::Duration;
@@ -88,9 +89,12 @@ impl Terminal for TestTerminal {
         }
     }
 
-    fn get_cast(&self) -> &AsciiCastData {
+    fn get_cast(&self) -> AsciiCastData {
         match &self.terminal {
-            Left(cast) => cast,
+            Left(cast) => AsciiCastData {
+                header: cast.header.clone(),
+                entries: cast.entries[..self.entry_index].to_vec(),
+            },
             Right(actual_terminal) => actual_terminal.get_cast(),
         }
     }

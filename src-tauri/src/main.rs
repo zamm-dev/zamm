@@ -13,9 +13,13 @@ mod test_helpers;
 mod upgrades;
 mod views;
 
+use std::collections::HashMap;
+
 use clap::Parser;
+use commands::terminal::Terminal;
 use diesel::sqlite::SqliteConnection;
 use futures::executor;
+use models::llm_calls::EntityId;
 use setup::api_keys::{setup_api_keys, ApiKeys};
 #[cfg(debug_assertions)]
 use specta::collect_types;
@@ -34,6 +38,7 @@ use upgrades::handle_app_upgrades;
 
 pub struct ZammDatabase(Mutex<Option<SqliteConnection>>);
 pub struct ZammApiKeys(Mutex<ApiKeys>);
+pub struct ZammTerminalSessions(Mutex<HashMap<EntityId, Box<dyn Terminal>>>);
 
 fn main() {
     let cli = Cli::parse();
@@ -64,6 +69,7 @@ fn main() {
         Some(Commands::Gui {}) | None => {
             let mut possible_db = setup::get_db();
             let api_keys = setup_api_keys(&mut possible_db);
+            let terminal_sessions = HashMap::new();
 
             tauri::Builder::default()
                 .setup(|app| {
@@ -104,6 +110,7 @@ fn main() {
                 })
                 .manage(ZammDatabase(Mutex::new(possible_db)))
                 .manage(ZammApiKeys(Mutex::new(api_keys)))
+                .manage(ZammTerminalSessions(Mutex::new(terminal_sessions)))
                 .invoke_handler(tauri::generate_handler![
                     get_api_keys,
                     set_api_key,
