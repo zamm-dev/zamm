@@ -41,6 +41,7 @@ export interface Network {
 
 export interface Terminal {
   recordingFile: string;
+  startingIndex?: number;
 }
 
 // Converts JSON strings to/from your types
@@ -283,5 +284,11 @@ const typeMap: any = {
     false,
   ),
   Network: o([{ json: "recordingFile", js: "recordingFile", typ: "" }], false),
-  Terminal: o([{ json: "recordingFile", js: "recordingFile", typ: "" }], false),
+  Terminal: o(
+    [
+      { json: "recordingFile", js: "recordingFile", typ: "" },
+      { json: "startingIndex", js: "startingIndex", typ: u(undefined, 0) },
+    ],
+    false,
+  ),
 };

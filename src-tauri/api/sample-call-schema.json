@@ -61,6 +61,9 @@
               "properties": {
                 "recordingFile": {
                   "type": "string"
+                },
+                "startingIndex": {
+                  "type": "integer"
                 }
               },
               "required": ["recordingFile"]

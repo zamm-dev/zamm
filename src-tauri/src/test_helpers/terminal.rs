@@ -27,6 +27,10 @@ impl TestTerminal {
         }
     }
 
+    pub fn set_entry_index(&mut self, index: usize) {
+        self.entry_index = index;
+    }
+
     fn next_entry(&mut self) -> &asciicast::Entry {
         match &self.terminal {
             Left(cast) => {

@@ -67,4 +67,6 @@ pub struct Network {
 #[serde(rename_all = "camelCase")]
 pub struct Terminal {
     pub recording_file: String,
+
+    pub starting_index: Option<i64>,
 }

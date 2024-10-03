@@ -439,10 +439,14 @@ where
             }
 
             // prepare terminal if necessary
-            if side_effects.terminal.is_some() {
+            if let Some(terminal_info) = &side_effects.terminal {
                 let recording_path = PathBuf::from(sample.terminal_recording());
-                let terminal =
+                let mut terminal =
                     Box::new(TestTerminal::new(recording_path.to_str().unwrap()));
+                if let Some(recording_index) = terminal_info.starting_index {
+                    terminal.set_entry_index(recording_index.try_into().unwrap());
+                }
+
                 let new_session_id = EntityId::new();
                 let sessions = ZammTerminalSessions(Mutex::new(HashMap::from([(
                     new_session_id.clone(),
