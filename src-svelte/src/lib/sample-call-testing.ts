@@ -56,6 +56,13 @@ export function parseSampleCall(sampleFile: string): ParsedCall {
   return parsedSample;
 }
 
+function stringify(obj: any): string {
+  if (typeof obj === "object") {
+    return JSON.stringify(obj, Object.keys(obj).sort());
+  }
+  return JSON.stringify(obj);
+}
+
 export class TauriInvokePlayback {
   unmatchedCalls: ParsedCall[];
   callPauseMs?: number;
@@ -67,13 +74,13 @@ export class TauriInvokePlayback {
   mockCall(
     ...args: (string | Record<string, string>)[]
   ): Promise<Record<string, string>> {
-    const jsonArgs = JSON.stringify(args);
+    const jsonArgs = stringify(args);
     const matchingCallIndex = this.unmatchedCalls.findIndex(
-      (call) => JSON.stringify(call.request) === jsonArgs,
+      (call) => stringify(call.request) === jsonArgs,
     );
     if (matchingCallIndex === -1) {
       const candidates = this.unmatchedCalls
-        .map((call) => JSON.stringify(call.request))
+        .map((call) => stringify(call.request))
         .join("\n");
       const errorMessage =
         `No matching call found for ${jsonArgs}.\n` +

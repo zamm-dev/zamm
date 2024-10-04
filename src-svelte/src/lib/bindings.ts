@@ -65,6 +65,10 @@ export function runCommand(command: string) {
   return invoke()<RunCommandResponse>("run_command", { command });
 }
 
+export function sendCommandInput(sessionId: string, input: string) {
+  return invoke()<string>("send_command_input", { sessionId, input });
+}
+
 export type TokenMetadata = {
   prompt: number | null;
   response: number | null;
@@ -116,11 +120,6 @@ export type LightweightLlmCall = {
   timestamp: string;
   response_message: ChatMessage;
 };
-export type RunCommandResponse = {
-  id: EntityId;
-  timestamp: string;
-  output: string;
-};
 export type EntityId = string;
 export type ChatPrompt = { messages: ChatMessage[] };
 export type Response = { completion: ChatMessage };
@@ -134,6 +133,11 @@ export type ConversationMetadata = {
 };
 export type LlmCallReference = { id: EntityId; snippet: string };
 export type Sound = "Switch" | "Whoosh";
+export type RunCommandResponse = {
+  id: EntityId;
+  timestamp: string;
+  output: string;
+};
 export type LlmCall = {
   id: EntityId;
   timestamp: string;

@@ -26,7 +26,7 @@
   import { chat } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
-  import Form from "./Form.svelte";
+  import SendInputForm from "$lib/controls/SendInputForm.svelte";
 
   export let expectingResponse = false;
   export let showMostRecentMessage = true;
@@ -125,9 +125,10 @@
       </div>
     </Scrollable>
 
-    <Form
-      {sendChatMessage}
-      chatBusy={expectingResponse}
+    <SendInputForm
+      accessibilityLabel="Chat with the AI:"
+      sendInput={sendChatMessage}
+      isBusy={expectingResponse}
       bind:currentMessage={$nextChatMessage}
       onTextInputResize={resizeConversationView}
     />

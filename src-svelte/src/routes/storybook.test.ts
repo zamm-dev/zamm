@@ -230,6 +230,11 @@ const components: ComponentTestConfig[] = [
     variants: ["empty", "small", "full"],
     screenshotEntireBody: true,
   },
+  {
+    path: ["screens", "terminal", "session"],
+    variants: ["new", "in-progress"],
+    screenshotEntireBody: true,
+  },
 ];
 
 async function findVariantFiles(

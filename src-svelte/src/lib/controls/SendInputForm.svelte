@@ -4,9 +4,11 @@
   import IconSend from "~icons/gravity-ui/arrow-right";
   import { onMount } from "svelte";
 
-  export let sendChatMessage: (message: string) => void;
-  export let chatBusy = false;
+  export let sendInput: (message: string) => void;
+  export let accessibilityLabel: string;
+  export let isBusy = false;
   export let currentMessage = "";
+  export let placeholder = "Type your message here...";
   export let onTextInputResize: () => void = () => undefined;
   let textareaInput: HTMLTextAreaElement;
 
@@ -22,14 +24,14 @@
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey) {
       event.preventDefault();
-      submitChat();
+      submitInput();
     }
   }
 
-  function submitChat() {
+  function submitInput() {
     const message = currentMessage.trim();
-    if (message && !chatBusy) {
-      sendChatMessage(currentMessage);
+    if (message && !isBusy) {
+      sendInput(currentMessage);
       currentMessage = "";
       requestAnimationFrame(() => {
         autosize.update(textareaInput);
@@ -41,19 +43,19 @@
 <form
   class="atomic-reveal cut-corners outer"
   autocomplete="off"
-  on:submit|preventDefault={submitChat}
+  on:submit|preventDefault={submitInput}
 >
-  <label for="message" class="accessibility-only">Chat with the AI:</label>
+  <label for="message" class="accessibility-only">{accessibilityLabel}</label>
   <textarea
     id="message"
     name="message"
-    placeholder="Type your message here..."
     rows="1"
+    {placeholder}
     on:keydown={handleKeydown}
     bind:this={textareaInput}
     bind:value={currentMessage}
   />
-  <Button ariaLabel="Send" disabled={chatBusy} unwrapped rightEnd
+  <Button ariaLabel="Send" disabled={isBusy} unwrapped rightEnd
     ><IconSend /></Button
   >
 </form>
