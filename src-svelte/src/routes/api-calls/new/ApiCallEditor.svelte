@@ -52,13 +52,14 @@
   import PromptComponent from "../[slug]/Prompt.svelte";
   import Button from "$lib/controls/Button.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
+  import Select from "$lib/controls/Select.svelte";
   import { chat } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
 
   export let expectingResponse = false;
-  let selectModels = OPENAI_MODELS;
+  let selectModels = $provider === "OpenAI" ? OPENAI_MODELS : OLLAMA_MODELS;
 
   async function submitApiCall() {
     if (expectingResponse) {
@@ -111,26 +112,15 @@
   </EmptyPlaceholder>
 
   <div class="model-settings">
-    <div class="setting">
-      <label for="provider">Provider: </label>
-      <div class="select-wrapper">
-        <select name="provider" id="provider" bind:value={$provider}>
-          <option value="OpenAI">OpenAI</option>
-          <option value="Ollama">Ollama</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="setting">
-      <label for="model">Model: </label>
-      <div class="select-wrapper">
-        <select name="model" id="model" bind:value={$llm}>
-          {#each selectModels as model}
-            <option value={model.apiName}>{model.humanName}</option>
-          {/each}
-        </select>
-      </div>
-    </div>
+    <Select name="provider" label="Provider: " bind:value={$provider}>
+      <option value="OpenAI">OpenAI</option>
+      <option value="Ollama">Ollama</option>
+    </Select>
+    <Select name="model" label="Model: " bind:value={$llm}>
+      {#each selectModels as model}
+        <option value={model.apiName}>{model.humanName}</option>
+      {/each}
+    </Select>
 
     {#if $canonicalRef}
       <div class="setting canonical-display">
@@ -155,53 +145,6 @@
     column-gap: 1rem;
     row-gap: 0.5rem;
     margin-bottom: 1rem;
-  }
-
-  .setting {
-    display: flex;
-    flex-direction: row;
-    gap: 0.5rem;
-  }
-
-  select {
-    -webkit-appearance: none;
-    -ms-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    border: none;
-    padding-right: 1rem;
-    box-sizing: border-box;
-    direction: rtl;
-    width: 100%;
-  }
-
-  select option {
-    direction: ltr;
-  }
-
-  select,
-  .select-wrapper {
-    background-color: transparent;
-    font-family: var(--font-body);
-    font-size: 1rem;
-  }
-
-  .select-wrapper {
-    flex: 1;
-    border-bottom: 1px dotted var(--color-faded);
-    position: relative;
-    display: inline-block;
-  }
-
-  .select-wrapper::after {
-    content: "▼";
-    display: inline-block;
-    position: absolute;
-    right: 0.25rem;
-    top: 0.35rem;
-    color: var(--color-faded);
-    font-size: 0.5rem;
-    pointer-events: none;
   }
 
   .setting.canonical-display {
