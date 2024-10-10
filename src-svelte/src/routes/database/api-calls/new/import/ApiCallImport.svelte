@@ -112,7 +112,7 @@
         type: "Chat",
         messages,
       });
-      goto("/api-calls/new");
+      goto("/database/api-calls/new");
     } catch (error) {
       snackbarError(error as string | Error);
     }

@@ -1,7 +1,7 @@
 <script lang="ts">
   import InfoBox from "$lib/InfoBox.svelte";
   import { type LlmCall } from "$lib/bindings";
-  import { lastMessageId, conversation } from "../../chat/Chat.svelte";
+  import { lastMessageId, conversation } from "../../../chat/Chat.svelte";
   import {
     canonicalRef,
     prompt,
@@ -36,7 +36,7 @@
     }
     llm.set(apiCall.llm.requested);
 
-    goto("/api-calls/new/");
+    goto("/database/api-calls/new/");
   }
 
   function restoreConversation() {

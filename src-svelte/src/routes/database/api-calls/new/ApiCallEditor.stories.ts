@@ -6,7 +6,7 @@ import { EMOJI_CANONICAL_REF } from "./test.data";
 
 export default {
   component: ApiCallEditorComponent,
-  title: "Screens/LLM Call/New",
+  title: "Screens/Database/LLM Call/New",
   argTypes: {},
   decorators: [SvelteStoresDecorator],
 };

@@ -8,7 +8,7 @@
 <script lang="ts">
   import InfoBox from "$lib/InfoBox.svelte";
   import IconAdd from "~icons/mingcute/add-fill";
-  import ApiCallsTable from "./ApiCallsTable.svelte";
+  import ApiCallsTable from "./api-calls/ApiCallsTable.svelte";
   import Select from "$lib/controls/Select.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
 
@@ -17,7 +17,10 @@
 
   $: infoBoxTitle =
     $dataType === "llm-calls" ? "LLM API Calls" : "Terminal Sessions";
-  $: newHref = $dataType === "llm-calls" ? "/api-calls/new/" : "/terminal/new/";
+  $: newHref =
+    $dataType === "llm-calls"
+      ? "/database/api-calls/new/"
+      : "/database/terminal-sessions/new/";
   $: newTitle =
     $dataType === "llm-calls" ? "New API call" : "New Terminal Session";
 </script>
@@ -36,7 +39,7 @@
     {:else}
       <EmptyPlaceholder>
         Terminal sessions cannot be viewed yet.<br />You may
-        <a href="/terminal/new/">start</a> a new one.
+        <a href="/database/terminal-sessions/new/">start</a> a new one.
       </EmptyPlaceholder>
     {/if}
   </div>

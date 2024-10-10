@@ -1,11 +1,11 @@
-import ApiCallsComponent from "./ApiCalls.svelte";
+import ApiCallsComponent from "./DatabaseView.svelte";
 import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
 import type { StoryFn, StoryObj } from "@storybook/svelte";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
 
 export default {
   component: ApiCallsComponent,
-  title: "Screens/LLM Call/List",
+  title: "Screens/Database/List",
   argTypes: {},
   decorators: [
     TauriInvokeDecorator,

@@ -189,17 +189,17 @@ const components: ComponentTestConfig[] = [
     ],
   },
   {
-    path: ["screens", "llm-call", "new"],
+    path: ["screens", "database", "llm-call", "new"],
     variants: ["blank", "edit-continued-conversation", "busy", "with-emoji"],
     screenshotEntireBody: true,
   },
   {
-    path: ["screens", "llm-call", "import"],
+    path: ["screens", "database", "llm-call", "import"],
     variants: ["static"],
     screenshotEntireBody: true,
   },
   {
-    path: ["screens", "llm-call", "individual"],
+    path: ["screens", "database", "llm-call"],
     variants: [
       {
         name: "narrow",
@@ -221,17 +221,17 @@ const components: ComponentTestConfig[] = [
     screenshotEntireBody: true,
   },
   {
-    path: ["screens", "llm-call", "individual", "actions"],
+    path: ["screens", "database", "llm-call", "actions"],
     variants: ["wide"],
     screenshotEntireBody: true,
   },
   {
-    path: ["screens", "llm-call", "list"],
+    path: ["screens", "database", "list"],
     variants: ["empty", "small", "full"],
     screenshotEntireBody: true,
   },
   {
-    path: ["screens", "terminal", "session"],
+    path: ["screens", "database", "terminal-session"],
     variants: ["new", "in-progress"],
     screenshotEntireBody: true,
   },

@@ -11,7 +11,7 @@ import {
 
 export default {
   component: ApiCallComponent,
-  title: "Screens/LLM Call/Individual",
+  title: "Screens/Database/LLM Call",
   argTypes: {},
   decorators: [TauriInvokeDecorator],
 };

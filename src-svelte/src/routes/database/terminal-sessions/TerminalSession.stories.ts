@@ -6,7 +6,7 @@ import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
 
 export default {
   component: TerminalSession,
-  title: "Screens/Terminal/Session",
+  title: "Screens/Database/Terminal Session",
   argTypes: {},
   decorators: [
     SvelteStoresDecorator,

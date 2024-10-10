@@ -4,7 +4,7 @@ import { CONTINUE_CONVERSATION_CALL } from "./sample-calls";
 
 export default {
   component: PromptComponent,
-  title: "Screens/LLM Call/Individual/Prompt",
+  title: "Screens/Database/LLM Call/Prompt",
   argTypes: {},
 };
 

@@ -7,7 +7,7 @@ import {
   resetConversation,
   conversation,
   lastMessageId,
-} from "../../chat/Chat.svelte";
+} from "../../../chat/Chat.svelte";
 import {
   canonicalRef,
   prompt,
@@ -24,7 +24,7 @@ import {
 import { TauriInvokePlayback } from "$lib/sample-call-testing";
 import ApiCall from "./ApiCall.svelte";
 import { get } from "svelte/store";
-import { mockStores } from "../../../vitest-mocks/stores";
+import { mockStores } from "../../../../vitest-mocks/stores";
 
 describe("Individual API call", () => {
   let tauriInvokeMock: Mock;
@@ -95,10 +95,10 @@ describe("Individual API call", () => {
     ).map((a) => a.href);
     expect(conversationLinks).toEqual([
       // previous
-      "http://localhost:3000/api-calls/d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
+      "http://localhost:3000/database/api-calls/d5ad1e49-f57f-4481-84fb-4d70ba8a7a74",
       // next
-      "http://localhost:3000/api-calls/0e6bcadf-2b41-43d9-b4cf-81008d4f4771",
-      "http://localhost:3000/api-calls/63b5c02e-b864-4efe-a286-fbef48b152ef",
+      "http://localhost:3000/database/api-calls/0e6bcadf-2b41-43d9-b4cf-81008d4f4771",
+      "http://localhost:3000/database/api-calls/63b5c02e-b864-4efe-a286-fbef48b152ef",
     ]);
 
     const variantSection = await screen.findByLabelText("Variants");
@@ -106,8 +106,8 @@ describe("Individual API call", () => {
       (a) => a.href,
     );
     expect(variantLinks).toEqual([
-      "http://localhost:3000/api-calls/f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
-      "http://localhost:3000/api-calls/7a35a4cf-f3d9-4388-bca8-2fe6e78c9648",
+      "http://localhost:3000/database/api-calls/f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
+      "http://localhost:3000/database/api-calls/7a35a4cf-f3d9-4388-bca8-2fe6e78c9648",
     ]);
   });
 
@@ -184,7 +184,9 @@ describe("Individual API call", () => {
     expect(get(canonicalRef)).toEqual(EDIT_CANONICAL_REF);
     expect(get(provider)).toEqual("OpenAI");
     expect(get(llm)).toEqual("gpt-4");
-    expect(get(mockStores.page).url.pathname).toEqual("/api-calls/new/");
+    expect(get(mockStores.page).url.pathname).toEqual(
+      "/database/api-calls/new/",
+    );
   });
 
   test("can edit Ollama API call", async () => {
@@ -215,6 +217,8 @@ describe("Individual API call", () => {
     // ... until now
     expect(get(provider)).toEqual("Ollama");
     expect(get(llm)).toEqual("llama3:8b");
-    expect(get(mockStores.page).url.pathname).toEqual("/api-calls/new/");
+    expect(get(mockStores.page).url.pathname).toEqual(
+      "/database/api-calls/new/",
+    );
   });
 });
