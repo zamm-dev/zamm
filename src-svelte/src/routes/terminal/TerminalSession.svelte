@@ -28,8 +28,8 @@
 
   async function sendCommand(newInput: string) {
     try {
+      expectingResponse = true;
       if (sessionId === undefined) {
-        // start new command
         let result = await runCommand(newInput);
         command = newInput;
         sessionId = result.id;
@@ -41,6 +41,8 @@
       resizeTerminalView();
     } catch (error) {
       snackbarError(error as string);
+    } finally {
+      expectingResponse = false;
     }
   }
 </script>
