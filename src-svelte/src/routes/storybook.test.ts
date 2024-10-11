@@ -12,6 +12,7 @@ import {
   type MatchImageSnapshotOptions,
 } from "jest-image-snapshot";
 import * as fs from "fs/promises";
+import { existsSync } from "fs";
 import sizeOf from "image-size";
 import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
 
@@ -395,6 +396,16 @@ describe.concurrent("Storybook visual tests", () => {
       test(
         `${testName} should render the same`,
         async ({ expect }) => {
+          if (process.env.CI === "true" && !variantConfig.assertDynamic) {
+            const goldFilePath =
+              `${SCREENSHOTS_BASE_DIR}/baseline/${storybookPath}` +
+              `/${variantConfig.name}.png`;
+            expect(
+              existsSync(goldFilePath),
+              `No baseline found for ${goldFilePath}`,
+            ).toBeTruthy();
+          }
+
           const page =
             variantConfig.browser === "chromium"
               ? await chromiumBrowserContext.newPage()
