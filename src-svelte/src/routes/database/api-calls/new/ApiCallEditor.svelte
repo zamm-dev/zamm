@@ -78,7 +78,7 @@
       });
       resetApiCallConversation();
 
-      goto(`/api-calls/${createdLlmCall.id}`);
+      goto(`/database/api-calls/${createdLlmCall.id}`);
     } catch (error) {
       snackbarError(error as string | Error);
     } finally {
@@ -106,8 +106,8 @@
 
 <InfoBox title="New API Call">
   <EmptyPlaceholder>
-    Manually build an API call below, or <a href="/api-calls/new/import/"
-      >import one</a
+    Manually build an API call below, or <a
+      href="/database/api-calls/new/import/">import one</a
     > from another source.
   </EmptyPlaceholder>
 

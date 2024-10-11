@@ -114,7 +114,7 @@
     <Scrollable on:bottomReached={loadApiCalls}>
       {#if llmCalls.length > 0}
         {#each llmCalls as call (call.id)}
-          <a href={`/api-calls/${call.id}`}>
+          <a href={`/database/api-calls/${call.id}`}>
             <div class="message instance">
               <div class="text-container">
                 <div class="text">
@@ -135,7 +135,7 @@
             <EmptyPlaceholder>
               Looks like you haven't made any calls to an LLM yet.<br />Get
               started via <a href="/chat">chat</a> or by making one
-              <a href="/api-calls/new/">from scratch</a>.
+              <a href="/database/api-calls/new/">from scratch</a>.
             </EmptyPlaceholder>
           </div>
           <div class="time"></div>

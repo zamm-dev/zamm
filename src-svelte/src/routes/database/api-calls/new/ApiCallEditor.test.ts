@@ -12,7 +12,7 @@ import ApiCallEditor, {
 import userEvent from "@testing-library/user-event";
 import { TauriInvokePlayback } from "$lib/sample-call-testing";
 import { get } from "svelte/store";
-import { mockStores } from "../../../vitest-mocks/stores";
+import { mockStores } from "../../../../vitest-mocks/stores";
 import { EDIT_CANONICAL_REF, EDIT_PROMPT } from "./test.data";
 import PersistentApiCallEditorView from "./PersistentApiCallEditorView.svelte";
 
@@ -105,7 +105,7 @@ describe("API call editor", () => {
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
     expect(get(mockStores.page).url.pathname).toEqual(
-      "/api-calls/c13c1e67-2de3-48de-a34c-a32079c03316",
+      "/database/api-calls/c13c1e67-2de3-48de-a34c-a32079c03316",
     );
   });
 
@@ -121,7 +121,7 @@ describe("API call editor", () => {
     expect(originalApiCallLink).toHaveTextContent(EDIT_CANONICAL_REF.snippet);
     expect(originalApiCallLink).toHaveAttribute(
       "href",
-      "/api-calls/c13c1e67-2de3-48de-a34c-a32079c03316",
+      "/database/api-calls/c13c1e67-2de3-48de-a34c-a32079c03316",
     );
 
     expect(tauriInvokeMock).not.toHaveBeenCalled();
@@ -134,7 +134,7 @@ describe("API call editor", () => {
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
     expect(get(mockStores.page).url.pathname).toEqual(
-      "/api-calls/f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
+      "/database/api-calls/f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
     );
   });
 
@@ -159,7 +159,7 @@ describe("API call editor", () => {
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
     expect(get(mockStores.page).url.pathname).toEqual(
-      "/api-calls/506e2d1f-549c-45cc-ad65-57a0741f06ee",
+      "/database/api-calls/506e2d1f-549c-45cc-ad65-57a0741f06ee",
     );
 
     // test that the provider is preserved

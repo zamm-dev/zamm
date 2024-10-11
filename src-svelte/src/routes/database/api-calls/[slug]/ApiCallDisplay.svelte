@@ -159,7 +159,7 @@
             {#if previousCall !== undefined}
               <a
                 class="conversation link previous atomic-reveal"
-                href={`/api-calls/${previousCall?.id}`}
+                href={`/database/api-calls/${previousCall?.id}`}
               >
                 <div class="arrow-icon"><IconLeftArrow /></div>
                 <div class="snippet">{previousCall?.snippet}</div>
@@ -171,7 +171,7 @@
             {#each nextCalls as nextCall}
               <a
                 class="conversation link next atomic-reveal"
-                href={`/api-calls/${nextCall.id}`}
+                href={`/database/api-calls/${nextCall.id}`}
               >
                 <div class="snippet">{nextCall.snippet}</div>
                 <div class="arrow-icon"><IconRightArrow /></div>

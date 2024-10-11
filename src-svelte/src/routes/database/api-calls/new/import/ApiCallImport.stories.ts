@@ -5,7 +5,7 @@ import MockTransitions from "$lib/__mocks__/MockTransitions.svelte";
 
 export default {
   component: ApiCallImport,
-  title: "Screens/LLM Call/Import",
+  title: "Screens/Database/LLM Call/Import",
   argTypes: {},
   decorators: [
     (story: StoryFn) => {

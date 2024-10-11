@@ -4,7 +4,7 @@ import SvelteStoresDecorator from "$lib/__mocks__/stores";
 
 export default {
   component: PersistentApiCallEditor,
-  title: "Screens/LLM Call/New",
+  title: "Screens/Database/LLM Call/New",
   argTypes: {},
   decorators: [SvelteStoresDecorator],
 };

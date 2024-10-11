@@ -39,7 +39,7 @@ describe("Api Calls endless scroll test", () => {
   });
 
   const getScrollElement = async () => {
-    const url = `http://localhost:6006/?path=/story/screens-llm-call-list--full`;
+    const url = `http://localhost:6006/?path=/story/screens-database-list--full`;
     await page.goto(url);
     await page
       .locator("button[title='Hide addons [A]']")

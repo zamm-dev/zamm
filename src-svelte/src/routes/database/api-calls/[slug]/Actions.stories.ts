@@ -4,7 +4,7 @@ import TauriInvokeDecorator from "$lib/__mocks__/invoke";
 
 export default {
   component: ActionsComponent,
-  title: "Screens/LLM Call/Individual/Actions",
+  title: "Screens/Database/LLM Call/Actions",
   argTypes: {},
   decorators: [TauriInvokeDecorator],
 };

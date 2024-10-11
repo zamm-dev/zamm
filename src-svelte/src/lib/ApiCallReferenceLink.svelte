@@ -8,7 +8,7 @@
 {#if nolink}
   <span class="nolink">{apiCall.snippet}</span>
 {:else}
-  <a href="/api-calls/{apiCall.id}">{apiCall.snippet}</a>
+  <a href="/database/api-calls/{apiCall.id}">{apiCall.snippet}</a>
 {/if}
 
 <style>
