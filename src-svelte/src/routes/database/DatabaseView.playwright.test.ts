@@ -4,7 +4,6 @@ import {
   chromium,
   expect,
   type Page,
-  type Frame,
   type Locator,
 } from "@playwright/test";
 import { afterAll, beforeAll, describe, test } from "vitest";
@@ -12,9 +11,8 @@ import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
 
 const DEBUG_LOGGING = false;
 
-describe("Api Calls endless scroll test", () => {
+describe("Database View", () => {
   let page: Page;
-  let frame: Frame;
   let browser: Browser;
   let context: BrowserContext;
 
@@ -38,8 +36,7 @@ describe("Api Calls endless scroll test", () => {
     }
   });
 
-  const getScrollElement = async () => {
-    const url = `http://localhost:6006/?path=/story/screens-database-list--full`;
+  const getFrame = async (url: string) => {
     await page.goto(url);
     await page
       .locator("button[title='Hide addons [A]']")
@@ -49,8 +46,11 @@ describe("Api Calls endless scroll test", () => {
     if (!maybeFrame) {
       throw new Error("Could not find Storybook iframe");
     }
-    frame = maybeFrame;
+    return maybeFrame;
+  };
 
+  const getScrollElement = async (url: string) => {
+    const frame = await getFrame(url);
     const apiCallsScrollElement = frame.locator(".scroll-contents");
     return { apiCallsScrollElement };
   };
@@ -72,13 +72,29 @@ describe("Api Calls endless scroll test", () => {
   test(
     "loads more messages when scrolled to end",
     async () => {
-      const { apiCallsScrollElement } = await getScrollElement();
+      const { apiCallsScrollElement } = await getScrollElement(
+        `http://localhost:6006/?path=/story/screens-database-list--full`,
+      );
       await expectLastMessage(apiCallsScrollElement, "Mocking number 10.");
 
       await apiCallsScrollElement.evaluate((el) => {
         el.scrollTop = el.scrollHeight;
       });
       await expectLastMessage(apiCallsScrollElement, "Mocking number 0.");
+    },
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
+  );
+
+  test(
+    "updates title when changing dropdown",
+    async () => {
+      const frame = await getFrame(
+        `http://localhost:6006/?path=/story/screens-database-list--full-page`,
+      );
+      await expect(frame.locator("h2")).toHaveText("LLM API Calls");
+
+      await frame.locator("select").selectOption("Terminal Sessions");
+      await expect(frame.locator("h2")).toHaveText("Terminal Sessions");
     },
     { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );

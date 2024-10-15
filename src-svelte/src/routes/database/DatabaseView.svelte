@@ -3,6 +3,10 @@
 
   type DataTypeEnum = "llm-calls" | "terminal";
   export const dataType = writable<DataTypeEnum>("llm-calls");
+
+  export function resetDataType() {
+    dataType.set("llm-calls");
+  }
 </script>
 
 <script lang="ts">
@@ -32,7 +36,7 @@
     </a>
     <Select name="data-type" label="Showing " bind:value={$dataType}>
       <option value="llm-calls">LLM Calls</option>
-      <option value="terminal">Terminal</option>
+      <option value="terminal">Terminal Sessions</option>
     </Select>
     {#if $dataType === "llm-calls"}
       <ApiCallsTable {dateTimeLocale} {timeZone} />
