@@ -78,7 +78,7 @@ mod tests {
 
     async fn make_request_helper(
         args: &GetApiCallRequest,
-        side_effects: &SideEffectsHelpers,
+        side_effects: &mut SideEffectsHelpers,
     ) -> ZammResult<LlmCall> {
         get_api_call_helper(side_effects.db.as_ref().unwrap(), &args.id).await
     }

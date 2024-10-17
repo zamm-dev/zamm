@@ -18,51 +18,51 @@ describe("Sidebar", () => {
       dummyLinks: true,
     });
     const homeLink = screen.getByTitle("Dashboard");
-    const apiCallsLink = screen.getByTitle("API Calls");
+    const apiCallsLink = screen.getByTitle("Database");
     expect(homeLink).toHaveAttribute("aria-current", "page");
     expect(apiCallsLink).not.toHaveAttribute("aria-current", "page");
   });
 
   test("highlights right icon for sub-paths", () => {
     render(SidebarUI, {
-      currentRoute: "/api-calls/1234",
+      currentRoute: "/database/api-calls/1234",
       dummyLinks: true,
     });
     const homeLink = screen.getByTitle("Dashboard");
-    const apiCallsLink = screen.getByTitle("API Calls");
+    const apiCallsLink = screen.getByTitle("Database");
     expect(homeLink).not.toHaveAttribute("aria-current", "page");
     expect(apiCallsLink).toHaveAttribute("aria-current", "page");
   });
 
   test("saves sub-path when navigating to new icon", async () => {
     render(SidebarUI, {
-      currentRoute: "/api-calls/1234",
+      currentRoute: "/database/api-calls/1234",
       dummyLinks: true,
     });
     const homeLink = screen.getByTitle("Dashboard");
-    const apiCallsLink = screen.getByTitle("API Calls");
+    const apiCallsLink = screen.getByTitle("Database");
     expect(homeLink).toHaveAttribute("href", "/");
-    expect(apiCallsLink).toHaveAttribute("href", "/api-calls");
+    expect(apiCallsLink).toHaveAttribute("href", "/database");
 
     await act(() => userEvent.click(homeLink));
     expect(homeLink).toHaveAttribute("href", "/");
-    expect(apiCallsLink).toHaveAttribute("href", "/api-calls/1234");
+    expect(apiCallsLink).toHaveAttribute("href", "/database/api-calls/1234");
   });
 
   test("restores default path when navigating back to old icon", async () => {
     render(SidebarUI, {
-      currentRoute: "/api-calls/1234",
+      currentRoute: "/database/api-calls/1234",
       dummyLinks: true,
     });
     const homeLink = screen.getByTitle("Dashboard");
-    const apiCallsLink = screen.getByTitle("API Calls");
+    const apiCallsLink = screen.getByTitle("Database");
     await act(() => userEvent.click(homeLink));
     expect(homeLink).toHaveAttribute("href", "/");
-    expect(apiCallsLink).toHaveAttribute("href", "/api-calls/1234");
+    expect(apiCallsLink).toHaveAttribute("href", "/database/api-calls/1234");
 
     await act(() => userEvent.click(apiCallsLink));
     expect(homeLink).toHaveAttribute("href", "/");
-    expect(apiCallsLink).toHaveAttribute("href", "/api-calls");
+    expect(apiCallsLink).toHaveAttribute("href", "/database");
   });
 });
 
@@ -71,8 +71,9 @@ describe("Sidebar interactions", () => {
   let playback: TauriInvokePlayback;
   let homeLink: HTMLElement;
   let settingsLink: HTMLElement;
+  const whooshSample = "../src-tauri/api/sample-calls/play_sound-whoosh.yaml";
 
-  beforeAll(() => {
+  beforeEach(() => {
     tauriInvokeMock = vi.fn();
     vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
     playback = new TauriInvokePlayback();
@@ -80,10 +81,7 @@ describe("Sidebar interactions", () => {
       (...args: (string | Record<string, string>)[]) =>
         playback.mockCall(...args),
     );
-    playback.addSamples("../src-tauri/api/sample-calls/play_sound-whoosh.yaml");
-  });
 
-  beforeEach(() => {
     render(SidebarUI, {
       currentRoute: "/",
       dummyLinks: true,
@@ -100,12 +98,16 @@ describe("Sidebar interactions", () => {
   });
 
   test("can change page path", async () => {
+    playback.addSamples(whooshSample);
+
     await act(() => userEvent.click(settingsLink));
     expect(homeLink).not.toHaveAttribute("aria-current", "page");
     expect(settingsLink).toHaveAttribute("aria-current", "page");
   });
 
   test("plays whoosh sound with right speed and volume", async () => {
+    playback.addSamples(whooshSample);
+
     // volume is at 0.125 so that when it's boosted 4x to compensate for the 4x
     // reduction in playback speed, the net volume will be at 0.5 as specified in the
     // sample file

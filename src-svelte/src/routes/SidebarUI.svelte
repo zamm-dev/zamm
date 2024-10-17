@@ -20,8 +20,8 @@
       icon: IconChat,
     },
     {
-      name: "API Calls",
-      path: "/api-calls",
+      name: "Database",
+      path: "/database",
       icon: IconDatabase,
     },
     {

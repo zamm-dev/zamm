@@ -500,6 +500,12 @@
     };
   }
 
+  function forceUpdateTitleText(newTitle: string) {
+    if (titleElement) {
+      titleElement.textContent = newTitle;
+    }
+  }
+
   $: shouldAnimate = $animationsOn && $firstPageLoad;
   $: timingScaleFactor = shouldAnimate ? 1 / $animationSpeed : 0;
   $: timing = getAnimationTiming(totalDelay, timingScaleFactor);
@@ -507,6 +513,7 @@
     delay: timing.overallFadeIn.delayMs(),
     duration: timing.overallFadeIn.durationMs(),
   };
+  $: forceUpdateTitleText(title);
 </script>
 
 <section

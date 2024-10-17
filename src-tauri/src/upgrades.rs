@@ -141,7 +141,7 @@ mod tests {
         async fn make_request(
             &mut self,
             _: &(),
-            side_effects: &SideEffectsHelpers,
+            side_effects: &mut SideEffectsHelpers,
         ) -> ZammResult<()> {
             handle_app_upgrades(&side_effects.disk, side_effects.db.as_ref().unwrap())
                 .await
