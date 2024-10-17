@@ -144,4 +144,14 @@ mod tests {
             "python api/sample-terminal-sessions/interleaved.py\r\nstdout\r\nstderr\r\nstdout\r\nbash-3.2$ "
         );
     }
+
+    #[tokio::test]
+    async fn test_windows_interactivity() {
+        let mut terminal =
+            TestTerminal::new("api/sample-terminal-sessions/windows.cast");
+        terminal.run_command("cmd").await.unwrap();
+        terminal.send_input("dir\r\n").await.unwrap();
+        let output = terminal.send_input("echo %cd%\r\n").await.unwrap();
+        assert!(output.contains("src-tauri"));
+    }
 }
