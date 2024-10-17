@@ -56,6 +56,7 @@
 
   .container :global(.select-wrapper) {
     flex: 0;
+    margin-bottom: 0.25rem;
   }
 
   .container :global(select) {

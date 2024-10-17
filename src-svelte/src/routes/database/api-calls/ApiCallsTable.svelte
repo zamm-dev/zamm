@@ -166,10 +166,6 @@
     margin-top: 0.5rem;
   }
 
-  .message.header {
-    margin-bottom: 0.5rem;
-  }
-
   .message.header .text-container,
   .message.header .time {
     text-align: center;
