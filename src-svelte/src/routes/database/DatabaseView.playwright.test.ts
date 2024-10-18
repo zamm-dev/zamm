@@ -91,10 +91,14 @@ describe("Database View", () => {
       const frame = await getFrame(
         `http://localhost:6006/?path=/story/screens-database-list--full-page`,
       );
-      await expect(frame.locator("h2")).toHaveText("LLM API Calls");
+      await expect(frame.locator("h2")).toHaveText("LLM API Calls", {
+        timeout: PLAYWRIGHT_TIMEOUT,
+      });
 
       await frame.locator("select").selectOption("Terminal Sessions");
-      await expect(frame.locator("h2")).toHaveText("Terminal Sessions");
+      await expect(frame.locator("h2")).toHaveText("Terminal Sessions", {
+        timeout: PLAYWRIGHT_TIMEOUT,
+      });
     },
     { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
