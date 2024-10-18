@@ -195,7 +195,10 @@ describe("App", function () {
 
   it("should be able to view single LLM call", async function () {
     this.retries(2);
+    // make sure we're back on the LLM APIs database view
     await findAndClick('a[title="Database"]');
+    await findAndClick('a[title="Database"]');
+    await findAndSelect('select[name="data-type"]', 0);
     await browser.pause(500); // for API calls to load
     // second link is the first in the list because the first link is the + sign
     await findAndClick(".api-calls-page a:nth-child(2)");
