@@ -29,7 +29,12 @@
 
       const newHeight = Math.floor(container.getBoundingClientRect().height);
       scrollableHeight = `${newHeight}px`;
-      dispatchResizeEvent("resize", scrollable.getDimensions());
+      if (scrollable?.getDimensions) {
+        // CI environment guard
+        dispatchResizeEvent("resize", scrollable.getDimensions());
+      } else {
+        console.warn("scrollable.getDimensions() is not a function");
+      }
     });
   }
 
