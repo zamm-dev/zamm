@@ -316,13 +316,14 @@
 
   class TypewriterEffect extends SubAnimation<void> {
     constructor(anim: { node: Element; timing: TransitionTimingFraction }) {
-      const text = anim.node.textContent ?? "";
-      const length = text.length + 1;
+      const originalText = anim.node.textContent ?? "";
       super({
         timing: anim.timing,
         tick: (tLocalFraction: number) => {
+          let currentText = anim.node.getAttribute("data-text") ?? originalText;
+          let length = currentText.length + 1;
           const i = Math.trunc(length * tLocalFraction);
-          anim.node.textContent = i === 0 ? "" : text.slice(0, i - 1);
+          anim.node.textContent = i === 0 ? "" : currentText.slice(0, i - 1);
         },
       });
     }
@@ -500,6 +501,13 @@
     };
   }
 
+  function forceUpdateTitleText(newTitle: string) {
+    if (titleElement) {
+      titleElement.textContent = newTitle;
+      titleElement.setAttribute("data-text", newTitle);
+    }
+  }
+
   $: shouldAnimate = $animationsOn && $firstPageLoad;
   $: timingScaleFactor = shouldAnimate ? 1 / $animationSpeed : 0;
   $: timing = getAnimationTiming(totalDelay, timingScaleFactor);
@@ -507,6 +515,7 @@
     delay: timing.overallFadeIn.delayMs(),
     duration: timing.overallFadeIn.durationMs(),
   };
+  $: forceUpdateTitleText(title);
 </script>
 
 <section

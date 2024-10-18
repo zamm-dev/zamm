@@ -1,23 +1,10 @@
+use crate::models::os::{get_os, OS};
+use crate::models::shell::{get_shell, Shell};
 use serde::{Deserialize, Serialize};
 use specta::specta;
 use specta::Type;
 
 use std::env;
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
-pub enum OS {
-    Mac,
-    Linux,
-    Windows,
-}
-
-#[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
-pub enum Shell {
-    Bash,
-    Zsh,
-    #[allow(clippy::enum_variant_names)]
-    PowerShell,
-}
 
 #[derive(Debug, Clone, Eq, PartialEq, Serialize, Deserialize, Type)]
 pub struct SystemInfo {
@@ -29,44 +16,6 @@ pub struct SystemInfo {
 
 fn get_zamm_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
-}
-
-fn get_os() -> Option<OS> {
-    #[cfg(target_os = "linux")]
-    return Some(OS::Linux);
-    #[cfg(target_os = "macos")]
-    return Some(OS::Mac);
-    #[cfg(target_os = "windows")]
-    return Some(OS::Windows);
-    #[cfg(not(any(
-        target_os = "linux",
-        target_os = "macos",
-        target_os = "windows"
-    )))]
-    return None;
-}
-
-fn get_shell() -> Option<Shell> {
-    if let Ok(shell) = env::var("SHELL") {
-        if shell.ends_with("/zsh") {
-            return Some(Shell::Zsh);
-        }
-        if shell.ends_with("/bash") {
-            return Some(Shell::Bash);
-        }
-    }
-
-    if env::var("ZSH_NAME").is_ok() {
-        return Some(Shell::Zsh);
-    }
-    if env::var("BASH").is_ok() {
-        return Some(Shell::Bash);
-    }
-
-    #[cfg(target_os = "windows")]
-    return Some(Shell::PowerShell);
-    #[cfg(not(target_os = "windows"))]
-    return None;
 }
 
 fn get_relative_profile_init_file() -> Option<String> {
@@ -119,7 +68,11 @@ mod tests {
         const EXPECTED_API_CALL: &'static str = "get_system_info";
         const CALL_HAS_ARGS: bool = false;
 
-        async fn make_request(&mut self, _: &(), _: &SideEffectsHelpers) -> SystemInfo {
+        async fn make_request(
+            &mut self,
+            _: &(),
+            _: &mut SideEffectsHelpers,
+        ) -> SystemInfo {
             self.system_info.clone()
         }
 
@@ -144,25 +97,6 @@ mod tests {
         let zamm_version = get_zamm_version();
         println!("Determined Zamm version to be {}", zamm_version);
         assert!(!zamm_version.is_empty());
-    }
-
-    #[test]
-    fn test_can_determine_os() {
-        let os = get_os();
-        println!("Determined OS to be {:?}", os);
-        assert!(os.is_some());
-    }
-
-    #[ignore]
-    #[test]
-    fn test_can_determine_shell() {
-        let shell = get_shell();
-        println!(
-            "Determined shell to be {:?} from env var {:?}",
-            shell,
-            env::var("SHELL")
-        );
-        assert!(shell.is_some());
     }
 
     #[cfg(not(target_os = "windows"))]

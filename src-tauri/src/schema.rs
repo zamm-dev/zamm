@@ -8,6 +8,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    asciicasts (id) {
+        id -> Text,
+        timestamp -> Timestamp,
+        command -> Text,
+        os -> Nullable<Text>,
+        cast -> Text,
+    }
+}
+
+diesel::table! {
     llm_call_follow_ups (previous_call_id, next_call_id) {
         previous_call_id -> Text,
         next_call_id -> Text,
@@ -39,6 +49,7 @@ diesel::table! {
 
 diesel::allow_tables_to_appear_in_same_query!(
     api_keys,
+    asciicasts,
     llm_call_follow_ups,
     llm_call_variants,
     llm_calls,

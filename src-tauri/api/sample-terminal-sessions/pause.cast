@@ -1,0 +1,3 @@
+{"version":2,"width":80,"height":24,"timestamp":1726831353,"command":"python api/sample-terminal-sessions/pause.py"}
+[0.315,"o","First\r\n"]
+[1.319,"o","Second\r\n"]

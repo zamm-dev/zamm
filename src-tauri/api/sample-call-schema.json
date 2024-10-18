@@ -55,6 +55,19 @@
               },
               "required": ["endStateDump"]
             },
+            "terminal": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "recordingFile": {
+                  "type": "string"
+                },
+                "startingIndex": {
+                  "type": "integer"
+                }
+              },
+              "required": ["recordingFile"]
+            },
             "network": {
               "type": "object",
               "additionalProperties": false,

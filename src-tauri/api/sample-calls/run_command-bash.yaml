@@ -1,0 +1,18 @@
+request:
+  - run_command
+  - >
+    {
+      "command": "bash"
+    }
+response:
+  message: >
+    {
+      "id": "3717ed48-ab52-4654-9f33-de5797af5118",
+      "timestamp": "2024-09-24T16:27:25",
+      "output": "\r\nThe default interactive shell is now zsh.\r\nTo update your account to use zsh, please run `chsh -s /bin/zsh`.\r\nFor more details, please visit https://support.apple.com/kb/HT208050.\r\nbash-3.2$ "
+    }
+sideEffects:
+  database:
+    endStateDump: command-run-bash
+  terminal:
+    recordingFile: bash.cast

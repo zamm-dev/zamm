@@ -12,6 +12,7 @@ import {
   type MatchImageSnapshotOptions,
 } from "jest-image-snapshot";
 import * as fs from "fs/promises";
+import { existsSync } from "fs";
 import sizeOf from "image-size";
 import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
 
@@ -189,17 +190,17 @@ const components: ComponentTestConfig[] = [
     ],
   },
   {
-    path: ["screens", "llm-call", "new"],
+    path: ["screens", "database", "llm-call", "new"],
     variants: ["blank", "edit-continued-conversation", "busy", "with-emoji"],
     screenshotEntireBody: true,
   },
   {
-    path: ["screens", "llm-call", "import"],
+    path: ["screens", "database", "llm-call", "import"],
     variants: ["static"],
     screenshotEntireBody: true,
   },
   {
-    path: ["screens", "llm-call", "individual"],
+    path: ["screens", "database", "llm-call"],
     variants: [
       {
         name: "narrow",
@@ -221,13 +222,18 @@ const components: ComponentTestConfig[] = [
     screenshotEntireBody: true,
   },
   {
-    path: ["screens", "llm-call", "individual", "actions"],
+    path: ["screens", "database", "llm-call", "actions"],
     variants: ["wide"],
     screenshotEntireBody: true,
   },
   {
-    path: ["screens", "llm-call", "list"],
+    path: ["screens", "database", "list"],
     variants: ["empty", "small", "full"],
+    screenshotEntireBody: true,
+  },
+  {
+    path: ["screens", "database", "terminal-session"],
+    variants: ["new", "in-progress"],
     screenshotEntireBody: true,
   },
 ];
@@ -390,6 +396,16 @@ describe.concurrent("Storybook visual tests", () => {
       test(
         `${testName} should render the same`,
         async ({ expect }) => {
+          if (process.env.CI === "true" && !variantConfig.assertDynamic) {
+            const goldFilePath =
+              `${SCREENSHOTS_BASE_DIR}/baseline/${storybookPath}` +
+              `/${variantConfig.name}.png`;
+            expect(
+              existsSync(goldFilePath),
+              `No baseline found for ${goldFilePath}`,
+            ).toBeTruthy();
+          }
+
           const page =
             variantConfig.browser === "chromium"
               ? await chromiumBrowserContext.newPage()

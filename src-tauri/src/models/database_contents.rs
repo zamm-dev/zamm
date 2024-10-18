@@ -1,3 +1,4 @@
+use crate::models::asciicasts::{AsciiCast, NewAsciiCast};
 use crate::models::llm_calls::{
     LlmCallFollowUp, LlmCallRow, LlmCallVariant, NewLlmCallFollowUp, NewLlmCallRow,
     NewLlmCallVariant,
@@ -29,6 +30,8 @@ pub struct DatabaseContents {
     pub api_keys: Vec<ApiKey>,
     #[serde(skip_serializing_if = "LlmCallData::is_default", default)]
     pub llm_calls: LlmCallData,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub terminal_sessions: Vec<AsciiCast>,
 }
 
 impl DatabaseContents {
@@ -55,6 +58,13 @@ impl DatabaseContents {
     pub fn insertable_call_variants(&self) -> Vec<NewLlmCallVariant> {
         self.llm_calls
             .variants
+            .iter()
+            .map(|k| k.as_insertable())
+            .collect()
+    }
+
+    pub fn insertable_terminal_sessions(&self) -> Vec<NewAsciiCast> {
+        self.terminal_sessions
             .iter()
             .map(|k| k.as_insertable())
             .collect()
