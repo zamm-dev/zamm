@@ -29,7 +29,8 @@ async function findAndSelect(selector, index, timeout) {
 
 async function findAndInput(selector, value) {
   const field = await $(selector);
-  await browser.execute(`arguments[0].value="${value}"`, field);
+  const escapedValue = value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  await browser.execute(`arguments[0].value="${escapedValue}"`, field);
   await browser.execute(
     'arguments[0].dispatchEvent(new Event("input", { bubbles: true }))',
     field,
@@ -131,7 +132,10 @@ describe("App", function () {
     await findAndClick('a[title="Dashboard"]');
     await findAndClick('a[title="Database"]');
 
-    await findAndInput('textarea[name="message"]', "/bin/bash");
+    await findAndInput(
+      'textarea[name="message"]',
+      "bash --rcfile ./zamm.bashrc",
+    );
     await findAndClick('button[type="submit"]');
     await findAndInput('textarea[name="message"]', "pwd");
     await findAndClick('button[type="submit"]');
