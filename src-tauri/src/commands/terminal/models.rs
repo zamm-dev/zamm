@@ -98,6 +98,11 @@ impl ActualTerminalInner {
         Ok(result)
     }
 
+    fn relative_time(&self) -> ZammResult<f64> {
+        let time_diff = chrono::Utc::now() - self.start_time()?;
+        Ok(time_diff.num_milliseconds() as f64 / 1000.0)
+    }
+
     fn read_once(&mut self) -> ZammResult<String> {
         match self.session.as_mut() {
             None => Err(anyhow!("No session started").into()),
@@ -141,10 +146,8 @@ impl ActualTerminalInner {
         };
 
         if !output.is_empty() {
-            let output_time = chrono::Utc::now();
-            let relative_time = output_time - self.start_time()?;
             self.session_data.entries.push(asciicast::Entry {
-                time: relative_time.num_milliseconds() as f64 / 1000.0,
+                time: self.relative_time()?,
                 event_type: asciicast::EventType::Output,
                 event_data: output.clone(),
             });
@@ -159,9 +162,8 @@ impl ActualTerminalInner {
                 session.writer.write_all(input.as_bytes())?;
                 session.writer.flush()?;
 
-                let relative_time = chrono::Utc::now() - self.start_time()?;
                 self.session_data.entries.push(asciicast::Entry {
-                    time: relative_time.num_milliseconds() as f64 / 1000.0,
+                    time: self.relative_time()?,
                     event_type: asciicast::EventType::Input,
                     event_data: input.to_string(),
                 });
