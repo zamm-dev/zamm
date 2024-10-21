@@ -11,7 +11,12 @@ const config = {
     adapter: adapter(),
     prerender: {
       crawl: false,
-      entries: ["*", "/api-calls/new/", "/api-calls/[slug]"],
+      entries: [
+        "*",
+        "/database/api-calls/new/",
+        "/database/api-calls/[slug]",
+        "/database/terminal-sessions/new/",
+      ],
     },
   },
 };

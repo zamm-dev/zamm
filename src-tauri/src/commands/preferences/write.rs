@@ -83,7 +83,7 @@ mod tests {
 
     async fn make_request_helper(
         args: &SetPreferencesRequest,
-        side_effects: &SideEffectsHelpers,
+        side_effects: &mut SideEffectsHelpers,
     ) -> ZammResult<()> {
         set_preferences_helper(&side_effects.disk, &args.preferences)
     }

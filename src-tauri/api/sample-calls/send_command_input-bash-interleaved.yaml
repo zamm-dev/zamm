@@ -1,0 +1,17 @@
+request:
+  - send_command_input
+  - >
+    {
+      "session_id": "3717ed48-ab52-4654-9f33-de5797af5118",
+      "input": "python api/sample-terminal-sessions/interleaved.py\n"
+    }
+response:
+  message: >
+    "python api/sample-terminal-sessions/interleaved.py\r\nstdout\r\nstderr\r\nstdout\r\nbash-3.2$ "
+sideEffects:
+  database:
+    startStateDump: command-run-bash
+    endStateDump: command-run-bash-interleaved
+  terminal:
+    recordingFile: bash.cast
+    startingIndex: 1

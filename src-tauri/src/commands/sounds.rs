@@ -51,7 +51,7 @@ mod tests {
         speed: f32,
     }
 
-    async fn make_request_helper(args: &PlaySoundRequest, _: &SideEffectsHelpers) {
+    async fn make_request_helper(args: &PlaySoundRequest, _: &mut SideEffectsHelpers) {
         play_sound(args.sound, args.volume, args.speed);
     }
 

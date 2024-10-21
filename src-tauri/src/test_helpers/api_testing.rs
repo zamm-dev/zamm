@@ -1,10 +1,13 @@
 use crate::commands::database::{read_database_contents, write_database_contents};
 use crate::commands::errors::ZammResult;
+use crate::commands::terminal::Terminal;
+use crate::models::llm_calls::EntityId;
 use crate::sample_call::{Disk, SampleCall};
 use crate::test_helpers::database::{setup_database, setup_zamm_db};
 use crate::test_helpers::sqlite::{dump_sqlite_database, load_sqlite_database};
 use crate::test_helpers::temp_files::get_temp_test_dir;
-use crate::ZammDatabase;
+use crate::test_helpers::terminal::TestTerminal;
+use crate::{ZammDatabase, ZammTerminalSessions};
 use path_absolutize::Absolutize;
 use reqwest_middleware::{ClientBuilder, ClientWithMiddleware};
 use rvcr::{VCRMiddleware, VCRMode};
@@ -231,12 +234,18 @@ pub struct NetworkHelper {
     pub mode: VCRMode,
 }
 
+pub struct TerminalHelper {
+    pub sessions: ZammTerminalSessions,
+    pub mock_session_id: EntityId,
+}
+
 #[derive(Default)]
 pub struct SideEffectsHelpers {
     pub temp_test_dir: Option<PathBuf>,
     pub disk: Option<PathBuf>,
     pub db: Option<ZammDatabase>,
     pub network: Option<NetworkHelper>,
+    pub terminal: Option<TerminalHelper>,
 }
 
 pub fn standard_test_subdir(api_call: &str, test_fn_name: &str) -> String {
@@ -257,6 +266,19 @@ impl SampleCall {
             .recording_file;
 
         format!("api/sample-network-requests/{}", recording_file)
+    }
+
+    pub fn terminal_recording(&self) -> String {
+        let recording_file = &self
+            .side_effects
+            .as_ref()
+            .unwrap()
+            .terminal
+            .as_ref()
+            .unwrap()
+            .recording_file;
+
+        format!("api/sample-terminal-sessions/{}", recording_file)
     }
 
     pub fn db_start_dump(&self) -> Option<String> {
@@ -321,7 +343,11 @@ where
         unimplemented!()
     }
 
-    async fn make_request(&mut self, args: &T, side_effects: &SideEffectsHelpers) -> U;
+    async fn make_request(
+        &mut self,
+        args: &T,
+        side_effects: &mut SideEffectsHelpers,
+    ) -> U;
 
     fn serialize_result(&self, sample: &SampleCall, result: &U) -> String;
 
@@ -412,6 +438,26 @@ where
                 });
             }
 
+            // prepare terminal if necessary
+            if let Some(terminal_info) = &side_effects.terminal {
+                let recording_path = PathBuf::from(sample.terminal_recording());
+                let mut terminal =
+                    Box::new(TestTerminal::new(recording_path.to_str().unwrap()));
+                if let Some(recording_index) = terminal_info.starting_index {
+                    terminal.set_entry_index(recording_index.try_into().unwrap());
+                }
+
+                let new_session_id = EntityId::new();
+                let sessions = ZammTerminalSessions(Mutex::new(HashMap::from([(
+                    new_session_id.clone(),
+                    terminal as Box<dyn Terminal>,
+                )])));
+                side_effects_helpers.terminal = Some(TerminalHelper {
+                    sessions,
+                    mock_session_id: new_session_id,
+                });
+            }
+
             // prepare db if necessary
             if side_effects.database.is_some() {
                 let temp_db_dir = temp_test_dir.join("database");
@@ -464,7 +510,7 @@ where
         } else {
             self.parse_args("null")
         };
-        let result = self.make_request(&args, &side_effects_helpers).await;
+        let result = self.make_request(&args, &mut side_effects_helpers).await;
         env::set_current_dir(current_dir).unwrap();
         let replacements = self.output_replacements(&sample, &result);
         println!("Replacements:");
@@ -607,7 +653,7 @@ macro_rules! impl_direct_test_case {
             async fn make_request(
                 &mut self,
                 args: &$req_type,
-                side_effects: &$crate::test_helpers::SideEffectsHelpers,
+                side_effects: &mut $crate::test_helpers::SideEffectsHelpers,
             ) -> $resp_type {
                 make_request_helper(args, side_effects).await
             }
@@ -662,7 +708,7 @@ macro_rules! impl_result_test_case {
             async fn make_request(
                 &mut self,
                 args: &$req_type,
-                side_effects: &$crate::test_helpers::SideEffectsHelpers,
+                side_effects: &mut $crate::test_helpers::SideEffectsHelpers,
             ) -> ZammResult<$resp_type> {
                 make_request_helper(args, side_effects).await
             }
