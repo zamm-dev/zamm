@@ -2,7 +2,6 @@ use crate::commands::errors::ZammResult;
 use crate::commands::terminal::{ActualTerminal, Terminal};
 use crate::models::asciicasts::AsciiCastData;
 use asciicast::EventType;
-use async_trait::async_trait;
 
 use either::Either::{self, Left, Right};
 use std::thread::sleep;
@@ -46,14 +45,17 @@ impl TestTerminal {
 impl Drop for TestTerminal {
     fn drop(&mut self) {
         if let Right(terminal) = &self.terminal {
-            terminal.get_cast().save(&self.recording_file).unwrap();
+            terminal
+                .get_cast()
+                .unwrap()
+                .save(&self.recording_file)
+                .unwrap();
         }
     }
 }
 
-#[async_trait]
 impl Terminal for TestTerminal {
-    async fn run_command(&mut self, command: &str) -> ZammResult<String> {
+    fn run_command(&mut self, command: &str) -> ZammResult<String> {
         match &mut self.terminal {
             Left(cast) => {
                 let expected_command = cast.header.command.as_ref().unwrap();
@@ -63,7 +65,7 @@ impl Terminal for TestTerminal {
                 assert_eq!(entry.event_type, EventType::Output);
                 Ok(entry.event_data.clone())
             }
-            Right(actual_terminal) => actual_terminal.run_command(command).await,
+            Right(actual_terminal) => actual_terminal.run_command(command),
         }
     }
 
@@ -78,7 +80,7 @@ impl Terminal for TestTerminal {
         }
     }
 
-    async fn send_input(&mut self, input: &str) -> ZammResult<String> {
+    fn send_input(&mut self, input: &str) -> ZammResult<String> {
         match &mut self.terminal {
             Left(_) => {
                 let input_entry = self.next_entry();
@@ -89,16 +91,16 @@ impl Terminal for TestTerminal {
                 assert_eq!(output_entry.event_type, EventType::Output);
                 Ok(output_entry.event_data.clone())
             }
-            Right(actual_terminal) => actual_terminal.send_input(input).await,
+            Right(actual_terminal) => actual_terminal.send_input(input),
         }
     }
 
-    fn get_cast(&self) -> AsciiCastData {
+    fn get_cast(&self) -> ZammResult<AsciiCastData> {
         match &self.terminal {
-            Left(cast) => AsciiCastData {
+            Left(cast) => Ok(AsciiCastData {
                 header: cast.header.clone(),
                 entries: cast.entries[..self.entry_index].to_vec(),
-            },
+            }),
             Right(actual_terminal) => actual_terminal.get_cast(),
         }
     }
@@ -113,7 +115,6 @@ mod tests {
         let mut terminal = TestTerminal::new("api/sample-terminal-sessions/date.cast");
         let output = terminal
             .run_command("date \"+%A %B %e, %Y %R %z\"")
-            .await
             .unwrap();
         assert_eq!(output, "Friday September 20, 2024 18:23 +0700\r\n");
     }
@@ -123,7 +124,6 @@ mod tests {
         let mut terminal = TestTerminal::new("api/sample-terminal-sessions/pause.cast");
         terminal
             .run_command("python api/sample-terminal-sessions/pause.py")
-            .await
             .unwrap();
 
         sleep(Duration::from_millis(1_000));
@@ -134,10 +134,9 @@ mod tests {
     #[tokio::test]
     async fn test_interactivity() {
         let mut terminal = TestTerminal::new("api/sample-terminal-sessions/bash.cast");
-        terminal.run_command("bash").await.unwrap();
+        terminal.run_command("bash").unwrap();
         let output = terminal
             .send_input("python api/sample-terminal-sessions/interleaved.py\n")
-            .await
             .unwrap();
         assert_eq!(
             output,
@@ -149,9 +148,9 @@ mod tests {
     async fn test_windows_interactivity() {
         let mut terminal =
             TestTerminal::new("api/sample-terminal-sessions/windows.cast");
-        terminal.run_command("cmd").await.unwrap();
-        terminal.send_input("dir\r\n").await.unwrap();
-        let output = terminal.send_input("echo %cd%\r\n").await.unwrap();
+        terminal.run_command("cmd").unwrap();
+        terminal.send_input("dir\r\n").unwrap();
+        let output = terminal.send_input("echo %cd%\r\n").unwrap();
         assert!(output.contains("src-tauri"));
     }
 }

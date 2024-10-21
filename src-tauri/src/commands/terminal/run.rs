@@ -31,8 +31,8 @@ async fn run_command_helper(
         .get_mut(session_id)
         .ok_or_else(|| anyhow!("No session found"))?;
 
-    let output = terminal.run_command(command).await?;
-    let cast = terminal.get_cast();
+    let output = terminal.run_command(command)?;
+    let cast = terminal.get_cast()?;
     let timestamp = cast
         .header
         .timestamp

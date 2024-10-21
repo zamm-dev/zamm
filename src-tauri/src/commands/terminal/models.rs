@@ -1,7 +1,6 @@
 use crate::commands::errors::ZammResult;
 use crate::models::asciicasts::AsciiCastData;
 use anyhow::anyhow;
-use async_trait::async_trait;
 use chrono::DateTime;
 use portable_pty::{
     native_pty_system, Child, CommandBuilder, MasterPty, PtySize, SlavePty,
@@ -13,12 +12,11 @@ use std::sync::{Arc, Mutex};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
-#[async_trait]
 pub trait Terminal: Send + Sync {
-    async fn run_command(&mut self, command: &str) -> ZammResult<String>;
+    fn run_command(&mut self, command: &str) -> ZammResult<String>;
     fn read_updates(&mut self) -> ZammResult<String>;
-    async fn send_input(&mut self, input: &str) -> ZammResult<String>;
-    fn get_cast(&self) -> AsciiCastData;
+    fn send_input(&mut self, input: &str) -> ZammResult<String>;
+    fn get_cast(&self) -> ZammResult<AsciiCastData>;
 }
 
 struct PtySession {
@@ -78,12 +76,12 @@ impl PtySession {
     }
 }
 
-pub struct ActualTerminal {
-    session: Option<Arc<Mutex<PtySession>>>,
-    pub session_data: AsciiCastData,
+pub struct ActualTerminalInner {
+    session: Option<PtySession>,
+    session_data: AsciiCastData,
 }
 
-impl ActualTerminal {
+impl ActualTerminalInner {
     pub fn new() -> Self {
         Self {
             session: None,
@@ -101,51 +99,28 @@ impl ActualTerminal {
     }
 
     fn read_once(&mut self) -> ZammResult<String> {
-        let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
-        let session = session_mutex.lock()?;
-        let mut partial_output = String::new();
-        while let Ok(c) = session.input_receiver.try_recv() {
-            partial_output.push(c);
-        }
-        Ok(partial_output)
-    }
-
-    #[allow(dead_code)]
-    fn exit_code(&self) -> Option<u32> {
-        let session_mutex = self.session.as_ref().unwrap();
-        let mut session = session_mutex.lock().unwrap();
-        match session.exit_code {
-            Some(code) => Some(code),
-            None => {
-                let status = session
-                    .child
-                    .try_wait()
-                    .unwrap_or(None)
-                    .map(|status| status.exit_code());
-                if let Some(code) = status {
-                    session.exit_code = Some(code);
-                    // todo: record exit code and total runtime
+        match self.session.as_mut() {
+            None => Err(anyhow!("No session started").into()),
+            Some(session) => {
+                let mut partial_output = String::new();
+                while let Ok(c) = session.input_receiver.try_recv() {
+                    partial_output.push(c);
                 }
-                status
+                Ok(partial_output)
             }
         }
     }
-}
 
-#[async_trait]
-impl Terminal for ActualTerminal {
-    async fn run_command(&mut self, command: &str) -> ZammResult<String> {
+    fn run_command(&mut self, command: &str) -> ZammResult<String> {
         if self.session.is_some() {
             return Err(anyhow!("Session already started").into());
         }
 
         self.session_data.header.command = Some(command.to_string());
-
-        let starting_time = chrono::Utc::now();
-        self.session_data.header.timestamp = Some(starting_time);
+        self.session_data.header.timestamp = Some(chrono::Utc::now());
 
         let session = PtySession::new(command)?;
-        self.session = Some(Arc::new(Mutex::new(session)));
+        self.session = Some(session);
 
         let result = self.read_updates()?;
         Ok(result)
@@ -177,26 +152,89 @@ impl Terminal for ActualTerminal {
         Ok(output)
     }
 
-    async fn send_input(&mut self, input: &str) -> ZammResult<String> {
-        let session_mutex = self.session.as_mut().ok_or(anyhow!("No session"))?;
-        {
-            let mut session = session_mutex.lock()?;
-            session.writer.write_all(input.as_bytes())?;
-            session.writer.flush()?;
+    fn send_input(&mut self, input: &str) -> ZammResult<String> {
+        match self.session.as_mut() {
+            None => Err(anyhow!("No session started").into()),
+            Some(session) => {
+                session.writer.write_all(input.as_bytes())?;
+                session.writer.flush()?;
+
+                let relative_time = chrono::Utc::now() - self.start_time()?;
+                self.session_data.entries.push(asciicast::Entry {
+                    time: relative_time.num_milliseconds() as f64 / 1000.0,
+                    event_type: asciicast::EventType::Input,
+                    event_data: input.to_string(),
+                });
+
+                self.read_updates()
+            }
         }
-
-        let relative_time = chrono::Utc::now() - self.start_time()?;
-        self.session_data.entries.push(asciicast::Entry {
-            time: relative_time.num_milliseconds() as f64 / 1000.0,
-            event_type: asciicast::EventType::Input,
-            event_data: input.to_string(),
-        });
-
-        self.read_updates()
     }
 
-    fn get_cast(&self) -> AsciiCastData {
-        self.session_data.clone()
+    fn get_cast(&self) -> &AsciiCastData {
+        &self.session_data
+    }
+
+    fn exit_code(&mut self) -> Option<u32> {
+        match self.session.as_mut() {
+            None => None,
+            Some(session) => {
+                if let Some(code) = session.exit_code {
+                    Some(code)
+                } else {
+                    let status = session
+                        .child
+                        .try_wait()
+                        .unwrap_or(None)
+                        .map(|status| status.exit_code());
+                    if let Some(code) = status {
+                        session.exit_code = Some(code);
+                        // todo: record exit code and total runtime
+                    }
+                    status
+                }
+            }
+        }
+    }
+}
+
+pub struct ActualTerminal {
+    inner: Arc<Mutex<ActualTerminalInner>>,
+}
+
+impl ActualTerminal {
+    pub fn new() -> Self {
+        Self {
+            inner: Arc::new(Mutex::new(ActualTerminalInner::new())),
+        }
+    }
+
+    #[allow(dead_code)]
+    fn exit_code(&self) -> ZammResult<Option<u32>> {
+        let mut inner = self.inner.lock()?;
+        Ok(inner.exit_code())
+    }
+}
+
+impl Terminal for ActualTerminal {
+    fn run_command(&mut self, command: &str) -> ZammResult<String> {
+        let mut inner = self.inner.lock()?;
+        inner.run_command(command)
+    }
+
+    fn read_updates(&mut self) -> ZammResult<String> {
+        let mut inner = self.inner.lock()?;
+        inner.read_updates()
+    }
+
+    fn send_input(&mut self, input: &str) -> ZammResult<String> {
+        let mut inner = self.inner.lock()?;
+        inner.send_input(input)
+    }
+
+    fn get_cast(&self) -> ZammResult<AsciiCastData> {
+        let inner = self.inner.lock()?;
+        Ok(inner.get_cast().clone())
     }
 }
 
@@ -218,10 +256,10 @@ mod tests {
         };
 
         let mut terminal = ActualTerminal::new();
-        let output = terminal.run_command(command).await.unwrap();
+        let output = terminal.run_command(command).unwrap();
         assert_eq!(output, expected_output);
-        assert_eq!(terminal.get_cast().entries.len(), 1);
-        assert_eq!(terminal.exit_code(), Some(0));
+        assert_eq!(terminal.get_cast().unwrap().entries.len(), 1);
+        assert_eq!(terminal.exit_code().unwrap(), Some(0));
     }
 
     #[tokio::test]
@@ -229,7 +267,6 @@ mod tests {
         let mut terminal = ActualTerminal::new();
         let output = terminal
             .run_command("python api/sample-terminal-sessions/interleaved.py")
-            .await
             .unwrap();
 
         // No trailing newline on Windows
@@ -242,14 +279,14 @@ mod tests {
         #[cfg(not(target_os = "windows"))]
         assert_eq!(output, "stdout\r\nstderr\r\nstdout\r\n");
 
-        assert_eq!(terminal.get_cast().entries.len(), 1);
-        assert_eq!(terminal.exit_code(), Some(0));
+        assert_eq!(terminal.get_cast().unwrap().entries.len(), 1);
+        assert_eq!(terminal.exit_code().unwrap(), Some(0));
     }
 
     #[tokio::test]
     async fn test_capture_output_without_blocking() {
         let mut terminal = ActualTerminal::new();
-        let output = terminal.run_command(SHELL_COMMAND).await.unwrap();
+        let output = terminal.run_command(SHELL_COMMAND).unwrap();
 
         // Windows output contains a whole lot of control characters, so we don't test
         // directly with `starts_with` or `ends_with` here
@@ -267,16 +304,16 @@ mod tests {
             output
         );
 
-        assert_eq!(terminal.get_cast().entries.len(), 1);
-        assert_eq!(terminal.exit_code(), None);
+        assert_eq!(terminal.get_cast().unwrap().entries.len(), 1);
+        assert_eq!(terminal.exit_code().unwrap(), None);
     }
 
     #[tokio::test]
     async fn test_no_entry_on_empty_capture() {
         let mut terminal = ActualTerminal::new();
-        terminal.run_command(SHELL_COMMAND).await.unwrap();
+        terminal.run_command(SHELL_COMMAND).unwrap();
         terminal.read_updates().unwrap();
-        assert_eq!(terminal.get_cast().entries.len(), 1);
+        assert_eq!(terminal.get_cast().unwrap().entries.len(), 1);
     }
 
     #[tokio::test]
@@ -288,9 +325,9 @@ mod tests {
         };
 
         let mut terminal = ActualTerminal::new();
-        terminal.run_command(SHELL_COMMAND).await.unwrap();
+        terminal.run_command(SHELL_COMMAND).unwrap();
 
-        let output = terminal.send_input(input).await.unwrap();
+        let output = terminal.send_input(input).unwrap();
         #[cfg(target_os = "windows")]
         assert!(
             output.contains("stdout\r\nstderr\r\nstdout"),
@@ -305,7 +342,7 @@ mod tests {
             output
         );
 
-        assert_eq!(terminal.get_cast().entries.len(), 3);
-        assert_eq!(terminal.exit_code(), None);
+        assert_eq!(terminal.get_cast().unwrap().entries.len(), 3);
+        assert_eq!(terminal.exit_code().unwrap(), None);
     }
 }

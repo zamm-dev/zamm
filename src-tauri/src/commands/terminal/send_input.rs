@@ -21,12 +21,12 @@ async fn send_command_input_helper(
     let terminal = sessions
         .get_mut(&session_entity_id)
         .ok_or_else(|| anyhow!("No session found"))?;
-    let result = terminal.send_input(input).await?;
+    let result = terminal.send_input(input)?;
 
     if let Some(conn) = db.as_mut() {
         let result = diesel::update(asciicasts::table)
             .filter(asciicasts::id.eq(session_entity_id))
-            .set(asciicasts::cast.eq(terminal.get_cast()))
+            .set(asciicasts::cast.eq(terminal.get_cast()?))
             .execute(conn)?;
         if result == 0 {
             return Err(anyhow!("Couldn't update session in database").into());
