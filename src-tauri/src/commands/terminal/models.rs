@@ -12,6 +12,11 @@ use std::sync::{Arc, Mutex};
 use std::thread::{sleep, spawn};
 use std::time::Duration;
 
+#[cfg(test)]
+const TERMINAL_READ_TIMEOUT: Duration = Duration::from_millis(500);
+#[cfg(not(test))]
+const TERMINAL_READ_TIMEOUT: Duration = Duration::from_millis(100);
+
 pub trait Terminal: Send + Sync {
     fn run_command(&mut self, command: &str) -> ZammResult<String>;
     fn read_updates(&mut self) -> ZammResult<String>;
@@ -135,7 +140,7 @@ impl ActualTerminalInner {
         let output = {
             let mut partial_output = String::new();
             loop {
-                sleep(Duration::from_millis(100));
+                sleep(TERMINAL_READ_TIMEOUT);
                 let partial = self.read_once()?;
                 if partial.is_empty() {
                     break;
