@@ -5752,7 +5752,7 @@ dependencies = [
 
 [[package]]
 name = "zamm"
-version = "0.1.7"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "asciicast",
