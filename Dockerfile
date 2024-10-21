@@ -40,6 +40,7 @@ COPY src-tauri/Cargo.toml Cargo.toml
 COPY src-tauri/Cargo.lock Cargo.lock
 RUN git clone --depth 1 --branch zamm/v0.0.0 https://github.com/amosjyng/async-openai.git /tmp/forks/async-openai && \
   git clone --depth 1 --branch zamm/v0.0.0 https://github.com/amosjyng/rvcr.git /tmp/forks/rvcr && \
+  git clone --depth 1 --branch zamm/v0.2.0 https://github.com/zamm-dev/ollama-rs.git /tmp/forks/ollama-rs && \
   mkdir src && \
   echo "// dummy file" > src/lib.rs && \
   echo "pub use tauri_build; fn main () {}" > build.rs && \
