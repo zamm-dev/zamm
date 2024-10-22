@@ -20,7 +20,7 @@ jobs:
     name: Build entire program
     runs-on: ubuntu-latest
     container:
-      image: "ghcr.io/zamm-dev/zamm:v0.1.4-build"
+      image: "ghcr.io/zamm-dev/zamm:v0.2.0-build"
       options: --user root
     env:
       HOME: /root
@@ -151,7 +151,7 @@ jobs:
     name: Run Svelte tests
     runs-on: ubuntu-latest
     container:
-      image: "ghcr.io/zamm-dev/zamm:v0.1.4-build"
+      image: "ghcr.io/zamm-dev/zamm:v0.2.0-build"
       options: --user root
     env:
       PLAYWRIGHT_TIMEOUT: 60000
