@@ -94,6 +94,10 @@
                 url="https://github.com/64bit/async-openai"
               />
               <Creditor
+                name="ollama-rs"
+                url="https://github.com/pepperoni21/ollama-rs"
+              />
+              <Creditor
                 name="Specta"
                 logo="specta.png"
                 url="https://github.com/oscartbeaumont/specta"
