@@ -94,6 +94,10 @@
                 url="https://github.com/64bit/async-openai"
               />
               <Creditor
+                name="ollama-rs"
+                url="https://github.com/pepperoni21/ollama-rs"
+              />
+              <Creditor
                 name="Specta"
                 logo="specta.png"
                 url="https://github.com/oscartbeaumont/specta"
@@ -133,6 +137,20 @@
               <Creditor
                 name="Good Timing"
                 url="https://typodermicfonts.com/good-timing/"
+              />
+            </Grid>
+          </SubInfoBox>
+          <SubInfoBox subheading="Sounds">
+            <Grid>
+              <Creditor
+                name="Pixabay"
+                logo="pixabay.jpeg"
+                url="https://pixabay.com/users/pixabay-1/"
+              />
+              <Creditor
+                name="SoundReality"
+                logo="soundreality.png"
+                url="https://www.patreon.com/SoundReality"
               />
             </Grid>
           </SubInfoBox>
