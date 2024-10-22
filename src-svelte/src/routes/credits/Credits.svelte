@@ -140,6 +140,20 @@
               />
             </Grid>
           </SubInfoBox>
+          <SubInfoBox subheading="Sounds">
+            <Grid>
+              <Creditor
+                name="Pixabay"
+                logo="pixabay.jpeg"
+                url="https://pixabay.com/users/pixabay-1/"
+              />
+              <Creditor
+                name="SoundReality"
+                logo="soundreality.png"
+                url="https://www.patreon.com/SoundReality"
+              />
+            </Grid>
+          </SubInfoBox>
           <SubInfoBox subheading="Icons">
             <Grid>
               <Creditor
