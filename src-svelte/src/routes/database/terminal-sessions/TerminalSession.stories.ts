@@ -33,6 +33,11 @@ New.parameters = {
   ],
 };
 
+export const NewOnWindows: StoryObj = Template.bind({}) as any;
+NewOnWindows.parameters = {
+  sampleCallFiles: ["/api/sample-calls/run_command-cmd.yaml"],
+};
+
 export const InProgress: StoryObj = Template.bind({}) as any;
 InProgress.args = {
   sessionId: "3717ed48-ab52-4654-9f33-de5797af5118",

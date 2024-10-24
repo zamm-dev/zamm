@@ -1,0 +1,18 @@
+request:
+  - run_command
+  - >
+    {
+      "command": "cmd"
+    }
+response:
+  message: >
+    {
+      "id": "319cc7fd-58cc-4320-ab46-2f0ba11c5402",
+      "timestamp": "2024-10-17T06:02:13",
+      "output": "Microsoft Windows [Version 10.0.22631.4169]\n(c) Microsoft Corporation. All rights reserved.C:\\Users\\Amos Ng\\Documents\\projects\\zamm-dev\\zamm\\src-tauri>"
+    }
+sideEffects:
+  database:
+    endStateDump: command-run-cmd
+  terminal:
+    recordingFile: windows.cast

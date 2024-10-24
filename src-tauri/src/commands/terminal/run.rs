@@ -19,6 +19,10 @@ pub struct RunCommandResponse {
     pub output: String,
 }
 
+fn clean_output(output: &str) -> String {
+    strip_ansi_escapes::strip_str(output)
+}
+
 async fn run_command_helper(
     zamm_db: &ZammDatabase,
     zamm_sessions: &ZammTerminalSessions,
@@ -31,7 +35,7 @@ async fn run_command_helper(
         .get_mut(session_id)
         .ok_or_else(|| anyhow!("No session found"))?;
 
-    let output = terminal.run_command(command)?;
+    let raw_output = terminal.run_command(command)?;
     let cast = terminal.get_cast()?;
     let timestamp = cast
         .header
@@ -55,6 +59,8 @@ async fn run_command_helper(
             })
             .execute(conn)?;
     }
+
+    let output = clean_output(&raw_output);
 
     Ok(RunCommandResponse {
         id: session_id.clone(),
@@ -144,17 +150,18 @@ mod tests {
             let actual_output = result.as_ref().unwrap();
             let expected_output_timestamp = to_yaml_string(&expected_output.timestamp);
             let actual_output_timestamp = to_yaml_string(&actual_output.timestamp);
-            let expected_os = if sample
+            let asciicast_filename = &sample
                 .side_effects
                 .as_ref()
                 .unwrap()
                 .terminal
                 .as_ref()
                 .unwrap()
-                .recording_file
-                .ends_with("bash.cast")
-            {
+                .recording_file;
+            let expected_os = if asciicast_filename.ends_with("bash.cast") {
                 "Mac"
+            } else if asciicast_filename.ends_with("windows.cast") {
+                "Windows"
             } else {
                 "Linux"
             };
@@ -208,5 +215,12 @@ mod tests {
         RunCommandTestCase,
         test_start_bash,
         "./api/sample-calls/run_command-bash.yaml"
+    );
+
+    #[cfg(target_os = "windows")]
+    check_sample!(
+        RunCommandTestCase,
+        test_start_cmd,
+        "./api/sample-calls/run_command-cmd.yaml"
     );
 }
