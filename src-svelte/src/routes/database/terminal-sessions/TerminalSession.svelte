@@ -34,7 +34,7 @@
         let result = await runCommand(newInput);
         command = newInput;
         sessionId = result.id;
-        output += result.output.trimStart();
+        output += result.output;
       } else {
         const inputNewline = $systemInfo?.os === "Windows" ? "\r\n" : "\n";
         let result = await sendCommandInput(sessionId, newInput + inputNewline);

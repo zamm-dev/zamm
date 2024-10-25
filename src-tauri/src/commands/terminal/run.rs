@@ -21,6 +21,8 @@ pub struct RunCommandResponse {
 
 fn clean_output(output: &str) -> String {
     strip_ansi_escapes::strip_str(output)
+        .trim_start()
+        .to_string()
 }
 
 async fn run_command_helper(
