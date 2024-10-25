@@ -217,7 +217,6 @@ mod tests {
         "./api/sample-calls/run_command-bash.yaml"
     );
 
-    #[cfg(target_os = "windows")]
     check_sample!(
         RunCommandTestCase,
         test_start_cmd,

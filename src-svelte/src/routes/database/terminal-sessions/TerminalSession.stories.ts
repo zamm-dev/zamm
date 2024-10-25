@@ -44,7 +44,7 @@ InProgress.args = {
   command: "bash",
   output:
     // eslint-disable-next-line max-len
-    "The default interactive shell is now zsh.\r\nTo update your account to use zsh, please run `chsh -s /bin/zsh`.\r\nFor more details, please visit https://support.apple.com/kb/HT208050.\r\nbash-3.2$ ",
+    "The default interactive shell is now zsh.\nTo update your account to use zsh, please run `chsh -s /bin/zsh`.\nFor more details, please visit https://support.apple.com/kb/HT208050.\nbash-3.2$ ",
 };
 InProgress.parameters = {
   sampleCallFiles: [
