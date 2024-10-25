@@ -21,7 +21,11 @@ async fn send_command_input_helper(
     let terminal = sessions
         .get_mut(&session_entity_id)
         .ok_or_else(|| anyhow!("No session found"))?;
-    let result = terminal.send_input(input)?;
+    #[cfg(target_os = "windows")]
+    let input_with_newline = format!("{}\r\n", input);
+    #[cfg(not(target_os = "windows"))]
+    let input_with_newline = format!("{}\n", input);
+    let result = terminal.send_input(&input_with_newline)?;
 
     if let Some(conn) = db.as_mut() {
         let result = diesel::update(asciicasts::table)
@@ -96,6 +100,7 @@ mod tests {
         String
     );
 
+    #[cfg(not(target_os = "windows"))]
     check_sample!(
         SendInputTestCase,
         test_bash_interleaved,

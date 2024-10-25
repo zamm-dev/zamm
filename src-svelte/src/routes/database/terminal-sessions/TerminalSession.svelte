@@ -5,7 +5,6 @@
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import Scrollable from "$lib/Scrollable.svelte";
-  import { systemInfo } from "$lib/system-info";
 
   export let sessionId: string | undefined = undefined;
   export let command: string | undefined = undefined;
@@ -36,8 +35,7 @@
         sessionId = result.id;
         output += result.output;
       } else {
-        const inputNewline = $systemInfo?.os === "Windows" ? "\r\n" : "\n";
-        let result = await sendCommandInput(sessionId, newInput + inputNewline);
+        let result = await sendCommandInput(sessionId, newInput);
         output += result;
       }
       resizeTerminalView();

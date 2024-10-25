@@ -3,7 +3,7 @@ request:
   - >
     {
       "session_id": "3717ed48-ab52-4654-9f33-de5797af5118",
-      "input": "python api/sample-terminal-sessions/interleaved.py\n"
+      "input": "python api/sample-terminal-sessions/interleaved.py"
     }
 response:
   message: >
