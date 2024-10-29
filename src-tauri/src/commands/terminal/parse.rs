@@ -1,3 +1,10 @@
+use lazy_static::lazy_static;
+use regex::Regex;
+
+lazy_static! {
+    static ref THREE_OR_MORE_NEWLINES: Regex = Regex::new(r"\n{3,}").unwrap();
+}
+
 #[derive(PartialEq)]
 pub enum EscapeSequence {
     None,
@@ -118,5 +125,8 @@ pub fn clean_output(output: &str) -> String {
     });
 
     parser.cleaned_lines.push(parser.current_line);
-    parser.cleaned_lines.join("\n").trim_start().to_string()
+    THREE_OR_MORE_NEWLINES
+        .replace_all(&parser.cleaned_lines.join("\n"), "\n\n")
+        .trim_start()
+        .to_string()
 }
