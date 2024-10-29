@@ -7,8 +7,6 @@ pub enum EscapeSequence {
     LineStart,
 }
 
-static ESCAPE_COMMANDS: &[char] = &['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'b', 'm'];
-
 pub struct OutputParser {
     pub state: EscapeSequence,
     pub cleaned_lines: Vec<String>,
@@ -73,7 +71,7 @@ pub fn clean_output(output: &str) -> String {
             if c == '?' {
                 // it's just a private sequence marker, do nothing
             } else if parser.state == EscapeSequence::InEscape
-                && ESCAPE_COMMANDS.contains(&c)
+                && c.is_ascii_alphabetic()
             {
                 escape_command = Some(c);
                 parser.state = EscapeSequence::None;
