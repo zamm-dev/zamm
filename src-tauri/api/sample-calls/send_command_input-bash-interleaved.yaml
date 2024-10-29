@@ -7,7 +7,7 @@ request:
     }
 response:
   message: >
-    "python api/sample-terminal-sessions/interleaved.py\r\nstdout\r\nstderr\r\nstdout\r\nbash-3.2$ "
+    "python api/sample-terminal-sessions/interleaved.py\nstdout\nstderr\nstdout\nbash-3.2$ "
 sideEffects:
   database:
     startStateDump: command-run-bash
