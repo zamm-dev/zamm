@@ -1,7 +1,7 @@
 import fs from "fs";
 import yaml from "js-yaml";
 import { Convert } from "./sample-call";
-import { camelCase } from "lodash";
+import { camelCase, isArray } from "lodash";
 
 function customAssert(condition: boolean, message?: string): void {
   if (!condition) {
@@ -57,7 +57,11 @@ export function parseSampleCall(sampleFile: string): ParsedCall {
 }
 
 function stringify(obj: any): string {
-  if (typeof obj === "object") {
+  if (isArray(obj)) {
+    const items = obj.map((item) => stringify(item));
+    return `[${items.join(",")}]`;
+  }
+  if (obj.constructor === Object) {
     return JSON.stringify(obj, Object.keys(obj).sort());
   }
   return JSON.stringify(obj);
@@ -75,13 +79,14 @@ export class TauriInvokePlayback {
     ...args: (string | Record<string, string>)[]
   ): Promise<Record<string, string>> {
     const jsonArgs = stringify(args);
-    const matchingCallIndex = this.unmatchedCalls.findIndex(
-      (call) => stringify(call.request) === jsonArgs,
+    const stringifiedUnmatchedCalls = this.unmatchedCalls.map((call) =>
+      stringify(call.request),
+    );
+    const matchingCallIndex = stringifiedUnmatchedCalls.findIndex(
+      (call) => call === jsonArgs,
     );
     if (matchingCallIndex === -1) {
-      const candidates = this.unmatchedCalls
-        .map((call) => stringify(call.request))
-        .join("\n");
+      const candidates = stringifiedUnmatchedCalls.join("\n");
       const errorMessage =
         `No matching call found for ${jsonArgs}.\n` +
         `Candidates are ${candidates}`;

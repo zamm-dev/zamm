@@ -1,4 +1,5 @@
 use crate::commands::errors::ZammResult;
+use crate::commands::terminal::parse::clean_output;
 use crate::commands::terminal::ActualTerminal;
 use crate::models::asciicasts::NewAsciiCast;
 use crate::models::llm_calls::EntityId;
@@ -31,7 +32,7 @@ async fn run_command_helper(
         .get_mut(session_id)
         .ok_or_else(|| anyhow!("No session found"))?;
 
-    let output = terminal.run_command(command)?;
+    let raw_output = terminal.run_command(command)?;
     let cast = terminal.get_cast()?;
     let timestamp = cast
         .header
@@ -55,6 +56,8 @@ async fn run_command_helper(
             })
             .execute(conn)?;
     }
+
+    let output = clean_output(&raw_output);
 
     Ok(RunCommandResponse {
         id: session_id.clone(),
@@ -84,7 +87,6 @@ pub async fn run_command(
 #[cfg(test)]
 mod tests {
     use super::*;
-
     use crate::check_sample;
     use crate::sample_call::SampleCall;
     use crate::test_helpers::api_testing::standard_test_subdir;
@@ -144,17 +146,18 @@ mod tests {
             let actual_output = result.as_ref().unwrap();
             let expected_output_timestamp = to_yaml_string(&expected_output.timestamp);
             let actual_output_timestamp = to_yaml_string(&actual_output.timestamp);
-            let expected_os = if sample
+            let asciicast_filename = &sample
                 .side_effects
                 .as_ref()
                 .unwrap()
                 .terminal
                 .as_ref()
                 .unwrap()
-                .recording_file
-                .ends_with("bash.cast")
-            {
+                .recording_file;
+            let expected_os = if asciicast_filename.ends_with("bash.cast") {
                 "Mac"
+            } else if asciicast_filename.ends_with("windows.cast") {
+                "Windows"
             } else {
                 "Linux"
             };
@@ -208,5 +211,11 @@ mod tests {
         RunCommandTestCase,
         test_start_bash,
         "./api/sample-calls/run_command-bash.yaml"
+    );
+
+    check_sample!(
+        RunCommandTestCase,
+        test_start_cmd,
+        "./api/sample-calls/run_command-cmd.yaml"
     );
 }

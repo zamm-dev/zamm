@@ -33,13 +33,21 @@ New.parameters = {
   ],
 };
 
+export const NewOnWindows: StoryObj = Template.bind({}) as any;
+NewOnWindows.parameters = {
+  sampleCallFiles: [
+    "/api/sample-calls/run_command-cmd.yaml",
+    "/api/sample-calls/send_command_input-cmd-dir.yaml",
+  ],
+};
+
 export const InProgress: StoryObj = Template.bind({}) as any;
 InProgress.args = {
   sessionId: "3717ed48-ab52-4654-9f33-de5797af5118",
   command: "bash",
   output:
     // eslint-disable-next-line max-len
-    "The default interactive shell is now zsh.\r\nTo update your account to use zsh, please run `chsh -s /bin/zsh`.\r\nFor more details, please visit https://support.apple.com/kb/HT208050.\r\nbash-3.2$ ",
+    "The default interactive shell is now zsh.\nTo update your account to use zsh, please run `chsh -s /bin/zsh`.\nFor more details, please visit https://support.apple.com/kb/HT208050.\nbash-3.2$ ",
 };
 InProgress.parameters = {
   sampleCallFiles: [

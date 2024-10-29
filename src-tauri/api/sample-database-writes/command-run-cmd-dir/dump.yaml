@@ -1,0 +1,22 @@
+terminal_sessions:
+- id: 319cc7fd-58cc-4320-ab46-2f0ba11c5402
+  timestamp: 2024-10-17T06:02:13
+  command: cmd
+  os: Windows
+  cast:
+    header:
+      version: 2
+      width: 80
+      height: 24
+      timestamp: 1729144933
+      command: cmd
+    entries:
+    - - 0.208
+      - 'o'
+      - "\e[?25l\e[2J\e[m\e[HMicrosoft Windows [Version 10.0.22631.4169]\r\n(c) Microsoft Corporation. All rights reserved.\e[4;1HC:\\Users\\Amos Ng\\Documents\\projects\\zamm-dev\\zamm\\src-tauri>\e]0;C:\\WINDOWS\\system32\\cmd.EXE\a\e[?25h"
+    - - 0.208
+      - 'i'
+      - "dir\r\n"
+    - - 0.41
+      - 'o'
+      - "\e[?25ldir\r\n Volume in drive C is Windows\r\n Volume Serial Number is 30A7-E02E\e[8;1H Directory of C:\\Users\\Amos Ng\\Documents\\projects\\zamm-dev\\zamm\\src-tauri\e[10;1H25/09/2024  05:54 pm    <DIR>          .\r\n20/09/2024  07:02 pm    <DIR>          ..\r\n14/02/2024  08:37 pm                73 .gitignore\r\n14/02/2024  08:37 pm                52 .rustfmt.toml\r\n17/10/2024  12:47 pm    <DIR>          api\r\n14/02/2024  08:37 pm    <DIR>          binaries\r\n14/02/2024  08:37 pm                90 build.rs\r\n25/09/2024  05:54 pm           142,536 Cargo.lock\r\n17/10/2024  12:58 pm             2,102 Cargo.toml\r\n20/09/2024  07:02 pm               830 clippy.py\r\n14/02/2024  08:37 pm               244 diesel.toml\r\n20/09/2024  07:02 pm    <DIR>          icons\r\n14/05/2024  03:37 pm               495 Makefile\r\n20/09/2024  07:02 pm    <DIR>          migrations\r\n14/02/2024  08:37 pm    <DIR>          sounds\r\e]0;C:\\WINDOWS\\system32\\cmd.EXE - dir\a\e[?25h\n17/10/2024  12:47 pm    <DIR>          src\r\n25/06/2024  08:14 pm    <DIR>          target\r\n20/09/2024  07:02 pm             1,645 tauri.conf.json\r\n               9 File(s)        148,067 bytes\r\n               9 Dir(s)  190,782,652,416 bytes free\r\n\e]0;C:\\WINDOWS\\system32\\cmd.EXE\a\nC:\\Users\\Amos Ng\\Documents\\projects\\zamm-dev\\zamm\\src-tauri>"
