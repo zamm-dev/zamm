@@ -27,6 +27,48 @@ impl OutputParser {
         Self::default()
     }
 
+    pub fn handle_escape_sequence_start(&mut self, c: char) {
+        if c == '[' || c == '(' {
+            self.state = EscapeSequence::InEscape;
+        } else if c == ']' {
+            self.state = EscapeSequence::InOperatingSystemEscape;
+        } else {
+            self.state = EscapeSequence::None;
+            self.current_line.push(c);
+        }
+    }
+
+    pub fn handle_escape_sequence_input(&mut self, c: char) {
+        let mut escape_command: Option<char> = None;
+        if c == '?' {
+            // it's just a private sequence marker, do nothing
+        } else if self.state == EscapeSequence::InEscape && c.is_ascii_alphabetic() {
+            escape_command = Some(c);
+            self.state = EscapeSequence::None;
+        } else if c == ';' {
+            self.escape_args.push(self.current_arg.clone());
+            self.current_arg.clear();
+        } else if c == '\u{0007}' {
+            escape_command = self.current_arg.pop();
+            self.escape_args.push(self.current_arg.clone());
+            self.state = EscapeSequence::None;
+        } else {
+            self.current_arg.push(c);
+        }
+
+        // if we changed the state here
+        if self.state == EscapeSequence::None {
+            self.escape_args.push(self.current_arg.clone());
+            self.current_arg.clear();
+
+            if let Some(escape_command) = escape_command {
+                self.handle_escape_command(escape_command);
+            }
+
+            self.escape_args.clear();
+        }
+    }
+
     pub fn handle_escape_command(&mut self, escape_command: char) {
         if escape_command == 'H' {
             if let Some(first_arg) = self.escape_args.first() {
@@ -41,6 +83,12 @@ impl OutputParser {
                 }
             }
         }
+    }
+
+    pub fn handle_newline(&mut self) {
+        self.state = EscapeSequence::None;
+        self.cleaned_lines.push(self.current_line.clone());
+        self.current_line.clear();
     }
 }
 
@@ -63,62 +111,23 @@ pub fn clean_output(output: &str) -> String {
         if c == '\u{001B}' {
             parser.state = EscapeSequence::Start;
         } else if parser.state == EscapeSequence::Start {
-            if c == '[' || c == '(' {
-                parser.state = EscapeSequence::InEscape;
-            } else if c == ']' {
-                parser.state = EscapeSequence::InOperatingSystemEscape;
-            } else {
-                parser.state = EscapeSequence::None;
-                parser.current_line.push(c);
-            }
+            parser.handle_escape_sequence_start(c);
         } else if parser.state == EscapeSequence::InEscape
             || parser.state == EscapeSequence::InOperatingSystemEscape
         {
-            let mut escape_command: Option<char> = None;
-            if c == '?' {
-                // it's just a private sequence marker, do nothing
-            } else if parser.state == EscapeSequence::InEscape
-                && c.is_ascii_alphabetic()
-            {
-                escape_command = Some(c);
-                parser.state = EscapeSequence::None;
-            } else if c == ';' {
-                parser.escape_args.push(parser.current_arg.clone());
-                parser.current_arg.clear();
-            } else if c == '\u{0007}' {
-                escape_command = parser.current_arg.pop();
-                parser.escape_args.push(parser.current_arg.clone());
-                parser.state = EscapeSequence::None;
-            } else {
-                parser.current_arg.push(c);
-            }
-
-            if parser.state == EscapeSequence::None {
-                parser.escape_args.push(parser.current_arg.clone());
-                parser.current_arg.clear();
-
-                if let Some(escape_command) = escape_command {
-                    parser.handle_escape_command(escape_command);
-                }
-
-                parser.escape_args.clear();
-            }
+            parser.handle_escape_sequence_input(c);
         } else if c == '\r' {
             parser.state = EscapeSequence::LineStart;
         } else if parser.state == EscapeSequence::LineStart {
             if c == '\n' {
-                parser.state = EscapeSequence::None;
-                parser.cleaned_lines.push(parser.current_line.clone());
-                parser.current_line.clear();
+                parser.handle_newline();
             } else {
                 parser.state = EscapeSequence::None;
                 parser.current_line.clear();
                 parser.current_line.push(c);
             }
         } else if c == '\n' {
-            parser.state = EscapeSequence::None;
-            parser.cleaned_lines.push(parser.current_line.clone());
-            parser.current_line.clear();
+            parser.handle_newline();
         } else {
             parser.current_line.push(c);
         }
