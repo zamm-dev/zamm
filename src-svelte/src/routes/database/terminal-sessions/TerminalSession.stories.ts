@@ -35,7 +35,10 @@ New.parameters = {
 
 export const NewOnWindows: StoryObj = Template.bind({}) as any;
 NewOnWindows.parameters = {
-  sampleCallFiles: ["/api/sample-calls/run_command-cmd.yaml"],
+  sampleCallFiles: [
+    "/api/sample-calls/run_command-cmd.yaml",
+    "/api/sample-calls/send_command_input-cmd-dir.yaml",
+  ],
 };
 
 export const InProgress: StoryObj = Template.bind({}) as any;

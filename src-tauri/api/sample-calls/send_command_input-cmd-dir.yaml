@@ -1,0 +1,17 @@
+request:
+  - send_command_input
+  - >
+    {
+      "session_id": "319cc7fd-58cc-4320-ab46-2f0ba11c5402",
+      "input": "dir"
+    }
+response:
+  message: >
+    "dir\n Volume in drive C is Windows\n Volume Serial Number is 30A7-E02E\n\n\n\n\n Directory of C:\\Users\\Amos Ng\\Documents\\projects\\zamm-dev\\zamm\\src-tauri\n\n25/09/2024  05:54 pm    <DIR>          .\n20/09/2024  07:02 pm    <DIR>          ..\n14/02/2024  08:37 pm                73 .gitignore\n14/02/2024  08:37 pm                52 .rustfmt.toml\n17/10/2024  12:47 pm    <DIR>          api\n14/02/2024  08:37 pm    <DIR>          binaries\n14/02/2024  08:37 pm                90 build.rs\n25/09/2024  05:54 pm           142,536 Cargo.lock\n17/10/2024  12:58 pm             2,102 Cargo.toml\n20/09/2024  07:02 pm               830 clippy.py\n14/02/2024  08:37 pm               244 diesel.toml\n20/09/2024  07:02 pm    <DIR>          icons\n14/05/2024  03:37 pm               495 Makefile\n20/09/2024  07:02 pm    <DIR>          migrations\n14/02/2024  08:37 pm    <DIR>          sounds\n17/10/2024  12:47 pm    <DIR>          src\n25/06/2024  08:14 pm    <DIR>          target\n20/09/2024  07:02 pm             1,645 tauri.conf.json\n               9 File(s)        148,067 bytes\n               9 Dir(s)  190,782,652,416 bytes free\n\nC:\\Users\\Amos Ng\\Documents\\projects\\zamm-dev\\zamm\\src-tauri>"
+sideEffects:
+  database:
+    startStateDump: command-run-cmd
+    endStateDump: command-run-cmd-dir
+  terminal:
+    recordingFile: windows.cast
+    startingIndex: 1

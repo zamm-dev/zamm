@@ -1,4 +1,5 @@
 use crate::commands::errors::ZammResult;
+use crate::commands::terminal::parse::clean_output;
 use crate::models::llm_calls::EntityId;
 use crate::schema::asciicasts;
 
@@ -25,19 +26,20 @@ async fn send_command_input_helper(
     let input_with_newline = format!("{}\r\n", input);
     #[cfg(not(target_os = "windows"))]
     let input_with_newline = format!("{}\n", input);
-    let result = terminal.send_input(&input_with_newline)?;
+    let raw_output = terminal.send_input(&input_with_newline)?;
+    let output = clean_output(&raw_output);
 
     if let Some(conn) = db.as_mut() {
-        let result = diesel::update(asciicasts::table)
+        let db_update_result = diesel::update(asciicasts::table)
             .filter(asciicasts::id.eq(session_entity_id))
             .set(asciicasts::cast.eq(terminal.get_cast()?))
             .execute(conn)?;
-        if result == 0 {
+        if db_update_result == 0 {
             return Err(anyhow!("Couldn't update session in database").into());
         }
     }
 
-    Ok(result)
+    Ok(output)
 }
 
 #[tauri::command(async)]
@@ -105,5 +107,12 @@ mod tests {
         SendInputTestCase,
         test_bash_interleaved,
         "./api/sample-calls/send_command_input-bash-interleaved.yaml"
+    );
+
+    #[cfg(target_os = "windows")]
+    check_sample!(
+        SendInputTestCase,
+        test_cmd_dir,
+        "./api/sample-calls/send_command_input-cmd-dir.yaml"
     );
 }
