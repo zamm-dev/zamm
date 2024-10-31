@@ -3,15 +3,18 @@ import "@testing-library/jest-dom";
 
 import { act, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
-import { TauriInvokePlayback } from "$lib/sample-call-testing";
+import {
+  TauriInvokePlayback,
+  stubGlobalInvoke,
+} from "$lib/sample-call-testing";
 import SidebarUI from "./SidebarUI.svelte";
 import { soundOn, volume, animationSpeed } from "$lib/preferences";
 
-const tauriInvokeMock = vi.fn();
-
-vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
-
 describe("Sidebar", () => {
+  beforeEach(() => {
+    soundOn.update(() => false);
+  });
+
   test("requires exact match for homepage", () => {
     render(SidebarUI, {
       currentRoute: "/",
@@ -75,7 +78,7 @@ describe("Sidebar interactions", () => {
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
-    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    stubGlobalInvoke(tauriInvokeMock);
     playback = new TauriInvokePlayback();
     tauriInvokeMock.mockImplementation(
       (...args: (string | Record<string, string>)[]) =>
@@ -98,8 +101,7 @@ describe("Sidebar interactions", () => {
   });
 
   test("can change page path", async () => {
-    playback.addSamples(whooshSample);
-
+    soundOn.update(() => false); // just to avoid failed Tauri invocations
     await act(() => userEvent.click(settingsLink));
     expect(homeLink).not.toHaveAttribute("aria-current", "page");
     expect(settingsLink).toHaveAttribute("aria-current", "page");
@@ -111,6 +113,7 @@ describe("Sidebar interactions", () => {
     // volume is at 0.125 so that when it's boosted 4x to compensate for the 4x
     // reduction in playback speed, the net volume will be at 0.5 as specified in the
     // sample file
+    soundOn.update(() => true);
     volume.update(() => 0.125);
     animationSpeed.update(() => 0.25);
     await act(() => userEvent.click(settingsLink));
@@ -127,6 +130,8 @@ describe("Sidebar interactions", () => {
   });
 
   test("does not play whoosh sound when path unchanged", async () => {
+    soundOn.update(() => true); // shouldn't play despite sound being on
+
     await act(() => userEvent.click(homeLink));
     expect(homeLink).toHaveAttribute("aria-current", "page");
     expect(settingsLink).not.toHaveAttribute("aria-current", "page");

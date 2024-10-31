@@ -10,8 +10,8 @@ function customAssert(condition: boolean, message?: string): void {
 }
 
 export interface ParsedCall {
-  request: (string | Record<string, string>)[];
-  response: Record<string, string>;
+  request: (string | Record<string, any>)[];
+  response: any;
   succeeded: boolean;
 }
 
@@ -76,9 +76,14 @@ export class TauriInvokePlayback {
   }
 
   mockCall(
-    ...args: (string | Record<string, string>)[]
+    ...args: (string | Record<string, any> | undefined)[]
   ): Promise<Record<string, string>> {
-    const jsonArgs = stringify(args);
+    const nonNullArgs = args.filter(
+      (arg) =>
+        arg !== undefined &&
+        (typeof arg === "string" || Object.keys(arg).length > 0),
+    ) as (string | Record<string, any>)[];
+    const jsonArgs = stringify(nonNullArgs);
     const stringifiedUnmatchedCalls = this.unmatchedCalls.map((call) =>
       stringify(call.request),
     );
@@ -119,4 +124,10 @@ export class TauriInvokePlayback {
     const calls = sampleFiles.map((filename) => parseSampleCall(filename));
     this.addCalls(...calls);
   }
+}
+
+export function stubGlobalInvoke(mock: any) {
+  window.__TAURI_INTERNALS__ = {
+    invoke: mock,
+  };
 }

@@ -11,12 +11,12 @@ import {
   transparencyOn,
   highDpiAdjust,
 } from "$lib/preferences";
-import { TauriInvokePlayback } from "$lib/sample-call-testing";
+import {
+  TauriInvokePlayback,
+  stubGlobalInvoke,
+} from "$lib/sample-call-testing";
 import { tickFor } from "$lib/test-helpers";
 
-const tauriInvokeMock = vi.fn();
-
-vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
 vi.stubGlobal("FontFace", function () {
   return {
     load: () => Promise.resolve(),
@@ -35,7 +35,7 @@ describe("AppLayout", () => {
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
-    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    stubGlobalInvoke(tauriInvokeMock);
     playback = new TauriInvokePlayback();
     tauriInvokeMock.mockImplementation(
       (...args: (string | Record<string, string>)[]) =>

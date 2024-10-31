@@ -9,7 +9,11 @@ import Chat, {
 } from "./Chat.svelte";
 import PersistentChatView from "./PersistentChatView.svelte";
 import userEvent from "@testing-library/user-event";
-import { TauriInvokePlayback, type ParsedCall } from "$lib/sample-call-testing";
+import {
+  TauriInvokePlayback,
+  type ParsedCall,
+  stubGlobalInvoke,
+} from "$lib/sample-call-testing";
 import { animationSpeed } from "$lib/preferences";
 import type { ChatArgs, LightweightLlmCall } from "$lib/bindings";
 
@@ -23,7 +27,7 @@ describe("Chat conversation", () => {
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
-    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    stubGlobalInvoke(tauriInvokeMock);
     playback = new TauriInvokePlayback();
     tauriInvokeMock.mockImplementation(
       (...args: (string | Record<string, string>)[]) =>

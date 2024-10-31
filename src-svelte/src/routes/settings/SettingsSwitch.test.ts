@@ -4,10 +4,10 @@ import "@testing-library/jest-dom";
 import { act, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import SettingsSwitch from "./SettingsSwitch.svelte";
+import { stubGlobalInvoke } from "$lib/sample-call-testing";
 
 const tauriInvokeMock = vi.fn();
-
-vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+stubGlobalInvoke(tauriInvokeMock);
 
 describe("Settings switch", () => {
   test("can be toggled on from clicking the container", async () => {

@@ -4,7 +4,10 @@ import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/svelte";
 import Metadata from "./Metadata.svelte";
 import { within, waitFor } from "@testing-library/dom";
-import { TauriInvokePlayback } from "$lib/sample-call-testing";
+import {
+  TauriInvokePlayback,
+  stubGlobalInvoke,
+} from "$lib/sample-call-testing";
 import { systemInfo } from "$lib/system-info";
 import { get } from "svelte/store";
 
@@ -14,7 +17,7 @@ describe("Metadata", () => {
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
-    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    stubGlobalInvoke(tauriInvokeMock);
     playback = new TauriInvokePlayback();
     tauriInvokeMock.mockImplementation(
       (...args: (string | Record<string, string>)[]) =>
@@ -59,12 +62,14 @@ describe("Metadata", () => {
   });
 
   test("API key error", async () => {
-    const spy = vi.spyOn(window, "__TAURI_INVOKE__");
-    expect(spy).not.toHaveBeenCalled();
-    tauriInvokeMock.mockRejectedValueOnce("testing");
+    playback.addCalls({
+      request: ["get_system_info"],
+      response: "testing",
+      succeeded: false,
+    });
 
     render(Metadata, {});
-    expect(spy).toHaveReturnedTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(1);
 
     await waitFor(() => {
       const status = screen.getByRole("status");

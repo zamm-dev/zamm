@@ -1,5 +1,8 @@
 import type { StoryFn, Decorator, StoryContext } from "@storybook/svelte";
-import { TauriInvokePlayback } from "$lib/sample-call-testing";
+import {
+  TauriInvokePlayback,
+  stubGlobalInvoke,
+} from "$lib/sample-call-testing";
 
 let playback: TauriInvokePlayback;
 let nextShouldWait = false;
@@ -20,7 +23,7 @@ function mockInvokeFn<T>(
   }
 }
 
-window.__TAURI_INVOKE__ = mockInvokeFn;
+stubGlobalInvoke(mockInvokeFn);
 
 interface TauriInvokeArgs {
   sampleCallFiles?: string[];

@@ -7,7 +7,10 @@ import ApiKeysDisplay from "./Display.svelte";
 import { within, waitFor } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
 import { systemInfo, NullSystemInfo } from "$lib/system-info";
-import { TauriInvokePlayback } from "$lib/sample-call-testing";
+import {
+  TauriInvokePlayback,
+  stubGlobalInvoke,
+} from "$lib/sample-call-testing";
 import { animationSpeed } from "$lib/preferences";
 
 describe("API Keys Display", () => {
@@ -20,7 +23,7 @@ describe("API Keys Display", () => {
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
-    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    stubGlobalInvoke(tauriInvokeMock);
     playback = new TauriInvokePlayback();
     tauriInvokeMock.mockImplementation(
       (...args: (string | Record<string, string>)[]) =>
@@ -97,15 +100,21 @@ describe("API Keys Display", () => {
 
   test("API key error", async () => {
     const errorMessage = "Testing error message";
-    const spy = vi.spyOn(window, "__TAURI_INVOKE__");
-    expect(spy).not.toHaveBeenCalled();
-    tauriInvokeMock.mockRejectedValueOnce(errorMessage);
+    playback.addCalls({
+      request: ["get_api_keys"],
+      response: errorMessage,
+      succeeded: false,
+    });
 
     render(ApiKeysDisplay, {});
     await waitFor(() =>
       expect(screen.getByRole("row", { name: /OpenAI/ })).toBeInTheDocument(),
     );
-    expect(spy).toHaveBeenLastCalledWith("get_api_keys");
+    expect(tauriInvokeMock).toHaveBeenLastCalledWith(
+      "get_api_keys",
+      {},
+      undefined,
+    );
 
     render(Snackbar, {});
     const alerts = screen.queryAllByRole("alertdialog");

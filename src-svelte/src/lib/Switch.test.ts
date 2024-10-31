@@ -1,16 +1,19 @@
 import { expect, test, vi, type SpyInstance, type Mock } from "vitest";
 import "@testing-library/jest-dom";
 
-import { act, render, screen } from "@testing-library/svelte";
+import { act, render, screen, waitFor } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import Switch, { getClickDelayMs } from "./Switch.svelte";
 import { soundOn, animationSpeed } from "$lib/preferences";
-import { TauriInvokePlayback } from "$lib/sample-call-testing";
+import {
+  TauriInvokePlayback,
+  stubGlobalInvoke,
+} from "$lib/sample-call-testing";
 
 const tauriInvokeMock = vi.fn();
 const recordSoundDelay = vi.fn();
 
-vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+stubGlobalInvoke(tauriInvokeMock);
 vi.stubGlobal("_testRecordSoundDelay", recordSoundDelay);
 
 describe("Switch delay", () => {
@@ -87,7 +90,7 @@ describe("Switch", () => {
 
     const onOffSwitch = screen.getByRole("switch");
     await act(() => userEvent.click(onOffSwitch));
-    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    waitFor(() => expect(tauriInvokeMock).toHaveReturnedTimes(1));
   });
 
   test("does not play clicking sound when sound off", async () => {

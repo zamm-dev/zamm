@@ -49,12 +49,13 @@
   }
 
   function submitApiKey() {
-    commands
-      .setApiKey(
+    unwrap(
+      commands.setApiKey(
         fields.saveKey ? fields.saveKeyLocation : null,
         service,
         fields.apiKey,
-      )
+      ),
+    )
       .then(() => {
         formClose();
       })

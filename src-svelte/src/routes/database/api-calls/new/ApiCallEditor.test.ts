@@ -10,7 +10,10 @@ import ApiCallEditor, {
   resetNewApiCall,
 } from "./ApiCallEditor.svelte";
 import userEvent from "@testing-library/user-event";
-import { TauriInvokePlayback } from "$lib/sample-call-testing";
+import {
+  TauriInvokePlayback,
+  stubGlobalInvoke,
+} from "$lib/sample-call-testing";
 import { get } from "svelte/store";
 import { mockStores } from "../../../../vitest-mocks/stores";
 import { EDIT_CANONICAL_REF, EDIT_PROMPT } from "./test.data";
@@ -22,7 +25,7 @@ describe("API call editor", () => {
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
-    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    stubGlobalInvoke(tauriInvokeMock);
     playback = new TauriInvokePlayback();
     tauriInvokeMock.mockImplementation(
       (...args: (string | Record<string, string>)[]) =>

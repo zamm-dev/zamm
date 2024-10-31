@@ -3,7 +3,10 @@ import "@testing-library/jest-dom";
 import { render, screen, waitFor } from "@testing-library/svelte";
 import TerminalSession from "./TerminalSession.svelte";
 import userEvent from "@testing-library/user-event";
-import { TauriInvokePlayback } from "$lib/sample-call-testing";
+import {
+  TauriInvokePlayback,
+  stubGlobalInvoke,
+} from "$lib/sample-call-testing";
 
 describe("Terminal session", () => {
   let tauriInvokeMock: Mock;
@@ -11,7 +14,7 @@ describe("Terminal session", () => {
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
-    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    stubGlobalInvoke(tauriInvokeMock);
     playback = new TauriInvokePlayback();
     tauriInvokeMock.mockImplementation(
       (...args: (string | Record<string, string>)[]) =>
