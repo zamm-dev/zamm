@@ -6,7 +6,7 @@
   import { onMount } from "svelte";
   import PageTransition from "./PageTransition.svelte";
   import AnimationControl from "./AnimationControl.svelte";
-  import { getPreferences } from "$lib/bindings";
+  import { commands } from "$lib/bindings";
   import {
     soundOn,
     backgroundAnimation,
@@ -27,7 +27,7 @@
     });
 
     const updatePrefs = async () => {
-      const prefs = await getPreferences();
+      const prefs = await commands.getPreferences();
 
       if (prefs.sound_on != null) {
         soundOn.set(prefs.sound_on);

@@ -12,46 +12,46 @@
     soundOn,
     volume,
   } from "$lib/preferences";
-  import { setPreferences } from "$lib/bindings";
+  import { commands } from "$lib/bindings";
 
   const onAnimationsToggle = (newValue: boolean) => {
-    setPreferences({
+    commands.setPreferences({
       animations_on: newValue,
     });
   };
 
   const onbackgroundAnimationToggle = (newValue: boolean) => {
-    setPreferences({
+    commands.setPreferences({
       background_animation: newValue,
     });
   };
 
   const onAnimationSpeedUpdate = (newValue: number) => {
-    setPreferences({
+    commands.setPreferences({
       animation_speed: newValue,
     });
   };
 
   const onTransparencyToggle = (newValue: boolean) => {
-    setPreferences({
+    commands.setPreferences({
       transparency_on: newValue,
     });
   };
 
   const onHighDpiAdjust = (newValue: boolean) => {
-    setPreferences({
+    commands.setPreferences({
       high_dpi_adjust: newValue,
     });
   };
 
   const onSoundToggle = (newValue: boolean) => {
-    setPreferences({
+    commands.setPreferences({
       sound_on: newValue,
     });
   };
 
   const onVolumeUpdate = (newValue: number) => {
-    setPreferences({
+    commands.setPreferences({
       volume: newValue,
     });
   };

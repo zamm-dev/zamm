@@ -1,7 +1,8 @@
 <script lang="ts">
   import InfoBox from "$lib/InfoBox.svelte";
   import SendInputForm from "$lib/controls/SendInputForm.svelte";
-  import { runCommand, sendCommandInput } from "$lib/bindings";
+  import { unwrap } from "$lib/tauri";
+  import { commands } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import Scrollable from "$lib/Scrollable.svelte";
@@ -30,12 +31,14 @@
     try {
       expectingResponse = true;
       if (sessionId === undefined) {
-        let result = await runCommand(newInput);
+        let result = await unwrap(commands.runCommand(newInput));
         command = newInput;
         sessionId = result.id;
         output += result.output;
       } else {
-        let result = await sendCommandInput(sessionId, newInput);
+        let result = await unwrap(
+          commands.sendCommandInput(sessionId, newInput),
+        );
         output += result;
       }
       resizeTerminalView();

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { getApiCalls, type LightweightLlmCall } from "$lib/bindings";
+  import { unwrap } from "$lib/tauri";
+  import { commands, type LightweightLlmCall } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import Scrollable from "$lib/Scrollable.svelte";
   import ApiCallReference from "$lib/ApiCallReference.svelte";
@@ -68,7 +69,7 @@
       return;
     }
 
-    llmCallsPromise = getApiCalls(llmCalls.length)
+    llmCallsPromise = unwrap(commands.getApiCalls(llmCalls.length))
       .then((newCalls) => {
         llmCalls = [...llmCalls, ...newCalls];
         allCallsLoaded = newCalls.length < PAGE_SIZE;

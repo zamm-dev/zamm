@@ -1,10 +1,10 @@
 <script lang="ts">
   import InfoBox from "$lib/InfoBox.svelte";
   import Loading from "$lib/Loading.svelte";
-  import { getSystemInfo, type OS } from "$lib/bindings";
+  import { commands, type OS } from "$lib/bindings";
   import { systemInfo } from "$lib/system-info";
 
-  let systemInfoCall = getSystemInfo();
+  let systemInfoCall = commands.getSystemInfo();
   systemInfoCall
     .then((result) => {
       systemInfo.set(result);

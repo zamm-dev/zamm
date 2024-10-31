@@ -1,6 +1,7 @@
 <script lang="ts">
   import InfoBox from "$lib/InfoBox.svelte";
-  import { importDb, exportDb, type DatabaseCounts } from "$lib/bindings";
+  import { commands, type DatabaseCounts } from "$lib/bindings";
+  import { unwrap } from "$lib/tauri";
   import { snackbarInfo, snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import { systemInfo } from "$lib/system-info";
   import Button from "$lib/controls/Button.svelte";
@@ -56,7 +57,7 @@
         throw new Error("More than one file selected");
       }
 
-      const importCounts = await importDb(filePath);
+      const importCounts = await unwrap(commands.importDb(filePath));
       const importMessage = `Imported ${nounify(importCounts.imported)}`;
       if (
         importCounts.ignored.num_api_keys > 0 ||
@@ -83,7 +84,7 @@
     }
 
     try {
-      const exportCounts = await exportDb(filePath);
+      const exportCounts = await unwrap(commands.exportDb(filePath));
       snackbarInfo(`Exported ${nounify(exportCounts)}`);
     } catch (error) {
       snackbarError(error as string | Error);

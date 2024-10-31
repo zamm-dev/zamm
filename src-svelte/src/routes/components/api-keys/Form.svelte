@@ -8,7 +8,8 @@
 
 <script lang="ts">
   import { cubicInOut } from "svelte/easing";
-  import { getApiKeys, setApiKey, type Service } from "$lib/bindings";
+  import { unwrap } from "$lib/tauri";
+  import { commands, type Service } from "$lib/bindings";
   import { standardDuration } from "$lib/preferences";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import { apiKeys } from "$lib/system-info";
@@ -48,11 +49,12 @@
   }
 
   function submitApiKey() {
-    setApiKey(
-      fields.saveKey ? fields.saveKeyLocation : null,
-      service,
-      fields.apiKey,
-    )
+    commands
+      .setApiKey(
+        fields.saveKey ? fields.saveKeyLocation : null,
+        service,
+        fields.apiKey,
+      )
       .then(() => {
         formClose();
       })
@@ -63,7 +65,7 @@
         setTimeout(async () => {
           // delay here instead of in CSS transition so that the text updates
           // simultaneously with the transition
-          apiKeys.set(await getApiKeys());
+          apiKeys.set(await unwrap(commands.getApiKeys()));
         }, 0.75 * growDuration);
       });
   }

@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { getApiKeys } from "$lib/bindings";
+  import { commands } from "$lib/bindings";
+  import { unwrap } from "$lib/tauri";
   import { apiKeys as apiKeysStore } from "$lib/system-info";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import InfoBox from "$lib/InfoBox.svelte";
@@ -11,7 +12,7 @@
   export let editDemo = false;
 
   onMount(() => {
-    getApiKeys()
+    unwrap(commands.getApiKeys())
       .then((keys) => {
         apiKeysStore.set(keys);
       })

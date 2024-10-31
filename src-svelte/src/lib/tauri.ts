@@ -1,15 +1,10 @@
-export interface SidecarMessageOptions {
-  sidecar: boolean;
-}
+import { type Result } from "./bindings";
 
-export interface SidecarMessage {
-  cmd: string;
-  program: string;
-  args: string[];
-  options: SidecarMessageOptions;
-  onEventFn: number;
-}
-
-export interface SidecarArgs {
-  message: SidecarMessage;
+export async function unwrap<T, U>(promise: Promise<Result<T, U>>) {
+  const result = await promise;
+  if (result.status === "ok") {
+    return result.data;
+  } else {
+    throw result.error;
+  }
 }

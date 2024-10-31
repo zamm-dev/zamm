@@ -1,5 +1,5 @@
 import { get } from "svelte/store";
-import { playSound, type Sound } from "./bindings";
+import { commands, type Sound } from "./bindings";
 import { soundOn, volume } from "./preferences";
 
 export function playSoundEffect(sound: Sound, speed?: number) {
@@ -8,7 +8,7 @@ export function playSoundEffect(sound: Sound, speed?: number) {
     // boost volume to compensate for lowered volume from lower speed
     const soundEffectVolume = get(volume) / soundEffectSpeed;
     try {
-      playSound(sound, soundEffectVolume, soundEffectSpeed);
+      commands.playSound(sound, soundEffectVolume, soundEffectSpeed);
     } catch (e) {
       console.error(`Problem playing ${sound}: ${e}`);
     }
