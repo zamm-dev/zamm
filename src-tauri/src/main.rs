@@ -109,6 +109,7 @@ fn main() {
 
                     Ok(())
                 })
+                .plugin(tauri_plugin_dialog::init())
                 .manage(ZammDatabase(Mutex::new(possible_db)))
                 .manage(ZammApiKeys(Mutex::new(api_keys)))
                 .manage(ZammTerminalSessions(Mutex::new(terminal_sessions)))
