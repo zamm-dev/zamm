@@ -219,16 +219,6 @@ fn compare_dir_all(
     }
 }
 
-pub struct SampleCallResult<T, U>
-where
-    T: Serialize + for<'de> Deserialize<'de>,
-    U: Serialize,
-{
-    pub sample: SampleCall,
-    pub args: T,
-    pub result: U,
-}
-
 pub struct NetworkHelper {
     pub network_client: ClientWithMiddleware,
     pub mode: VCRMode,
@@ -387,7 +377,7 @@ where
         compare_dir_all(expected_output_dir, actual_output_dir, output_replacements);
     }
 
-    async fn check_sample_call(&mut self, sample_file: &str) -> SampleCallResult<T, U> {
+    async fn check_sample_call(&mut self, sample_file: &str) {
         // sanity check that sample inputs are as expected
         let sample = read_sample(sample_file);
         if Self::CALL_HAS_ARGS {
@@ -568,12 +558,6 @@ where
                 &actual_db_sql_dump,
                 &replacements,
             );
-        }
-
-        SampleCallResult {
-            sample,
-            args,
-            result,
         }
     }
 }

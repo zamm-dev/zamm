@@ -6,7 +6,7 @@
   import Button from "$lib/controls/Button.svelte";
   import ButtonGroup from "$lib/controls/ButtonGroup.svelte";
   import Warning from "$lib/Warning.svelte";
-  import { save, open, type DialogFilter } from "@tauri-apps/api/dialog";
+  import { save, open, type DialogFilter } from "@tauri-apps/plugin-dialog";
 
   const ZAMM_DB_FILTER: DialogFilter = {
     name: "ZAMM Database",

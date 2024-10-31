@@ -22,10 +22,10 @@ use futures::executor;
 use models::llm_calls::EntityId;
 use setup::api_keys::{setup_api_keys, ApiKeys};
 #[cfg(debug_assertions)]
-use specta::collect_types;
+use specta_typescript::Typescript;
 use tauri::Manager;
 #[cfg(debug_assertions)]
-use tauri_specta::ts;
+use tauri_specta::{collect_commands, Builder};
 use tokio::sync::Mutex;
 
 use cli::{Cli, Commands};
@@ -47,25 +47,24 @@ fn main() {
     match &cli.command {
         #[cfg(debug_assertions)]
         Some(Commands::ExportBindings {}) => {
-            ts::export(
-                collect_types![
-                    get_api_keys,
-                    set_api_key,
-                    play_sound,
-                    get_preferences,
-                    set_preferences,
-                    get_system_info,
-                    chat,
-                    get_api_call,
-                    get_api_calls,
-                    import_db,
-                    export_db,
-                    run_command,
-                    send_command_input,
-                ],
-                "../src-svelte/src/lib/bindings.ts",
-            )
-            .expect("Failed to export Specta bindings");
+            let builder = Builder::<tauri::Wry>::new().commands(collect_commands![
+                get_api_keys,
+                set_api_key,
+                play_sound,
+                get_preferences,
+                set_preferences,
+                get_system_info,
+                chat,
+                get_api_call,
+                get_api_calls,
+                import_db,
+                export_db,
+                run_command,
+                send_command_input,
+            ]);
+            builder
+                .export(Typescript::default(), "../src-svelte/src/lib/bindings.ts")
+                .expect("Failed to export Specta bindings");
             println!("Specta bindings should be exported to ../src-svelte/src/lib/bindings.ts");
         }
         Some(Commands::Gui {}) | None => {
@@ -75,7 +74,7 @@ fn main() {
 
             tauri::Builder::default()
                 .setup(|app| {
-                    let config_dir = app.handle().path_resolver().app_config_dir();
+                    let config_dir = app.path().app_config_dir().ok();
                     let zamm_db = app.state::<ZammDatabase>();
 
                     executor::block_on(async {
@@ -93,14 +92,14 @@ fn main() {
                     #[cfg(not(target_os = "macos"))]
                     let high_dpi_adjust_on = prefs.high_dpi_adjust.unwrap_or(false);
                     if high_dpi_adjust_on {
-                        app.get_window("main")
+                        app.get_webview_window("main")
                             .ok_or(anyhow::anyhow!("No main window"))?
                             .set_size(tauri::Size::Logical(tauri::LogicalSize {
                                 width: 708.0,  // 850 * 0.8333...
                                 height: 541.0, // 650 * 0.8333...
                             }))?;
                     } else {
-                        app.get_window("main")
+                        app.get_webview_window("main")
                             .ok_or(anyhow::anyhow!("No main window"))?
                             .set_size(tauri::Size::Logical(tauri::LogicalSize {
                                 width: 850.0,

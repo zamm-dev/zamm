@@ -1,6 +1,7 @@
 use specta::specta;
 use std::fs;
 use std::path::PathBuf;
+use tauri::Manager;
 
 use crate::commands::errors::ZammResult;
 use crate::commands::preferences::models::{get_preferences_file, Preferences};
@@ -50,7 +51,7 @@ pub fn get_preferences_helper(preferences_path: &Option<PathBuf>) -> Preferences
 #[tauri::command(async)]
 #[specta]
 pub fn get_preferences(app_handle: tauri::AppHandle) -> Preferences {
-    let app_dir = app_handle.path_resolver().app_config_dir();
+    let app_dir = app_handle.path().app_config_dir().ok();
     get_preferences_helper(&app_dir)
 }
 
