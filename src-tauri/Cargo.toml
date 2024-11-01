@@ -70,3 +70,7 @@ vcr-cassette = "2.0.1"
 async-openai = { path = "../forks/async-openai/async-openai" }
 ollama-rs = { path = "../forks/ollama-rs" }
 rvcr = { path = "../forks/rvcr" }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-process = "2.0.1"
+tauri-plugin-updater = "2"

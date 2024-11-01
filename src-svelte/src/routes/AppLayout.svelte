@@ -17,6 +17,7 @@
     animationsOn,
     rootEm,
   } from "$lib/preferences";
+  import { checkForUpdates } from "$lib/autoupdate";
 
   export let currentRoute: string;
   let ready = false;
@@ -63,6 +64,7 @@
     };
 
     updatePrefs();
+    checkForUpdates();
 
     return () => {
       rootEmUnsubscribe();

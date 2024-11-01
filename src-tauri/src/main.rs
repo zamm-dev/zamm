@@ -110,6 +110,8 @@ fn main() {
                     Ok(())
                 })
                 .plugin(tauri_plugin_dialog::init())
+                .plugin(tauri_plugin_process::init())
+                .plugin(tauri_plugin_updater::Builder::new().build())
                 .manage(ZammDatabase(Mutex::new(possible_db)))
                 .manage(ZammApiKeys(Mutex::new(api_keys)))
                 .manage(ZammTerminalSessions(Mutex::new(terminal_sessions)))
