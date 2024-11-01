@@ -41,6 +41,12 @@ describe("AppLayout", () => {
       (...args: (string | Record<string, string>)[]) =>
         playback.mockCall(...args),
     );
+
+    playback.addCalls({
+      request: ["plugin:updater|check"],
+      response: {},
+      succeeded: true,
+    });
   });
 
   test("will do nothing if no custom settings exist", async () => {
@@ -54,7 +60,8 @@ describe("AppLayout", () => {
     render(AppLayout, { currentRoute: "/" });
     await tickFor(3);
     expect(get(soundOn)).toBe(true);
-    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    // twice -- once for the updater, once for the preferences
+    expect(tauriInvokeMock).toHaveReturnedTimes(2);
   });
 
   test("will set sound if sound preference overridden", async () => {
@@ -69,7 +76,7 @@ describe("AppLayout", () => {
     await waitFor(() => {
       expect(get(soundOn)).toBe(false);
     });
-    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(2);
   });
 
   test("will set volume if volume preference overridden", async () => {
@@ -84,7 +91,7 @@ describe("AppLayout", () => {
     await waitFor(() => {
       expect(get(volume)).toBe(0.8);
     });
-    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(2);
   });
 
   test("will set animation if animation preference overridden", async () => {
@@ -99,7 +106,7 @@ describe("AppLayout", () => {
     await waitFor(() => {
       expect(get(animationsOn)).toBe(false);
     });
-    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(2);
   });
 
   test("will set animation speed if speed preference overridden", async () => {
@@ -114,7 +121,7 @@ describe("AppLayout", () => {
     await waitFor(() => {
       expect(get(animationSpeed)).toBe(0.9);
     });
-    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(2);
   });
 
   test("will set transparency if transparency preference overridden", async () => {
@@ -129,7 +136,7 @@ describe("AppLayout", () => {
     await waitFor(() => {
       expect(get(transparencyOn)).toBe(true);
     });
-    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(2);
   });
 
   test("will set high DPI adjust if preference overridden", async () => {
@@ -144,6 +151,6 @@ describe("AppLayout", () => {
     await waitFor(() => {
       expect(get(highDpiAdjust)).toBe(true);
     });
-    expect(tauriInvokeMock).toHaveReturnedTimes(1);
+    expect(tauriInvokeMock).toHaveReturnedTimes(2);
   });
 });
