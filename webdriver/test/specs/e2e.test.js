@@ -177,7 +177,7 @@ describe("App", function () {
 
   it("should be able to import data", async function () {
     await findAndClick('a[title="Settings"]');
-    await findAndClick('a[title="Dashboard"]');
+    await findAndClick('a[title="Database"]');
     await findAndClick('a[title="Settings"]');
     await browser.execute(`window.WEBDRIVER_FILE_PATH = '${SAMPLE_DB_PATH}';`);
     await findAndClick("button=Import data");
@@ -185,11 +185,10 @@ describe("App", function () {
     // click twice to reset the saved navigation to the "New API Call" page
     await findAndClick('a[title="Database"]');
     await findAndClick('a[title="Database"]');
-    await findAndClick('a[title="Dashboard"]');
-    await findAndClick('a[title="Database"]');
+    await findAndSelect('select[name="data-type"]', 0);
     await browser.pause(500); // for API calls to load
     expect(
-      await browser.checkFullPageScreen("api-calls-populated", {}),
+      await browser.checkFullPageScreen("api-calls-populated", {})
     ).toBeLessThanOrEqual(maxMismatch);
   });
 

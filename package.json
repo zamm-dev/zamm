@@ -11,9 +11,6 @@
     "src-svelte",
     "webdriver"
   ],
-  "dependencies": {
-    "@tauri-apps/api": "^1.4.0"
-  },
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.4",
     "@typescript-eslint/eslint-plugin": "^5.52.0",
