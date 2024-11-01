@@ -188,7 +188,7 @@ describe("App", function () {
     await findAndSelect('select[name="data-type"]', 0);
     await browser.pause(500); // for API calls to load
     expect(
-      await browser.checkFullPageScreen("api-calls-populated", {})
+      await browser.checkFullPageScreen("api-calls-populated", {}),
     ).toBeLessThanOrEqual(maxMismatch);
   });
 

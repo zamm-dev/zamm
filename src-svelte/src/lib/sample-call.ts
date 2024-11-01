@@ -61,7 +61,9 @@ function invalidValue(typ: any, val: any, key: any, parent: any = ""): never {
   const parentText = parent ? ` on ${parent}` : "";
   const keyText = key ? ` for key "${key}"` : "";
   throw Error(
-    `Invalid value${keyText}${parentText}. Expected ${prettyTyp} but got ${JSON.stringify(val)}`,
+    `Invalid value${keyText}${parentText}. Expected ${prettyTyp} but got ${JSON.stringify(
+      val,
+    )}`,
   );
 }
 
