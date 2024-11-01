@@ -1,15 +1,15 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 LABEL org.opencontainers.image.source="https://github.com/zamm-dev/zamm"
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt update && \
-  apt install -y --no-install-recommends build-essential libssl-dev zlib1g-dev libffi-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev libncurses-dev tk-dev libwebkit2gtk-4.0-dev curl wget file libgtk-3-dev librsvg2-dev ca-certificates software-properties-common patchelf && \
+  apt install -y --no-install-recommends build-essential libssl-dev zlib1g-dev libffi-dev libbz2-dev libreadline-dev libsqlite3-dev liblzma-dev libncurses-dev tk-dev libwebkit2gtk-4.0-dev curl wget file libgtk-3-dev librsvg2-dev ca-certificates software-properties-common patchelf gnupg-agent && \
   apt-add-repository ppa:git-core/ppa && \
   apt update && \
   apt install -y git
 
-ARG RUST_VERSION=1.76.0
-ARG TAURI_CLI_VERSION=1.5.9
+ARG RUST_VERSION=1.82.0
+ARG TAURI_CLI_VERSION=2.0.4
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${RUST_VERSION}
 ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cargo install --locked tauri-cli@${TAURI_CLI_VERSION}
@@ -34,7 +34,7 @@ RUN git clone --depth 1 --branch zamm/v0.1.1 https://github.com/amosjyng/neodrag
   cd /tmp/dependencies && \
   yarn
 
-RUN apt install -y libasound2-dev
+RUN apt-get update && apt install -y libasound2-dev libglib2.0-dev libgtk-3-dev libsoup-3.0-dev libjavascriptcoregtk-4.1-dev libwebkit2gtk-4.1-dev
 
 COPY src-tauri/Cargo.toml Cargo.toml
 COPY src-tauri/Cargo.lock Cargo.lock
