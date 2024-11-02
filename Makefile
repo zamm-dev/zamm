@@ -1,6 +1,6 @@
 .PHONY: rust-format rust-lint quicktype
 
-BUILD_IMAGE = ghcr.io/zamm-dev/zamm:v0.2.0-build
+BUILD_IMAGE = ghcr.io/zamm-dev/zamm:v0.2.1-build
 CURRENT_DIR = $(shell pwd)
 
 build: svelte rust
@@ -15,7 +15,6 @@ copy-docker-deps:
 	mv -n /tmp/dependencies/forks/neodrag/packages/svelte/dist ./forks/neodrag/packages/svelte/
 	mv -n /tmp/dependencies/node_modules ./
 	mv -n /tmp/dependencies/src-svelte/node_modules ./src-svelte/
-	mv -n /tmp/dependencies/target ./src-tauri/
 
 build-docker:
 	docker run --rm -v $(CURRENT_DIR):/zamm -w /zamm $(BUILD_IMAGE) make copy-docker-deps build ARGS=$(ARGS)

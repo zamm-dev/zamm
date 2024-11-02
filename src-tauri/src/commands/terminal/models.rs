@@ -19,6 +19,7 @@ const TERMINAL_READ_TIMEOUT: Duration = Duration::from_millis(100);
 
 pub trait Terminal: Send + Sync {
     fn run_command(&mut self, command: &str) -> ZammResult<String>;
+    #[allow(dead_code)]
     fn read_updates(&mut self) -> ZammResult<String>;
     fn send_input(&mut self, input: &str) -> ZammResult<String>;
     fn get_cast(&self) -> ZammResult<AsciiCastData>;

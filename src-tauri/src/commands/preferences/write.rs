@@ -2,6 +2,7 @@ use anyhow::anyhow;
 use specta::specta;
 use std::fs;
 use std::path::PathBuf;
+use tauri::Manager;
 use toml::map::Entry;
 use toml::Table;
 use toml::Value;
@@ -59,7 +60,7 @@ pub fn set_preferences(
     app_handle: tauri::AppHandle,
     preferences: Preferences,
 ) -> ZammResult<()> {
-    let app_dir = app_handle.path_resolver().app_config_dir();
+    let app_dir = app_handle.path().app_config_dir().ok();
     match set_preferences_helper(&app_dir, &preferences) {
         Ok(_) => Ok(()),
         Err(e) => {

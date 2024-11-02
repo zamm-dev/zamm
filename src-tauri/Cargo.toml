@@ -10,18 +10,18 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [build-dependencies]
-tauri-build = { version = "1.4", features = [] }
+tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "1.4", features = [ "dialog-save", "dialog-open", "updater", "shell-open", "process-command-api" ] }
+tauri = { version = "2", features = [] }
 diesel = { version = "2.1.0", features = ["sqlite", "uuid", "chrono"] }
 directories = "5.0.1"
 diesel_migrations = { version = "2.1.0", features = ["sqlite"] }
 uuid = { version = "1.4.1", features = ["v4", "fast-rng", "macro-diagnostics", "serde"] }
-specta = { version = "1.0.5", features = ["uuid", "chrono"] }
-tauri-specta = { version = "1.0.2", features = ["javascript", "typescript"] }
+specta = { version = "=2.0.0-rc.20", features = ["uuid", "chrono"] }
+tauri-specta = { version = "=2.0.0-rc.20", features = ["typescript"] }
 futures = "0.3.28"
-tauri-utils = "1.4.0"
+tauri-utils = "2"
 thiserror = "1.0.47"
 anyhow = "1.0.75"
 mockall = "0.11.4"
@@ -50,6 +50,8 @@ either = "1.13.0"
 portable-pty = "0.8.1"
 regex = "1.11.1"
 lazy_static = "1.5.0"
+tauri-plugin-dialog = "2"
+specta-typescript = "0.0.7"
 
 [features]
 # this feature is used for production builds or when `devPath` points to the filesystem
@@ -67,3 +69,7 @@ vcr-cassette = "2.0.1"
 async-openai = { path = "../forks/async-openai/async-openai" }
 ollama-rs = { path = "../forks/ollama-rs" }
 rvcr = { path = "../forks/rvcr" }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-process = "2.0.1"
+tauri-plugin-updater = "2"

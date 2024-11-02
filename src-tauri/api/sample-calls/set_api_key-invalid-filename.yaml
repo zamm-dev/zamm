@@ -9,7 +9,7 @@ request:
 response:
   success: false
   message: >
-    "Is a directory (os error 21)"
+    "IO error: Is a directory (os error 21)"
 sideEffects:
   disk:
     startStateDirectory: empty

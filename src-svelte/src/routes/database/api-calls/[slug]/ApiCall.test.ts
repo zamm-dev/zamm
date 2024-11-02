@@ -21,7 +21,10 @@ import {
   EDIT_PROMPT,
   START_PROMPT,
 } from "../new/test.data";
-import { TauriInvokePlayback } from "$lib/sample-call-testing";
+import {
+  TauriInvokePlayback,
+  stubGlobalInvoke,
+} from "$lib/sample-call-testing";
 import ApiCall from "./ApiCall.svelte";
 import { get } from "svelte/store";
 import { mockStores } from "../../../../vitest-mocks/stores";
@@ -32,7 +35,7 @@ describe("Individual API call", () => {
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
-    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    stubGlobalInvoke(tauriInvokeMock);
     playback = new TauriInvokePlayback();
     tauriInvokeMock.mockImplementation(
       (...args: (string | Record<string, string>)[]) =>

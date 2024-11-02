@@ -23,7 +23,8 @@
   import Scrollable, { type ResizedEvent } from "$lib/Scrollable.svelte";
   import Message from "./Message.svelte";
   import TypingIndicator from "./TypingIndicator.svelte";
-  import { chat } from "$lib/bindings";
+  import { commands } from "$lib/bindings";
+  import { unwrap } from "$lib/tauri";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import SendInputForm from "$lib/controls/SendInputForm.svelte";
@@ -81,13 +82,15 @@
     expectingResponse = true;
 
     try {
-      let llmCall = await chat({
-        provider: "OpenAI",
-        llm: "gpt-4",
-        temperature: null,
-        previous_call_id: $lastMessageId,
-        prompt: $conversation,
-      });
+      let llmCall = await unwrap(
+        commands.chat({
+          provider: "OpenAI",
+          llm: "gpt-4",
+          temperature: null,
+          previous_call_id: $lastMessageId,
+          prompt: $conversation,
+        }),
+      );
       lastMessageId.set(llmCall.id);
       appendMessage(llmCall.response_message);
     } catch (err) {

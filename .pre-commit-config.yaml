@@ -36,7 +36,7 @@ repos:
         language: system
         types: [file]
         files: \.(js|ts|svelte)$
-        exclude: src-svelte/src/lib/sample-call.ts
+        exclude: ^(src-svelte/src/lib/sample-call.ts|src-svelte/src/lib/bindings.ts)$
       - id: cargo-fmt
         name: cargo fmt
         entry: cargo fmt --manifest-path src-tauri/Cargo.toml --

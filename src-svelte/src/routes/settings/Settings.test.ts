@@ -14,6 +14,7 @@ import {
   parseSampleCall,
   type ParsedCall,
   TauriInvokePlayback,
+  stubGlobalInvoke,
 } from "$lib/sample-call-testing";
 
 describe("Settings", () => {
@@ -54,7 +55,7 @@ describe("Settings", () => {
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
-    vi.stubGlobal("__TAURI_INVOKE__", tauriInvokeMock);
+    stubGlobalInvoke(tauriInvokeMock);
     playback = new TauriInvokePlayback();
     tauriInvokeMock.mockImplementation(
       (...args: (string | Record<string, string>)[]) =>

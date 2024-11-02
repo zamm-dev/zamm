@@ -53,7 +53,8 @@
   import Button from "$lib/controls/Button.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import Select from "$lib/controls/Select.svelte";
-  import { chat } from "$lib/bindings";
+  import { commands } from "$lib/bindings";
+  import { unwrap } from "$lib/tauri";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
@@ -69,13 +70,15 @@
     expectingResponse = true;
 
     try {
-      const createdLlmCall = await chat({
-        provider: $provider,
-        llm: $llm,
-        temperature: null,
-        canonical_id: $canonicalRef?.id,
-        prompt: $prompt.messages,
-      });
+      const createdLlmCall = await unwrap(
+        commands.chat({
+          provider: $provider,
+          llm: $llm,
+          temperature: null,
+          canonical_id: $canonicalRef?.id,
+          prompt: $prompt.messages,
+        }),
+      );
       resetApiCallConversation();
 
       goto(`/database/api-calls/${createdLlmCall.id}`);
