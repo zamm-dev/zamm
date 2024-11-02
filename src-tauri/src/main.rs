@@ -32,8 +32,8 @@ use cli::{Cli, Commands};
 use commands::preferences::get_preferences_file_contents;
 use commands::{
     chat, export_db, get_api_call, get_api_calls, get_api_keys, get_preferences,
-    get_system_info, import_db, play_sound, run_command, send_command_input,
-    set_api_key, set_preferences,
+    get_system_info, get_terminal_sessions, import_db, play_sound, run_command,
+    send_command_input, set_api_key, set_preferences,
 };
 use upgrades::handle_app_upgrades;
 
@@ -61,6 +61,7 @@ fn main() {
                 export_db,
                 run_command,
                 send_command_input,
+                get_terminal_sessions,
             ]);
             builder
                 .export(Typescript::default(), "../src-svelte/src/lib/bindings.ts")
@@ -129,6 +130,7 @@ fn main() {
                     export_db,
                     run_command,
                     send_command_input,
+                    get_terminal_sessions,
                 ])
                 .run(tauri::generate_context!())
                 .expect("error while running tauri application");

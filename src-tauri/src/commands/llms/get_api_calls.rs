@@ -1,4 +1,5 @@
 use crate::commands::errors::ZammResult;
+use crate::commands::PAGE_SIZE;
 use crate::models::llm_calls::{LightweightLlmCall, LlmCallRow};
 use crate::schema::llm_calls;
 use crate::ZammDatabase;
@@ -7,8 +8,6 @@ use diesel::prelude::*;
 use diesel::RunQueryDsl;
 use specta::specta;
 use tauri::State;
-
-const PAGE_SIZE: i64 = 50;
 
 async fn get_api_calls_helper(
     zamm_db: &ZammDatabase,
