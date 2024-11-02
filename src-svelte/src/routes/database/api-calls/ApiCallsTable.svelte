@@ -7,9 +7,6 @@
   const getApiCalls = (offset: number) => unwrap(commands.getApiCalls(offset));
   const apiCallUrl = (apiCall: LightweightLlmCall) =>
     `/database/api-calls/${apiCall.id}/`;
-
-  export let dateTimeLocale: string | undefined = undefined;
-  export let timeZone: string | undefined = undefined;
 </script>
 
 <Table
@@ -17,8 +14,7 @@
   getItems={getApiCalls}
   itemUrl={apiCallUrl}
   renderItem={ApiCallBlurb}
-  {dateTimeLocale}
-  {timeZone}
+  {...$$restProps}
 >
   Looks like you haven't made any calls to an LLM yet.<br />Get started via
   <a href="/chat">chat</a>

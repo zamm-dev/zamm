@@ -8,9 +8,6 @@
     unwrap(commands.getTerminalSessions(offset));
   const terminalSessionUrl = (apiCall: TerminalSessionReference) =>
     `/database/terminal-sessions/${apiCall.id}/`;
-
-  export let dateTimeLocale: string | undefined = undefined;
-  export let timeZone: string | undefined = undefined;
 </script>
 
 <Table
@@ -18,8 +15,7 @@
   getItems={getTerminalSessions}
   itemUrl={terminalSessionUrl}
   renderItem={TerminalSessionBlurb}
-  {dateTimeLocale}
-  {timeZone}
+  {...$$restProps}
 >
   Looks like you haven't <a href="/database/terminal-sessions/new/">started</a> any
   terminal sessions yet.
