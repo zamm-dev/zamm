@@ -118,6 +118,19 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async getTerminalSessions(
+    offset: number,
+  ): Promise<Result<TerminalSessionReference[], Error>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_terminal_sessions", { offset }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
 };
 
 /** user-defined events **/
@@ -216,6 +229,12 @@ export type SystemInfo = {
   os: OS | null;
   shell: Shell | null;
   shell_init_file: string | null;
+};
+export type TerminalSessionReference = {
+  id: EntityId;
+  timestamp: string;
+  command: string;
+  last_io: string | null;
 };
 export type TokenMetadata = {
   prompt: number | null;

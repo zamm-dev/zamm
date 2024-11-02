@@ -200,10 +200,10 @@ describe("App", function () {
     await findAndSelect('select[name="data-type"]', 0);
     await browser.pause(500); // for API calls to load
     // second link is the first in the list because the first link is the + sign
-    await findAndClick(".api-calls-page a:nth-child(2)");
+    await findAndClick(".database-page a:nth-child(2)");
     await findAndClick('a[title="Database"]');
     await browser.pause(500); // for API calls to load
-    await findAndClick(".api-calls-page a:nth-child(2)");
+    await findAndClick(".database-page a:nth-child(2)");
     await browser.pause(4_000); // for snackbar messages from previous tests to go away
     expect(
       await browser.checkFullPageScreen("api-call-individual", {}),

@@ -13,8 +13,8 @@
   import InfoBox from "$lib/InfoBox.svelte";
   import IconAdd from "~icons/mingcute/add-fill";
   import ApiCallsTable from "./api-calls/ApiCallsTable.svelte";
+  import TerminalSessionsTable from "./terminal-sessions/TerminalSessionsTable.svelte";
   import Select from "$lib/controls/Select.svelte";
-  import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
 
   export let dateTimeLocale: string | undefined = undefined;
   export let timeZone: string | undefined = undefined;
@@ -41,10 +41,7 @@
     {#if $dataType === "llm-calls"}
       <ApiCallsTable {dateTimeLocale} {timeZone} />
     {:else}
-      <EmptyPlaceholder>
-        Terminal sessions cannot be viewed yet.<br />You may
-        <a href="/database/terminal-sessions/new/">start</a> a new one.
-      </EmptyPlaceholder>
+      <TerminalSessionsTable {dateTimeLocale} {timeZone} />
     {/if}
   </div>
 </InfoBox>
