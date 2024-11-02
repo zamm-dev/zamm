@@ -19,7 +19,7 @@
   let allItemsLoaded = false;
   let blurbWidth = MIN_BLURB_WIDTH;
   let timeWidth = MIN_TIME_WIDTH;
-  let headerBlurbWidth = MIN_BLURB_WIDTH;
+  let headerBlurbWidth = "15rem"; // 3 * MIN_BLURB_WIDTH
 
   const formatter = new Intl.DateTimeFormat(dateTimeLocale, {
     year: "numeric",
