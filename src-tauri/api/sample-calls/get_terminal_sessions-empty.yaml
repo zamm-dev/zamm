@@ -1,0 +1,13 @@
+request:
+  - get_terminal_sessions
+  - >
+    {
+      "offset": 0
+    }
+response:
+  message: >
+    []
+sideEffects:
+  database:
+    startStateDump: empty
+    endStateDump: empty

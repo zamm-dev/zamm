@@ -1,0 +1,20 @@
+request:
+  - get_terminal_sessions
+  - >
+    {
+      "offset": 0
+    }
+response:
+  message: >
+    [
+      {
+        "id": "3717ed48-ab52-4654-9f33-de5797af5118",
+        "timestamp": "2024-09-24T16:27:25",
+        "command": "bash",
+        "last_io": "python api/sample-terminal-sessions/interleaved.py"
+      }
+    ]
+sideEffects:
+  database:
+    startStateDump: command-run-bash-interleaved
+    endStateDump: command-run-bash-interleaved

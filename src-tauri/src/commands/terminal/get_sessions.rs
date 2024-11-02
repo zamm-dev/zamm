@@ -29,7 +29,7 @@ impl From<AsciiCast> for TerminalSessionReference {
             .iter()
             .filter(|e| e.event_type == EventType::Input)
             .last()
-            .map(|e| e.event_data.clone());
+            .map(|e| e.event_data.trim().to_string());
         if last_io.is_none() {
             last_io = value
                 .cast
@@ -37,7 +37,7 @@ impl From<AsciiCast> for TerminalSessionReference {
                 .iter()
                 .filter(|e| e.event_type == EventType::Output)
                 .last()
-                .map(|e| e.event_data.clone());
+                .map(|e| e.event_data.trim().to_string());
         }
         TerminalSessionReference {
             id: value.id,
@@ -71,4 +71,45 @@ pub async fn get_terminal_sessions(
     offset: i32,
 ) -> ZammResult<Vec<TerminalSessionReference>> {
     get_terminal_sessions_helper(&database, offset).await
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::test_helpers::SideEffectsHelpers;
+    use crate::{check_sample, impl_result_test_case};
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+    struct GetTerminalSessionsRequest {
+        offset: i32,
+    }
+
+    async fn make_request_helper(
+        args: &GetTerminalSessionsRequest,
+        side_effects: &mut SideEffectsHelpers,
+    ) -> ZammResult<Vec<TerminalSessionReference>> {
+        get_terminal_sessions_helper(side_effects.db.as_ref().unwrap(), args.offset)
+            .await
+    }
+
+    impl_result_test_case!(
+        GetTerminalSessionsTestCase,
+        get_terminal_sessions,
+        true,
+        GetTerminalSessionsRequest,
+        Vec<TerminalSessionReference>
+    );
+
+    check_sample!(
+        GetTerminalSessionsTestCase,
+        test_empty_list,
+        "./api/sample-calls/get_terminal_sessions-empty.yaml"
+    );
+
+    check_sample!(
+        GetTerminalSessionsTestCase,
+        test_small_list,
+        "./api/sample-calls/get_terminal_sessions-small.yaml"
+    );
 }
