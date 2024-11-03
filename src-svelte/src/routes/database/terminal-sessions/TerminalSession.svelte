@@ -53,7 +53,9 @@
 <InfoBox title="Terminal Session" fullHeight>
   <div class="terminal-container composite-reveal full-height">
     {#if command}
-      <p>Current command: <span class="command">{command}</span></p>
+      <p class="atomic-reveal">
+        Current command: <span class="command">{command}</span>
+      </p>
     {:else}
       <EmptyPlaceholder>
         No running process.<br />Get started by entering a command below.

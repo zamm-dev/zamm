@@ -118,6 +118,19 @@ export const commands = {
       else return { status: "error", error: e as any };
     }
   },
+  async getTerminalSession(
+    id: string,
+  ): Promise<Result<RecoveredTerminalSession, Error>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_terminal_session", { id }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
   async getTerminalSessions(
     offset: number,
   ): Promise<Result<TerminalSessionReference[], Error>> {
@@ -209,6 +222,13 @@ export type Preferences = {
   volume?: number | null;
 };
 export type Prompt = ({ type: "Chat" } & ChatPrompt) | { type: "Unknown" };
+export type RecoveredTerminalSession = {
+  id: EntityId;
+  timestamp: string;
+  command: string;
+  os: OS | null;
+  output: string;
+};
 export type Request = { prompt: Prompt; temperature: number };
 export type Response = { completion: ChatMessage };
 export type RodioError =
