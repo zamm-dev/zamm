@@ -72,19 +72,7 @@ mod tests {
         side_effects: &mut SideEffectsHelpers,
     ) -> ZammResult<String> {
         let terminal_helper = side_effects.terminal.as_mut().unwrap();
-        let mock_terminal = terminal_helper
-            .sessions
-            .0
-            .lock()
-            .await
-            .remove(&terminal_helper.mock_session_id)
-            .unwrap();
-        terminal_helper.sessions.0.lock().await.insert(
-            EntityId {
-                uuid: args.session_id,
-            },
-            mock_terminal,
-        );
+        terminal_helper.change_mock_id(args.session_id).await;
         send_command_input_helper(
             side_effects.db.as_mut().unwrap(),
             &terminal_helper.sessions,

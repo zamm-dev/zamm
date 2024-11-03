@@ -49,6 +49,21 @@ impl Deref for EntityId {
     }
 }
 
+impl From<Uuid> for EntityId {
+    fn from(uuid: Uuid) -> Self {
+        EntityId { uuid }
+    }
+}
+
+impl TryFrom<&str> for EntityId {
+    type Error = uuid::Error;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let uuid = Uuid::parse_str(value)?;
+        Ok(EntityId { uuid })
+    }
+}
+
 impl ToSql<Text, Sqlite> for EntityId
 where
     String: ToSql<Text, Sqlite>,
