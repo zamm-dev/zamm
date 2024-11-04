@@ -18,6 +18,7 @@ const Template = ({ ...args }) => ({
 export const Khmer: StoryObj = Template.bind({}) as any;
 Khmer.args = {
   apiCall: KHMER_CALL,
+  showActions: false,
   dateTimeLocale: "en-GB",
   timeZone: "Asia/Phnom_Penh",
 };
@@ -30,6 +31,7 @@ Khmer.parameters = {
 export const LotsOfCode: StoryObj = Template.bind({}) as any;
 LotsOfCode.args = {
   apiCall: LOTS_OF_CODE_CALL,
+  showActions: false,
   dateTimeLocale: "en-GB",
   timeZone: "Asia/Phnom_Penh",
 };

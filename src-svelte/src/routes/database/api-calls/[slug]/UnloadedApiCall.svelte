@@ -2,8 +2,8 @@
   import ApiCall from "./ApiCall.svelte";
   import { type LlmCall, commands } from "$lib/bindings";
   import { unwrap } from "$lib/tauri";
-  import Actions from "./Actions.svelte";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
+  import Loading from "$lib/Loading.svelte";
 
   export let id: string;
   let apiCall: LlmCall | undefined = undefined;
@@ -17,15 +17,8 @@
     });
 </script>
 
-<div class="container">
-  <ApiCall {...$$restProps} bind:apiCall />
-  <Actions {apiCall} />
-</div>
-
-<style>
-  .container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-</style>
+{#if apiCall}
+  <ApiCall {...$$restProps} {apiCall} />
+{:else}
+  <Loading />
+{/if}
