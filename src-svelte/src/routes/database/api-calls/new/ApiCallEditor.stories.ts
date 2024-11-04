@@ -1,8 +1,8 @@
 import ApiCallEditorComponent from "./ApiCallEditor.svelte";
 import type { StoryObj } from "@storybook/svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
-import { CONTINUE_CONVERSATION_CALL } from "../[slug]/sample-calls";
-import { EMOJI_CANONICAL_REF } from "./test.data";
+import { CONTINUE_CONVERSATION_PROMPT } from "../[slug]/sample-calls";
+import { EDIT_CANONICAL_REF, EMOJI_CANONICAL_REF } from "./test.data";
 
 export default {
   component: ApiCallEditorComponent,
@@ -22,13 +22,8 @@ export const EditContinuedConversation: StoryObj = Template.bind({}) as any;
 EditContinuedConversation.parameters = {
   stores: {
     apiCallEditing: {
-      canonicalRef: {
-        id: "c13c1e67-2de3-48de-a34c-a32079c03316",
-        snippet:
-          "Sure, here's a joke for you: Why don't scientists trust atoms? " +
-          "Because they make up everything!",
-      },
-      prompt: CONTINUE_CONVERSATION_CALL.request.prompt,
+      canonicalRef: EDIT_CANONICAL_REF,
+      prompt: CONTINUE_CONVERSATION_PROMPT,
     },
   },
 };
@@ -40,13 +35,8 @@ Busy.args = {
 Busy.parameters = {
   stores: {
     apiCallEditing: {
-      canonicalRef: {
-        id: "c13c1e67-2de3-48de-a34c-a32079c03316",
-        snippet:
-          "Sure, here's a joke for you: Why don't scientists trust atoms? " +
-          "Because they make up everything!",
-      },
-      prompt: CONTINUE_CONVERSATION_CALL.request.prompt,
+      canonicalRef: EDIT_CANONICAL_REF,
+      prompt: CONTINUE_CONVERSATION_PROMPT,
     },
   },
 };
