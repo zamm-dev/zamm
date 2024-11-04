@@ -11,7 +11,7 @@ response:
       "timestamp": "2024-09-24T16:27:25",
       "command": "bash",
       "os": "Mac",
-      "output": "The default interactive shell is now zsh.\nTo update your account to use zsh, please run `chsh -s /bin/zsh`.\nFor more details, please visit https://support.apple.com/kb/HT208050.\nbash-3.2$ \npython api/sample-terminal-sessions/interleaved.py\nstdout\nstderr\nstdout\nbash-3.2$ ",
+      "output": "The default interactive shell is now zsh.\nTo update your account to use zsh, please run `chsh -s /bin/zsh`.\nFor more details, please visit https://support.apple.com/kb/HT208050.\nbash-3.2$ python api/sample-terminal-sessions/interleaved.py\nstdout\nstderr\nstdout\nbash-3.2$ ",
       "is_active": false
     }
 sideEffects:

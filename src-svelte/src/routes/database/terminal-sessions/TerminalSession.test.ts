@@ -34,7 +34,7 @@ describe("Terminal session", () => {
     vi.unstubAllGlobals();
   });
 
-  test("Terminal session", async () => {
+  test("can start and send input to command", async () => {
     render(TerminalSession, {});
     const commandInput = screen.getByLabelText("Enter command to run");
     const sendButton = screen.getByRole("button", { name: "Send" });

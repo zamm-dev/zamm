@@ -10,6 +10,7 @@
   export let sessionId: string | undefined = undefined;
   export let command: string | undefined = undefined;
   export let output = "";
+  export let isActive = true;
   let expectingResponse = false;
   let growable: Scrollable | undefined;
   $: awaitingSession = sessionId === undefined;
@@ -54,7 +55,7 @@
   <div class="terminal-container composite-reveal full-height">
     {#if command}
       <p class="atomic-reveal">
-        Current command: <span class="command">{command}</span>
+        Command: <span class="command">{command}</span>
       </p>
     {:else}
       <EmptyPlaceholder>
@@ -66,13 +67,19 @@
       <pre>{output}</pre>
     </Scrollable>
 
-    <SendInputForm
-      {accessibilityLabel}
-      {placeholder}
-      sendInput={sendCommand}
-      isBusy={expectingResponse}
-      onTextInputResize={resizeTerminalView}
-    />
+    {#if isActive}
+      <SendInputForm
+        {accessibilityLabel}
+        {placeholder}
+        sendInput={sendCommand}
+        isBusy={expectingResponse}
+        onTextInputResize={resizeTerminalView}
+      />
+    {:else}
+      <EmptyPlaceholder>
+        This terminal session is no longer active.
+      </EmptyPlaceholder>
+    {/if}
   </div>
 </InfoBox>
 

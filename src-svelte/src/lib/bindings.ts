@@ -228,6 +228,7 @@ export type RecoveredTerminalSession = {
   command: string;
   os: OS | null;
   output: string;
+  is_active: boolean;
 };
 export type Request = { prompt: Prompt; temperature: number };
 export type Response = { completion: ChatMessage };

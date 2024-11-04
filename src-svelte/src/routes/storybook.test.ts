@@ -235,7 +235,7 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["screens", "database", "terminal-session"],
-    variants: ["new", "in-progress"],
+    variants: ["new", "in-progress", "finished"],
     screenshotEntireBody: true,
   },
 ];

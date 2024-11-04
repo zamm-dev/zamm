@@ -50,7 +50,7 @@ async fn get_terminal_session_helper(
             }
         })
         .collect::<Vec<String>>()
-        .join("\n");
+        .join("");
     let is_active = sessions.contains_key(&parsed_uuid);
     let recovered_session = RecoveredTerminalSession {
         id: result.id,
