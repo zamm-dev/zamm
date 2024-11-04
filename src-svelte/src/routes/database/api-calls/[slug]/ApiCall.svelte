@@ -1,25 +1,17 @@
 <script lang="ts">
   import ApiCallDisplay from "./ApiCallDisplay.svelte";
-  import { type LlmCall, commands } from "$lib/bindings";
-  import { unwrap } from "$lib/tauri";
+  import { type LlmCall } from "$lib/bindings";
   import Actions from "./Actions.svelte";
-  import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
 
-  export let id: string;
-  let apiCall: LlmCall | undefined = undefined;
-
-  unwrap(commands.getApiCall(id))
-    .then((retrievedApiCall) => {
-      apiCall = retrievedApiCall;
-    })
-    .catch((error) => {
-      snackbarError(error);
-    });
+  export let apiCall: LlmCall;
+  export let showActions = true;
 </script>
 
 <div class="container">
   <ApiCallDisplay {...$$restProps} bind:apiCall />
-  <Actions {apiCall} />
+  {#if showActions}
+    <Actions {apiCall} />
+  {/if}
 </div>
 
 <style>

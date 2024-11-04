@@ -204,11 +204,13 @@ const components: ComponentTestConfig[] = [
     variants: [
       {
         name: "narrow",
+        prefix: "regular",
         narrowWindow: true,
         tallWindow: true,
       },
       {
         name: "wide",
+        prefix: "regular",
         tallWindow: true,
       },
       "khmer",
