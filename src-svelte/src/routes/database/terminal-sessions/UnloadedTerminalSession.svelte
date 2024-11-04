@@ -4,6 +4,7 @@
   import { onMount } from "svelte";
   import { unwrap } from "$lib/tauri";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
+  import Loading from "$lib/Loading.svelte";
 
   export let id: string;
   let terminalSession: RecoveredTerminalSession | undefined = undefined;
@@ -25,5 +26,5 @@
     isActive={terminalSession.is_active}
   />
 {:else}
-  <p>Loading...</p>
+  <Loading />
 {/if}
