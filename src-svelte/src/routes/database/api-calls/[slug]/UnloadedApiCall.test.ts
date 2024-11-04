@@ -25,7 +25,7 @@ import {
   TauriInvokePlayback,
   stubGlobalInvoke,
 } from "$lib/sample-call-testing";
-import ApiCall from "./ApiCall.svelte";
+import ApiCall from "./UnloadedApiCall.svelte";
 import { get } from "svelte/store";
 import { mockStores } from "../../../../vitest-mocks/stores";
 
