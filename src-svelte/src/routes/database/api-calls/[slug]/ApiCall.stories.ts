@@ -1,4 +1,4 @@
-import ApiCallComponent from "./ApiCallDisplay.svelte";
+import ApiCallComponent from "./ApiCall.svelte";
 import type { StoryObj } from "@storybook/svelte";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
 import {

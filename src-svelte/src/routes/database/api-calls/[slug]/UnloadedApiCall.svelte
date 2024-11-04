@@ -1,5 +1,5 @@
 <script lang="ts">
-  import ApiCallDisplay from "./ApiCallDisplay.svelte";
+  import ApiCall from "./ApiCall.svelte";
   import { type LlmCall, commands } from "$lib/bindings";
   import { unwrap } from "$lib/tauri";
   import Actions from "./Actions.svelte";
@@ -18,7 +18,7 @@
 </script>
 
 <div class="container">
-  <ApiCallDisplay {...$$restProps} bind:apiCall />
+  <ApiCall {...$$restProps} bind:apiCall />
   <Actions {apiCall} />
 </div>
 
