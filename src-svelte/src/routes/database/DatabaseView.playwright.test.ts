@@ -62,7 +62,7 @@ describe("Database View", () => {
     // the actual last child is the bottom indicator that triggers the shadow and the
     // auto-load
     const lastMessageContainer = apiCallsScrollElement.locator(
-      "a:nth-last-child(2) .message.instance .text-container",
+      "a:nth-last-child(2) .blurb.instance .text-container",
     );
     await expect(lastMessageContainer).toHaveText(expectedValue, {
       timeout: PLAYWRIGHT_TIMEOUT,
