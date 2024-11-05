@@ -17,12 +17,12 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
 pub struct RecoveredTerminalSession {
-    id: EntityId,
-    timestamp: NaiveDateTime,
-    command: String,
-    os: Option<OS>,
-    output: String,
-    is_active: bool,
+    pub id: EntityId,
+    pub timestamp: NaiveDateTime,
+    pub command: String,
+    pub os: Option<OS>,
+    pub output: String,
+    pub is_active: bool,
 }
 
 async fn get_terminal_session_helper(

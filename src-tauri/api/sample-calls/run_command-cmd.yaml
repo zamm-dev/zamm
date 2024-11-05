@@ -9,7 +9,10 @@ response:
     {
       "id": "319cc7fd-58cc-4320-ab46-2f0ba11c5402",
       "timestamp": "2024-10-17T06:02:13",
-      "output": "Microsoft Windows [Version 10.0.22631.4169]\n(c) Microsoft Corporation. All rights reserved.\n\nC:\\Users\\Amos Ng\\Documents\\projects\\zamm-dev\\zamm\\src-tauri>"
+      "command": "cmd",
+      "os": "Windows",
+      "output": "Microsoft Windows [Version 10.0.22631.4169]\n(c) Microsoft Corporation. All rights reserved.\n\nC:\\Users\\Amos Ng\\Documents\\projects\\zamm-dev\\zamm\\src-tauri>",
+      "is_active": true
     }
 sideEffects:
   database:

@@ -93,7 +93,7 @@ export const commands = {
   },
   async runCommand(
     command: string,
-  ): Promise<Result<RunCommandResponse, Error>> {
+  ): Promise<Result<RecoveredTerminalSession, Error>> {
     try {
       return {
         status: "ok",
@@ -236,11 +236,6 @@ export type RodioError =
   | { Stream: string }
   | { Decode: string }
   | { Play: string };
-export type RunCommandResponse = {
-  id: EntityId;
-  timestamp: string;
-  output: string;
-};
 export type SerdeError = { Json: string } | { Yaml: string } | { Toml: string };
 export type Service = "OpenAI" | "Ollama" | { Unknown: string };
 export type Shell = "Bash" | "Zsh" | "PowerShell";

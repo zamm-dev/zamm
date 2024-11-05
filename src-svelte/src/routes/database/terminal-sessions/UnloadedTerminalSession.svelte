@@ -7,24 +7,19 @@
   import Loading from "$lib/Loading.svelte";
 
   export let id: string;
-  let terminalSession: RecoveredTerminalSession | undefined = undefined;
+  let session: RecoveredTerminalSession | undefined = undefined;
 
   onMount(async () => {
     try {
-      terminalSession = await unwrap(commands.getTerminalSession(id));
+      session = await unwrap(commands.getTerminalSession(id));
     } catch (error) {
       snackbarError(error as string | Error);
     }
   });
 </script>
 
-{#if terminalSession}
-  <TerminalSession
-    sessionId={terminalSession.id}
-    command={terminalSession.command}
-    output={terminalSession.output}
-    isActive={terminalSession.is_active}
-  />
+{#if session}
+  <TerminalSession {session} />
 {:else}
   <Loading />
 {/if}

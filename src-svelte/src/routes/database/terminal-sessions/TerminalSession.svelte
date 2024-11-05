@@ -2,18 +2,15 @@
   import InfoBox from "$lib/InfoBox.svelte";
   import SendInputForm from "$lib/controls/SendInputForm.svelte";
   import { unwrap } from "$lib/tauri";
-  import { commands } from "$lib/bindings";
+  import { commands, type RecoveredTerminalSession } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import Scrollable from "$lib/Scrollable.svelte";
 
-  export let sessionId: string | undefined = undefined;
-  export let command: string | undefined = undefined;
-  export let output = "";
-  export let isActive = true;
+  export let session: RecoveredTerminalSession | undefined = undefined;
   let expectingResponse = false;
   let growable: Scrollable | undefined;
-  $: awaitingSession = sessionId === undefined;
+  $: awaitingSession = session === undefined;
   $: accessibilityLabel = awaitingSession
     ? "Enter command to run"
     : "Enter input for command";
@@ -31,16 +28,13 @@
   async function sendCommand(newInput: string) {
     try {
       expectingResponse = true;
-      if (sessionId === undefined) {
-        let result = await unwrap(commands.runCommand(newInput));
-        command = newInput;
-        sessionId = result.id;
-        output += result.output;
+      if (session === undefined) {
+        session = await unwrap(commands.runCommand(newInput));
       } else {
         let result = await unwrap(
-          commands.sendCommandInput(sessionId, newInput),
+          commands.sendCommandInput(session.id, newInput),
         );
-        output += result;
+        session.output += result;
       }
       resizeTerminalView();
     } catch (error) {
@@ -53,9 +47,9 @@
 
 <InfoBox title="Terminal Session" fullHeight>
   <div class="terminal-container composite-reveal full-height">
-    {#if command}
+    {#if session?.command}
       <p class="atomic-reveal">
-        Command: <span class="command">{command}</span>
+        Command: <span class="command">{session.command}</span>
       </p>
     {:else}
       <EmptyPlaceholder>
@@ -64,10 +58,10 @@
     {/if}
 
     <Scrollable bind:this={growable}>
-      <pre>{output}</pre>
+      <pre>{session?.output ?? ""}</pre>
     </Scrollable>
 
-    {#if isActive}
+    {#if session === undefined || session.is_active}
       <SendInputForm
         {accessibilityLabel}
         {placeholder}
