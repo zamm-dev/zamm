@@ -104,7 +104,7 @@
   }
 
   onMount(() => {
-    const updateIndicator = () => {
+    const updateIndicatorPosition = () => {
       transitionDuration = "0";
       indicatorPosition = getIndicatorPosition(getMatchingRoute(currentRoute));
       setTimeout(() => {
@@ -113,13 +113,13 @@
     };
     const rootEmUnsubscribe = rootEm.subscribe(() => {
       // update 100ms later in case browser takes time to update
-      setTimeout(updateIndicator, 100);
+      setTimeout(updateIndicatorPosition, 100);
     });
-    window.addEventListener("resize", updateIndicator);
+    window.addEventListener("resize", updateIndicatorPosition);
 
     return () => {
       rootEmUnsubscribe();
-      window.removeEventListener("resize", updateIndicator);
+      window.removeEventListener("resize", updateIndicatorPosition);
     };
   });
 
