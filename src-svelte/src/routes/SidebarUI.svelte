@@ -1,3 +1,13 @@
+<script lang="ts" context="module">
+  import { writable } from "svelte/store";
+
+  export interface SidebarContext {
+    updateIndicator: (newRoute: string) => void;
+  }
+
+  export const sidebar = writable<SidebarContext | null>(null);
+</script>
+
 <script lang="ts">
   import IconSettings from "~icons/ion/settings";
   import IconChat from "~icons/ph/chat-dots-fill";
@@ -116,6 +126,8 @@
       setTimeout(updateIndicatorPosition, 100);
     });
     window.addEventListener("resize", updateIndicatorPosition);
+
+    sidebar.set({ updateIndicator });
 
     return () => {
       rootEmUnsubscribe();

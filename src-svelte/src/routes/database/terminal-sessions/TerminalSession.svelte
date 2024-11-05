@@ -6,6 +6,10 @@
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import Scrollable from "$lib/Scrollable.svelte";
+  import { sidebar } from "../../SidebarUI.svelte";
+  import { replaceState } from "$app/navigation";
+  import { page } from "$app/stores";
+  import { pageTransition } from "../../PageTransition.svelte";
 
   export let session: TerminalSessionInfo | undefined = undefined;
   let expectingResponse = false;
@@ -30,6 +34,15 @@
       expectingResponse = true;
       if (session === undefined) {
         session = await unwrap(commands.runCommand(newInput));
+        const newUrl = `/database/terminal-sessions/${session.id}/`;
+        if (replaceState) {
+          // replaceState undefined in Vitest
+          replaceState(newUrl, $page.state);
+        } else {
+          window.history.replaceState($page.state, "", newUrl);
+        }
+        $sidebar?.updateIndicator(newUrl);
+        $pageTransition?.addVisitedRoute(newUrl);
       } else {
         let result = await unwrap(
           commands.sendCommandInput(session.id, newInput),
