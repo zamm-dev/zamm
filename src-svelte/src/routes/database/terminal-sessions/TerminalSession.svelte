@@ -2,12 +2,12 @@
   import InfoBox from "$lib/InfoBox.svelte";
   import SendInputForm from "$lib/controls/SendInputForm.svelte";
   import { unwrap } from "$lib/tauri";
-  import { commands, type RecoveredTerminalSession } from "$lib/bindings";
+  import { commands, type TerminalSessionInfo } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import Scrollable from "$lib/Scrollable.svelte";
 
-  export let session: RecoveredTerminalSession | undefined = undefined;
+  export let session: TerminalSessionInfo | undefined = undefined;
   let expectingResponse = false;
   let growable: Scrollable | undefined;
   $: awaitingSession = session === undefined;

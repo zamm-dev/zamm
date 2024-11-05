@@ -1,35 +1,23 @@
 use super::parse::clean_output;
 use crate::commands::errors::ZammResult;
+use crate::commands::terminal::models::TerminalSessionInfo;
 use crate::models::asciicasts::AsciiCast;
-use crate::models::os::OS;
 use crate::models::EntityId;
 use crate::schema::asciicasts;
 use crate::ZammDatabase;
 use crate::ZammTerminalSessions;
 use anyhow::anyhow;
-use chrono::NaiveDateTime;
 use diesel::prelude::*;
 use diesel::RunQueryDsl;
-use serde::{Deserialize, Serialize};
 use specta::specta;
 use tauri::State;
 use uuid::Uuid;
-
-#[derive(Debug, Clone, Serialize, Deserialize, specta::Type)]
-pub struct RecoveredTerminalSession {
-    pub id: EntityId,
-    pub timestamp: NaiveDateTime,
-    pub command: String,
-    pub os: Option<OS>,
-    pub output: String,
-    pub is_active: bool,
-}
 
 async fn get_terminal_session_helper(
     zamm_db: &ZammDatabase,
     zamm_sessions: &ZammTerminalSessions,
     id: Uuid,
-) -> ZammResult<RecoveredTerminalSession> {
+) -> ZammResult<TerminalSessionInfo> {
     let mut db = zamm_db.0.lock().await;
     let conn = db.as_mut().ok_or(anyhow!("Failed to lock database"))?;
     let sessions = zamm_sessions.0.lock().await;
@@ -52,7 +40,7 @@ async fn get_terminal_session_helper(
         .collect::<Vec<String>>()
         .join("");
     let is_active = sessions.contains_key(&parsed_uuid);
-    let recovered_session = RecoveredTerminalSession {
+    let recovered_session = TerminalSessionInfo {
         id: result.id,
         timestamp: result.timestamp,
         command: result.command.clone(),
@@ -69,7 +57,7 @@ pub async fn get_terminal_session(
     database: State<'_, ZammDatabase>,
     zamm_sessions: State<'_, ZammTerminalSessions>,
     id: Uuid,
-) -> ZammResult<RecoveredTerminalSession> {
+) -> ZammResult<TerminalSessionInfo> {
     get_terminal_session_helper(&database, &zamm_sessions, id).await
 }
 
@@ -94,11 +82,8 @@ mod tests {
         session_should_exist: bool,
     }
 
-    impl
-        SampleCallTestCase<
-            GetTerminalSessionRequest,
-            ZammResult<RecoveredTerminalSession>,
-        > for GetTerminalSessionTestCase
+    impl SampleCallTestCase<GetTerminalSessionRequest, ZammResult<TerminalSessionInfo>>
+        for GetTerminalSessionTestCase
     {
         const EXPECTED_API_CALL: &'static str = "get_terminal_session";
         const CALL_HAS_ARGS: bool = true;
@@ -111,7 +96,7 @@ mod tests {
             &mut self,
             args: &GetTerminalSessionRequest,
             side_effects: &mut SideEffectsHelpers,
-        ) -> ZammResult<RecoveredTerminalSession> {
+        ) -> ZammResult<TerminalSessionInfo> {
             let mut terminal_helper = TerminalHelper::new();
             if self.session_should_exist {
                 terminal_helper.change_mock_id(args.id).await;
@@ -128,7 +113,7 @@ mod tests {
         fn serialize_result(
             &self,
             sample: &SampleCall,
-            result: &ZammResult<RecoveredTerminalSession>,
+            result: &ZammResult<TerminalSessionInfo>,
         ) -> String {
             ZammResultReturn::serialize_result(self, sample, result)
         }
@@ -137,13 +122,13 @@ mod tests {
             &self,
             sample: &SampleCall,
             args: &GetTerminalSessionRequest,
-            result: &ZammResult<RecoveredTerminalSession>,
+            result: &ZammResult<TerminalSessionInfo>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl ZammResultReturn<GetTerminalSessionRequest, RecoveredTerminalSession>
+    impl ZammResultReturn<GetTerminalSessionRequest, TerminalSessionInfo>
         for GetTerminalSessionTestCase
     {
     }

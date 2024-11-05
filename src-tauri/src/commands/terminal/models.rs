@@ -1,7 +1,10 @@
 use crate::commands::errors::ZammResult;
 use crate::models::asciicasts::AsciiCastData;
+use crate::models::os::OS;
+use crate::models::EntityId;
 use anyhow::anyhow;
 use chrono::DateTime;
+use chrono::NaiveDateTime;
 use portable_pty::{
     native_pty_system, Child, CommandBuilder, MasterPty, PtySize, SlavePty,
 };
@@ -16,6 +19,16 @@ use std::time::Duration;
 const TERMINAL_READ_TIMEOUT: Duration = Duration::from_millis(500);
 #[cfg(not(test))]
 const TERMINAL_READ_TIMEOUT: Duration = Duration::from_millis(100);
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, specta::Type)]
+pub struct TerminalSessionInfo {
+    pub id: EntityId,
+    pub timestamp: NaiveDateTime,
+    pub command: String,
+    pub os: Option<OS>,
+    pub output: String,
+    pub is_active: bool,
+}
 
 pub trait Terminal: Send + Sync {
     fn run_command(&mut self, command: &str) -> ZammResult<String>;

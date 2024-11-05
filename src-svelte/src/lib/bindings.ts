@@ -93,7 +93,7 @@ export const commands = {
   },
   async runCommand(
     command: string,
-  ): Promise<Result<RecoveredTerminalSession, Error>> {
+  ): Promise<Result<TerminalSessionInfo, Error>> {
     try {
       return {
         status: "ok",
@@ -120,7 +120,7 @@ export const commands = {
   },
   async getTerminalSession(
     id: string,
-  ): Promise<Result<RecoveredTerminalSession, Error>> {
+  ): Promise<Result<TerminalSessionInfo, Error>> {
     try {
       return {
         status: "ok",
@@ -222,14 +222,6 @@ export type Preferences = {
   volume?: number | null;
 };
 export type Prompt = ({ type: "Chat" } & ChatPrompt) | { type: "Unknown" };
-export type RecoveredTerminalSession = {
-  id: EntityId;
-  timestamp: string;
-  command: string;
-  os: OS | null;
-  output: string;
-  is_active: boolean;
-};
 export type Request = { prompt: Prompt; temperature: number };
 export type Response = { completion: ChatMessage };
 export type RodioError =
@@ -245,6 +237,14 @@ export type SystemInfo = {
   os: OS | null;
   shell: Shell | null;
   shell_init_file: string | null;
+};
+export type TerminalSessionInfo = {
+  id: EntityId;
+  timestamp: string;
+  command: string;
+  os: OS | null;
+  output: string;
+  is_active: boolean;
 };
 export type TerminalSessionReference = {
   id: EntityId;

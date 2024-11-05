@@ -1,5 +1,5 @@
 use crate::commands::errors::ZammResult;
-use crate::commands::terminal::get_session::RecoveredTerminalSession;
+use crate::commands::terminal::models::TerminalSessionInfo;
 use crate::commands::terminal::parse::clean_output;
 use crate::commands::terminal::ActualTerminal;
 use crate::models::asciicasts::NewAsciiCast;
@@ -17,7 +17,7 @@ async fn run_command_helper(
     zamm_sessions: &ZammTerminalSessions,
     session_id: &EntityId,
     command: &str,
-) -> ZammResult<RecoveredTerminalSession> {
+) -> ZammResult<TerminalSessionInfo> {
     let db = &mut zamm_db.0.lock().await;
     let mut sessions = zamm_sessions.0.lock().await;
     let terminal = sessions
@@ -46,7 +46,7 @@ async fn run_command_helper(
     }
 
     let output = clean_output(&raw_output);
-    Ok(RecoveredTerminalSession {
+    Ok(TerminalSessionInfo {
         id: session_id.clone(),
         timestamp,
         output,
@@ -62,7 +62,7 @@ pub async fn run_command(
     database: State<'_, ZammDatabase>,
     sessions: State<'_, ZammTerminalSessions>,
     command: String,
-) -> ZammResult<RecoveredTerminalSession> {
+) -> ZammResult<TerminalSessionInfo> {
     let terminal = ActualTerminal::new();
     let new_session_id = EntityId::new();
     sessions
@@ -98,11 +98,11 @@ mod tests {
         serde_yaml::to_string(obj).unwrap().trim().to_string()
     }
 
-    fn parse_response(response_str: &str) -> RecoveredTerminalSession {
+    fn parse_response(response_str: &str) -> TerminalSessionInfo {
         serde_json::from_str(response_str).unwrap()
     }
 
-    impl SampleCallTestCase<RunCommandRequest, ZammResult<RecoveredTerminalSession>>
+    impl SampleCallTestCase<RunCommandRequest, ZammResult<TerminalSessionInfo>>
         for RunCommandTestCase
     {
         const EXPECTED_API_CALL: &'static str = "run_command";
@@ -116,7 +116,7 @@ mod tests {
             &mut self,
             args: &RunCommandRequest,
             side_effects: &mut SideEffectsHelpers,
-        ) -> ZammResult<RecoveredTerminalSession> {
+        ) -> ZammResult<TerminalSessionInfo> {
             let terminal_helper = side_effects.terminal.as_ref().unwrap();
             run_command_helper(
                 side_effects.db.as_ref().unwrap(),
@@ -130,7 +130,7 @@ mod tests {
         fn output_replacements(
             &self,
             sample: &SampleCall,
-            result: &ZammResult<RecoveredTerminalSession>,
+            result: &ZammResult<TerminalSessionInfo>,
         ) -> HashMap<String, String> {
             let expected_output = parse_response(&sample.response.message);
             let actual_output = result.as_ref().unwrap();
@@ -174,7 +174,7 @@ mod tests {
         fn serialize_result(
             &self,
             sample: &SampleCall,
-            result: &ZammResult<RecoveredTerminalSession>,
+            result: &ZammResult<TerminalSessionInfo>,
         ) -> String {
             ZammResultReturn::serialize_result(self, sample, result)
         }
@@ -183,16 +183,13 @@ mod tests {
             &self,
             sample: &SampleCall,
             args: &RunCommandRequest,
-            result: &ZammResult<RecoveredTerminalSession>,
+            result: &ZammResult<TerminalSessionInfo>,
         ) {
             ZammResultReturn::check_result(self, sample, args, result).await
         }
     }
 
-    impl ZammResultReturn<RunCommandRequest, RecoveredTerminalSession>
-        for RunCommandTestCase
-    {
-    }
+    impl ZammResultReturn<RunCommandRequest, TerminalSessionInfo> for RunCommandTestCase {}
 
     check_sample!(
         RunCommandTestCase,
