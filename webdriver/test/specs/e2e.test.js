@@ -114,7 +114,7 @@ describe("App", function () {
     await findAndClick('a[title="Database"]');
     await findAndClick('a[title="Database"]');
     await findAndSelect('select[name="data-type"]', 1);
-    await findAndClick("a=start");
+    await findAndClick("a=started");
     await findAndClick('a[title="Dashboard"]');
     await findAndClick('a[title="Database"]');
     await browser.pause(2500); // for page to finish rendering
@@ -128,7 +128,7 @@ describe("App", function () {
     await findAndClick('a[title="Database"]');
     await findAndClick('a[title="Database"]');
     await findAndSelect('select[name="data-type"]', 1);
-    await findAndClick("a=start");
+    await findAndClick("a=started");
     await findAndClick('a[title="Dashboard"]');
     await findAndClick('a[title="Database"]');
 
