@@ -1,0 +1,20 @@
+request:
+  - get_terminal_session
+  - >
+    {
+      "id": "3717ed48-ab52-4654-9f33-de5797af5118"
+    }
+response:
+  message: >
+    {
+      "id": "3717ed48-ab52-4654-9f33-de5797af5118",
+      "timestamp": "2024-09-24T16:27:25",
+      "command": "bash",
+      "os": "Mac",
+      "output": "The default interactive shell is now zsh.\nTo update your account to use zsh, please run `chsh -s /bin/zsh`.\nFor more details, please visit https://support.apple.com/kb/HT208050.\nbash-3.2$ python api/sample-terminal-sessions/interleaved.py\nstdout\nstderr\nstdout\nbash-3.2$ ",
+      "is_active": false
+    }
+sideEffects:
+  database:
+    startStateDump: command-run-bash-interleaved
+    endStateDump: command-run-bash-interleaved

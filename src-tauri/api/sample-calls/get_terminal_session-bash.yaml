@@ -1,8 +1,8 @@
 request:
-  - run_command
+  - get_terminal_session
   - >
     {
-      "command": "bash"
+      "id": "3717ed48-ab52-4654-9f33-de5797af5118"
     }
 response:
   message: >
@@ -16,6 +16,5 @@ response:
     }
 sideEffects:
   database:
+    startStateDump: command-run-bash
     endStateDump: command-run-bash
-  terminal:
-    recordingFile: bash.cast

@@ -1,6 +1,6 @@
 use crate::commands::database::{read_database_contents, write_database_contents};
 use crate::commands::errors::ZammResult;
-use crate::commands::terminal::Terminal;
+use crate::commands::terminal::{ActualTerminal, Terminal};
 use crate::models::llm_calls::EntityId;
 use crate::sample_call::{Disk, SampleCall};
 use crate::test_helpers::database::{setup_database, setup_zamm_db};
@@ -18,6 +18,7 @@ use std::fs::ReadDir;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 use tokio::sync::Mutex;
+use uuid::Uuid;
 use vcr_cassette::Headers;
 
 fn read_sample(filename: &str) -> SampleCall {
@@ -227,6 +228,29 @@ pub struct NetworkHelper {
 pub struct TerminalHelper {
     pub sessions: ZammTerminalSessions,
     pub mock_session_id: EntityId,
+}
+
+impl TerminalHelper {
+    pub fn new() -> Self {
+        let new_session_id = EntityId::new();
+        let sessions = ZammTerminalSessions(Mutex::new(HashMap::from([(
+            new_session_id.clone(),
+            Box::new(ActualTerminal::new()) as Box<dyn Terminal>,
+        )])));
+        TerminalHelper {
+            sessions,
+            mock_session_id: new_session_id,
+        }
+    }
+
+    pub async fn change_mock_id(&mut self, new_uuid: Uuid) {
+        let new_id: EntityId = new_uuid.into();
+        let mut sessions = self.sessions.0.lock().await;
+        let mock_terminal = sessions.remove(&self.mock_session_id).unwrap();
+        sessions.insert(new_id.clone(), mock_terminal);
+
+        self.mock_session_id = new_id;
+    }
 }
 
 #[derive(Default)]

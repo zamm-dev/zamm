@@ -7,3 +7,4 @@ pub mod shell;
 
 pub use api_keys::{ApiKey, NewApiKey};
 pub use database_contents::{DatabaseContents, LlmCallData};
+pub use llm_calls::EntityId;

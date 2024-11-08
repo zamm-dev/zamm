@@ -1,11 +1,11 @@
-import TerminalSession from "./TerminalSession.svelte";
+import UnloadedTerminalSession from "./UnloadedTerminalSession.svelte";
 import type { StoryFn, StoryObj } from "@storybook/svelte";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
 import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
 
 export default {
-  component: TerminalSession,
+  component: UnloadedTerminalSession,
   title: "Screens/Database/Terminal Session",
   argTypes: {},
   decorators: [
@@ -21,22 +21,27 @@ export default {
 };
 
 const Template = ({ ...args }) => ({
-  Component: TerminalSession,
+  Component: UnloadedTerminalSession,
   props: args,
 });
 
-export const New: StoryObj = Template.bind({}) as any;
-New.parameters = {
+export const InProgress: StoryObj = Template.bind({}) as any;
+InProgress.args = {
+  id: "3717ed48-ab52-4654-9f33-de5797af5118",
+};
+InProgress.parameters = {
   sampleCallFiles: [
-    "/api/sample-calls/run_command-bash.yaml",
+    "/api/sample-calls/get_terminal_session-bash.yaml",
     "/api/sample-calls/send_command_input-bash-interleaved.yaml",
   ],
 };
 
-export const NewOnWindows: StoryObj = Template.bind({}) as any;
-NewOnWindows.parameters = {
+export const Finished: StoryObj = Template.bind({}) as any;
+Finished.args = {
+  id: "3717ed48-ab52-4654-9f33-de5797af5118",
+};
+Finished.parameters = {
   sampleCallFiles: [
-    "/api/sample-calls/run_command-cmd.yaml",
-    "/api/sample-calls/send_command_input-cmd-dir.yaml",
+    "/api/sample-calls/get_terminal_session-bash-interleaved.yaml",
   ],
 };

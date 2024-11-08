@@ -2,17 +2,19 @@
   import InfoBox from "$lib/InfoBox.svelte";
   import SendInputForm from "$lib/controls/SendInputForm.svelte";
   import { unwrap } from "$lib/tauri";
-  import { commands } from "$lib/bindings";
+  import { commands, type TerminalSessionInfo } from "$lib/bindings";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import Scrollable from "$lib/Scrollable.svelte";
+  import { sidebar } from "../../SidebarUI.svelte";
+  import { replaceState } from "$app/navigation";
+  import { page } from "$app/stores";
+  import { pageTransition } from "../../PageTransition.svelte";
 
-  export let sessionId: string | undefined = undefined;
-  export let command: string | undefined = undefined;
-  export let output = "";
+  export let session: TerminalSessionInfo | undefined = undefined;
   let expectingResponse = false;
   let growable: Scrollable | undefined;
-  $: awaitingSession = sessionId === undefined;
+  $: awaitingSession = session === undefined;
   $: accessibilityLabel = awaitingSession
     ? "Enter command to run"
     : "Enter input for command";
@@ -30,16 +32,22 @@
   async function sendCommand(newInput: string) {
     try {
       expectingResponse = true;
-      if (sessionId === undefined) {
-        let result = await unwrap(commands.runCommand(newInput));
-        command = newInput;
-        sessionId = result.id;
-        output += result.output;
+      if (session === undefined) {
+        session = await unwrap(commands.runCommand(newInput));
+        const newUrl = `/database/terminal-sessions/${session.id}/`;
+        if (replaceState) {
+          // replaceState undefined in Vitest
+          replaceState(newUrl, $page.state);
+        } else {
+          window.history.replaceState($page.state, "", newUrl);
+        }
+        $sidebar?.updateIndicator(newUrl);
+        $pageTransition?.addVisitedRoute(newUrl);
       } else {
         let result = await unwrap(
-          commands.sendCommandInput(sessionId, newInput),
+          commands.sendCommandInput(session.id, newInput),
         );
-        output += result;
+        session.output += result;
       }
       resizeTerminalView();
     } catch (error) {
@@ -52,8 +60,10 @@
 
 <InfoBox title="Terminal Session" fullHeight>
   <div class="terminal-container composite-reveal full-height">
-    {#if command}
-      <p>Current command: <span class="command">{command}</span></p>
+    {#if session?.command}
+      <p class="atomic-reveal">
+        Command: <span class="command">{session.command}</span>
+      </p>
     {:else}
       <EmptyPlaceholder>
         No running process.<br />Get started by entering a command below.
@@ -61,16 +71,22 @@
     {/if}
 
     <Scrollable bind:this={growable}>
-      <pre>{output}</pre>
+      <pre>{session?.output ?? ""}</pre>
     </Scrollable>
 
-    <SendInputForm
-      {accessibilityLabel}
-      {placeholder}
-      sendInput={sendCommand}
-      isBusy={expectingResponse}
-      onTextInputResize={resizeTerminalView}
-    />
+    {#if session === undefined || session.is_active}
+      <SendInputForm
+        {accessibilityLabel}
+        {placeholder}
+        sendInput={sendCommand}
+        isBusy={expectingResponse}
+        onTextInputResize={resizeTerminalView}
+      />
+    {:else}
+      <EmptyPlaceholder>
+        This terminal session is no longer active.
+      </EmptyPlaceholder>
+    {/if}
   </div>
 </InfoBox>
 

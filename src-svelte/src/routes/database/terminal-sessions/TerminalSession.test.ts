@@ -7,6 +7,9 @@ import {
   TauriInvokePlayback,
   stubGlobalInvoke,
 } from "$lib/sample-call-testing";
+import { sidebar } from "../../SidebarUI.svelte";
+import { pageTransition } from "../../PageTransition.svelte";
+import { get } from "svelte/store";
 
 describe("Terminal session", () => {
   let tauriInvokeMock: Mock;
@@ -20,6 +23,9 @@ describe("Terminal session", () => {
       (...args: (string | Record<string, string>)[]) =>
         playback.mockCall(...args),
     );
+    window.history.replaceState = vi.fn();
+    sidebar.set({ updateIndicator: vi.fn() });
+    pageTransition.set({ addVisitedRoute: vi.fn() });
 
     window.IntersectionObserver = vi.fn(() => {
       return {
@@ -34,7 +40,7 @@ describe("Terminal session", () => {
     vi.unstubAllGlobals();
   });
 
-  test("Terminal session", async () => {
+  test("can start and send input to command", async () => {
     render(TerminalSession, {});
     const commandInput = screen.getByLabelText("Enter command to run");
     const sendButton = screen.getByRole("button", { name: "Send" });
@@ -53,6 +59,17 @@ describe("Terminal session", () => {
         ),
       ).toBeInTheDocument();
     });
+    expect(window.history.replaceState).toHaveBeenCalledWith(
+      undefined,
+      "",
+      "/database/terminal-sessions/3717ed48-ab52-4654-9f33-de5797af5118/",
+    );
+    expect(get(sidebar)?.updateIndicator).toHaveBeenCalledWith(
+      "/database/terminal-sessions/3717ed48-ab52-4654-9f33-de5797af5118/",
+    );
+    expect(get(pageTransition)?.addVisitedRoute).toHaveBeenCalledWith(
+      "/database/terminal-sessions/3717ed48-ab52-4654-9f33-de5797af5118/",
+    );
 
     playback.addSamples(
       "../src-tauri/api/sample-calls/send_command_input-bash-interleaved.yaml",

@@ -93,7 +93,7 @@ export const commands = {
   },
   async runCommand(
     command: string,
-  ): Promise<Result<RunCommandResponse, Error>> {
+  ): Promise<Result<TerminalSessionInfo, Error>> {
     try {
       return {
         status: "ok",
@@ -112,6 +112,32 @@ export const commands = {
       return {
         status: "ok",
         data: await TAURI_INVOKE("send_command_input", { sessionId, input }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getTerminalSession(
+    id: string,
+  ): Promise<Result<TerminalSessionInfo, Error>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_terminal_session", { id }),
+      };
+    } catch (e) {
+      if (e instanceof Error) throw e;
+      else return { status: "error", error: e as any };
+    }
+  },
+  async getTerminalSessions(
+    offset: number,
+  ): Promise<Result<TerminalSessionReference[], Error>> {
+    try {
+      return {
+        status: "ok",
+        data: await TAURI_INVOKE("get_terminal_sessions", { offset }),
       };
     } catch (e) {
       if (e instanceof Error) throw e;
@@ -202,11 +228,6 @@ export type RodioError =
   | { Stream: string }
   | { Decode: string }
   | { Play: string };
-export type RunCommandResponse = {
-  id: EntityId;
-  timestamp: string;
-  output: string;
-};
 export type SerdeError = { Json: string } | { Yaml: string } | { Toml: string };
 export type Service = "OpenAI" | "Ollama" | { Unknown: string };
 export type Shell = "Bash" | "Zsh" | "PowerShell";
@@ -216,6 +237,20 @@ export type SystemInfo = {
   os: OS | null;
   shell: Shell | null;
   shell_init_file: string | null;
+};
+export type TerminalSessionInfo = {
+  id: EntityId;
+  timestamp: string;
+  command: string;
+  os: OS | null;
+  output: string;
+  is_active: boolean;
+};
+export type TerminalSessionReference = {
+  id: EntityId;
+  timestamp: string;
+  command: string;
+  last_io: string | null;
 };
 export type TokenMetadata = {
   prompt: number | null;

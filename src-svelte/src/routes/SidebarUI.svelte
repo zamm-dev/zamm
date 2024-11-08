@@ -1,3 +1,13 @@
+<script lang="ts" context="module">
+  import { writable } from "svelte/store";
+
+  export interface SidebarContext {
+    updateIndicator: (newRoute: string) => void;
+  }
+
+  export const sidebar = writable<SidebarContext | null>(null);
+</script>
+
 <script lang="ts">
   import IconSettings from "~icons/ion/settings";
   import IconChat from "~icons/ph/chat-dots-fill";
@@ -104,7 +114,7 @@
   }
 
   onMount(() => {
-    const updateIndicator = () => {
+    const updateIndicatorPosition = () => {
       transitionDuration = "0";
       indicatorPosition = getIndicatorPosition(getMatchingRoute(currentRoute));
       setTimeout(() => {
@@ -113,13 +123,15 @@
     };
     const rootEmUnsubscribe = rootEm.subscribe(() => {
       // update 100ms later in case browser takes time to update
-      setTimeout(updateIndicator, 100);
+      setTimeout(updateIndicatorPosition, 100);
     });
-    window.addEventListener("resize", updateIndicator);
+    window.addEventListener("resize", updateIndicatorPosition);
+
+    sidebar.set({ updateIndicator });
 
     return () => {
       rootEmUnsubscribe();
-      window.removeEventListener("resize", updateIndicator);
+      window.removeEventListener("resize", updateIndicatorPosition);
     };
   });
 

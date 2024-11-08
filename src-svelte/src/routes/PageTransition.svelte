@@ -1,5 +1,11 @@
 <script lang="ts" context="module">
+  import { writable } from "svelte/store";
   import { cubicIn, backOut } from "svelte/easing";
+
+  export interface PageTransitionContext {
+    addVisitedRoute: (newRoute: string) => void;
+  }
+  export const pageTransition = writable<PageTransitionContext | null>(null);
 
   export enum TransitionType {
     // user is going leftward -- meaning both incoming and outgoing are moving right
@@ -67,6 +73,12 @@
     transitions.in.delay = regularDelay;
     firstAppLoad.set(false);
     checkFirstPageLoad(currentRoute);
+
+    pageTransition.set({
+      addVisitedRoute: (newRoute: string) => {
+        visitedKeys.add(newRoute);
+      },
+    });
   });
 
   function checkFirstPageLoad(route: string) {

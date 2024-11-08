@@ -16,6 +16,7 @@ const config = {
         "/database/api-calls/new/",
         "/database/api-calls/[slug]",
         "/database/terminal-sessions/new/",
+        "/database/terminal-sessions/[slug]",
       ],
     },
   },

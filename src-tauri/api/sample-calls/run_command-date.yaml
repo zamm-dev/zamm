@@ -9,7 +9,10 @@ response:
     {
       "id": "38a5e2ea-2222-4913-9b20-2a1c682ab358",
       "timestamp": "2024-09-20T11:23:53",
-      "output": "Friday September 20, 2024 18:23 +0700\n"
+      "command": "date \"+%A %B %e, %Y %R %z\"",
+      "os": "Linux",
+      "output": "Friday September 20, 2024 18:23 +0700\n",
+      "is_active": true
     }
 sideEffects:
   database:
