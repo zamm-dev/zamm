@@ -30,6 +30,11 @@
 
   function intersectionCallback(shadow: HTMLDivElement) {
     return (entries: IntersectionObserverEntry[]) => {
+      if (!shadow) {
+        console.warn("Shadow not mounted");
+        return;
+      }
+
       let indicator = entries[0];
       if (indicator.isIntersecting) {
         shadow.classList.remove("visible");
