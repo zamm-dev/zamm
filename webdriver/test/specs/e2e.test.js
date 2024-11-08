@@ -128,7 +128,7 @@ describe("App", function () {
     await findAndClick('a[title="Database"]');
     await findAndClick('a[title="Database"]');
     await findAndSelect('select[name="data-type"]', 1);
-    await findAndClick("a=started");
+    await findAndClick('a[title="New Terminal Session"]');
     await findAndClick('a[title="Dashboard"]');
     await findAndClick('a[title="Database"]');
 
