@@ -1,3 +1,5 @@
+use crate::commands::errors::Error;
+#[cfg(test)]
 use crate::commands::errors::ZammResult;
 use crate::models::llm_calls::EntityId;
 use crate::models::os::OS;
@@ -14,6 +16,7 @@ use diesel::sql_types::Text;
 use diesel::sqlite::Sqlite;
 use std::fmt;
 use std::fmt::{Display, Formatter};
+use std::str::FromStr;
 
 #[derive(Debug, Clone, PartialEq, AsExpression, FromSqlRow)]
 #[diesel(sql_type = Text)]
@@ -49,7 +52,7 @@ impl AsciiCastData {
     #[cfg(test)]
     pub fn load(file: &str) -> ZammResult<Self> {
         let contents = std::fs::read_to_string(file)?;
-        AsciiCastData::parse(&contents)
+        contents.parse()
     }
 
     #[cfg(test)]
@@ -57,16 +60,6 @@ impl AsciiCastData {
         let contents = format!("{}", self);
         std::fs::write(file, contents)?;
         Ok(())
-    }
-
-    pub fn parse(contents: &str) -> ZammResult<Self> {
-        let mut lines = contents.lines();
-        let header_str = lines.next().ok_or(anyhow!("Empty cast"))?;
-        let header: Header = serde_json::from_str(header_str)?;
-        let entries = lines
-            .map(serde_json::from_str)
-            .collect::<Result<Vec<Entry>, _>>()?;
-        Ok(Self { header, entries })
     }
 }
 
@@ -92,7 +85,7 @@ impl<'de> serde::de::Visitor<'de> for AsciiCastDataVisitor {
     where
         E: serde::de::Error,
     {
-        AsciiCastData::parse(value).map_err(serde::de::Error::custom)
+        value.parse().map_err(serde::de::Error::custom)
     }
 }
 
@@ -114,6 +107,20 @@ impl Display for AsciiCastData {
             .map(|entry| serde_json::to_string(entry).map_err(|_| fmt::Error))
             .collect::<Result<Vec<String>, _>>()?;
         write!(f, "{}\n{}", header, entries.join("\n"))
+    }
+}
+
+impl FromStr for AsciiCastData {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut lines = s.lines();
+        let header_str = lines.next().ok_or(anyhow!("Empty cast"))?;
+        let header: Header = serde_json::from_str(header_str)?;
+        let entries = lines
+            .map(serde_json::from_str)
+            .collect::<Result<Vec<Entry>, _>>()?;
+        Ok(Self { header, entries })
     }
 }
 
@@ -167,7 +174,7 @@ where
 {
     fn from_sql(bytes: DB::RawValue<'_>) -> deserialize::Result<Self> {
         let json_str = String::from_sql(bytes)?;
-        AsciiCastData::parse(&json_str).map_err(Into::into)
+        json_str.parse().map_err(Into::into)
     }
 }
 
