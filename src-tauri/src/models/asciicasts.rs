@@ -14,11 +14,20 @@ use diesel::prelude::*;
 use diesel::serialize::{self, IsNull, Output, ToSql};
 use diesel::sql_types::Text;
 use diesel::sqlite::Sqlite;
+use serde_with::{DeserializeFromStr, SerializeDisplay};
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
 
-#[derive(Debug, Clone, PartialEq, AsExpression, FromSqlRow)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    AsExpression,
+    FromSqlRow,
+    SerializeDisplay,
+    DeserializeFromStr,
+)]
 #[diesel(sql_type = Text)]
 pub struct AsciiCastData {
     pub header: Header,
@@ -60,41 +69,6 @@ impl AsciiCastData {
         let contents = format!("{}", self);
         std::fs::write(file, contents)?;
         Ok(())
-    }
-}
-
-impl serde::Serialize for AsciiCastData {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        format!("{}", self).serialize(serializer)
-    }
-}
-
-struct AsciiCastDataVisitor;
-
-impl<'de> serde::de::Visitor<'de> for AsciiCastDataVisitor {
-    type Value = AsciiCastData;
-
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-        formatter.write_str("an asciicast string")
-    }
-
-    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-    where
-        E: serde::de::Error,
-    {
-        value.parse().map_err(serde::de::Error::custom)
-    }
-}
-
-impl<'de> serde::Deserialize<'de> for AsciiCastData {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: serde::Deserializer<'de>,
-    {
-        deserializer.deserialize_str(AsciiCastDataVisitor)
     }
 }
 
