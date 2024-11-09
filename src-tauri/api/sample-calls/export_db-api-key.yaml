@@ -7,8 +7,7 @@ request:
 response:
   message: >
     {
-      "num_api_keys": 1,
-      "num_llm_calls": 0
+      "num_api_keys": 1
     }
 sideEffects:
   disk:

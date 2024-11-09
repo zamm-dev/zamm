@@ -3,14 +3,6 @@ terminal_sessions:
   timestamp: 2024-10-17T06:02:13
   command: cmd
   os: Windows
-  cast:
-    header:
-      version: 2
-      width: 80
-      height: 24
-      timestamp: 1729144933
-      command: cmd
-    entries:
-    - - 0.208
-      - 'o'
-      - "\e[?25l\e[2J\e[m\e[HMicrosoft Windows [Version 10.0.22631.4169]\r\n(c) Microsoft Corporation. All rights reserved.\e[4;1HC:\\Users\\Amos Ng\\Documents\\projects\\zamm-dev\\zamm\\src-tauri>\e]0;C:\\WINDOWS\\system32\\cmd.EXE\a\e[?25h"
+  cast: |-
+    {"version":2,"width":80,"height":24,"timestamp":1729144933,"command":"cmd"}
+    [0.208,"o","\u001b[?25l\u001b[2J\u001b[m\u001b[HMicrosoft Windows [Version 10.0.22631.4169]\r\n(c) Microsoft Corporation. All rights reserved.\u001b[4;1HC:\\Users\\Amos Ng\\Documents\\projects\\zamm-dev\\zamm\\src-tauri>\u001b]0;C:\\WINDOWS\\system32\\cmd.EXE\u0007\u001b[?25h"]

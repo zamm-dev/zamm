@@ -15,15 +15,7 @@ use diesel::sqlite::Sqlite;
 use std::fmt;
 use std::fmt::{Display, Formatter};
 
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    AsExpression,
-    FromSqlRow,
-    serde::Serialize,
-    serde::Deserialize,
-)]
+#[derive(Debug, Clone, PartialEq, AsExpression, FromSqlRow)]
 #[diesel(sql_type = Text)]
 pub struct AsciiCastData {
     pub header: Header,
@@ -54,13 +46,13 @@ impl AsciiCastData {
         }
     }
 
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub fn load(file: &str) -> ZammResult<Self> {
         let contents = std::fs::read_to_string(file)?;
         AsciiCastData::parse(&contents)
     }
 
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub fn save(&self, file: &str) -> ZammResult<()> {
         let contents = format!("{}", self);
         std::fs::write(file, contents)?;
@@ -75,6 +67,41 @@ impl AsciiCastData {
             .map(serde_json::from_str)
             .collect::<Result<Vec<Entry>, _>>()?;
         Ok(Self { header, entries })
+    }
+}
+
+impl serde::Serialize for AsciiCastData {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        format!("{}", self).serialize(serializer)
+    }
+}
+
+struct AsciiCastDataVisitor;
+
+impl<'de> serde::de::Visitor<'de> for AsciiCastDataVisitor {
+    type Value = AsciiCastData;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("an asciicast string")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        AsciiCastData::parse(value).map_err(serde::de::Error::custom)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for AsciiCastData {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(AsciiCastDataVisitor)
     }
 }
 
@@ -101,7 +128,6 @@ pub struct AsciiCast {
 }
 
 impl AsciiCast {
-    #[allow(dead_code)]
     pub fn as_insertable(&self) -> NewAsciiCast {
         NewAsciiCast {
             id: &self.id,
@@ -150,8 +176,51 @@ mod tests {
     use super::*;
     use crate::test_helpers::database::setup_database;
     use asciicast::{Entry, EventType, Header};
-    use chrono::SubsecRound;
+    use chrono::{DateTime, SubsecRound};
     use uuid::Uuid;
+
+    const TEST_CAST_STR: &str = r#""{\"version\":2,\"width\":80,\"height\":24,\"timestamp\":1731159783}\n[0.0,\"i\",\"echo hello\"]\n[1.0,\"o\",\"hello\"]""#;
+
+    fn get_test_ascii_cast() -> AsciiCastData {
+        AsciiCastData {
+            header: Header {
+                version: 2,
+                width: 80,
+                height: 24,
+                // `asciicast` crate has problems parsing non-existent time
+                timestamp: DateTime::from_timestamp(1731159783, 0),
+                duration: None,
+                idle_time_limit: None,
+                command: None,
+                title: None,
+                env: None,
+            },
+            entries: vec![
+                Entry {
+                    time: 0.0,
+                    event_type: EventType::Input,
+                    event_data: "echo hello".to_string(),
+                },
+                Entry {
+                    time: 1.0,
+                    event_type: EventType::Output,
+                    event_data: "hello".to_string(),
+                },
+            ],
+        }
+    }
+
+    #[test]
+    fn test_serialize_ascii_cast_data() {
+        let serialized = serde_json::to_string(&get_test_ascii_cast()).unwrap();
+        assert_eq!(serialized, TEST_CAST_STR);
+    }
+
+    #[test]
+    fn test_deserialize_ascii_cast_data() {
+        let deserialized: AsciiCastData = serde_json::from_str(TEST_CAST_STR).unwrap();
+        assert_eq!(deserialized, get_test_ascii_cast());
+    }
 
     #[test]
     fn test_ascii_cast_round_trip() {

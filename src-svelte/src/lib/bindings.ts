@@ -170,10 +170,14 @@ export type ConversationMetadata = {
   previous_call?: LlmCallReference | null;
   next_calls?: LlmCallReference[];
 };
-export type DatabaseCounts = { num_api_keys: number; num_llm_calls: number };
+export type DatabaseCounts = {
+  num_api_keys?: number;
+  num_llm_calls?: number;
+  num_terminal_sessions?: number;
+};
 export type DatabaseImportCounts = {
-  imported: DatabaseCounts;
-  ignored: DatabaseCounts;
+  imported?: DatabaseCounts;
+  ignored?: DatabaseCounts;
 };
 export type EntityId = string;
 export type Error =

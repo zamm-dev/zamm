@@ -8,11 +8,9 @@ response:
   message: >
     {
       "imported": {
-        "num_api_keys": 0,
         "num_llm_calls": 1
       },
       "ignored": {
-        "num_api_keys": 0,
         "num_llm_calls": 1
       }
     }

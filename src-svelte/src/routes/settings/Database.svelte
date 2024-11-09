@@ -19,17 +19,55 @@
     extensions: ["yaml"],
   };
 
-  function nounify(counts: DatabaseCounts): string {
-    let noun: string;
-    if (counts.num_api_keys > 0 && counts.num_llm_calls === 0) {
-      noun = "API key";
-    } else if (counts.num_api_keys === 0 && counts.num_llm_calls > 0) {
-      noun = "LLM call";
-    } else {
-      noun = "item";
+  interface DefinedDatabaseCounts {
+    num_api_keys: number;
+    num_llm_calls: number;
+    num_terminal_sessions: number;
+  }
+
+  function substituteUndefinedCounts(
+    counts: DatabaseCounts | undefined,
+  ): DefinedDatabaseCounts {
+    if (counts === undefined) {
+      return {
+        num_api_keys: 0,
+        num_llm_calls: 0,
+        num_terminal_sessions: 0,
+      };
     }
 
-    const total = counts.num_api_keys + counts.num_llm_calls;
+    return {
+      num_api_keys: counts.num_api_keys ?? 0,
+      num_llm_calls: counts.num_llm_calls ?? 0,
+      num_terminal_sessions: counts.num_terminal_sessions ?? 0,
+    };
+  }
+
+  function nounify(counts: DatabaseCounts | undefined): string {
+    if (counts === undefined) {
+      return "0 items";
+    }
+
+    let noun: string;
+    const itemTypes = Object.keys(counts).length;
+    const definedCounts = substituteUndefinedCounts(counts);
+    if (itemTypes === 0 || itemTypes > 1) {
+      noun = "item";
+    } else if (definedCounts.num_api_keys > 0) {
+      noun = "API key";
+    } else if (definedCounts.num_llm_calls > 0) {
+      noun = "LLM call";
+    } else {
+      if (definedCounts.num_terminal_sessions === 0) {
+        console.error("Unexpected terminal session count");
+      }
+      noun = "terminal session";
+    }
+
+    const total =
+      definedCounts.num_api_keys +
+      definedCounts.num_llm_calls +
+      definedCounts.num_terminal_sessions;
     const nounified = `${total} ${noun}`;
     return total === 0 || total > 1 ? nounified + "s" : nounified;
   }
@@ -59,9 +97,12 @@
 
       const importCounts = await unwrap(commands.importDb(filePath));
       const importMessage = `Imported ${nounify(importCounts.imported)}`;
+
+      const ignoredImports = substituteUndefinedCounts(importCounts.ignored);
       if (
-        importCounts.ignored.num_api_keys > 0 ||
-        importCounts.ignored.num_llm_calls > 0
+        ignoredImports.num_api_keys > 0 ||
+        ignoredImports.num_llm_calls > 0 ||
+        ignoredImports.num_terminal_sessions > 0
       ) {
         snackbarInfo(
           `${importMessage}, ignored ${nounify(importCounts.ignored)}`,

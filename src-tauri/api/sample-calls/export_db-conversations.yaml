@@ -7,7 +7,6 @@ request:
 response:
   message: >
     {
-      "num_api_keys": 0,
       "num_llm_calls": 6
     }
 sideEffects:

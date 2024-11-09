@@ -1,5 +1,6 @@
 use crate::commands::database::metadata::DatabaseCounts;
 use crate::commands::errors::{Error, ImportError, ZammResult};
+use crate::models::asciicasts::NewAsciiCast;
 use crate::models::llm_calls::{
     NewLlmCallFollowUp, NewLlmCallRow, NewLlmCallVariant, Prompt,
 };
@@ -19,7 +20,11 @@ use tokio::sync::MutexGuard;
 
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, specta::Type)]
 pub struct DatabaseImportCounts {
+    #[serde(skip_serializing_if = "DatabaseCounts::is_empty")]
+    #[serde(default)]
     pub imported: DatabaseCounts,
+    #[serde(skip_serializing_if = "DatabaseCounts::is_empty")]
+    #[serde(default)]
     pub ignored: DatabaseCounts,
 }
 
@@ -62,6 +67,18 @@ pub async fn read_database_contents(
                 == 0
         })
         .collect();
+    let new_terminal_sessions: Vec<NewAsciiCast> = db_contents
+        .insertable_terminal_sessions()
+        .into_iter()
+        .filter(|session| {
+            asciicasts::table
+                .filter(asciicasts::id.eq(&session.id))
+                .count()
+                .get_result::<i64>(db)
+                .unwrap_or(0)
+                == 0
+        })
+        .collect();
     let new_llm_call_ids = new_llm_calls.iter().map(|call| call.id).collect::<Vec<_>>();
     let new_llm_call_follow_ups: Vec<NewLlmCallFollowUp> = db_contents
         .insertable_call_follow_ups()
@@ -79,7 +96,6 @@ pub async fn read_database_contents(
                 || new_llm_call_ids.contains(&variant.variant_id)
         })
         .collect();
-    let new_terminal_sessions = db_contents.insertable_terminal_sessions();
 
     if new_llm_calls
         .iter()
@@ -117,10 +133,14 @@ pub async fn read_database_contents(
         imported: DatabaseCounts {
             num_api_keys: new_api_keys.len() as i32,
             num_llm_calls: new_llm_calls.len() as i32,
+            num_terminal_sessions: new_terminal_sessions.len() as i32,
         },
         ignored: DatabaseCounts {
             num_api_keys: (db_contents.api_keys.len() - new_api_keys.len()) as i32,
             num_llm_calls: (db_contents.llm_calls.instances.len() - new_llm_calls.len())
+                as i32,
+            num_terminal_sessions: (db_contents.terminal_sessions.len()
+                - new_terminal_sessions.len())
                 as i32,
         },
     })
@@ -191,6 +211,12 @@ mod tests {
         ImportDbTestCase,
         test_conflicting_api_key,
         "./api/sample-calls/import_db-conflicting-api-key.yaml"
+    );
+
+    check_sample!(
+        ImportDbTestCase,
+        test_terminal_sessions,
+        "./api/sample-calls/import_db-terminal-sessions.yaml"
     );
 
     check_sample!(
