@@ -3,14 +3,6 @@ terminal_sessions:
   timestamp: 2024-09-20T11:23:53
   command: date "+%A %B %e, %Y %R %z"
   os: Linux
-  cast:
-    header:
-      version: 2
-      width: 80
-      height: 24
-      timestamp: 1726831433
-      command: date "+%A %B %e, %Y %R %z"
-    entries:
-    - - 0.102
-      - 'o'
-      - "Friday September 20, 2024 18:23 +0700\r\n"
+  cast: |-
+    {"version":2,"width":80,"height":24,"timestamp":1726831433,"command":"date \"+%A %B %e, %Y %R %z\""}
+    [0.102,"o","Friday September 20, 2024 18:23 +0700\r\n"]
