@@ -71,6 +71,7 @@ pub async fn write_database_contents(
     Ok(DatabaseCounts {
         num_api_keys: db_contents.api_keys.len() as i32,
         num_llm_calls: db_contents.llm_calls.instances.len() as i32,
+        num_terminal_sessions: db_contents.terminal_sessions.len() as i32,
     })
 }
 
@@ -119,13 +120,19 @@ mod tests {
 
     check_sample!(
         ExportDbTestCase,
-        test_export_llm_calls,
-        "./api/sample-calls/export_db-populated.yaml"
+        test_export_api_key,
+        "./api/sample-calls/export_db-api-key.yaml"
     );
 
     check_sample!(
         ExportDbTestCase,
-        test_export_api_key,
-        "./api/sample-calls/export_db-api-key.yaml"
+        test_export_llm_calls,
+        "./api/sample-calls/export_db-conversations.yaml"
+    );
+
+    check_sample!(
+        ExportDbTestCase,
+        test_export_terminal_sessions,
+        "./api/sample-calls/export_db-terminal-sessions.yaml"
     );
 }

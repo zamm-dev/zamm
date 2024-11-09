@@ -1,0 +1,17 @@
+request:
+  - export_db
+  - >
+    {
+      "path": "exported-db.yaml"
+    }
+response:
+  message: >
+    {
+      "num_terminal_sessions": 1
+    }
+sideEffects:
+  disk:
+    endStateDirectory: db-import-export/terminal-sessions
+  database:
+    startStateDump: command-run-cmd-dir
+    endStateDump: command-run-cmd-dir

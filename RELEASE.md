@@ -17,4 +17,5 @@
    - [`src-tauri/api/sample-disk-writes/db-import-export/conflicting-llm-call/conflicting-db.yaml`](/src-tauri/api/sample-disk-writes/db-import-export/conflicting-llm-call/conflicting-db.yaml)
    - [`src-tauri/api/sample-disk-writes/db-import-export/conversation-edited-2/test-folder/exported-db.yaml`](/src-tauri/api/sample-disk-writes/db-import-export/conversation-edited-2/test-folder/exported-db.yaml)
    - [`src-tauri/api/sample-disk-writes/db-import-export/different-api-key/different.zamm.yaml`](/src-tauri/api/sample-disk-writes/db-import-export/different-api-key/different.zamm.yaml)
+   - [`src-tauri/api/sample-disk-writes/db-import-export/terminal-sessions/exported-db.yaml`](/src-tauri/api/sample-disk-writes/db-import-export/terminal-sessions/exported-db.yaml)
 10. Update the end-to-end screenshot
