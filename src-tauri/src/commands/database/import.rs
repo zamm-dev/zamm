@@ -21,8 +21,10 @@ use tokio::sync::MutexGuard;
 #[derive(Debug, Default, serde::Serialize, serde::Deserialize, specta::Type)]
 pub struct DatabaseImportCounts {
     #[serde(skip_serializing_if = "DatabaseCounts::is_empty")]
+    #[serde(default)]
     pub imported: DatabaseCounts,
     #[serde(skip_serializing_if = "DatabaseCounts::is_empty")]
+    #[serde(default)]
     pub ignored: DatabaseCounts,
 }
 
