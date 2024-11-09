@@ -54,13 +54,13 @@ impl AsciiCastData {
         }
     }
 
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub fn load(file: &str) -> ZammResult<Self> {
         let contents = std::fs::read_to_string(file)?;
         AsciiCastData::parse(&contents)
     }
 
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub fn save(&self, file: &str) -> ZammResult<()> {
         let contents = format!("{}", self);
         std::fs::write(file, contents)?;
@@ -101,7 +101,6 @@ pub struct AsciiCast {
 }
 
 impl AsciiCast {
-    #[allow(dead_code)]
     pub fn as_insertable(&self) -> NewAsciiCast {
         NewAsciiCast {
             id: &self.id,
