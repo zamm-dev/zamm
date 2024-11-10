@@ -75,40 +75,42 @@
 <InfoBox title="API Call">
   {#if apiCall}
     <table class="composite-reveal">
-      <tr>
-        <td>ID</td>
-        <td>{apiCall?.id ?? "Unknown"}</td>
-      </tr>
-      <tr>
-        <td>Time</td>
-        <td>{humanTime ?? "Unknown"}</td>
-      </tr>
-      <tr>
-        <td>LLM</td>
-        <td>
-          {apiCall?.llm.requested ?? "Unknown"}
-          {#if apiCall?.llm.requested !== apiCall?.llm.name}
-            → {apiCall?.llm.name}
-          {/if}
-          {#if provider}
-            (via {provider})
-          {/if}
-        </td>
-      </tr>
-      <tr>
-        <td>Temperature</td>
-        <td>
-          {temperature ?? "Unknown"}
-        </td>
-      </tr>
-      <tr>
-        <td>Tokens</td>
-        <td>
-          {apiCall?.tokens.prompt ?? "Unknown"} prompt +
-          {apiCall?.tokens.response ?? "Unknown"} response =
-          {apiCall?.tokens.total ?? "Unknown"} total tokens
-        </td>
-      </tr>
+      <tbody>
+        <tr>
+          <td>ID</td>
+          <td>{apiCall?.id ?? "Unknown"}</td>
+        </tr>
+        <tr>
+          <td>Time</td>
+          <td>{humanTime ?? "Unknown"}</td>
+        </tr>
+        <tr>
+          <td>LLM</td>
+          <td>
+            {apiCall?.llm.requested ?? "Unknown"}
+            {#if apiCall?.llm.requested !== apiCall?.llm.name}
+              → {apiCall?.llm.name}
+            {/if}
+            {#if provider}
+              (via {provider})
+            {/if}
+          </td>
+        </tr>
+        <tr>
+          <td>Temperature</td>
+          <td>
+            {temperature ?? "Unknown"}
+          </td>
+        </tr>
+        <tr>
+          <td>Tokens</td>
+          <td>
+            {apiCall?.tokens.prompt ?? "Unknown"} prompt +
+            {apiCall?.tokens.response ?? "Unknown"} response =
+            {apiCall?.tokens.total ?? "Unknown"} total tokens
+          </td>
+        </tr>
+      </tbody>
     </table>
 
     {#if apiCall.request.prompt.type === "Chat"}

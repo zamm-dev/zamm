@@ -29,35 +29,39 @@
       <Loading />
     {:then systemInfo}
       <table>
-        <tr>
-          <th colspan="2">ZAMM</th>
-        </tr>
-        <tr>
-          <td>Version</td>
-          <td class="version-value">{systemInfo.zamm_version}</td>
-        </tr>
-        <tr>
-          <td>Stability</td>
-          <td class="stability-value">Unstable (Alpha)</td>
-        </tr>
-        <tr>
-          <td>Fork</td>
-          <td>Original</td>
-        </tr>
+        <tbody>
+          <tr>
+            <th colspan="2">ZAMM</th>
+          </tr>
+          <tr>
+            <td>Version</td>
+            <td class="version-value">{systemInfo.zamm_version}</td>
+          </tr>
+          <tr>
+            <td>Stability</td>
+            <td class="stability-value">Unstable (Alpha)</td>
+          </tr>
+          <tr>
+            <td>Fork</td>
+            <td>Original</td>
+          </tr>
+        </tbody>
       </table>
 
       <table class="less-space">
-        <tr>
-          <th colspan="2">Computer</th>
-        </tr>
-        <tr>
-          <td>OS</td>
-          <td>{os}</td>
-        </tr>
-        <tr>
-          <td>Shell</td>
-          <td>{systemInfo.shell ?? "Unknown"}</td>
-        </tr>
+        <tbody>
+          <tr>
+            <th colspan="2">Computer</th>
+          </tr>
+          <tr>
+            <td>OS</td>
+            <td>{os}</td>
+          </tr>
+          <tr>
+            <td>Shell</td>
+            <td>{systemInfo.shell ?? "Unknown"}</td>
+          </tr>
+        </tbody>
       </table>
     {:catch error}
       <span role="status">error: {error}</span>
