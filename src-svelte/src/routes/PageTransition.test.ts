@@ -3,6 +3,7 @@ import PageTransitionControl from "./PageTransitionControl.svelte";
 import { act, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import { get } from "svelte/store";
+import { vi } from "vitest";
 import { firstPageLoad } from "$lib/firstPageLoad";
 
 describe("Screen during transition", () => {
@@ -39,6 +40,13 @@ describe("PageTransition", () => {
     await act(() => userEvent.type(routeInput, url));
     await act(() => userEvent.click(navigateButton));
   };
+
+  beforeAll(() => {
+    HTMLElement.prototype.animate = vi.fn().mockReturnValue({
+      onfinish: null,
+      cancel: vi.fn(),
+    });
+  });
 
   beforeEach(() => {
     render(PageTransitionControl, { currentRoute: "/" });

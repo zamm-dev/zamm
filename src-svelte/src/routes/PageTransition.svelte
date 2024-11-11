@@ -54,8 +54,6 @@
 </script>
 
 <script lang="ts">
-  import { run } from "svelte/legacy";
-
   import { fly } from "svelte/transition";
   import { standardDuration } from "$lib/preferences";
   import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
@@ -79,7 +77,6 @@
     await tick();
     transitions.in.delay = regularDelay;
     firstAppLoad.set(false);
-    checkFirstPageLoad(currentRoute);
 
     pageTransition.set({
       addVisitedRoute: (newRoute: string) => {
@@ -155,10 +152,8 @@
     oldRoute = route;
   }
 
-  run(() => {
+  $effect(() => {
     checkFirstPageLoad(currentRoute);
-  });
-  run(() => {
     updateFlyDirection(currentRoute);
   });
 
