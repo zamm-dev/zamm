@@ -1,7 +1,11 @@
 <script lang="ts">
   import { type TerminalSessionReference } from "$lib/bindings";
 
-  export let item: TerminalSessionReference;
+  interface Props {
+    item: TerminalSessionReference;
+  }
+
+  let { item }: Props = $props();
 </script>
 
 <div class="ellipsis-container">

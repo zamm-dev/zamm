@@ -1,4 +1,4 @@
-import { expect, test, vi, type SpyInstance, type Mock } from "vitest";
+import { expect, test, vi, type MockInstance, type Mock } from "vitest";
 import "@testing-library/jest-dom";
 
 import { act, render, screen, waitFor } from "@testing-library/svelte";
@@ -33,7 +33,7 @@ describe("Switch delay", () => {
 describe("Switch", () => {
   let tauriInvokeMock: Mock;
   let playback: TauriInvokePlayback;
-  let recordSoundDelaySpy: SpyInstance;
+  let recordSoundDelaySpy: MockInstance;
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();

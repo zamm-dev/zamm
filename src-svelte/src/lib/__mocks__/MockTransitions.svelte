@@ -1,8 +1,13 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import MockAppLayout from "./MockAppLayout.svelte";
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
 
-  let visible = false;
+  let { children }: Props = $props();
+
+  let visible = $state(false);
 
   onMount(() => {
     setTimeout(() => {
@@ -13,6 +18,6 @@
 
 <MockAppLayout>
   {#if visible}
-    <slot />
+    {@render children?.()}
   {/if}
 </MockAppLayout>

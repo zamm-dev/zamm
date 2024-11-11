@@ -3,6 +3,11 @@
   import { commands, type LightweightLlmCall } from "$lib/bindings";
   import { unwrap } from "$lib/tauri";
   import ApiCallBlurb from "./ApiCallBlurb.svelte";
+  interface Props {
+    [key: string]: any;
+  }
+
+  let { ...rest }: Props = $props();
 
   const getApiCalls = (offset: number) => unwrap(commands.getApiCalls(offset));
   const apiCallUrl = (apiCall: LightweightLlmCall) =>
@@ -14,7 +19,7 @@
   getItems={getApiCalls}
   itemUrl={apiCallUrl}
   renderItem={ApiCallBlurb}
-  {...$$restProps}
+  {...rest}
 >
   Looks like you haven't made any calls to an LLM yet.<br />Get started via
   <a href="/chat">chat</a>

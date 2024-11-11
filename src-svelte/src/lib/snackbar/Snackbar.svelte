@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   import { writable, type Writable } from "svelte/store";
 
   interface SnackbarMessage {
@@ -56,12 +56,16 @@
 </script>
 
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import { standardDuration } from "$lib/preferences";
   import { fly, fade } from "svelte/transition";
   import { flip } from "svelte/animate";
   import Message from "./Message.svelte";
 
-  $: setBaseAnimationDurationMs($standardDuration);
+  run(() => {
+    setBaseAnimationDurationMs($standardDuration);
+  });
 </script>
 
 <div class="snackbars">

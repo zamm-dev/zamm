@@ -1,5 +1,14 @@
+<script lang="ts">
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
+
+  let { children }: Props = $props();
+  const children_render = $derived(children);
+</script>
+
 <div class="credits-grid">
-  <slot />
+  {@render children_render?.()}
 </div>
 
 <style>

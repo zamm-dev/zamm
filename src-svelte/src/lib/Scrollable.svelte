@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   export type ResizedEvent = CustomEvent<DOMRect>;
 </script>
 
@@ -7,11 +7,22 @@
   import { createEventDispatcher } from "svelte";
   import FixedScrollable from "./FixedScrollable.svelte";
 
-  export let minHeight = "8rem";
-  export let initialPosition: "top" | "bottom" = "top";
-  let scrollableHeight: string = minHeight;
-  let container: HTMLDivElement | null = null;
-  let scrollable: FixedScrollable | null = null;
+  interface Props {
+    minHeight?: string;
+    initialPosition?: "top" | "bottom";
+    children?: import("svelte").Snippet;
+    [key: string]: any;
+  }
+
+  let {
+    minHeight = "8rem",
+    initialPosition = "top",
+    children,
+    ...rest
+  }: Props = $props();
+  let scrollableHeight: string = $state(minHeight);
+  let container: HTMLDivElement | null = $state(null);
+  let scrollable: FixedScrollable | null = $state(null);
   const dispatchResizeEvent = createEventDispatcher();
   const dispatchBottomReachedEvent = createEventDispatcher();
 
@@ -55,6 +66,8 @@
       window.removeEventListener("resize", windowResizeCallback);
     };
   });
+
+  const children_render = $derived(children);
 </script>
 
 <div class="growable container composite-reveal" bind:this={container}>
@@ -63,9 +76,9 @@
     maxHeight={scrollableHeight}
     bind:this={scrollable}
     on:bottomReached={bottomReached}
-    {...$$restProps}
+    {...rest}
   >
-    <slot />
+    {@render children_render?.()}
   </FixedScrollable>
 </div>
 

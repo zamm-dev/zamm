@@ -1,9 +1,14 @@
 <script lang="ts">
   import Scrollable from "./Scrollable.svelte";
+  interface Props {
+    [key: string]: any;
+  }
+
+  let { ...rest }: Props = $props();
 </script>
 
 <div class="container">
-  <Scrollable {...$$restProps}>
+  <Scrollable {...rest}>
     <p>
       Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque faucibus
       vulputate rhoncus. Maecenas velit urna, consectetur id ipsum ac, porta

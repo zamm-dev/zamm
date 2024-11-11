@@ -13,7 +13,11 @@
   import Button from "$lib/controls/Button.svelte";
   import ButtonGroup from "$lib/controls/ButtonGroup.svelte";
 
-  export let apiCall: LlmCall | undefined = undefined;
+  interface Props {
+    apiCall?: LlmCall | undefined;
+  }
+
+  let { apiCall = undefined }: Props = $props();
 
   function editApiCall() {
     if (!apiCall) {

@@ -1,13 +1,17 @@
 <script lang="ts">
   import IconClose from "~icons/ep/close-bold";
 
-  export let dismiss: () => void;
-  export let message: string;
-  export let messageType: "error" | "info";
+  interface Props {
+    dismiss: () => void;
+    message: string;
+    messageType: "error" | "info";
+  }
+
+  let { dismiss, message, messageType }: Props = $props();
 </script>
 
 <div class={"snackbar " + messageType} role="alertdialog">
-  {message}<button on:click={dismiss} title="Dismiss">
+  {message}<button onclick={dismiss} title="Dismiss">
     <IconClose />
   </button>
 </div>

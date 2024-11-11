@@ -1,12 +1,23 @@
 <script lang="ts">
   import Slider from "$lib/Slider.svelte";
 
-  export let label: string;
-  export let min = 0;
-  export let max: number;
-  export let step: number | undefined = undefined;
-  export let value: number = min;
-  export let onUpdate: (newValue: number) => void = () => undefined;
+  interface Props {
+    label: string;
+    min?: number;
+    max: number;
+    step?: number | undefined;
+    value?: number;
+    onUpdate?: (newValue: number) => void;
+  }
+
+  let {
+    label,
+    min = 0,
+    max,
+    step = undefined,
+    value = $bindable(min),
+    onUpdate = () => undefined,
+  }: Props = $props();
 </script>
 
 <div class="settings-slider container">

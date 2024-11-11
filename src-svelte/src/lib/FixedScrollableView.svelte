@@ -1,8 +1,13 @@
 <script lang="ts">
   import FixedScrollable from "./FixedScrollable.svelte";
+  interface Props {
+    [key: string]: any;
+  }
+
+  let { ...rest }: Props = $props();
 </script>
 
-<FixedScrollable maxHeight="10rem" {...$$restProps}>
+<FixedScrollable maxHeight="10rem" {...rest}>
   <p>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque faucibus
     vulputate rhoncus. Maecenas velit urna, consectetur id ipsum ac, porta

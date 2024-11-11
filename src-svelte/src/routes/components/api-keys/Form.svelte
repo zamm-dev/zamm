@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   export interface FormFields {
     apiKey: string;
     saveKey: boolean;
@@ -7,6 +7,8 @@
 </script>
 
 <script lang="ts">
+  import { preventDefault } from "svelte/legacy";
+
   import { cubicInOut } from "svelte/easing";
   import { unwrap } from "$lib/tauri";
   import { commands, type Service } from "$lib/bindings";
@@ -17,15 +19,24 @@
   import Button from "$lib/controls/Button.svelte";
   import Explanation from "$lib/Explanation.svelte";
 
-  export let service: Service;
-  export let apiKeyUrl: string | undefined = undefined;
-  export let fields: FormFields;
-  export let formClose: () => void = () => undefined;
+  interface Props {
+    service: Service;
+    apiKeyUrl?: string | undefined;
+    fields: FormFields;
+    formClose?: () => void;
+  }
+
+  let {
+    service,
+    apiKeyUrl = undefined,
+    fields = $bindable(),
+    formClose = () => undefined,
+  }: Props = $props();
   const exportExplanation =
     `Exports this API key for use in other programs on your computer.\n` +
     `Don't worry about this option if you're not a programmer.`;
 
-  $: growDuration = 2 * $standardDuration;
+  let growDuration = $derived(2 * $standardDuration);
 
   function growY(node: HTMLElement) {
     const rem = 18;
@@ -74,7 +85,7 @@
 
 <div class="container" transition:growY>
   <div class="inset-container">
-    <form on:submit|preventDefault={submitApiKey}>
+    <form onsubmit={preventDefault(submitApiKey)}>
       {#if apiKeyUrl}
         <p>
           Tip: Get your {service} key

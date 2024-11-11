@@ -4,11 +4,19 @@
     animationsOn,
     standardDuration,
   } from "$lib/preferences";
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
 
-  $: standardDurationMs = $standardDuration.toFixed(2) + "ms";
-  $: style =
+  let { children }: Props = $props();
+
+  let standardDurationMs = $derived($standardDuration.toFixed(2) + "ms");
+  let style = $derived(
     `--base-animation-speed: ${$animationSpeed}; ` +
-    `--standard-duration: ${standardDurationMs};`;
+      `--standard-duration: ${standardDurationMs};`,
+  );
+
+  const children_render = $derived(children);
 </script>
 
 <div
@@ -17,7 +25,7 @@
   class:animations-disabled={!$animationsOn}
   {style}
 >
-  <slot />
+  {@render children_render?.()}
 </div>
 
 <style>

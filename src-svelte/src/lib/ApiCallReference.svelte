@@ -2,16 +2,21 @@
   import ApiCallReferenceLink from "./ApiCallReferenceLink.svelte";
   import type { LlmCallReference } from "./bindings";
 
-  export let apiCall: LlmCallReference;
-  export let selfContained = false;
+  interface Props {
+    apiCall: LlmCallReference;
+    selfContained?: boolean;
+    [key: string]: any;
+  }
+
+  let { apiCall, selfContained = false, ...rest }: Props = $props();
 </script>
 
 {#if selfContained}
   <div class="ellipsis-container">
-    <ApiCallReferenceLink {apiCall} {...$$restProps} />
+    <ApiCallReferenceLink {apiCall} {...rest} />
   </div>
 {:else}
-  <ApiCallReferenceLink {apiCall} {...$$restProps} />
+  <ApiCallReferenceLink {apiCall} {...rest} />
 {/if}
 
 <style>

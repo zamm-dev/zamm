@@ -1,17 +1,26 @@
 <script lang="ts">
   import Switch from "$lib/Switch.svelte";
 
-  export let label: string;
-  export let toggledOn = false;
-  export let onToggle: (toggledOn: boolean) => void = () => undefined;
-  let switchChild: Switch;
+  interface Props {
+    label: string;
+    toggledOn?: boolean;
+    onToggle?: (toggledOn: boolean) => void;
+  }
+
+  let {
+    label,
+    toggledOn = $bindable(false),
+    onToggle = () => undefined,
+  }: Props = $props();
+  let switchChild: Switch | undefined;
+
+  function toggleSwitchChild(e: Event) {
+    e.preventDefault();
+    switchChild?.toggle();
+  }
 </script>
 
-<div
-  class="settings-switch container"
-  on:click|preventDefault={switchChild.toggle}
-  role="none"
->
+<div class="settings-switch container" onclick={toggleSwitchChild} role="none">
   <Switch
     {label}
     bind:this={switchChild}

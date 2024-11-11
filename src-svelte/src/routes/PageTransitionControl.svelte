@@ -1,8 +1,12 @@
 <script lang="ts">
   import PageTransition from "./PageTransition.svelte";
 
-  export let currentRoute = "/";
-  let newRoute = "";
+  interface Props {
+    currentRoute?: string;
+  }
+
+  let { currentRoute = $bindable("/") }: Props = $props();
+  let newRoute = $state("");
 
   function navigate() {
     currentRoute = newRoute;
@@ -11,5 +15,5 @@
 </script>
 
 <input type="text" aria-label="Route" bind:value={newRoute} />
-<button on:click={navigate}>Navigate</button>
+<button onclick={navigate}>Navigate</button>
 <PageTransition {currentRoute} />

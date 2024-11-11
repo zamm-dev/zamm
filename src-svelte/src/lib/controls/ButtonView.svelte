@@ -1,7 +1,12 @@
 <script lang="ts">
   import Button from "./Button.svelte";
 
-  export let text: string;
+  interface Props {
+    text: string;
+    [key: string]: any;
+  }
+
+  let { text, ...rest }: Props = $props();
 </script>
 
-<Button {...$$restProps}>{text}</Button>
+<Button {...rest}>{text}</Button>

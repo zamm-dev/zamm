@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   export function getClickDelayMs(animationSpeed: number) {
     // time taken to reach other end of switch, meaning that this doesn't account
     // for the time it takes to bounce back from the overshoot
@@ -9,6 +9,8 @@
 </script>
 
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import { playSoundEffect } from "./sound";
   import { animationSpeed, rootEm } from "./preferences";
   import getComponentId from "./label-id";
@@ -28,13 +30,22 @@
   `;
   const switchId = getComponentId("switch");
 
-  export let label: string | undefined = undefined;
-  export let toggledOn = false;
-  export let letParentToggle = false;
-  export let onToggle: (toggledOn: boolean) => void = () => undefined;
-  let toggleBound: HTMLElement;
-  let left = 0;
-  let transition = transitionAnimation;
+  interface Props {
+    label?: string | undefined;
+    toggledOn?: boolean;
+    letParentToggle?: boolean;
+    onToggle?: (toggledOn: boolean) => void;
+  }
+
+  let {
+    label = undefined,
+    toggledOn = $bindable(false),
+    letParentToggle = false,
+    onToggle = () => undefined,
+  }: Props = $props();
+  let toggleBound: HTMLElement | undefined = $state(undefined);
+  let left = $state(0);
+  let transition = $state(transitionAnimation);
   let startingOffset = 0;
   let dragging = false;
   let dragPositionOnLeft = false;
@@ -67,10 +78,17 @@
     }
   }
 
-  let toggleDragOptions: DragOptions = {
+  function getBounds() {
+    if (!toggleBound) {
+      throw new Error("Toggle bounds not set");
+    }
+    return toggleBound;
+  }
+
+  let toggleDragOptions: DragOptions = $state({
     axis: "x",
     defaultClassDragging: "grabbing",
-    bounds: () => toggleBound,
+    bounds: getBounds,
     inverseScale: 1,
     render: (data: DragEventData) => {
       left = data.offsetX;
@@ -106,7 +124,7 @@
       // even if toggle state didn't change, reset back to resting position
       toggleDragOptions = updatePosition(toggledOn);
     },
-  };
+  });
 
   function updatePosition(toggledOn: boolean) {
     return {
@@ -130,8 +148,12 @@
     }
   }
 
-  $: toggleDragOptions = updatePosition(toggledOn);
-  $: left = toggleDragOptions.position?.x ?? 0;
+  run(() => {
+    toggleDragOptions = updatePosition(toggledOn);
+  });
+  run(() => {
+    left = toggleDragOptions.position?.x ?? 0;
+  });
 </script>
 
 <div class="container">
@@ -144,7 +166,7 @@
     tabIndex="0"
     aria-checked={toggledOn}
     id={switchId}
-    on:click={buttonClicked}
+    onclick={buttonClicked}
     style="font-size: {switchSize}px;"
   >
     <div class="groove-layer groove">

@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   import type { LlmCallReference } from "$lib/bindings";
   import type { ChatPromptVariant } from "$lib/additionalTypes";
   import { writable } from "svelte/store";
@@ -59,8 +59,14 @@
   import { goto } from "$app/navigation";
   import { onMount } from "svelte";
 
-  export let expectingResponse = false;
-  let selectModels = $provider === "OpenAI" ? OPENAI_MODELS : OLLAMA_MODELS;
+  interface Props {
+    expectingResponse?: boolean;
+  }
+
+  let { expectingResponse = $bindable(false) }: Props = $props();
+  let selectModels = $state(
+    $provider === "OpenAI" ? OPENAI_MODELS : OLLAMA_MODELS,
+  );
 
   async function submitApiCall() {
     if (expectingResponse) {

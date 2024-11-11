@@ -1,17 +1,28 @@
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import Form, { type FormFields } from "./Form.svelte";
   import type { Service } from "$lib/bindings";
   import { systemInfo } from "$lib/system-info";
 
-  export let name: Service;
-  export let apiKeyUrl: string | undefined = undefined;
-  export let apiKey: string | null;
-  export let editing = false;
-  let formFields: FormFields = {
+  interface Props {
+    name: Service;
+    apiKeyUrl?: string | undefined;
+    apiKey: string | null;
+    editing?: boolean;
+  }
+
+  let {
+    name,
+    apiKeyUrl = undefined,
+    apiKey,
+    editing = $bindable(false),
+  }: Props = $props();
+  let formFields: FormFields = $state({
     apiKey: "",
     saveKey: true,
     saveKeyLocation: "",
-  };
+  });
 
   function toggleEditing() {
     editing = !editing;
@@ -34,16 +45,18 @@
     }
   }
 
-  $: active = apiKey !== null;
-  $: label = active ? "Active" : "Inactive";
-  $: updateFormFields(editing);
+  let active = $derived(apiKey !== null);
+  let label = $derived(active ? "Active" : "Inactive");
+  run(() => {
+    updateFormFields(editing);
+  });
 </script>
 
 <div class="container">
   <div
     class="row"
-    on:click={toggleEditing}
-    on:keypress={toggleEditing}
+    onclick={toggleEditing}
+    onkeypress={toggleEditing}
     role="row"
     tabindex="0"
   >

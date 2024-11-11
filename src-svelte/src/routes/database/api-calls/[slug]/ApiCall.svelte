@@ -3,12 +3,17 @@
   import { type LlmCall } from "$lib/bindings";
   import Actions from "./Actions.svelte";
 
-  export let apiCall: LlmCall;
-  export let showActions = true;
+  interface Props {
+    apiCall: LlmCall;
+    showActions?: boolean;
+    [key: string]: any;
+  }
+
+  let { apiCall, showActions = true, ...rest }: Props = $props();
 </script>
 
 <div class="container">
-  <ApiCallDisplay {...$$restProps} bind:apiCall />
+  <ApiCallDisplay {apiCall} {...rest} />
   {#if showActions}
     <Actions {apiCall} />
   {/if}

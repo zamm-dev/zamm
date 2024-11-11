@@ -19,8 +19,13 @@
   } from "$lib/preferences";
   import { checkForUpdates } from "$lib/autoupdate";
 
-  export let currentRoute: string;
-  let ready = false;
+  interface Props {
+    currentRoute: string;
+    children?: import("svelte").Snippet;
+  }
+
+  let { currentRoute, children }: Props = $props();
+  let ready = $state(false);
 
   onMount(() => {
     const rootEmUnsubscribe = rootEm.subscribe((value) => {
@@ -70,6 +75,8 @@
       rootEmUnsubscribe();
     };
   });
+
+  const children_render = $derived(children);
 </script>
 
 <div id="app" class:high-dpi-adjust={$highDpiAdjust}>
@@ -86,7 +93,7 @@
         <main>
           {#if ready}
             <PageTransition {currentRoute}>
-              <slot />
+              {@render children_render?.()}
             </PageTransition>
           {/if}
         </main>

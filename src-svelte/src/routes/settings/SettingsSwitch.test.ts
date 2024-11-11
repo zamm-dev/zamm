@@ -1,6 +1,5 @@
 import { assert, expect, test, vi } from "vitest";
 import "@testing-library/jest-dom";
-
 import { act, render, screen } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import SettingsSwitch from "./SettingsSwitch.svelte";

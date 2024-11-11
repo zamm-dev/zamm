@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import InfoBox from "$lib/InfoBox.svelte";
   import SubInfoBox from "$lib/SubInfoBox.svelte";
   import { type LlmCall } from "$lib/bindings";
@@ -9,9 +11,17 @@
   import ApiCallReference from "$lib/ApiCallReference.svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
 
-  export let dateTimeLocale: string | undefined = undefined;
-  export let timeZone: string | undefined = undefined;
-  export let apiCall: LlmCall | undefined = undefined;
+  interface Props {
+    dateTimeLocale?: string | undefined;
+    timeZone?: string | undefined;
+    apiCall?: LlmCall | undefined;
+  }
+
+  let {
+    dateTimeLocale = undefined,
+    timeZone = undefined,
+    apiCall = undefined,
+  }: Props = $props();
 
   const formatter = new Intl.DateTimeFormat(dateTimeLocale, {
     year: "numeric",
@@ -24,8 +34,8 @@
     timeZone,
   });
 
-  let humanTime: string | undefined = undefined;
-  let temperature: string | undefined = undefined;
+  let humanTime: string | undefined = $state(undefined);
+  let temperature: string | undefined = $state(undefined);
 
   function updateDisplayStrings(apiCall: LlmCall | undefined) {
     if (!apiCall) {
@@ -63,13 +73,16 @@
     }
   }
 
-  $: updateDisplayStrings(apiCall);
-  $: previousCall = apiCall?.conversation?.previous_call;
-  $: nextCalls = apiCall?.conversation?.next_calls ?? [];
-  $: thisAsRef = getThisAsRef(apiCall);
-  $: variants =
-    apiCall?.variation?.variants ?? apiCall?.variation?.sibling_variants ?? [];
-  $: provider = extractProvider(apiCall);
+  run(() => {
+    updateDisplayStrings(apiCall);
+  });
+  let previousCall = $derived(apiCall?.conversation?.previous_call);
+  let nextCalls = $derived(apiCall?.conversation?.next_calls ?? []);
+  let thisAsRef = $derived(getThisAsRef(apiCall));
+  let variants = $derived(
+    apiCall?.variation?.variants ?? apiCall?.variation?.sibling_variants ?? [],
+  );
+  let provider = $derived(extractProvider(apiCall));
 </script>
 
 <InfoBox title="API Call">

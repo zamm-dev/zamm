@@ -1,8 +1,12 @@
 <script lang="ts">
   import type { LlmCallReference } from "$lib/bindings";
 
-  export let apiCall: LlmCallReference;
-  export let nolink = false;
+  interface Props {
+    apiCall: LlmCallReference;
+    nolink?: boolean;
+  }
+
+  let { apiCall, nolink = false }: Props = $props();
 </script>
 
 {#if nolink}

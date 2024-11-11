@@ -4,20 +4,25 @@
   import SubInfoBox from "$lib/SubInfoBox.svelte";
   import PageTransition from "./PageTransition.svelte";
 
-  let routeA = true;
-  export let routeBAddress = "/b/";
+  let routeA = $state(true);
+  interface Props {
+    routeBAddress?: string;
+    [key: string]: any;
+  }
+
+  let { routeBAddress = "/b/", ...rest }: Props = $props();
 
   function toggleRoute() {
     routeA = !routeA;
   }
 
-  $: currentRoute = routeA ? "/a/" : routeBAddress;
+  let currentRoute = $derived(routeA ? "/a/" : routeBAddress);
 </script>
 
-<button class="route-toggle" on:click={toggleRoute}>Toggle route</button>
+<button class="route-toggle" onclick={toggleRoute}>Toggle route</button>
 
 <MockAppLayout>
-  <PageTransition {currentRoute} {...$$restProps}>
+  <PageTransition {currentRoute} {...rest}>
     {#if routeA}
       <InfoBox title="Simulation">
         <p class="atomic-reveal">

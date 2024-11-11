@@ -1,6 +1,6 @@
 <script>
   import { page } from "$app/stores";
-  import ApiCall from "./UnloadedApiCall.svelte";
+  import UnloadedApiCall from "./UnloadedApiCall.svelte";
 </script>
 
-<ApiCall id={$page.params.slug} />
+<UnloadedApiCall id={$page.params.slug} />

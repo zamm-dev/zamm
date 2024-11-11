@@ -10,8 +10,12 @@
   import plaintext from "svelte-highlight/languages/plaintext";
   import "svelte-highlight/styles/github.css";
 
-  export let text: string;
-  export let lang: string;
+  interface Props {
+    text: string;
+    lang: string;
+  }
+
+  let { text, lang }: Props = $props();
 
   function getLanguageStr() {
     if (lang) {

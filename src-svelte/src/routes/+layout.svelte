@@ -1,10 +1,10 @@
-<script>
+<script lang="ts">
   import AppLayout from "./AppLayout.svelte";
   import "./styles.css";
 
-  export let data;
+  let { data, children } = $props();
 </script>
 
 <AppLayout currentRoute={data.url}>
-  <slot />
+  {@render children?.()}
 </AppLayout>

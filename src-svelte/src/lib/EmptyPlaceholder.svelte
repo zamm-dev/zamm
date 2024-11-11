@@ -1,5 +1,14 @@
+<script lang="ts">
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
+
+  let { children }: Props = $props();
+  const children_render = $derived(children);
+</script>
+
 <p class="empty atomic-reveal">
-  <slot />
+  {@render children_render?.()}
 </p>
 
 <style>

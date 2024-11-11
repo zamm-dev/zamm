@@ -4,9 +4,13 @@
   import { onMount } from "svelte";
   import type { ChatPromptVariant } from "$lib/additionalTypes";
 
-  export let prompt: ChatPromptVariant;
-  export let editable = false;
-  let textareas: HTMLTextAreaElement[] = [];
+  interface Props {
+    prompt: ChatPromptVariant;
+    editable?: boolean;
+  }
+
+  let { prompt = $bindable(), editable = false }: Props = $props();
+  let textareas: HTMLTextAreaElement[] = $state([]);
 
   function toggleRole(i: number) {
     if (!editable) {
@@ -52,31 +56,31 @@
         class={"message atomic-reveal " + message.role.toLowerCase()}
         role="listitem"
       >
-        <!-- svelte-ignore a11y-no-noninteractive-tabindex -->
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
         <span
           class="role"
           class:editable
           role={editable ? "button" : "text"}
           aria-label={editable ? "Toggle message type" : undefined}
           tabindex={editable ? 0 : undefined}
-          on:click={() => toggleRole(i)}
-          on:keypress={() => toggleRole(i)}>{message.role}</span
+          onclick={() => toggleRole(i)}
+          onkeypress={() => toggleRole(i)}>{message.role}</span
         >
         {#if editable}
           <textarea
             rows="1"
             placeholder="Set text for new prompt message..."
             value={message.text}
-            on:input={(e) => editText(i, e)}
+            oninput={(e) => editText(i, e)}
             bind:this={textareas[i]}
-          />
+          ></textarea>
         {:else}
           <pre>{message.text}</pre>
         {/if}
       </div>
     {/each}
     {#if editable}
-      <button title="Add a new message to the chat" on:click={addMessage}
+      <button title="Add a new message to the chat" onclick={addMessage}
         >+</button
       >
     {/if}

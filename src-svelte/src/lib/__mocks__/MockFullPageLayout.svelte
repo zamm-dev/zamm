@@ -1,11 +1,18 @@
 <script lang="ts">
   import AnimationControl from "../../routes/AnimationControl.svelte";
   import Snackbar from "$lib/snackbar/Snackbar.svelte";
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
+
+  let { children }: Props = $props();
+
+  const children_render = $derived(children);
 </script>
 
 <div id="mock-full-page-layout" class="storybook-wrapper full-height">
   <AnimationControl>
-    <slot />
+    {@render children_render?.()}
     <Snackbar />
   </AnimationControl>
 </div>

@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   import { writable } from "svelte/store";
 
   type DataTypeEnum = "llm-calls" | "terminal";
@@ -16,17 +16,24 @@
   import TerminalSessionsTable from "./terminal-sessions/TerminalSessionsTable.svelte";
   import Select from "$lib/controls/Select.svelte";
 
-  export let dateTimeLocale: string | undefined = undefined;
-  export let timeZone: string | undefined = undefined;
+  interface Props {
+    dateTimeLocale?: string | undefined;
+    timeZone?: string | undefined;
+  }
 
-  $: infoBoxTitle =
-    $dataType === "llm-calls" ? "LLM API Calls" : "Terminal Sessions";
-  $: newHref =
+  let { dateTimeLocale = undefined, timeZone = undefined }: Props = $props();
+
+  let infoBoxTitle = $derived(
+    $dataType === "llm-calls" ? "LLM API Calls" : "Terminal Sessions",
+  );
+  let newHref = $derived(
     $dataType === "llm-calls"
       ? "/database/api-calls/new/"
-      : "/database/terminal-sessions/new/";
-  $: newTitle =
-    $dataType === "llm-calls" ? "New API call" : "New Terminal Session";
+      : "/database/terminal-sessions/new/",
+  );
+  let newTitle = $derived(
+    $dataType === "llm-calls" ? "New API call" : "New Terminal Session",
+  );
 </script>
 
 <InfoBox title={infoBoxTitle} fullHeight>

@@ -8,8 +8,13 @@
   import Service from "./Service.svelte";
   import { onMount } from "svelte";
 
-  let isLoading = true;
-  export let editDemo = false;
+  let isLoading = $state(true);
+  interface Props {
+    editDemo?: boolean;
+    [key: string]: any;
+  }
+
+  let { editDemo = false, ...rest }: Props = $props();
 
   onMount(() => {
     unwrap(commands.getApiKeys())
@@ -24,10 +29,10 @@
       });
   });
 
-  $: apiKeys = $apiKeysStore;
+  let apiKeys = $derived($apiKeysStore);
 </script>
 
-<InfoBox title="API Keys" {...$$restProps}>
+<InfoBox title="API Keys" {...rest}>
   {#if isLoading}
     <Loading />
   {:else}

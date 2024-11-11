@@ -1,16 +1,30 @@
 <script lang="ts">
   import { createEventDispatcher } from "svelte";
 
-  export let unwrapped = false;
-  export let disabled = false;
-  export let leftEnd = false;
-  export let rightEnd = false;
-  export let ariaLabel: string | undefined = undefined;
+  interface Props {
+    unwrapped?: boolean;
+    disabled?: boolean;
+    leftEnd?: boolean;
+    rightEnd?: boolean;
+    ariaLabel?: string | undefined;
+    children?: import("svelte").Snippet;
+  }
+
+  let {
+    unwrapped = false,
+    disabled = false,
+    leftEnd = false,
+    rightEnd = false,
+    ariaLabel = undefined,
+    children,
+  }: Props = $props();
   const dispatchClickEvent = createEventDispatcher();
 
   function handleClick() {
     dispatchClickEvent("click");
   }
+
+  const children_render = $derived(children);
 </script>
 
 {#if unwrapped}
@@ -21,9 +35,9 @@
     class:disabled
     type="submit"
     aria-label={ariaLabel}
-    on:click={handleClick}
+    onclick={handleClick}
   >
-    <slot />
+    {@render children_render?.()}
   </button>
 {:else}
   <button
@@ -33,14 +47,14 @@
     class:disabled
     type="submit"
     aria-label={ariaLabel}
-    on:click={handleClick}
+    onclick={handleClick}
   >
     <div
       class="cut-corners inner"
       class:left-end={leftEnd}
       class:right-end={rightEnd}
     >
-      <slot />
+      {@render children_render?.()}
     </div>
   </button>
 {/if}

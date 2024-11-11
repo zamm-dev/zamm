@@ -4,19 +4,20 @@
   import CodeRender from "./CodeRender.svelte";
   import SvelteMarkdown from "svelte-markdown";
 
-  export let message: ChatMessage;
-  let resizeBubbleBound: (chatWidthPx: number) => Promise<void>;
+  interface Props {
+    message: ChatMessage;
+    [key: string]: any;
+  }
+
+  let { message, ...rest }: Props = $props();
+  let messageUI: MessageUI;
 
   export function resizeBubble(chatWidthPx: number) {
-    return resizeBubbleBound(chatWidthPx);
+    return messageUI.resizeBubble(chatWidthPx);
   }
 </script>
 
-<MessageUI
-  role={message.role}
-  bind:resizeBubble={resizeBubbleBound}
-  {...$$restProps}
->
+<MessageUI role={message.role} bind:this={messageUI} {...rest}>
   <div class="markdown">
     <SvelteMarkdown source={message.text} renderers={{ code: CodeRender }} />
   </div>

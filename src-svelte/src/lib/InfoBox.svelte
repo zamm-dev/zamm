@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   import {
     type TransitionTimingMs,
     type TransitionTimingFraction,
@@ -241,6 +241,8 @@
 </script>
 
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import getComponentId from "./label-id";
   import RoundDef from "./RoundDef.svelte";
   import { cubicInOut, cubicOut, linear } from "svelte/easing";
@@ -254,14 +256,26 @@
   import { firstAppLoad, firstPageLoad } from "./firstPageLoad";
   import { SubAnimation, PropertyAnimation } from "$lib/animation-timing";
 
-  export let title = "";
-  export let childNumber = 0;
-  export let preDelay = $firstAppLoad ? 0 : 100;
-  export let maxWidth: string | undefined = undefined;
-  export let fullHeight = false;
+  interface Props {
+    title?: string;
+    childNumber?: number;
+    preDelay?: any;
+    maxWidth?: string | undefined;
+    fullHeight?: boolean;
+    children?: import("svelte").Snippet;
+  }
+
+  let {
+    title = "",
+    childNumber = 0,
+    preDelay = $firstAppLoad ? 0 : 100,
+    maxWidth = undefined,
+    fullHeight = false,
+    children,
+  }: Props = $props();
   let maxWidthStyle = maxWidth === undefined ? "" : `max-width: ${maxWidth};`;
   const infoboxId = getComponentId("infobox");
-  let titleElement: HTMLElement | undefined;
+  let titleElement: HTMLElement | undefined = $state();
   const perChildStagger = 100;
   const totalDelay = preDelay + childNumber * perChildStagger;
 
@@ -372,7 +386,7 @@
         timing: anim.timing,
         tick: (tLocalFraction: number) => {
           const opacity = easingFunction(tLocalFraction);
-          anim.node.style.opacity = opacity;
+          anim.node.style.opacity = opacity.toString();
 
           if (tLocalFraction === 0) {
             anim.node.classList.add("wait-for-infobox");
@@ -508,14 +522,18 @@
     }
   }
 
-  $: shouldAnimate = $animationsOn && $firstPageLoad;
-  $: timingScaleFactor = shouldAnimate ? 1 / $animationSpeed : 0;
-  $: timing = getAnimationTiming(totalDelay, timingScaleFactor);
-  $: overallFadeInArgs = {
+  let shouldAnimate = $derived($animationsOn && $firstPageLoad);
+  let timingScaleFactor = $derived(shouldAnimate ? 1 / $animationSpeed : 0);
+  let timing = $derived(getAnimationTiming(totalDelay, timingScaleFactor));
+  let overallFadeInArgs = $derived({
     delay: timing.overallFadeIn.delayMs(),
     duration: timing.overallFadeIn.durationMs(),
-  };
-  $: forceUpdateTitleText(title);
+  });
+  run(() => {
+    forceUpdateTitleText(title);
+  });
+
+  const children_render = $derived(children);
 </script>
 
 <section
@@ -548,7 +566,7 @@
         class="info-content composite-reveal"
         in:revealInfoBox|global={timing}
       >
-        <slot />
+        {@render children_render?.()}
       </div>
     </div>
   </div>

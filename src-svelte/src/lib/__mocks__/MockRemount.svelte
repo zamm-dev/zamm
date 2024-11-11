@@ -1,5 +1,10 @@
 <script lang="ts">
-  let visible = true;
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
+
+  let { children }: Props = $props();
+  let visible = $state(true);
 
   function remount() {
     visible = false;
@@ -7,8 +12,8 @@
   }
 </script>
 
-<button on:click={remount}>Remount</button>
+<button onclick={remount}>Remount</button>
 
 {#if visible}
-  <slot />
+  {@render children?.()}
 {/if}

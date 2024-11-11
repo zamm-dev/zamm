@@ -1,7 +1,11 @@
 <script lang="ts">
-  export let name: string;
-  export let placeholder: string | undefined = undefined;
-  export let value: string;
+  interface Props {
+    name: string;
+    placeholder?: string | undefined;
+    value: string;
+  }
+
+  let { name, placeholder = undefined, value = $bindable() }: Props = $props();
 </script>
 
 <div class="fancy-input">

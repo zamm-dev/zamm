@@ -1,25 +1,38 @@
 <script lang="ts" generics="Item extends { id: string, timestamp: string }">
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import Scrollable from "$lib/Scrollable.svelte";
-  import { onMount } from "svelte";
+  import { onMount, type Component } from "svelte";
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
 
   const PAGE_SIZE = 50;
   const MIN_BLURB_WIDTH = "5rem";
   const MIN_TIME_WIDTH = "12.5rem";
 
-  export let dateTimeLocale: string | undefined = undefined;
-  export let timeZone: string | undefined = undefined;
-  export let blurbLabel: string;
-  export let itemUrl: (item: Item) => string;
-  export let getItems: (offset: number) => Promise<Item[]>;
-  export let renderItem: ConstructorOfATypedSvelteComponent;
-  let items: Item[] = [];
+  interface Props {
+    dateTimeLocale?: string | undefined;
+    timeZone?: string | undefined;
+    blurbLabel: string;
+    itemUrl: (item: Item) => string;
+    getItems: (offset: number) => Promise<Item[]>;
+    renderItem: Component<{ item: Item }>;
+    children?: import("svelte").Snippet;
+  }
+
+  let {
+    dateTimeLocale = undefined,
+    timeZone = undefined,
+    blurbLabel,
+    itemUrl,
+    getItems,
+    renderItem,
+    children,
+  }: Props = $props();
+  let items: Item[] = $state([]);
   let newItemsPromise: Promise<void> | undefined = undefined;
   let allItemsLoaded = false;
-  let blurbWidth = MIN_BLURB_WIDTH;
-  let timeWidth = MIN_TIME_WIDTH;
-  let headerBlurbWidth = "15rem"; // 3 * MIN_BLURB_WIDTH
+  let blurbWidth = $state(MIN_BLURB_WIDTH);
+  let timeWidth = $state(MIN_TIME_WIDTH);
+  let headerBlurbWidth = $state("15rem"); // 3 * MIN_BLURB_WIDTH
 
   const formatter = new Intl.DateTimeFormat(dateTimeLocale, {
     year: "numeric",
@@ -92,10 +105,13 @@
     };
   });
 
-  $: minimumWidths =
+  let minimumWidths = $derived(
     `--blurb-width: ${blurbWidth}; ` +
-    `--header-blurb-width: ${headerBlurbWidth}; ` +
-    `--time-width: ${timeWidth}`;
+      `--header-blurb-width: ${headerBlurbWidth}; ` +
+      `--time-width: ${timeWidth}`,
+  );
+
+  const children_render = $derived(children);
 </script>
 
 <div class="container database-page full-height" style={minimumWidths}>
@@ -109,11 +125,12 @@
     <Scrollable on:bottomReached={loadNewItems}>
       {#if items.length > 0}
         {#each items as item (item.id)}
+          {@const Blurb = renderItem}
           <a href={itemUrl(item)}>
             <div class="blurb instance">
               <div class="text-container">
                 <div class="text">
-                  <svelte:component this={renderItem} {item} />
+                  <Blurb {item} />
                 </div>
               </div>
               <div class="time">{formatTimestamp(item.timestamp)}</div>
@@ -124,7 +141,7 @@
         <div class="blurb placeholder">
           <div class="text-container">
             <EmptyPlaceholder>
-              <slot />
+              {@render children_render?.()}
             </EmptyPlaceholder>
           </div>
           <div class="time"></div>

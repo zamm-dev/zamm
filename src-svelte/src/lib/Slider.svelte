@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import { onMount } from "svelte";
   import getComponentId from "./label-id";
   import {
@@ -13,24 +15,35 @@
     `transition: ` + `transform var(--standard-duration) ease-out;`;
   const overshoot = 0.4 * $rootEm; // how much overshoot to allow per-side
 
-  export let label: string | undefined = undefined;
-  export let min = 0;
-  export let max: number;
-  export let step: number | undefined = undefined;
-  export let value: number = min;
-  export let onUpdate: (newValue: number) => void = () => undefined;
+  interface Props {
+    label?: string | undefined;
+    min?: number;
+    max: number;
+    step?: number | undefined;
+    value?: number;
+    onUpdate?: (newValue: number) => void;
+  }
+
+  let {
+    label = undefined,
+    min = 0,
+    max,
+    step = undefined,
+    value = $bindable(min),
+    onUpdate = () => undefined,
+  }: Props = $props();
   const range = max - min;
-  let track: HTMLDivElement | null;
-  let toggleBound: HTMLDivElement | null;
-  let toggleLabel: HTMLDivElement | null;
-  let leeway = 0;
-  let left = 0;
-  let transition = transitionAnimation;
+  let track: HTMLDivElement | null = $state(null);
+  let toggleBound: HTMLDivElement | null = $state(null);
+  let toggleLabel: HTMLDivElement | null = $state(null);
+  let leeway = $state(0);
+  let left = $state(0);
+  let transition = $state(transitionAnimation);
   // needed because unlike Neodrag, we want the class to apply as soon as mousedown
   // happens
-  let dragging = false;
+  let dragging = $state(false);
 
-  let toggleDragOptions: DragOptions = {
+  let toggleDragOptions: DragOptions = $state({
     axis: "x",
     bounds: () => {
       if (!toggleBound) {
@@ -56,7 +69,7 @@
       // so we need to wait a bit to stop the dragging
       setTimeout(() => (dragging = false), 100);
     },
-  };
+  });
 
   function updateValue(newValue: number) {
     const minStep = step || 0.01;
@@ -148,7 +161,9 @@
     }
   });
 
-  $: left = toggleDragOptions.position?.x ?? 0;
+  run(() => {
+    left = toggleDragOptions.position?.x ?? 0;
+  });
 </script>
 
 <div class="container">
@@ -164,8 +179,8 @@
     aria-valuenow={value}
     aria-labelledby={sliderId}
     style="--overshoot: {overshoot}px;"
-    on:click={onClick}
-    on:keydown={onKeyPress}
+    onclick={onClick}
+    onkeydown={onKeyPress}
   >
     <div class="groove-layer groove" bind:this={track}>
       <div class="groove-layer shadow"></div>

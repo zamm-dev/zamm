@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   import { writable } from "svelte/store";
 
   export interface SidebarContext {
@@ -9,6 +9,8 @@
 </script>
 
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import IconSettings from "~icons/ion/settings";
   import IconChat from "~icons/ph/chat-dots-fill";
   import IconDashboard from "~icons/material-symbols/monitor-heart";
@@ -47,17 +49,23 @@
   ];
 
   const REGULAR_TRANSITION_DURATION = "calc(2 * var(--standard-duration))";
-  export let currentRoute: string;
-  export let dummyLinks = false;
-  let indicatorPosition: number;
-  let transitionDuration = REGULAR_TRANSITION_DURATION;
+  interface Props {
+    currentRoute: string;
+    dummyLinks?: boolean;
+  }
+
+  let { currentRoute = $bindable(), dummyLinks = false }: Props = $props();
+  let indicatorPosition: number = $state(0);
+  let transitionDuration = $state(REGULAR_TRANSITION_DURATION);
   let previousRoute = currentRoute;
-  let iconLinks = routes.reduce(
-    (acc, route) => {
-      acc[route.name] = route.path;
-      return acc;
-    },
-    {} as Record<string, string>,
+  let iconLinks = $state(
+    routes.reduce(
+      (acc, route) => {
+        acc[route.name] = route.path;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
   );
 
   function routeMatches(sidebarRoute: string, pageRoute: string) {
@@ -135,7 +143,9 @@
     };
   });
 
-  $: updateIndicator(currentRoute);
+  run(() => {
+    updateIndicator(currentRoute);
+  });
 </script>
 
 <header style={`--animation-duration: ${transitionDuration};`}>
@@ -186,9 +196,9 @@
         id="nav-{route.name.toLowerCase()}"
         title={route.name}
         href={iconLinks[route.name]}
-        on:click={routeChangeSimulator(route)}
+        onclick={routeChangeSimulator(route)}
       >
-        <svelte:component this={route.icon} />
+        <route.icon />
       </a>
     {/each}
     <div class="spacer"></div>
@@ -202,9 +212,9 @@
         id="nav-{route.name.toLowerCase()}"
         title={route.name}
         href={iconLinks[route.name]}
-        on:click={routeChangeSimulator(route)}
+        onclick={routeChangeSimulator(route)}
       >
-        <svelte:component this={route.icon} />
+        <route.icon />
       </a>
     {/each}
   </nav>

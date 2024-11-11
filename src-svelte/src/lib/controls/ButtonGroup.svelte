@@ -1,6 +1,15 @@
+<script lang="ts">
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
+
+  let { children }: Props = $props();
+  const children_render = $derived(children);
+</script>
+
 <div class="outer-container">
   <div class="button-container cut-corners outer">
-    <slot />
+    {@render children_render?.()}
   </div>
 </div>
 

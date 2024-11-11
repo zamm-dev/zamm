@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   import { writable } from "svelte/store";
   import { type ChatMessage } from "$lib/bindings";
 
@@ -29,11 +29,18 @@
   import EmptyPlaceholder from "$lib/EmptyPlaceholder.svelte";
   import SendInputForm from "$lib/controls/SendInputForm.svelte";
 
-  export let expectingResponse = false;
-  export let showMostRecentMessage = true;
-  let messageComponents: Message[] = [];
-  let growable: Scrollable | undefined;
-  let chatContainer: HTMLDivElement | undefined = undefined;
+  interface Props {
+    expectingResponse?: boolean;
+    showMostRecentMessage?: boolean;
+  }
+
+  let {
+    expectingResponse = $bindable(false),
+    showMostRecentMessage = true,
+  }: Props = $props();
+  let messageComponents: Message[] = $state([]);
+  let growable: Scrollable | undefined = $state();
+  let chatContainer: HTMLDivElement | undefined = $state(undefined);
   let conversationWidthPx = 100;
 
   function resizeConversationView() {

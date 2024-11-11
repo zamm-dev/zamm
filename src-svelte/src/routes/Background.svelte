@@ -2,7 +2,10 @@
   import BackgroundUI from "./BackgroundUI.svelte";
   import { animationsOn, backgroundAnimation } from "$lib/preferences";
 
-  $: animated = $animationsOn && $backgroundAnimation;
+  let animated: boolean = $state(false);
+  $effect(() => {
+    animated = $animationsOn && $backgroundAnimation;
+  });
 </script>
 
-<BackgroundUI bind:animated />
+<BackgroundUI {animated} />

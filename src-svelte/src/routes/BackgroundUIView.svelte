@@ -1,10 +1,17 @@
 <script lang="ts">
   import MockAppLayout from "$lib/__mocks__/MockAppLayout.svelte";
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
+
+  let { children }: Props = $props();
+
+  const children_render = $derived(children);
 </script>
 
 <MockAppLayout>
   <div class="background-container">
-    <slot />
+    {@render children_render?.()}
   </div>
 </MockAppLayout>
 

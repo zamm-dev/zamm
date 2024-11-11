@@ -11,16 +11,22 @@
   import { page } from "$app/stores";
   import { pageTransition } from "../../PageTransition.svelte";
 
-  export let session: TerminalSessionInfo | undefined = undefined;
-  let expectingResponse = false;
-  let growable: Scrollable | undefined;
-  $: awaitingSession = session === undefined;
-  $: accessibilityLabel = awaitingSession
-    ? "Enter command to run"
-    : "Enter input for command";
-  $: placeholder = awaitingSession
-    ? "Enter command to run (e.g. /bin/bash)"
-    : "Enter input for command";
+  interface Props {
+    session?: TerminalSessionInfo | undefined;
+  }
+
+  let { session = $bindable(undefined) }: Props = $props();
+  let expectingResponse = $state(false);
+  let growable: Scrollable | undefined = $state();
+  let awaitingSession = $derived(session === undefined);
+  let accessibilityLabel = $derived(
+    awaitingSession ? "Enter command to run" : "Enter input for command",
+  );
+  let placeholder = $derived(
+    awaitingSession
+      ? "Enter command to run (e.g. /bin/bash)"
+      : "Enter input for command",
+  );
 
   function resizeTerminalView() {
     growable?.resizeScrollable();

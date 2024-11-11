@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   import type { ChatMessage } from "$lib/bindings";
 
   function determineRole(role: string): "Human" | "System" | "AI" {
@@ -101,7 +101,7 @@
   import { canonicalRef, prompt } from "../ApiCallEditor.svelte";
   import { goto } from "$app/navigation";
 
-  let importData = "";
+  let importData = $state("");
 
   function importConversation() {
     try {

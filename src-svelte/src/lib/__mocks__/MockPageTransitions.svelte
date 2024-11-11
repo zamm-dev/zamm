@@ -4,11 +4,18 @@
   import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
   import { animationSpeed, transparencyOn } from "$lib/preferences";
   import Background from "../../routes/Background.svelte";
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
+
+  let { children }: Props = $props();
 
   firstAppLoad.set(true);
   firstPageLoad.set(true);
   animationSpeed.set(0.1);
   transparencyOn.set(true);
+
+  const children_render = $derived(children);
 </script>
 
 <div id="mock-transitions">
@@ -18,7 +25,7 @@
     </div>
 
     <PageTransition currentRoute="/storybook-demo">
-      <slot />
+      {@render children_render?.()}
     </PageTransition>
   </MockFullPageLayout>
 </div>

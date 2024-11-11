@@ -3,6 +3,11 @@
   import { commands, type TerminalSessionReference } from "$lib/bindings";
   import { unwrap } from "$lib/tauri";
   import TerminalSessionBlurb from "./TerminalSessionBlurb.svelte";
+  interface Props {
+    [key: string]: any;
+  }
+
+  let { ...rest }: Props = $props();
 
   const getTerminalSessions = (offset: number) =>
     unwrap(commands.getTerminalSessions(offset));
@@ -15,7 +20,7 @@
   getItems={getTerminalSessions}
   itemUrl={terminalSessionUrl}
   renderItem={TerminalSessionBlurb}
-  {...$$restProps}
+  {...rest}
 >
   Looks like you haven't <a href="/database/terminal-sessions/new/">started</a> any
   terminal sessions yet.

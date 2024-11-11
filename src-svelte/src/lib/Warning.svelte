@@ -1,5 +1,12 @@
 <script lang="ts">
   import IconWarning from "~icons/streamline/warning-octagon-solid";
+  interface Props {
+    children?: import("svelte").Snippet;
+  }
+
+  let { children }: Props = $props();
+
+  const children_render = $derived(children);
 </script>
 
 <div class="warning atomic-reveal">
@@ -7,7 +14,7 @@
     <IconWarning />
   </div>
   <div class="text">
-    <slot />
+    {@render children_render?.()}
   </div>
 </div>
 

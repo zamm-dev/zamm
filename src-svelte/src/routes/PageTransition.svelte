@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   import { writable } from "svelte/store";
   import { cubicIn, backOut } from "svelte/easing";
 
@@ -54,16 +54,23 @@
 </script>
 
 <script lang="ts">
+  import { run } from "svelte/legacy";
+
   import { fly } from "svelte/transition";
   import { standardDuration } from "$lib/preferences";
   import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
   import { onMount, tick } from "svelte";
 
-  export let currentRoute: string;
+  interface Props {
+    currentRoute: string;
+    children?: import("svelte").Snippet;
+  }
+
+  let { currentRoute, children }: Props = $props();
   let oldRoute = currentRoute;
-  let ready = false;
+  let ready = $state(false);
   const visitedKeys = new Set<string>();
-  let transitions: Transitions = getTransitions(TransitionType.Swap);
+  let transitions: Transitions = $state(getTransitions(TransitionType.Swap));
 
   onMount(async () => {
     const regularDelay = transitions.in.delay;
@@ -148,8 +155,14 @@
     oldRoute = route;
   }
 
-  $: checkFirstPageLoad(currentRoute);
-  $: updateFlyDirection(currentRoute);
+  run(() => {
+    checkFirstPageLoad(currentRoute);
+  });
+  run(() => {
+    updateFlyDirection(currentRoute);
+  });
+
+  const children_render = $derived(children);
 </script>
 
 {#key currentRoute}
@@ -159,7 +172,7 @@
       in:fly|global={transitions.in}
       out:fly|global={transitions.out}
     >
-      <slot />
+      {@render children_render?.()}
     </div>
   {/if}
 {/key}

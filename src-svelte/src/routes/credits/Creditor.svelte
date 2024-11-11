@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   const MAX_URL_LENGTH = 15;
 
   function formatUrlHelper(urlString: string) {
@@ -44,11 +44,21 @@
   import GitHubIcon from "./GitHubIcon.svelte";
   import TypodermicIcon from "./TypodermicIcon.svelte";
 
-  export let isPerson = false;
-  export let logo: string | undefined = undefined;
-  export let name: string;
-  export let url: string;
-  export let urlDisplay = formatUrl(url);
+  interface Props {
+    isPerson?: boolean;
+    logo?: string | undefined;
+    name: string;
+    url: string;
+    urlDisplay?: any;
+  }
+
+  let {
+    isPerson = false,
+    logo = undefined,
+    name,
+    url,
+    urlDisplay = formatUrl(url),
+  }: Props = $props();
 
   const isGitHubLink = url.startsWith("https://github.com");
   const isTypodermicLink = url.startsWith("https://typodermicfonts.com");

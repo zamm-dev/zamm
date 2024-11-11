@@ -3,6 +3,11 @@
   import Loading from "$lib/Loading.svelte";
   import { commands, type OS } from "$lib/bindings";
   import { systemInfo } from "$lib/system-info";
+  interface Props {
+    [key: string]: any;
+  }
+
+  let { ...rest }: Props = $props();
 
   let systemInfoCall = commands.getSystemInfo();
   systemInfoCall
@@ -20,11 +25,11 @@
     return os ?? "Unknown";
   }
 
-  $: os = formatOsString($systemInfo?.os);
+  let os = $derived(formatOsString($systemInfo?.os));
 </script>
 
 <div class="container">
-  <InfoBox title="System Info" {...$$restProps}>
+  <InfoBox title="System Info" {...rest}>
     {#await systemInfoCall}
       <Loading />
     {:then systemInfo}

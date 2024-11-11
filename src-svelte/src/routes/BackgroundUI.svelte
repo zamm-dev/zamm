@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script module lang="ts">
   const CHAR_GAP = 2;
   const ANIMATES_PER_CHAR = 2;
   const STATIC_INITIAL_DRAWS = 100;
@@ -26,9 +26,15 @@
   import { standardDuration, newEmStore } from "$lib/preferences";
   import prand from "pure-rand";
 
+  interface Props {
+    animated?: boolean;
+  }
+
+  let { animated = false }: Props = $props();
   const rng = prand.xoroshiro128plus(8650539321744612);
-  export let animated = false;
-  $: animateIntervalMs = $standardDuration / 2;
+  const animateIntervalMs = derived(standardDuration, ($sd) => $sd / 2);
+  $effect(() => updateAnimationState(animated));
+  $effect(() => updateAnimationSpeed($animateIntervalMs));
   let charEm = newEmStore(26);
   let textFont = derived(
     charEm,
@@ -62,7 +68,7 @@
       return;
     }
 
-    animateInterval = setInterval(draw, animateIntervalMs);
+    animateInterval = setInterval(draw, $animateIntervalMs);
   }
 
   function nextColumnPosition() {
@@ -174,9 +180,6 @@
       }
     };
   });
-
-  $: updateAnimationState(animated);
-  $: updateAnimationSpeed(animateIntervalMs);
 </script>
 
 <div class="background" bind:this={background}>

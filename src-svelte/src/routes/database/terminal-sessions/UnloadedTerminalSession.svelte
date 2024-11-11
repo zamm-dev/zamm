@@ -6,8 +6,12 @@
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import Loading from "$lib/Loading.svelte";
 
-  export let id: string;
-  let session: TerminalSessionInfo | undefined = undefined;
+  interface Props {
+    id: string;
+  }
+
+  let { id }: Props = $props();
+  let session: TerminalSessionInfo | undefined = $state(undefined);
 
   onMount(async () => {
     try {

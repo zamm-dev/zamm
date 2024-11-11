@@ -1,8 +1,15 @@
 <script lang="ts">
   import getComponentId from "./label-id";
 
-  export let subheading: string;
+  interface Props {
+    subheading: string;
+    children?: import("svelte").Snippet;
+  }
+
+  let { subheading, children }: Props = $props();
   const subinfoboxId = getComponentId("subinfobox");
+
+  const children_render = $derived(children);
 </script>
 
 <section class="sub-info-box composite-reveal" aria-labelledby={subinfoboxId}>
@@ -10,7 +17,7 @@
     <h3 id={subinfoboxId}>{subheading}</h3>
   </div>
   <div class="content composite-reveal">
-    <slot />
+    {@render children_render?.()}
   </div>
 </section>
 

@@ -12,4 +12,4 @@
 
 <Snackbar />
 
-<button on:click={showError}>Show Error</button>
+<button onclick={showError}>Show Error</button>

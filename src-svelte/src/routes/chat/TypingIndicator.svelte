@@ -2,7 +2,7 @@
   import MessageUI from "./MessageUI.svelte";
   import { animationsOn } from "$lib/preferences";
 
-  $: animationState = $animationsOn ? "running" : "paused";
+  let animationState = $derived($animationsOn ? "running" : "paused");
 </script>
 
 <MessageUI role="AI">

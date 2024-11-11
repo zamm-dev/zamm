@@ -1,4 +1,4 @@
-<script lang="ts" context="module">
+<script lang="ts" module>
   export function styleKhmer(text: string) {
     var newText = "";
     var isKhmer = false;
@@ -27,10 +27,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  export let role: "System" | "Human" | "AI";
-  export let forceHighlight = false;
+  interface Props {
+    role: "System" | "Human" | "AI";
+    forceHighlight?: boolean;
+    children?: import("svelte").Snippet;
+  }
+
+  let { role, forceHighlight = false, children }: Props = $props();
   const classList = `message atomic-reveal ${role.toLowerCase()}`;
-  let textElement: HTMLDivElement | null;
+  let textElement: HTMLDivElement | null = $state(null);
 
   let finalResizeTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
@@ -126,13 +131,15 @@
       }
     };
   });
+
+  const children_render = $derived(children);
 </script>
 
 <div class={classList} class:force-highlight={forceHighlight} role="listitem">
   <div class="arrow"></div>
   <div class="text-container">
     <div class="text" bind:this={textElement}>
-      <slot />
+      {@render children_render?.()}
     </div>
   </div>
 </div>

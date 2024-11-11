@@ -1,17 +1,24 @@
 <script lang="ts">
   import getComponentId from "$lib/label-id";
 
-  export let name: string;
-  export let value: string;
-  export let label: string;
+  interface Props {
+    name: string;
+    value: string;
+    label: string;
+    children?: import("svelte").Snippet;
+  }
+
+  let { name, value = $bindable(), label, children }: Props = $props();
   let id = getComponentId("select");
+
+  const children_render = $derived(children);
 </script>
 
 <div class="setting">
   <label for={id}>{label}</label>
   <div class="select-wrapper">
     <select {name} {id} bind:value>
-      <slot />
+      {@render children_render?.()}
     </select>
   </div>
 </div>

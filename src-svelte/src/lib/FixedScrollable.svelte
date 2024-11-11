@@ -2,16 +2,27 @@
   import { onMount } from "svelte";
   import { createEventDispatcher } from "svelte";
 
-  export let maxHeight: string;
-  export let initialPosition: "top" | "bottom" = "top";
-  export let autoscroll = false;
-  export let scrollDelay = 0;
-  let scrollContents: HTMLDivElement | undefined = undefined;
+  interface Props {
+    maxHeight: string;
+    initialPosition?: "top" | "bottom";
+    autoscroll?: boolean;
+    scrollDelay?: number;
+    children?: import("svelte").Snippet;
+  }
+
+  let {
+    maxHeight,
+    initialPosition = "top",
+    autoscroll = false,
+    scrollDelay = 0,
+    children,
+  }: Props = $props();
+  let scrollContents: HTMLDivElement | undefined = $state(undefined);
   let scrollInterval: NodeJS.Timeout | undefined = undefined;
-  let topIndicator: HTMLDivElement;
-  let bottomIndicator: HTMLDivElement;
-  let topShadow: HTMLDivElement;
-  let bottomShadow: HTMLDivElement;
+  let topIndicator: HTMLDivElement | undefined = $state();
+  let bottomIndicator: HTMLDivElement | undefined = $state();
+  let topShadow: HTMLDivElement | undefined = $state();
+  let bottomShadow: HTMLDivElement | undefined = $state();
   const dispatchBottomReachedEvent = createEventDispatcher();
 
   export function getDimensions() {
@@ -28,7 +39,7 @@
     }
   }
 
-  function intersectionCallback(shadow: HTMLDivElement) {
+  function intersectionCallback(shadow: HTMLDivElement | undefined) {
     return (entries: IntersectionObserverEntry[]) => {
       if (!shadow) {
         console.warn("Shadow not mounted");
@@ -51,6 +62,10 @@
   }
 
   onMount(() => {
+    if (!topIndicator || !bottomIndicator) {
+      throw new Error("Scrollable component not mounted");
+    }
+
     let topScrollObserver = new IntersectionObserver(
       intersectionCallback(topShadow),
     );
@@ -91,7 +106,9 @@
     };
   });
 
-  $: style = `max-height: ${maxHeight}`;
+  let style = $derived(`max-height: ${maxHeight}`);
+
+  const children_render = $derived(children);
 </script>
 
 <div class="scrollable composite-reveal" {style}>
@@ -100,12 +117,12 @@
     class="scroll-contents composite-reveal"
     {style}
     bind:this={scrollContents}
-    on:mousedown={stopScrolling}
-    on:wheel={stopScrolling}
+    onmousedown={stopScrolling}
+    onwheel={stopScrolling}
     role="none"
   >
     <div class="indicator top" bind:this={topIndicator}></div>
-    <slot />
+    {@render children_render?.()}
     <div class="indicator bottom" bind:this={bottomIndicator}></div>
   </div>
   <div class="shadow bottom" bind:this={bottomShadow}></div>
