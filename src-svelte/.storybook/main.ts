@@ -44,16 +44,14 @@ const config: StorybookConfig = {
     getAbsolutePath("@storybook/addon-viewport"),
   ],
   framework: {
-    name: "@storybook/sveltekit",
+    name: getAbsolutePath("@storybook/sveltekit"),
     options: {},
   },
   core: {
     disableWhatsNewNotifications: true,
   },
   staticDirs: ["../static", "../../src-tauri"],
-  docs: {
-    autodocs: "tag",
-  },
+  docs: {},
   async viteFinal(config: InlineConfig) {
     const workaroundConfig = unpluginIconsWorkaround(config);
     return mergeConfig(workaroundConfig, {
