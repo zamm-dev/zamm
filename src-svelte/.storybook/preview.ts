@@ -12,6 +12,7 @@ const preview = {
       },
     },
     viewport: {
+      defaultViewport: "reset",
       viewports: {
         ...MINIMAL_VIEWPORTS,
         smallTablet: {
