@@ -58,7 +58,7 @@ export function parseSampleCall(sampleFile: string): ParsedCall {
 
 function stringify(obj: any): string {
   if (isArray(obj)) {
-    const items = obj.map((item) => stringify(item));
+    const items = obj.map((item: any) => stringify(item));
     return `[${items.join(",")}]`;
   }
   if (obj.constructor === Object) {

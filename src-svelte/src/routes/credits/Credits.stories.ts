@@ -1,6 +1,6 @@
 import CreditsComponent from "./Credits.svelte";
-import MockPageTransitions from "$lib/__mocks__/MockPageTransitions.svelte";
-import type { StoryObj, StoryFn } from "@storybook/svelte";
+import type { StoryObj } from "@storybook/svelte";
+import { MockPageTransitionsDecorator } from "$lib/__mocks__/decorators";
 
 export default {
   component: CreditsComponent,
@@ -21,11 +21,4 @@ Tablet.parameters = {
 };
 
 export const FullPage: StoryObj = Template.bind({}) as any;
-FullPage.decorators = [
-  (story: StoryFn) => {
-    return {
-      Component: MockPageTransitions,
-      slot: story,
-    };
-  },
-];
+FullPage.decorators = [MockPageTransitionsDecorator];

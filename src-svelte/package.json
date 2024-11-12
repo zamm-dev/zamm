@@ -40,6 +40,7 @@
     "@types/cookie": "^0.5.1",
     "@types/jest-image-snapshot": "^6.2.0",
     "@types/js-yaml": "^4.0.5",
+    "@types/lodash": "^4.17.13",
     "@vitest/ui": "^2.1.4",
     "autoprefixer": "^10.4.15",
     "eslint-plugin-svelte": "^2.45.1",

@@ -1,7 +1,7 @@
 import ApiCallImport from "./ApiCallImport.svelte";
 import type { StoryFn, StoryObj } from "@storybook/svelte";
 import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
-import MockTransitions from "$lib/__mocks__/MockTransitions.svelte";
+import { MockTransitionsDecorator } from "$lib/__mocks__/decorators";
 
 export default {
   component: ApiCallImport,
@@ -35,11 +35,4 @@ MountTransition.parameters = {
     defaultViewport: "smallTablet",
   },
 };
-MountTransition.decorators = [
-  (story: StoryFn) => {
-    return {
-      Component: MockTransitions,
-      slot: story,
-    };
-  },
-];
+MountTransition.decorators = [MockTransitionsDecorator];

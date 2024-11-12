@@ -1,8 +1,10 @@
 import InfoBox from "./InfoBoxView.svelte";
-import type { StoryFn, StoryObj } from "@storybook/svelte";
+import type { StoryObj } from "@storybook/svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
-import MockTransitions from "$lib/__mocks__/MockTransitions.svelte";
-import MockPageTransitions from "./__mocks__/MockPageTransitions.svelte";
+import {
+  MockPageTransitionsDecorator,
+  MockTransitionsDecorator,
+} from "./__mocks__/decorators";
 
 export default {
   component: InfoBox,
@@ -27,15 +29,7 @@ MountTransition.args = {
   preDelay: 0,
   maxWidth: "50rem",
 };
-MountTransition.decorators = [
-  SvelteStoresDecorator,
-  (story: StoryFn) => {
-    return {
-      Component: MockTransitions,
-      slot: story,
-    };
-  },
-];
+MountTransition.decorators = [SvelteStoresDecorator, MockTransitionsDecorator];
 
 export const SlowMotion: StoryObj = Template.bind({}) as any;
 SlowMotion.args = {
@@ -48,15 +42,7 @@ SlowMotion.parameters = {
     animationSpeed: 0.1,
   },
 };
-SlowMotion.decorators = [
-  SvelteStoresDecorator,
-  (story: StoryFn) => {
-    return {
-      Component: MockTransitions,
-      slot: story,
-    };
-  },
-];
+SlowMotion.decorators = [SvelteStoresDecorator, MockTransitionsDecorator];
 
 export const Motionless: StoryObj = Template.bind({}) as any;
 Motionless.args = {
@@ -68,15 +54,7 @@ Motionless.parameters = {
     animationsOn: false,
   },
 };
-Motionless.decorators = [
-  SvelteStoresDecorator,
-  (story: StoryFn) => {
-    return {
-      Component: MockTransitions,
-      slot: story,
-    };
-  },
-];
+Motionless.decorators = [SvelteStoresDecorator, MockTransitionsDecorator];
 
 export const Transparent: StoryObj = Template.bind({}) as any;
 Transparent.args = {
@@ -90,12 +68,4 @@ Transparent.parameters = {
     transparencyOn: true,
   },
 };
-Transparent.decorators = [
-  SvelteStoresDecorator,
-  (story: StoryFn) => {
-    return {
-      Component: MockPageTransitions,
-      slot: story,
-    };
-  },
-];
+Transparent.decorators = [SvelteStoresDecorator, MockPageTransitionsDecorator];
