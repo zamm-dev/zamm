@@ -115,19 +115,19 @@
 </script>
 
 <div class="container database-page full-height" style={minimumWidths}>
-  <div class="blurb header">
+  <div class="blurb header atomic-reveal">
     <div class="text-container">
       <div class="text">{blurbLabel}</div>
     </div>
     <div class="time">Time</div>
   </div>
-  <div class="scrollable-container full-height">
+  <div class="scrollable-container full-height composite-reveal">
     <Scrollable on:bottomReached={loadNewItems}>
       {#if items.length > 0}
         {#each items as item (item.id)}
           {@const Blurb = renderItem}
-          <a href={itemUrl(item)}>
-            <div class="blurb instance">
+          <a href={itemUrl(item)} class="composite-reveal">
+            <div class="blurb instance atomic-reveal">
               <div class="text-container">
                 <div class="text">
                   <Blurb {item} />

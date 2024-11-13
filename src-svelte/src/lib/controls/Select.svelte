@@ -14,7 +14,7 @@
   const children_render = $derived(children);
 </script>
 
-<div class="setting">
+<div class="setting atomic-reveal">
   <label for={id}>{label}</label>
   <div class="select-wrapper">
     <select {name} {id} bind:value>

@@ -241,8 +241,6 @@
 </script>
 
 <script lang="ts">
-  import { run } from "svelte/legacy";
-
   import getComponentId from "./label-id";
   import RoundDef from "./RoundDef.svelte";
   import { cubicInOut, cubicOut, linear } from "svelte/easing";
@@ -278,9 +276,10 @@
   let titleElement: HTMLElement | undefined = $state();
   const perChildStagger = 100;
   const totalDelay = preDelay + childNumber * perChildStagger;
+  let isAnimatingTitle = false;
 
   function revealOutline(
-    node: Element,
+    node: HTMLDivElement,
     timing: BorderBoxTiming,
   ): TransitionConfig {
     const parentNode = node.parentNode as Element;
@@ -322,7 +321,10 @@
         node.setAttribute("style", width + height);
 
         if (tGlobalFraction === 1) {
-          node.removeAttribute("style");
+          node.style.display = "inline-block";
+          setTimeout(() => {
+            node.removeAttribute("style");
+          }, 10);
         }
       },
     };
@@ -334,10 +336,15 @@
       super({
         timing: anim.timing,
         tick: (tLocalFraction: number) => {
+          isAnimatingTitle = true;
           let currentText = anim.node.getAttribute("data-text") ?? originalText;
           let length = currentText.length + 1;
           const i = Math.trunc(length * tLocalFraction);
           anim.node.textContent = i === 0 ? "" : currentText.slice(0, i - 1);
+
+          if (tLocalFraction === 1) {
+            isAnimatingTitle = false;
+          }
         },
       });
     }
@@ -392,6 +399,10 @@
             anim.node.classList.add("wait-for-infobox");
           } else if (tLocalFraction >= 0.9) {
             anim.node.classList.remove("wait-for-infobox");
+
+            if (tLocalFraction === 1) {
+              anim.node.style.removeProperty("opacity");
+            }
           }
         },
       });
@@ -454,11 +465,17 @@
       // whole parent at once to avoid the text appearing before anything else -- e.g.
       // if there's something like "some text in <em>some tag</em>", the "some text in"
       // will appear immediately while "some tag" takes a moment to fade in
-      const isAtomicNode =
-        currentNode.classList.contains("atomic-reveal") ||
-        (!currentNode.classList.contains("composite-reveal") &&
-          (currentNode.children.length === 0 ||
-            currentNode.children.length === currentNode.childNodes.length));
+      let isAtomicNode = false;
+      if (currentNode.classList.contains("atomic-reveal")) {
+        isAtomicNode = true;
+      } else if (currentNode.classList.contains("composite-reveal")) {
+        isAtomicNode = false;
+      } else if (currentNode.tagName === "TBODY") {
+        isAtomicNode = false;
+      } else {
+        isAtomicNode = true;
+      }
+
       if (isAtomicNode) {
         return [
           new RevealContent({
@@ -517,8 +534,11 @@
 
   function forceUpdateTitleText(newTitle: string) {
     if (titleElement) {
-      titleElement.textContent = newTitle;
-      titleElement.setAttribute("data-text", newTitle);
+      if (isAnimatingTitle) {
+        titleElement.setAttribute("data-text", newTitle);
+      } else {
+        titleElement.textContent = newTitle;
+      }
     }
   }
 
@@ -529,7 +549,7 @@
     delay: timing.overallFadeIn.delayMs(),
     duration: timing.overallFadeIn.durationMs(),
   });
-  run(() => {
+  $effect(() => {
     forceUpdateTitleText(title);
   });
 
