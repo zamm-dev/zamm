@@ -8,6 +8,8 @@
   export const pageTransition = writable<PageTransitionContext | null>(null);
 
   export enum TransitionType {
+    // user just opened the app
+    Init,
     // user is going leftward -- meaning both incoming and outgoing are moving right
     Left,
     // user is going rightward -- meaning both incoming and outgoing are moving left
@@ -57,7 +59,7 @@
   import { fly } from "svelte/transition";
   import { standardDuration } from "$lib/preferences";
   import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
-  import { onMount, tick } from "svelte";
+  import { onMount } from "svelte";
 
   interface Props {
     currentRoute: string;
@@ -68,15 +70,13 @@
   let oldRoute = currentRoute;
   let ready = $state(false);
   const visitedKeys = new Set<string>();
-  let transitions: Transitions = $state(getTransitions(TransitionType.Swap));
+  let transitions: Transitions = $state(getTransitions(TransitionType.Init));
 
   onMount(async () => {
-    const regularDelay = transitions.in.delay;
-    transitions.in.delay = 0;
     ready = true;
-    await tick();
-    transitions.in.delay = regularDelay;
-    firstAppLoad.set(false);
+    setTimeout(() => {
+      firstAppLoad.set(false);
+    }, $standardDuration);
 
     pageTransition.set({
       addVisitedRoute: (newRoute: string) => {
@@ -139,6 +139,22 @@
             delay: $standardDuration,
           },
         };
+      case TransitionType.Init:
+        return {
+          out: {
+            // doesn't matter for init
+            x: "-20%",
+            duration: 0,
+            easing: cubicIn,
+            delay: 0,
+          },
+          in: {
+            x: "-20%",
+            duration: $standardDuration,
+            easing: backOut,
+            delay: 0,
+          },
+        };
     }
   }
 
@@ -147,12 +163,16 @@
       return;
     }
 
+    if (oldRoute === route) {
+      return;
+    }
+
     const direction = getTransitionType(oldRoute, route);
     transitions = getTransitions(direction);
     oldRoute = route;
   }
 
-  $effect(() => {
+  $effect.pre(() => {
     checkFirstPageLoad(currentRoute);
     updateFlyDirection(currentRoute);
   });

@@ -27,7 +27,6 @@ describe("Screen during transition", () => {
 
   it("should swap for root path", () => {
     expect(getTransitionType("/", "/some-page")).toEqual(TransitionType.Swap);
-
     expect(getTransitionType("/some-page", "/")).toEqual(TransitionType.Swap);
   });
 });
