@@ -7,7 +7,7 @@
   const children_render = $derived(children);
 </script>
 
-<div class="outer-container">
+<div class="outer-container atomic-reveal">
   <div class="button-container cut-corners outer">
     {@render children_render?.()}
   </div>

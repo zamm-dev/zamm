@@ -332,15 +332,13 @@
 
   class TypewriterEffect extends SubAnimation<void> {
     constructor(anim: { node: Element; timing: TransitionTimingFraction }) {
-      const originalText = anim.node.textContent ?? "";
       super({
         timing: anim.timing,
         tick: (tLocalFraction: number) => {
           isAnimatingTitle = true;
-          let currentText = anim.node.getAttribute("data-text") ?? originalText;
-          let length = currentText.length + 1;
+          let length = title.length + 1;
           const i = Math.trunc(length * tLocalFraction);
-          anim.node.textContent = i === 0 ? "" : currentText.slice(0, i - 1);
+          anim.node.textContent = i === 0 ? "" : title.slice(0, i - 1);
 
           if (tLocalFraction === 1) {
             isAnimatingTitle = false;
@@ -470,7 +468,11 @@
         isAtomicNode = true;
       } else if (currentNode.classList.contains("composite-reveal")) {
         isAtomicNode = false;
-      } else if (currentNode.tagName === "TBODY") {
+      } else if (
+        currentNode.tagName === "DIV" ||
+        currentNode.tagName === "TABLE" ||
+        currentNode.tagName === "TBODY"
+      ) {
         isAtomicNode = false;
       } else {
         isAtomicNode = true;
@@ -533,12 +535,8 @@
   }
 
   function forceUpdateTitleText(newTitle: string) {
-    if (titleElement) {
-      if (isAnimatingTitle) {
-        titleElement.setAttribute("data-text", newTitle);
-      } else {
-        titleElement.textContent = newTitle;
-      }
+    if (titleElement && !isAnimatingTitle) {
+      titleElement.textContent = newTitle;
     }
   }
 
@@ -549,7 +547,7 @@
     delay: timing.overallFadeIn.delayMs(),
     duration: timing.overallFadeIn.durationMs(),
   });
-  $effect(() => {
+  $effect.pre(() => {
     forceUpdateTitleText(title);
   });
 

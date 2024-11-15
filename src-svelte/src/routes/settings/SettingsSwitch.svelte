@@ -20,7 +20,11 @@
   }
 </script>
 
-<div class="settings-switch container" onclick={toggleSwitchChild} role="none">
+<div
+  class="settings-switch container atomic-reveal"
+  onclick={toggleSwitchChild}
+  role="none"
+>
   <Switch
     {label}
     bind:this={switchChild}

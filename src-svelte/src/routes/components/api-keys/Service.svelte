@@ -52,7 +52,7 @@
   });
 </script>
 
-<div class="container">
+<div class="container atomic-reveal">
   <div
     class="row"
     onclick={toggleEditing}

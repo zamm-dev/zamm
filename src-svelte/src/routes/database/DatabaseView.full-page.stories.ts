@@ -35,5 +35,6 @@ FullPage.parameters = {
   sampleCallFiles: [
     "/api/sample-calls/get_api_calls-full.yaml",
     "/api/sample-calls/get_api_calls-offset.yaml",
+    "/api/sample-calls/get_terminal_sessions-small.yaml",
   ],
 };

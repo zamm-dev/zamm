@@ -20,7 +20,7 @@
   }: Props = $props();
 </script>
 
-<div class="settings-slider container">
+<div class="settings-slider container atomic-reveal">
   <Slider {label} {min} {max} {step} {onUpdate} bind:value />
 </div>
 

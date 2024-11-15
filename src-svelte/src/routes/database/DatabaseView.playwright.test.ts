@@ -62,6 +62,7 @@ describe("Database View", () => {
 
   test(
     "loads more messages when scrolled to end",
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
     async () => {
       const { apiCallsScrollElement } = await getScrollElement(
         `http://localhost:6006/?path=/story/screens-database-list--full`,
@@ -73,11 +74,11 @@ describe("Database View", () => {
       });
       await expectLastMessage(apiCallsScrollElement, "Mocking number 0.");
     },
-    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 
   test(
     "updates title when changing dropdown",
+    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
     async () => {
       const frame = await getStorybookFrame(
         page,
@@ -92,6 +93,5 @@ describe("Database View", () => {
         timeout: PLAYWRIGHT_TIMEOUT,
       });
     },
-    { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
   );
 });
