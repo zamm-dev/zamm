@@ -7,7 +7,11 @@ import {
   type Locator,
 } from "@playwright/test";
 import { afterAll, beforeAll, describe, test } from "vitest";
-import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
+import {
+  PLAYWRIGHT_TIMEOUT,
+  PLAYWRIGHT_TEST_TIMEOUT,
+  getStorybookFrame,
+} from "$lib/test-helpers";
 
 const DEBUG_LOGGING = false;
 
@@ -36,21 +40,8 @@ describe("Database View", () => {
     }
   });
 
-  const getFrame = async (url: string) => {
-    await page.goto(url);
-    await page
-      .locator("button[title='Hide addons [A]']")
-      .dispatchEvent("click");
-
-    const maybeFrame = page.frame({ name: "storybook-preview-iframe" });
-    if (!maybeFrame) {
-      throw new Error("Could not find Storybook iframe");
-    }
-    return maybeFrame;
-  };
-
   const getScrollElement = async (url: string) => {
-    const frame = await getFrame(url);
+    const frame = await getStorybookFrame(page, url);
     const apiCallsScrollElement = frame.locator(".scroll-contents");
     return { apiCallsScrollElement };
   };
@@ -88,7 +79,8 @@ describe("Database View", () => {
   test(
     "updates title when changing dropdown",
     async () => {
-      const frame = await getFrame(
+      const frame = await getStorybookFrame(
+        page,
         `http://localhost:6006/?path=/story/screens-database-list--full-page`,
       );
       await expect(frame.locator("h2")).toHaveText("LLM API Calls", {

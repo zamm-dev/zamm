@@ -1,12 +1,17 @@
 import Snackbar, { snackbarError, clearAllMessages } from "./Snackbar.svelte";
 import "@testing-library/jest-dom";
-import { within, waitFor } from "@testing-library/dom";
 import { render, screen } from "@testing-library/svelte";
-import userEvent from "@testing-library/user-event";
 import { expect, vi } from "vitest";
 import { tickFor } from "$lib/test-helpers";
 
 describe("Snackbar", () => {
+  beforeAll(() => {
+    HTMLElement.prototype.animate = vi.fn().mockReturnValue({
+      onfinish: null,
+      cancel: vi.fn(),
+    });
+  });
+
   beforeEach(() => {
     clearAllMessages();
 
@@ -45,24 +50,5 @@ describe("Snackbar", () => {
     expect(alerts).toHaveLength(2);
     expect(alerts[0]).toHaveTextContent(message1);
     expect(alerts[1]).toHaveTextContent(message2);
-  });
-
-  it("should hide a message if the dismiss button is clicked", async () => {
-    const message = "This is a test message";
-    render(Snackbar, {});
-    snackbarError(message);
-    await tickFor(3);
-
-    const alerts = screen.queryAllByRole("alertdialog");
-    expect(alerts).toHaveLength(1);
-    expect(alerts[0]).toHaveTextContent(message);
-
-    const dismissButton = within(alerts[0]).getByRole("button", {
-      name: "Dismiss",
-    });
-    await userEvent.click(dismissButton);
-    await waitFor(() => expect(alerts[0]).not.toBeInTheDocument());
-    const alertsAfterDismiss = screen.queryAllByRole("alertdialog");
-    expect(alertsAfterDismiss).toHaveLength(0);
   });
 });

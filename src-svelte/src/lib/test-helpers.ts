@@ -1,5 +1,6 @@
 import { spawn, ChildProcess } from "child_process";
 import fetch from "node-fetch";
+import { type Page } from "@playwright/test";
 import { tick } from "svelte";
 
 export const PLAYWRIGHT_TIMEOUT =
@@ -60,6 +61,17 @@ export async function killStorybook(process?: ChildProcess) {
   }
 
   process.kill();
+}
+
+export async function getStorybookFrame(page: Page, url: string) {
+  await page.goto(url);
+  await page.locator("button[title^='Hide addons ']").dispatchEvent("click");
+
+  const maybeFrame = page.frame({ name: "storybook-preview-iframe" });
+  if (!maybeFrame) {
+    throw new Error("Could not find Storybook iframe");
+  }
+  return maybeFrame;
 }
 
 export async function tickFor(ticks: number) {
