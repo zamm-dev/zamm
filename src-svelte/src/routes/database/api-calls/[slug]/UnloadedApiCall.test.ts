@@ -1,6 +1,5 @@
 import { expect, test, vi, type Mock } from "vitest";
 import "@testing-library/jest-dom";
-
 import { render, screen, waitFor, within } from "@testing-library/svelte";
 import userEvent from "@testing-library/user-event";
 import {
@@ -27,7 +26,11 @@ import {
 } from "$lib/sample-call-testing";
 import ApiCall from "./UnloadedApiCall.svelte";
 import { get } from "svelte/store";
-import { mockStores } from "../../../../vitest-mocks/stores";
+import { goto } from "$app/navigation";
+
+vi.mock("$app/navigation", () => {
+  return { goto: vi.fn() };
+});
 
 describe("Individual API call", () => {
   let tauriInvokeMock: Mock;
@@ -49,10 +52,7 @@ describe("Individual API call", () => {
         playback.mockCall(...args),
     );
 
-    mockStores.page.set({
-      url: new URL("http://localhost/"),
-      params: {},
-    });
+    (goto as Mock).mockClear();
     resetConversation();
     resetNewApiCall();
   });
@@ -137,7 +137,7 @@ describe("Individual API call", () => {
       },
     ]);
     expect(get(lastMessageId)).toBeUndefined();
-    expect(get(mockStores.page).url.pathname).toEqual("/");
+    expect(goto).toBeCalledTimes(0);
 
     const restoreButton = await waitFor(() =>
       screen.getByText("Restore conversation"),
@@ -170,7 +170,7 @@ describe("Individual API call", () => {
       ]);
     });
     expect(get(lastMessageId)).toEqual("c13c1e67-2de3-48de-a34c-a32079c03316");
-    expect(get(mockStores.page).url.pathname).toEqual("/chat");
+    expect(goto).toBeCalledWith("/chat");
   });
 
   test("can edit API call", async () => {
@@ -184,7 +184,7 @@ describe("Individual API call", () => {
     });
     expect(get(canonicalRef)).toBeUndefined();
     expect(get(prompt)).toEqual(getDefaultApiCall());
-    expect(get(mockStores.page).url.pathname).toEqual("/");
+    expect(goto).toBeCalledTimes(0);
 
     const editButton = await waitFor(() => screen.getByText("Edit API call"));
     userEvent.click(editButton);
@@ -194,9 +194,7 @@ describe("Individual API call", () => {
     expect(get(canonicalRef)).toEqual(EDIT_CANONICAL_REF);
     expect(get(provider)).toEqual("OpenAI");
     expect(get(llm)).toEqual("gpt-4");
-    expect(get(mockStores.page).url.pathname).toEqual(
-      "/database/api-calls/new/",
-    );
+    expect(goto).toBeCalledWith("/database/api-calls/new/");
   });
 
   test("can edit Ollama API call", async () => {
@@ -211,7 +209,7 @@ describe("Individual API call", () => {
     });
     expect(get(canonicalRef)).toBeUndefined();
     expect(get(prompt)).toEqual(getDefaultApiCall());
-    expect(get(mockStores.page).url.pathname).toEqual("/");
+    expect(goto).toBeCalledTimes(0);
 
     const editButton = await waitFor(() => screen.getByText("Edit API call"));
     userEvent.click(editButton);
@@ -227,8 +225,6 @@ describe("Individual API call", () => {
     // ... until now
     expect(get(provider)).toEqual("Ollama");
     expect(get(llm)).toEqual("llama3:8b");
-    expect(get(mockStores.page).url.pathname).toEqual(
-      "/database/api-calls/new/",
-    );
+    expect(goto).toBeCalledWith("/database/api-calls/new/");
   });
 });

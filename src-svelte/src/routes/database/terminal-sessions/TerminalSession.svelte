@@ -41,12 +41,7 @@
       if (session === undefined) {
         session = await unwrap(commands.runCommand(newInput));
         const newUrl = `/database/terminal-sessions/${session.id}/`;
-        if (replaceState) {
-          // replaceState undefined in Vitest
-          replaceState(newUrl, $page.state);
-        } else {
-          window.history.replaceState($page.state, "", newUrl);
-        }
+        replaceState(newUrl, $page.state);
         $sidebar?.updateIndicator(newUrl);
         $pageTransition?.addVisitedRoute(newUrl);
       } else {

@@ -10,6 +10,11 @@ import {
 import { sidebar } from "../../SidebarUI.svelte";
 import { pageTransition } from "../../PageTransition.svelte";
 import { get } from "svelte/store";
+import { replaceState } from "$app/navigation";
+
+vi.mock("$app/navigation", () => {
+  return { replaceState: vi.fn() };
+});
 
 describe("Terminal session", () => {
   let tauriInvokeMock: Mock;
@@ -30,7 +35,8 @@ describe("Terminal session", () => {
       (...args: (string | Record<string, string>)[]) =>
         playback.mockCall(...args),
     );
-    window.history.replaceState = vi.fn();
+
+    (replaceState as Mock).mockClear();
     sidebar.set({ updateIndicator: vi.fn() });
     pageTransition.set({ addVisitedRoute: vi.fn() });
 
@@ -66,10 +72,9 @@ describe("Terminal session", () => {
         ),
       ).toBeInTheDocument();
     });
-    expect(window.history.replaceState).toHaveBeenCalledWith(
-      undefined,
-      "",
+    expect(replaceState).toBeCalledWith(
       "/database/terminal-sessions/3717ed48-ab52-4654-9f33-de5797af5118/",
+      undefined,
     );
     expect(get(sidebar)?.updateIndicator).toHaveBeenCalledWith(
       "/database/terminal-sessions/3717ed48-ab52-4654-9f33-de5797af5118/",
