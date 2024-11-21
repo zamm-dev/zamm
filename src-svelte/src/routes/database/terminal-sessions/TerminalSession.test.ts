@@ -15,6 +15,13 @@ describe("Terminal session", () => {
   let tauriInvokeMock: Mock;
   let playback: TauriInvokePlayback;
 
+  beforeAll(() => {
+    HTMLElement.prototype.animate = vi.fn().mockReturnValue({
+      onfinish: null,
+      cancel: vi.fn(),
+    });
+  });
+
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
     stubGlobalInvoke(tauriInvokeMock);
