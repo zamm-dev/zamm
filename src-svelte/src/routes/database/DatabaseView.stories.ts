@@ -40,7 +40,10 @@ Small.parameters = {
   viewport: {
     defaultViewport: "smallTablet",
   },
-  sampleCallFiles: ["/api/sample-calls/get_api_calls-small.yaml"],
+  sampleCallFiles: [
+    "/api/sample-calls/get_api_calls-small.yaml",
+    "/api/sample-calls/get_terminal_sessions-small.yaml",
+  ],
 };
 
 export const Full: StoryObj = Template.bind({}) as any;

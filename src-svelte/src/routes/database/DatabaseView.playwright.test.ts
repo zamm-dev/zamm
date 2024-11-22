@@ -77,7 +77,7 @@ describe("Database View", () => {
   );
 
   test(
-    "updates title when changing dropdown",
+    "updates title and links when changing dropdown",
     { retry: 2, timeout: PLAYWRIGHT_TEST_TIMEOUT },
     async () => {
       const frame = await getStorybookFrame(
@@ -87,11 +87,21 @@ describe("Database View", () => {
       await expect(frame.locator("h2")).toHaveText("LLM API Calls", {
         timeout: PLAYWRIGHT_TIMEOUT,
       });
+      const linkToApiCall = frame.locator("a:has-text('Mocking number 59.')");
+      await expect(linkToApiCall).toHaveAttribute(
+        "href",
+        "/database/api-calls/d5ad1e49-f57f-4481-84fb-4d70ba8a7a59/",
+      );
 
       await frame.locator("select").selectOption("Terminal Sessions");
       await expect(frame.locator("h2")).toHaveText("Terminal Sessions", {
         timeout: PLAYWRIGHT_TIMEOUT,
       });
+      const linkToTerminalSession = frame.locator("a:has-text('python api')");
+      await expect(linkToTerminalSession).toHaveAttribute(
+        "href",
+        "/database/terminal-sessions/3717ed48-ab52-4654-9f33-de5797af5118/",
+      );
     },
   );
 });
