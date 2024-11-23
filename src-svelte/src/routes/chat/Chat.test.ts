@@ -15,7 +15,7 @@ import {
   stubGlobalInvoke,
 } from "$lib/sample-call-testing";
 import { animationSpeed } from "$lib/preferences";
-import type { ChatArgs, LightweightLlmCall } from "$lib/bindings";
+import type { ChatArgs } from "$lib/bindings";
 
 describe("Chat conversation", () => {
   let tauriInvokeMock: Mock;
@@ -70,6 +70,7 @@ describe("Chat conversation", () => {
 
   async function sendChatMessage(
     message: string,
+    expectedAiResponse: string,
     correspondingApiCallSample: string,
   ) {
     expect(tauriInvokeMock).not.toHaveBeenCalled();
@@ -91,14 +92,10 @@ describe("Chat conversation", () => {
     expect(screen.getByText(nextExpectedHumanPrompt)).toBeInTheDocument();
 
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
-    const lastResult: LightweightLlmCall =
-      tauriInvokeMock.mock.results[0].value;
-    const aiResponse = lastResult.response_message.text;
-    const lastSentence = aiResponse.split("\n").slice(-1)[0];
     await waitFor(() => {
       expect(
         screen.getByText(
-          new RegExp(lastSentence.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+          new RegExp(expectedAiResponse.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
         ),
       ).toBeInTheDocument();
     });
@@ -111,10 +108,12 @@ describe("Chat conversation", () => {
     render(Chat, {});
     await sendChatMessage(
       "Hello, does this work?",
+      "Yes, it works. How can I assist you today?",
       "../src-tauri/api/sample-calls/chat-start-conversation.yaml",
     );
     await sendChatMessage(
       "Tell me something funny.",
+      "Sure, here's a joke for you",
       "../src-tauri/api/sample-calls/chat-continue-conversation.yaml",
     );
   });
@@ -155,6 +154,7 @@ describe("Chat conversation", () => {
     render(PersistentChatView, {});
     await sendChatMessage(
       "Hello, does this work?",
+      "Yes, it works. How can I assist you today?",
       "../src-tauri/api/sample-calls/chat-start-conversation.yaml",
     );
 
@@ -204,6 +204,7 @@ describe("Chat conversation", () => {
     });
     await sendChatMessage(
       "Tell me something funny.",
+      "Sure, here's a joke for you",
       "../src-tauri/api/sample-calls/chat-continue-conversation.yaml",
     );
   });

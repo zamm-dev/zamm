@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { preventDefault } from "svelte/legacy";
-
   import autosize from "autosize";
   import Button from "$lib/controls/Button.svelte";
   import IconSend from "~icons/gravity-ui/arrow-right";
@@ -23,7 +21,7 @@
     placeholder = "Type your message here...",
     onTextInputResize = () => undefined,
   }: Props = $props();
-  let textareaInput: HTMLTextAreaElement | null = $state(null);
+  let textareaInput: HTMLTextAreaElement | null = null;
 
   onMount(() => {
     if (!textareaInput) {
@@ -44,19 +42,20 @@
 
   function handleKeydown(event: KeyboardEvent) {
     if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey) {
-      event.preventDefault();
-      submitInput();
+      submitInput(event);
     }
   }
 
-  function submitInput() {
+  function submitInput(e: Event) {
+    e.preventDefault();
     const message = currentMessage.trim();
     if (message && !isBusy) {
       sendInput(currentMessage);
       currentMessage = "";
       requestAnimationFrame(() => {
         if (!textareaInput) {
-          throw new Error("Textarea input not found");
+          console.error("Textarea input not found");
+          return;
         }
         autosize.update(textareaInput);
       });
@@ -67,7 +66,7 @@
 <form
   class="atomic-reveal cut-corners outer"
   autocomplete="off"
-  onsubmit={preventDefault(submitInput)}
+  onsubmit={submitInput}
 >
   <label for="message" class="accessibility-only">{accessibilityLabel}</label>
   <textarea
