@@ -22,18 +22,6 @@ describe("Chat conversation", () => {
   let playback: TauriInvokePlayback;
 
   beforeAll(() => {
-    animationSpeed.set(10);
-  });
-
-  beforeEach(() => {
-    tauriInvokeMock = vi.fn();
-    stubGlobalInvoke(tauriInvokeMock);
-    playback = new TauriInvokePlayback();
-    tauriInvokeMock.mockImplementation(
-      (...args: (string | Record<string, string>)[]) =>
-        playback.mockCall(...args),
-    );
-
     vi.stubGlobal("requestAnimationFrame", (fn: FrameRequestCallback) => {
       return window.setTimeout(() => fn(Date.now()), 16);
     });
@@ -57,6 +45,22 @@ describe("Chat conversation", () => {
         toJSON: vi.fn(),
       };
     });
+    HTMLElement.prototype.animate = vi.fn().mockReturnValue({
+      onfinish: null,
+      cancel: vi.fn(),
+    });
+
+    animationSpeed.set(10);
+  });
+
+  beforeEach(() => {
+    tauriInvokeMock = vi.fn();
+    stubGlobalInvoke(tauriInvokeMock);
+    playback = new TauriInvokePlayback();
+    tauriInvokeMock.mockImplementation(
+      (...args: (string | Record<string, string>)[]) =>
+        playback.mockCall(...args),
+    );
   });
 
   afterEach(() => {

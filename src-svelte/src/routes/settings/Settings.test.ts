@@ -38,6 +38,10 @@ describe("Settings", () => {
         // do nothing
       }
     };
+    HTMLElement.prototype.animate = vi.fn().mockReturnValue({
+      onfinish: null,
+      cancel: vi.fn(),
+    });
 
     playSwitchSoundCall = parseSampleCall(
       "../src-tauri/api/sample-calls/play_sound-switch.yaml",
