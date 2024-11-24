@@ -1,6 +1,5 @@
 import { expect, test, vi, type Mock } from "vitest";
 import "@testing-library/jest-dom";
-
 import { render, screen, waitFor } from "@testing-library/svelte";
 import ApiCallEditor, {
   canonicalRef,
@@ -15,13 +14,24 @@ import {
   stubGlobalInvoke,
 } from "$lib/sample-call-testing";
 import { get } from "svelte/store";
-import { mockStores } from "../../../../vitest-mocks/stores";
 import { EDIT_CANONICAL_REF, EDIT_PROMPT } from "./test.data";
 import PersistentApiCallEditorView from "./PersistentApiCallEditorView.svelte";
+import { goto } from "$app/navigation";
+
+vi.mock("$app/navigation", () => {
+  return { goto: vi.fn() };
+});
 
 describe("API call editor", () => {
   let tauriInvokeMock: Mock;
   let playback: TauriInvokePlayback;
+
+  beforeAll(() => {
+    HTMLElement.prototype.animate = vi.fn().mockReturnValue({
+      onfinish: null,
+      cancel: vi.fn(),
+    });
+  });
 
   beforeEach(() => {
     tauriInvokeMock = vi.fn();
@@ -31,6 +41,8 @@ describe("API call editor", () => {
       (...args: (string | Record<string, string>)[]) =>
         playback.mockCall(...args),
     );
+
+    (goto as Mock).mockClear();
   });
 
   afterEach(() => {
@@ -107,7 +119,7 @@ describe("API call editor", () => {
     await userEvent.click(screen.getByRole("button", { name: "Submit" }));
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
-    expect(get(mockStores.page).url.pathname).toEqual(
+    expect(goto).toBeCalledWith(
       "/database/api-calls/c13c1e67-2de3-48de-a34c-a32079c03316",
     );
   });
@@ -136,7 +148,7 @@ describe("API call editor", () => {
     await userEvent.click(screen.getByRole("button", { name: "Submit" }));
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
-    expect(get(mockStores.page).url.pathname).toEqual(
+    expect(goto).toBeCalledWith(
       "/database/api-calls/f39a5017-89d4-45ec-bcbb-25c2bd43cfc1",
     );
   });
@@ -161,7 +173,7 @@ describe("API call editor", () => {
     await userEvent.click(screen.getByRole("button", { name: "Submit" }));
     expect(tauriInvokeMock).toHaveBeenCalledTimes(1);
     expect(tauriInvokeMock).toHaveReturnedTimes(1);
-    expect(get(mockStores.page).url.pathname).toEqual(
+    expect(goto).toBeCalledWith(
       "/database/api-calls/506e2d1f-549c-45cc-ad65-57a0741f06ee",
     );
 

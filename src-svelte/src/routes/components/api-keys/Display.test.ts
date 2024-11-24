@@ -18,6 +18,11 @@ describe("API Keys Display", () => {
   let playback: TauriInvokePlayback;
 
   beforeAll(() => {
+    HTMLElement.prototype.animate = vi.fn().mockReturnValue({
+      onfinish: null,
+      cancel: vi.fn(),
+    });
+
     animationSpeed.set(10);
   });
 
