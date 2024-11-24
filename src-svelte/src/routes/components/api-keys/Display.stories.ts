@@ -41,6 +41,11 @@ Loading.parameters = {
 export const Unknown: StoryObj = Template.bind({}) as any;
 Unknown.parameters = {
   sampleCallFiles: [unknownKeys, writeToFile, knownKeys],
+  stores: {
+    systemInfo: {
+      shell_init_file: ".bashrc",
+    },
+  },
   viewport: {
     defaultViewport: "mobile2",
   },

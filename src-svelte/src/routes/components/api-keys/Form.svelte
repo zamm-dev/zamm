@@ -7,8 +7,6 @@
 </script>
 
 <script lang="ts">
-  import { preventDefault } from "svelte/legacy";
-
   import { cubicInOut } from "svelte/easing";
   import { unwrap } from "$lib/tauri";
   import { commands, type Service } from "$lib/bindings";
@@ -59,7 +57,9 @@
     };
   }
 
-  function submitApiKey() {
+  function submitApiKey(e: Event) {
+    e.preventDefault();
+
     unwrap(
       commands.setApiKey(
         fields.saveKey ? fields.saveKeyLocation : null,
@@ -77,7 +77,12 @@
         setTimeout(async () => {
           // delay here instead of in CSS transition so that the text updates
           // simultaneously with the transition
-          apiKeys.set(await unwrap(commands.getApiKeys()));
+          try {
+            const newKeys = await unwrap(commands.getApiKeys());
+            apiKeys.set(newKeys);
+          } catch (err) {
+            snackbarError(err as string);
+          }
         }, 0.75 * growDuration);
       });
   }
@@ -85,7 +90,7 @@
 
 <div class="container" transition:growY>
   <div class="inset-container">
-    <form onsubmit={preventDefault(submitApiKey)}>
+    <form onsubmit={submitApiKey}>
       {#if apiKeyUrl}
         <p>
           Tip: Get your {service} key

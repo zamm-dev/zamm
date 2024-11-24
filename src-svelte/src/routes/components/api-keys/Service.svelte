@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { run } from "svelte/legacy";
-
   import Form, { type FormFields } from "./Form.svelte";
   import type { Service } from "$lib/bindings";
   import { systemInfo } from "$lib/system-info";
@@ -26,17 +24,16 @@
 
   function toggleEditing() {
     editing = !editing;
+    if (editing) {
+      initializeFormFields();
+    }
   }
 
   function formClose() {
     editing = false;
   }
 
-  function updateFormFields(trigger: boolean) {
-    if (!trigger) {
-      return;
-    }
-
+  function initializeFormFields() {
     if (formFields.apiKey === "") {
       formFields.apiKey = apiKey ?? "";
     }
@@ -47,9 +44,6 @@
 
   let active = $derived(apiKey !== null);
   let label = $derived(active ? "Active" : "Inactive");
-  run(() => {
-    updateFormFields(editing);
-  });
 </script>
 
 <div class="container atomic-reveal">

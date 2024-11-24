@@ -1,7 +1,7 @@
 <script lang="ts">
   import { commands } from "$lib/bindings";
   import { unwrap } from "$lib/tauri";
-  import { apiKeys as apiKeysStore } from "$lib/system-info";
+  import { apiKeys } from "$lib/system-info";
   import { snackbarError } from "$lib/snackbar/Snackbar.svelte";
   import InfoBox from "$lib/InfoBox.svelte";
   import Loading from "$lib/Loading.svelte";
@@ -19,7 +19,7 @@
   onMount(() => {
     unwrap(commands.getApiKeys())
       .then((keys) => {
-        apiKeysStore.set(keys);
+        apiKeys.set(keys);
       })
       .catch((error) => {
         snackbarError(error);
@@ -28,8 +28,6 @@
         isLoading = false;
       });
   });
-
-  let apiKeys = $derived($apiKeysStore);
 </script>
 
 <InfoBox title="API Keys" {...rest}>
@@ -40,7 +38,7 @@
       <Service
         name="OpenAI"
         apiKeyUrl="https://platform.openai.com/api-keys"
-        apiKey={apiKeys.openai}
+        apiKey={$apiKeys.openai}
         editing={editDemo}
       />
     </div>
