@@ -10,12 +10,17 @@
   }
 
   let { children }: Props = $props();
+  let showChildren = $state(false);
 
   onMount(() => {
     firstAppLoad.set(true);
     firstPageLoad.set(true);
     animationSpeed.set(0.1);
     transparencyOn.set(true);
+
+    setTimeout(() => {
+      showChildren = true;
+    }, 500);
   });
 
   const children_render = $derived(children);
@@ -27,15 +32,18 @@
       <Background />
     </div>
 
-    <PageTransition currentRoute="/storybook-demo">
-      {@render children_render?.()}
-    </PageTransition>
+    {#if showChildren}
+      <PageTransition currentRoute="/storybook-demo">
+        {@render children_render?.()}
+      </PageTransition>
+    {/if}
   </MockFullPageLayout>
 </div>
 
 <style>
   #mock-transitions {
     margin: -1rem;
+    overflow: hidden;
   }
 
   .bg {
