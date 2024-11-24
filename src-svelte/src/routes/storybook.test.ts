@@ -14,7 +14,11 @@ import {
 import * as fs from "fs/promises";
 import { existsSync } from "fs";
 import sizeOf from "image-size";
-import { PLAYWRIGHT_TIMEOUT, PLAYWRIGHT_TEST_TIMEOUT } from "$lib/test-helpers";
+import {
+  PLAYWRIGHT_TIMEOUT,
+  PLAYWRIGHT_TEST_TIMEOUT,
+  getStorybookFrame,
+} from "$lib/test-helpers";
 
 const NARROW_WINDOW_SIZE = 675;
 
@@ -397,6 +401,10 @@ describe.concurrent("Storybook visual tests", () => {
       const testName = `${storybookPath}/${variantConfig.name}.png`;
       test(
         `${testName} should render the same`,
+        {
+          retry: 1,
+          timeout: PLAYWRIGHT_TEST_TIMEOUT,
+        },
         async ({ expect }) => {
           if (process.env.CI === "true" && !variantConfig.assertDynamic) {
             const goldFilePath =
@@ -419,15 +427,14 @@ describe.concurrent("Storybook visual tests", () => {
             await makeWindowNarrow(page);
           }
 
-          await page.goto(
+          const frame = await getStorybookFrame(
+            page,
             `http://localhost:6006/?path=/story/${storybookUrl}${variantPrefix}`,
           );
-          // hide bottom drawer
-          await page.locator("button[title='Hide addons [A]']").click();
           // wait for fonts to load
-          await page.evaluate(() => document.fonts.ready);
+          await frame.evaluate(() => document.fonts.ready);
           // wait for images to load
-          const imagesLocator = page.locator("//img");
+          const imagesLocator = frame.locator("//img");
           const images = await imagesLocator.evaluateAll((images) => {
             return images.map((i) => {
               i.scrollIntoView();
@@ -438,11 +445,6 @@ describe.concurrent("Storybook visual tests", () => {
             (i) => i.complete || new Promise((f) => (i.onload = f)),
           );
           await Promise.all(imagePromises);
-
-          const frame = page.frame({ name: "storybook-preview-iframe" });
-          if (!frame) {
-            throw new Error("Could not find Storybook iframe");
-          }
 
           if (variantConfig.additionalAction) {
             await variantConfig.additionalAction(frame, page);
@@ -512,10 +514,6 @@ describe.concurrent("Storybook visual tests", () => {
           }
 
           await page.close();
-        },
-        {
-          retry: 1,
-          timeout: PLAYWRIGHT_TEST_TIMEOUT,
         },
       );
     }

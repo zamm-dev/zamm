@@ -1,16 +1,17 @@
 <script lang="ts">
-  import MockFullPageLayout from "./MockFullPageLayout.svelte";
+  import MockAppLayout from "./MockAppLayout.svelte";
   import PageTransition from "../../routes/PageTransition.svelte";
   import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
   import { animationSpeed, transparencyOn } from "$lib/preferences";
   import Background from "../../routes/Background.svelte";
-  import { onMount } from "svelte";
+  import { onMount, type Snippet } from "svelte";
+
   interface Props {
-    children?: import("svelte").Snippet;
+    children: Snippet;
   }
 
   let { children }: Props = $props();
-  let showChildren = $state(false);
+  let ready = $state(false);
 
   onMount(() => {
     firstAppLoad.set(true);
@@ -19,25 +20,23 @@
     transparencyOn.set(true);
 
     setTimeout(() => {
-      showChildren = true;
+      ready = true;
     }, 500);
   });
-
-  const children_render = $derived(children);
 </script>
 
 <div id="mock-transitions">
-  <MockFullPageLayout>
+  <MockAppLayout animated fullHeight>
     <div class="bg">
       <Background />
     </div>
 
-    {#if showChildren}
+    {#if ready}
       <PageTransition currentRoute="/storybook-demo">
-        {@render children_render?.()}
+        {@render children?.()}
       </PageTransition>
     {/if}
-  </MockFullPageLayout>
+  </MockAppLayout>
 </div>
 
 <style>

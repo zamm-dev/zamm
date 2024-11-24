@@ -67,6 +67,7 @@ export async function getStorybookFrame(page: Page, url: string) {
   await page.goto(url);
   await page.locator("button[title^='Hide addons ']").dispatchEvent("click");
 
+  await page.waitForSelector("iframe");
   const maybeFrame = page.frame({ name: "storybook-preview-iframe" });
   if (!maybeFrame) {
     throw new Error("Could not find Storybook iframe");
