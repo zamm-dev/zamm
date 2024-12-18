@@ -3,12 +3,13 @@ import type { StoryObj } from "@storybook/svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
 import { CONTINUE_CONVERSATION_PROMPT } from "../[slug]/sample-calls";
 import { EDIT_CANONICAL_REF, EMOJI_CANONICAL_REF } from "./test.data";
+import { MockAppLayoutDecorator } from "$lib/__mocks__/decorators";
 
 export default {
   component: ApiCallEditorComponent,
   title: "Screens/Database/LLM Call/New",
   argTypes: {},
-  decorators: [SvelteStoresDecorator],
+  decorators: [SvelteStoresDecorator, MockAppLayoutDecorator],
 };
 
 const Template = ({ ...args }) => ({

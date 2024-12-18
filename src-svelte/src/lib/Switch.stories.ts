@@ -1,21 +1,15 @@
 import Switch from "./Switch.svelte";
-import type { StoryFn, StoryObj } from "@storybook/svelte";
+import type { StoryObj } from "@storybook/svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
-import MockAppLayout from "$lib/__mocks__/MockAppLayout.svelte";
+import {
+  MockAppLayoutDecorator,
+  MockPageTransitionsDecorator,
+} from "./__mocks__/decorators";
 
 export default {
   component: Switch,
   title: "Reusable/Switch",
   argTypes: {},
-  decorators: [
-    SvelteStoresDecorator,
-    (story: StoryFn) => {
-      return {
-        Component: MockAppLayout,
-        slot: story,
-      };
-    },
-  ],
 };
 
 const Template = ({ ...args }) => ({
@@ -33,6 +27,7 @@ On.parameters = {
     defaultViewport: "mobile1",
   },
 };
+On.decorators = [SvelteStoresDecorator, MockAppLayoutDecorator];
 
 export const Off: StoryObj = Template.bind({}) as any;
 Off.args = {
@@ -44,6 +39,22 @@ Off.parameters = {
     defaultViewport: "mobile1",
   },
 };
+Off.decorators = [SvelteStoresDecorator, MockAppLayoutDecorator];
+
+export const Fast: StoryObj = Template.bind({}) as any;
+Fast.args = {
+  label: "Simulation",
+  toggledOn: false,
+};
+Fast.parameters = {
+  viewport: {
+    defaultViewport: "mobile1",
+  },
+  preferences: {
+    animationSpeed: 1,
+  },
+};
+Fast.decorators = [SvelteStoresDecorator, MockPageTransitionsDecorator];
 
 export const SlowMotion: StoryObj = Template.bind({}) as any;
 SlowMotion.args = {
@@ -58,3 +69,4 @@ SlowMotion.parameters = {
     animationSpeed: 0.1,
   },
 };
+SlowMotion.decorators = [SvelteStoresDecorator, MockPageTransitionsDecorator];

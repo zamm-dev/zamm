@@ -41,7 +41,11 @@
       if (session === undefined) {
         session = await unwrap(commands.runCommand(newInput));
         const newUrl = `/database/terminal-sessions/${session.id}/`;
-        replaceState(newUrl, $page.state);
+        try {
+          replaceState(newUrl, $page.state);
+        } catch (error) {
+          console.error("Failed to update URL, are we on Storybook?", error);
+        }
         $sidebar?.updateIndicator(newUrl);
         $pageTransition?.addVisitedRoute(newUrl);
       } else {
@@ -52,7 +56,7 @@
       }
       resizeTerminalView();
     } catch (error) {
-      snackbarError(error as string);
+      snackbarError(error as string | Error);
     } finally {
       expectingResponse = false;
     }

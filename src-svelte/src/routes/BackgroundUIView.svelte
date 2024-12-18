@@ -1,19 +1,19 @@
 <script lang="ts">
-  import MockAppLayout from "$lib/__mocks__/MockAppLayout.svelte";
+  import type { Snippet } from "svelte";
+  import AnimationControl from "./AnimationControl.svelte";
+
   interface Props {
-    children?: import("svelte").Snippet;
+    children?: Snippet;
   }
 
   let { children }: Props = $props();
-
-  const children_render = $derived(children);
 </script>
 
-<MockAppLayout>
+<AnimationControl>
   <div class="background-container">
-    {@render children_render?.()}
+    {@render children?.()}
   </div>
-</MockAppLayout>
+</AnimationControl>
 
 <style>
   .background-container {

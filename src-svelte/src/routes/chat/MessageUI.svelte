@@ -99,7 +99,6 @@
 
         resetChildren(markdownElement);
 
-        await new Promise((r) => setTimeout(r, 0));
         const maxPotentialWidth = maxMessageWidth(chatWidthPx);
         const currentWidth = markdownElement.getBoundingClientRect().width;
         const maxActualWidth = Math.ceil(

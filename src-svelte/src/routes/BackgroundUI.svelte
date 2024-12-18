@@ -32,7 +32,9 @@
 
   let { animated = false }: Props = $props();
   const rng = prand.xoroshiro128plus(8650539321744612);
-  const animateIntervalMs = derived(standardDuration, ($sd) => $sd / 2);
+  const animateIntervalMs = derived(standardDuration, ($sd) =>
+    $sd === 0 ? 1_000_000 : $sd / 2,
+  );
   $effect(() => updateAnimationState(animated));
   $effect(() => updateAnimationSpeed($animateIntervalMs));
   let charEm = newEmStore(26);

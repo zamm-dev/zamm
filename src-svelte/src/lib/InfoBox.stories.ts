@@ -2,8 +2,8 @@ import InfoBox from "./InfoBoxView.svelte";
 import type { StoryObj } from "@storybook/svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
 import {
+  MockAppLayoutDecorator,
   MockPageTransitionsDecorator,
-  MockTransitionsDecorator,
 } from "./__mocks__/decorators";
 
 export default {
@@ -22,14 +22,20 @@ Regular.args = {
   title: "Simulation",
   maxWidth: "50rem",
 };
+Regular.decorators = [MockAppLayoutDecorator];
 
-export const MountTransition: StoryObj = Template.bind({}) as any;
-MountTransition.args = {
+export const FullPage: StoryObj = Template.bind({}) as any;
+FullPage.args = {
   title: "Simulation",
   preDelay: 0,
   maxWidth: "50rem",
 };
-MountTransition.decorators = [SvelteStoresDecorator, MockTransitionsDecorator];
+FullPage.parameters = {
+  preferences: {
+    animationSpeed: 1,
+  },
+};
+FullPage.decorators = [SvelteStoresDecorator, MockPageTransitionsDecorator];
 
 export const SlowMotion: StoryObj = Template.bind({}) as any;
 SlowMotion.args = {
@@ -42,30 +48,4 @@ SlowMotion.parameters = {
     animationSpeed: 0.1,
   },
 };
-SlowMotion.decorators = [SvelteStoresDecorator, MockTransitionsDecorator];
-
-export const Motionless: StoryObj = Template.bind({}) as any;
-Motionless.args = {
-  title: "Simulation",
-  maxWidth: "50rem",
-};
-Motionless.parameters = {
-  preferences: {
-    animationsOn: false,
-  },
-};
-Motionless.decorators = [SvelteStoresDecorator, MockTransitionsDecorator];
-
-export const Transparent: StoryObj = Template.bind({}) as any;
-Transparent.args = {
-  title: "Simulation",
-  maxWidth: "50rem",
-};
-Transparent.parameters = {
-  preferences: {
-    animationsOn: false,
-    backgroundAnimation: false,
-    transparencyOn: true,
-  },
-};
-Transparent.decorators = [SvelteStoresDecorator, MockPageTransitionsDecorator];
+SlowMotion.decorators = [SvelteStoresDecorator, MockPageTransitionsDecorator];

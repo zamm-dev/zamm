@@ -231,7 +231,7 @@
       var(--sidebar-left-padding);
     float: left;
     clip-path: inset(0 0 0 0);
-    height: 100vh;
+    height: 100%;
     box-sizing: border-box;
     overflow: hidden;
     position: absolute;

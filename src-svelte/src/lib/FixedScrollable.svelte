@@ -27,7 +27,11 @@
 
   export function getDimensions() {
     if (scrollContents) {
-      return scrollContents.getBoundingClientRect();
+      // we need dimensions after taking scrollbar into account
+      return {
+        width: scrollContents.clientWidth,
+        height: scrollContents.clientHeight,
+      };
     }
 
     throw new Error("Scrollable component not mounted");

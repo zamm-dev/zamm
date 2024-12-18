@@ -77,6 +77,7 @@
 <style>
   .container {
     display: inline-block;
+    width: fit-content;
   }
 
   table {

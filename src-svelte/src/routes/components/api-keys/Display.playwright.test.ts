@@ -13,7 +13,7 @@ import {
   getStorybookFrame,
 } from "$lib/test-helpers";
 
-describe("Snackbar", () => {
+describe("API keys display (animated)", () => {
   let page: Page;
   let browser: Browser;
   let context: BrowserContext;
@@ -45,7 +45,7 @@ describe("Snackbar", () => {
       const frame = await getStorybookFrame(
         page,
         // eslint-disable-next-line max-len
-        `http://localhost:6006/?path=/story/screens-dashboard-api-keys-display--known`,
+        `http://localhost:6006/?path=/story/screens-dashboard-api-keys-display--fast`,
       );
       const form = frame.locator("form");
       await expect(form).not.toBeVisible();
@@ -65,7 +65,7 @@ describe("Snackbar", () => {
       const frame = await getStorybookFrame(
         page,
         // eslint-disable-next-line max-len
-        `http://localhost:6006/?path=/story/screens-dashboard-api-keys-display--unknown`,
+        `http://localhost:6006/?path=/story/screens-dashboard-api-keys-display--fast`,
       );
       const testApiKeyInput = "0p3n41-4p1-k3y";
       const testFileInput = "/home/different/.bashrc";

@@ -34,8 +34,6 @@ Subpath.parameters = {
 };
 
 export const Motionless: StoryObj = Template.bind({}) as any;
-Motionless.parameters = {
-  preferences: {
-    animationsOn: false,
-  },
+Motionless.args = {
+  animated: false,
 };

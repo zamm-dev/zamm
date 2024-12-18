@@ -1,27 +1,22 @@
 import SidebarUI from "./SidebarUI.svelte";
-import type { StoryFn, StoryObj } from "@storybook/svelte";
+import type { StoryObj } from "@storybook/svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
-import MockAppLayout from "$lib/__mocks__/MockAppLayout.svelte";
+import {
+  MockAppLayoutDecorator,
+  MockPageTransitionsDecorator,
+} from "$lib/__mocks__/decorators";
 
 export default {
   component: SidebarUI,
   title: "Layout/Sidebar",
   argTypes: {},
   parameters: {
+    fullHeight: true,
     backgrounds: {
       default: "ZAMM background",
       values: [{ name: "ZAMM background", value: "#f4f4f4" }],
     },
   },
-  decorators: [
-    SvelteStoresDecorator,
-    (story: StoryFn) => {
-      return {
-        Component: MockAppLayout,
-        slot: story,
-      };
-    },
-  ],
 };
 
 const Template = ({ ...args }) => ({
@@ -34,18 +29,21 @@ DashboardSelected.args = {
   currentRoute: "/",
   dummyLinks: true,
 };
+DashboardSelected.decorators = [SvelteStoresDecorator, MockAppLayoutDecorator];
 
 export const SettingsSelected: StoryObj = Template.bind({}) as any;
 SettingsSelected.args = {
   currentRoute: "/settings",
   dummyLinks: true,
 };
+SettingsSelected.decorators = [SvelteStoresDecorator, MockAppLayoutDecorator];
 
 export const CreditsSelected: StoryObj = Template.bind({}) as any;
 CreditsSelected.args = {
   currentRoute: "/credits",
   dummyLinks: true,
 };
+CreditsSelected.decorators = [SvelteStoresDecorator, MockAppLayoutDecorator];
 
 export const SlowMotion: StoryObj = Template.bind({}) as any;
 SlowMotion.args = {
@@ -57,3 +55,4 @@ SlowMotion.parameters = {
     animationSpeed: 0.1,
   },
 };
+SlowMotion.decorators = [SvelteStoresDecorator, MockPageTransitionsDecorator];

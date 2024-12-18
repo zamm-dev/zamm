@@ -1,8 +1,8 @@
 import ChatComponent from "./Chat.svelte";
-import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
-import type { StoryFn, StoryObj } from "@storybook/svelte";
+import { MockAppLayoutDecorator } from "$lib/__mocks__/decorators";
+import type { StoryObj } from "@storybook/svelte";
 import { conversation, shortConversation } from "./Chat.mock-data";
 
 export default {
@@ -12,13 +12,11 @@ export default {
   decorators: [
     SvelteStoresDecorator,
     TauriInvokeDecorator,
-    (story: StoryFn) => {
-      return {
-        Component: MockFullPageLayout,
-        slot: story,
-      };
-    },
+    MockAppLayoutDecorator,
   ],
+  parameters: {
+    fullHeight: true,
+  },
 };
 
 const Template = ({ ...args }) => ({

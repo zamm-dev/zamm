@@ -1,12 +1,13 @@
 import MetadataComponent from "./Metadata.svelte";
 import type { StoryObj } from "@storybook/svelte";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
+import { MockAppLayoutDecorator } from "$lib/__mocks__/decorators";
 
 export default {
   component: MetadataComponent,
   title: "Screens/Dashboard/Metadata",
   argTypes: {},
-  decorators: [TauriInvokeDecorator],
+  decorators: [TauriInvokeDecorator, MockAppLayoutDecorator],
 };
 
 const Template = ({ ...args }) => ({

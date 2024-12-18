@@ -1,5 +1,9 @@
 <script lang="ts" module>
-  export type ResizedEvent = CustomEvent<DOMRect>;
+  export type ClientDimensions = {
+    width: number;
+    height: number;
+  };
+  export type ResizedEvent = CustomEvent<ClientDimensions>;
 </script>
 
 <script lang="ts">

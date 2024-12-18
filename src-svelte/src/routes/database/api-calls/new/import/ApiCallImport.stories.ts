@@ -1,20 +1,14 @@
 import ApiCallImport from "./ApiCallImport.svelte";
-import type { StoryFn, StoryObj } from "@storybook/svelte";
-import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
-import { MockTransitionsDecorator } from "$lib/__mocks__/decorators";
+import type { StoryObj } from "@storybook/svelte";
+import {
+  MockAppLayoutDecorator,
+  MockPageTransitionsDecorator,
+} from "$lib/__mocks__/decorators";
 
 export default {
   component: ApiCallImport,
   title: "Screens/Database/LLM Call/Import",
   argTypes: {},
-  decorators: [
-    (story: StoryFn) => {
-      return {
-        Component: MockFullPageLayout,
-        slot: story,
-      };
-    },
-  ],
 };
 
 const Template = ({ ...args }) => ({
@@ -23,7 +17,9 @@ const Template = ({ ...args }) => ({
 });
 
 export const Static: StoryObj = Template.bind({}) as any;
+Static.decorators = [MockAppLayoutDecorator];
 Static.parameters = {
+  fullHeight: true,
   viewport: {
     defaultViewport: "smallTablet",
   },
@@ -35,4 +31,4 @@ MountTransition.parameters = {
     defaultViewport: "smallTablet",
   },
 };
-MountTransition.decorators = [MockTransitionsDecorator];
+MountTransition.decorators = [MockPageTransitionsDecorator];

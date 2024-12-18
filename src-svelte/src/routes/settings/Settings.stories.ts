@@ -1,6 +1,9 @@
 import SettingsComponent from "./Settings.svelte";
 import type { StoryObj } from "@storybook/svelte";
-import { MockPageTransitionsDecorator } from "$lib/__mocks__/decorators";
+import {
+  MockAppLayoutDecorator,
+  MockPageTransitionsDecorator,
+} from "$lib/__mocks__/decorators";
 
 export default {
   component: SettingsComponent,
@@ -19,6 +22,7 @@ TinyPhoneScreen.parameters = {
     defaultViewport: "tallerSmallMobile",
   },
 };
+TinyPhoneScreen.decorators = [MockAppLayoutDecorator];
 
 export const LargePhoneScreen: StoryObj = Template.bind({}) as any;
 LargePhoneScreen.parameters = {
@@ -26,6 +30,7 @@ LargePhoneScreen.parameters = {
     defaultViewport: "mobile2",
   },
 };
+LargePhoneScreen.decorators = [MockAppLayoutDecorator];
 
 export const Tablet: StoryObj = Template.bind({}) as any;
 Tablet.parameters = {
@@ -33,6 +38,7 @@ Tablet.parameters = {
     defaultViewport: "tablet",
   },
 };
+Tablet.decorators = [MockAppLayoutDecorator];
 
 export const FullPage: StoryObj = Template.bind({}) as any;
 FullPage.decorators = [MockPageTransitionsDecorator];

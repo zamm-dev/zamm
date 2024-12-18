@@ -7,17 +7,20 @@
   import { onMount, type Snippet } from "svelte";
 
   interface Props {
+    customStoreValues?: boolean;
     children: Snippet;
   }
 
-  let { children }: Props = $props();
+  let { customStoreValues = false, children }: Props = $props();
   let ready = $state(false);
 
   onMount(() => {
     firstAppLoad.set(true);
     firstPageLoad.set(true);
-    animationSpeed.set(0.1);
     transparencyOn.set(true);
+    if (!customStoreValues) {
+      animationSpeed.set(0.1);
+    }
 
     setTimeout(() => {
       ready = true;
@@ -41,6 +44,8 @@
 
 <style>
   #mock-transitions {
+    width: 100vw;
+    height: 100vh;
     margin: -1rem;
     overflow: hidden;
   }

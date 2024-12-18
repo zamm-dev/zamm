@@ -1,21 +1,15 @@
 import Slider from "./Slider.svelte";
-import type { StoryFn, StoryObj } from "@storybook/svelte";
+import type { StoryObj } from "@storybook/svelte";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
-import MockAppLayout from "$lib/__mocks__/MockAppLayout.svelte";
+import {
+  MockAppLayoutDecorator,
+  MockPageTransitionsDecorator,
+} from "./__mocks__/decorators";
 
 export default {
   component: Slider,
   title: "Reusable/Slider",
   argTypes: {},
-  decorators: [
-    SvelteStoresDecorator,
-    (story: StoryFn) => {
-      return {
-        Component: MockAppLayout,
-        slot: story,
-      };
-    },
-  ],
 };
 
 const Template = ({ ...args }) => ({
@@ -34,6 +28,7 @@ TinyPhoneScreen.parameters = {
     defaultViewport: "mobile1",
   },
 };
+TinyPhoneScreen.decorators = [SvelteStoresDecorator, MockAppLayoutDecorator];
 
 export const TinyPhoneScreenWithLongLabel: StoryObj = Template.bind({}) as any;
 TinyPhoneScreenWithLongLabel.args = {
@@ -46,6 +41,10 @@ TinyPhoneScreenWithLongLabel.parameters = {
     defaultViewport: "mobile1",
   },
 };
+TinyPhoneScreenWithLongLabel.decorators = [
+  SvelteStoresDecorator,
+  MockAppLayoutDecorator,
+];
 
 export const Tablet: StoryObj = Template.bind({}) as any;
 Tablet.args = {
@@ -58,6 +57,7 @@ Tablet.parameters = {
     defaultViewport: "tablet",
   },
 };
+Tablet.decorators = [SvelteStoresDecorator, MockAppLayoutDecorator];
 
 export const SlowMotion: StoryObj = Template.bind({}) as any;
 SlowMotion.args = {
@@ -73,3 +73,4 @@ SlowMotion.parameters = {
     animationSpeed: 0.1,
   },
 };
+SlowMotion.decorators = [SvelteStoresDecorator, MockPageTransitionsDecorator];

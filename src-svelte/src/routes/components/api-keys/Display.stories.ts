@@ -1,23 +1,17 @@
 import ApiKeysDisplay from "./Display.svelte";
-import type { StoryFn, StoryObj } from "@storybook/svelte";
+import type { StoryObj } from "@storybook/svelte";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
 import SvelteStoresDecorator from "$lib/__mocks__/stores";
-import MockAppLayout from "$lib/__mocks__/MockAppLayout.svelte";
+import {
+  MockAppLayoutDecorator,
+  MockPageTransitionsDecorator,
+} from "$lib/__mocks__/decorators";
 
 export default {
   component: ApiKeysDisplay,
   title: "Screens/Dashboard/API Keys Display",
   argTypes: {},
-  decorators: [
-    SvelteStoresDecorator,
-    TauriInvokeDecorator,
-    (story: StoryFn) => {
-      return {
-        Component: MockAppLayout,
-        slot: story,
-      };
-    },
-  ],
+  decorators: [SvelteStoresDecorator, TauriInvokeDecorator],
 };
 
 const Template = ({ ...args }) => ({
@@ -37,6 +31,7 @@ Loading.parameters = {
     defaultViewport: "mobile2",
   },
 };
+Loading.decorators = [MockAppLayoutDecorator];
 
 export const Unknown: StoryObj = Template.bind({}) as any;
 Unknown.parameters = {
@@ -50,6 +45,7 @@ Unknown.parameters = {
     defaultViewport: "mobile2",
   },
 };
+Unknown.decorators = [MockAppLayoutDecorator];
 
 export const Known: StoryObj = Template.bind({}) as any;
 Known.parameters = {
@@ -58,6 +54,7 @@ Known.parameters = {
     defaultViewport: "mobile2",
   },
 };
+Known.decorators = [MockAppLayoutDecorator];
 
 export const Editing: StoryObj = Template.bind({}) as any;
 Editing.args = {
@@ -69,6 +66,7 @@ Editing.parameters = {
     defaultViewport: "mobile2",
   },
 };
+Editing.decorators = [MockAppLayoutDecorator];
 
 export const EditingPreFilled: StoryObj = Template.bind({}) as any;
 EditingPreFilled.args = {
@@ -85,6 +83,7 @@ EditingPreFilled.parameters = {
     defaultViewport: "mobile2",
   },
 };
+EditingPreFilled.decorators = [MockAppLayoutDecorator];
 
 export const Unset: StoryObj = Template.bind({}) as any;
 Unset.parameters = {
@@ -96,6 +95,24 @@ Unset.parameters = {
     defaultViewport: "mobile2",
   },
 };
+Unset.decorators = [MockAppLayoutDecorator];
+
+export const Fast: StoryObj = Template.bind({}) as any;
+Fast.parameters = {
+  sampleCallFiles: [unknownKeys, writeToFile, knownKeys],
+  stores: {
+    systemInfo: {
+      shell_init_file: ".bashrc",
+    },
+  },
+  preferences: {
+    animationSpeed: 1,
+  },
+  viewport: {
+    defaultViewport: "mobile2",
+  },
+};
+Fast.decorators = [MockPageTransitionsDecorator];
 
 export const SlowMotion: StoryObj = Template.bind({}) as any;
 SlowMotion.parameters = {
@@ -107,3 +124,4 @@ SlowMotion.parameters = {
     defaultViewport: "mobile2",
   },
 };
+SlowMotion.decorators = [MockPageTransitionsDecorator];

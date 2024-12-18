@@ -2,24 +2,37 @@ import type {
   DecoratorFunction,
   PartialStoryFn,
 } from "storybook/internal/types";
-import MockTransitions from "./MockTransitions.svelte";
 import MockPageTransitions from "./MockPageTransitions.svelte";
-import type { SvelteRenderer } from "@storybook/svelte";
+import MockAppLayout from "./MockAppLayout.svelte";
+import type { StoryContext, SvelteRenderer } from "@storybook/svelte";
+import MockFullPageLayout from "./MockFullPageLayout.svelte";
+import MockTransitionUsingStore from "./MockTransitionUsingStore.svelte";
 
-const mockPageTransitionFn = (story: PartialStoryFn) => {
+const mockPageTransitionFn = (
+  story: PartialStoryFn,
+  { parameters }: StoryContext,
+) => {
+  const component =
+    parameters.preferences?.animationSpeed !== undefined
+      ? MockTransitionUsingStore
+      : MockPageTransitions;
   return {
-    Component: MockPageTransitions,
+    Component: component,
     slot: story,
   };
 };
 export const MockPageTransitionsDecorator: DecoratorFunction<SvelteRenderer> =
   mockPageTransitionFn as unknown as DecoratorFunction<SvelteRenderer>;
 
-const mockTransitionFn = (story: PartialStoryFn) => {
+const mockAppLayoutFn = (
+  story: PartialStoryFn,
+  { parameters }: StoryContext,
+) => {
+  const component = parameters.fullHeight ? MockFullPageLayout : MockAppLayout;
   return {
-    Component: MockTransitions,
+    Component: component,
     slot: story,
   };
 };
-export const MockTransitionsDecorator: DecoratorFunction<SvelteRenderer> =
-  mockTransitionFn as unknown as DecoratorFunction<SvelteRenderer>;
+export const MockAppLayoutDecorator: DecoratorFunction<SvelteRenderer> =
+  mockAppLayoutFn as unknown as DecoratorFunction<SvelteRenderer>;

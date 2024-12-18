@@ -27,9 +27,15 @@ export const Static: StoryObj = Template.bind({}) as any;
 Static.args = {
   animated: false,
 };
+
 export const Dynamic: StoryObj = Template.bind({}) as any;
 Dynamic.args = {
   animated: true,
+};
+Dynamic.parameters = {
+  preferences: {
+    animationSpeed: 1,
+  },
 };
 
 export const SlowMotion: StoryObj = Template.bind({}) as any;
