@@ -315,29 +315,32 @@ describe.concurrent("Storybook visual tests", () => {
     context.expect.extend({ toMatchImageSnapshot });
   });
 
+  const getScreenshotElement = async (frame: Frame, selector?: string) => {
+    if (selector) {
+      // override has been specified
+      return frame.locator(selector);
+    }
+
+    const firstChild = frame.locator("#storybook-root > :first-child");
+    if ((await firstChild.getAttribute("id")) === "mock-app-layout") {
+      // we're wrapping the story with the MockAppLayoutDecorator
+      return frame.locator(
+        "#mock-app-layout > #animation-control > :first-child",
+      );
+    }
+
+    return firstChild;
+  };
+
   const takeScreenshot = async (
     frame: Frame,
     page: Page,
     tallWindow: boolean,
     selector?: string,
-    screenshotEntireBody?: boolean,
+    addMargins?: boolean,
   ) => {
-    let locatorStr;
-    if (selector) {
-      locatorStr = selector;
-    } else {
-      locatorStr = screenshotEntireBody
-        ? "body"
-        : "#storybook-root > :first-child";
-      const elementClass = await frame
-        .locator(locatorStr)
-        .getAttribute("class");
-      if (elementClass?.includes("storybook-wrapper")) {
-        locatorStr = ".storybook-wrapper > :first-child > :first-child";
-      }
-    }
-
-    const elementLocator = frame.locator(locatorStr);
+    const screenshotMarginPx = addMargins ? 18 : 0;
+    const elementLocator = await getScreenshotElement(frame, selector);
     await elementLocator.waitFor({ state: "visible" });
 
     if (tallWindow) {
@@ -349,7 +352,9 @@ describe.concurrent("Storybook visual tests", () => {
       const elementHeight = await elementLocator.evaluate(
         (el) => el.clientHeight,
       );
-      const storybookHeight = 60; // height taken up by Storybook elements
+      // height taken up by Storybook elements, plus a little extra to make sure the
+      // screenshot margin is included in the screenshot
+      const storybookHeight = 60 + screenshotMarginPx;
       const effectiveViewportHeight = currentViewport.height - storybookHeight;
       const extraHeightNeeded = elementHeight - effectiveViewportHeight;
 
@@ -361,7 +366,35 @@ describe.concurrent("Storybook visual tests", () => {
       }
     }
 
-    return await elementLocator.screenshot();
+    // https://github.com/microsoft/playwright/issues/28394#issuecomment-2329352801
+    const boundingBox = await elementLocator.boundingBox();
+    if (!boundingBox) {
+      throw new Error(`No bounding box found for element ${selector}`);
+    }
+
+    const documentWidth = await page.evaluate(() => document.body.clientWidth);
+    const documentHeight = await page.evaluate(
+      () => document.body.clientHeight,
+    );
+
+    const scrollX = await page.evaluate(() => window.scrollX);
+    const scrollY = await page.evaluate(() => window.scrollY);
+
+    const x = Math.max(scrollX + boundingBox.x - screenshotMarginPx, 0);
+    const y = Math.max(scrollY + boundingBox.y - screenshotMarginPx, 0);
+    const width = Math.min(
+      boundingBox.width + 2 * screenshotMarginPx,
+      documentWidth - x,
+    );
+    const height = Math.min(
+      boundingBox.height + 2 * screenshotMarginPx,
+      documentHeight - y,
+    );
+
+    return await page.screenshot({
+      clip: { x, y, width, height },
+      fullPage: true,
+    });
   };
 
   const baseMatchOptions: MatchImageSnapshotOptions = {

@@ -65,7 +65,14 @@ export async function killStorybook(process?: ChildProcess) {
 
 export async function getStorybookFrame(page: Page, url: string) {
   await page.goto(url);
-  await page.locator("button[title^='Hide addons ']").dispatchEvent("click");
+  const hideAddonsButton = page.locator("button[title^='Hide addons ']");
+  // first click minimizes it, second click restores it, third click gets rid of it
+  // for good. We no longer have to do the first click because manager.ts minimizes
+  // it by default already
+  for (let i = 0; i < 2; i++) {
+    await hideAddonsButton.dispatchEvent("click");
+    await page.waitForTimeout(100);
+  }
 
   await page.waitForSelector("iframe");
   const maybeFrame = page.frame({ name: "storybook-preview-iframe" });

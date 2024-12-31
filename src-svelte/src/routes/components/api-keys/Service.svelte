@@ -2,6 +2,7 @@
   import Form, { type FormFields } from "./Form.svelte";
   import type { Service } from "$lib/bindings";
   import { systemInfo } from "$lib/system-info";
+  import { onMount } from "svelte";
 
   interface Props {
     name: Service;
@@ -21,10 +22,11 @@
     saveKey: true,
     saveKeyLocation: "",
   });
+  let formInitialized = false;
 
   function toggleEditing() {
     editing = !editing;
-    if (editing) {
+    if (editing && !formInitialized) {
       initializeFormFields();
     }
   }
@@ -34,13 +36,16 @@
   }
 
   function initializeFormFields() {
-    if (formFields.apiKey === "") {
-      formFields.apiKey = apiKey ?? "";
-    }
-    if (formFields.saveKeyLocation === "") {
-      formFields.saveKeyLocation = $systemInfo?.shell_init_file ?? "";
-    }
+    formFields.apiKey = apiKey ?? "";
+    formFields.saveKeyLocation = $systemInfo?.shell_init_file ?? "";
+    formInitialized = true;
   }
+
+  onMount(() => {
+    if (editing) {
+      initializeFormFields();
+    }
+  });
 
   let active = $derived(apiKey !== null);
   let label = $derived(active ? "Active" : "Inactive");

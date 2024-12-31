@@ -2,12 +2,13 @@ import ApiCallComponent from "./ApiCall.svelte";
 import type { StoryObj } from "@storybook/svelte";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
 import { KHMER_CALL, LOTS_OF_CODE_CALL } from "./sample-calls";
+import { MockAppLayoutDecorator } from "$lib/__mocks__/decorators";
 
 export default {
   component: ApiCallComponent,
   title: "Screens/Database/LLM Call",
   argTypes: {},
-  decorators: [TauriInvokeDecorator],
+  decorators: [TauriInvokeDecorator, MockAppLayoutDecorator],
 };
 
 const Template = ({ ...args }) => ({
