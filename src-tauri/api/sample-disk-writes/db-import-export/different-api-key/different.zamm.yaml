@@ -1,4 +1,4 @@
-zamm_version: 0.2.1
+zamm_version: 0.2.2
 api_keys:
 - service: OpenAI
   api_key: 4-d1ff3r3n7-k3y
