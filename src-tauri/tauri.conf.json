@@ -30,7 +30,7 @@
   },
   "productName": "zamm",
   "mainBinaryName": "zamm",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "identifier": "dev.zamm",
   "plugins": {
     "updater": {
