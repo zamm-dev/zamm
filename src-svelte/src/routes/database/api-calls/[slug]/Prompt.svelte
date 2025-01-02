@@ -97,8 +97,7 @@
   }
 
   .message {
-    transition-property: background-color;
-    transition: var(--standard-duration) ease-out;
+    transition: background-color var(--standard-duration) ease-out;
     margin: 0.5rem 0;
     padding: 0.5rem;
     border-radius: var(--corner-roundness);
