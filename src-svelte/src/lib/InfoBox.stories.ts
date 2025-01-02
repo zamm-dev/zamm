@@ -10,6 +10,7 @@ export default {
   component: InfoBox,
   title: "Reusable/InfoBox",
   argTypes: {},
+  decorators: [SvelteStoresDecorator],
 };
 
 const Template = ({ ...args }) => ({
@@ -35,7 +36,7 @@ FullPage.parameters = {
     animationSpeed: 1,
   },
 };
-FullPage.decorators = [SvelteStoresDecorator, MockPageTransitionsDecorator];
+FullPage.decorators = [MockPageTransitionsDecorator];
 
 export const SlowMotion: StoryObj = Template.bind({}) as any;
 SlowMotion.args = {
@@ -48,4 +49,4 @@ SlowMotion.parameters = {
     animationSpeed: 0.1,
   },
 };
-SlowMotion.decorators = [SvelteStoresDecorator, MockPageTransitionsDecorator];
+SlowMotion.decorators = [MockPageTransitionsDecorator];

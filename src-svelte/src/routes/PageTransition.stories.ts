@@ -15,10 +15,16 @@ const Template = ({ ...args }) => ({
 });
 
 export const Default: StoryObj = Template.bind({}) as any;
+Default.parameters = {
+  preferences: {
+    animationsOn: true,
+  },
+};
 
 export const SlowMotion: StoryObj = Template.bind({}) as any;
 SlowMotion.parameters = {
   preferences: {
+    animationsOn: true,
     animationSpeed: 0.1,
   },
 };
@@ -29,11 +35,13 @@ Subpath.args = {
 };
 Subpath.parameters = {
   preferences: {
-    animationSpeed: 0.1,
+    animationsOn: true,
   },
 };
 
 export const Motionless: StoryObj = Template.bind({}) as any;
-Motionless.args = {
-  animated: false,
+Motionless.parameters = {
+  preferences: {
+    animationsOn: false,
+  },
 };

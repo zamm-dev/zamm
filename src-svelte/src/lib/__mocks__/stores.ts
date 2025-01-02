@@ -1,6 +1,7 @@
 import type { StoryFn, Decorator, StoryContext } from "@storybook/svelte";
 import {
   animationsOn,
+  transparencyOn,
   backgroundAnimation,
   animationSpeed,
 } from "$lib/preferences";
@@ -21,6 +22,7 @@ import type { ChatPromptVariant } from "$lib/additionalTypes";
 
 interface Preferences {
   animationsOn?: boolean;
+  transparencyOn?: boolean;
   backgroundAnimation?: boolean;
   animationSpeed?: number;
 }
@@ -59,9 +61,15 @@ const SvelteStoresDecorator: Decorator = (
   firstPageLoad.set(true);
 
   if (preferences?.animationsOn === undefined) {
-    animationsOn.set(true);
+    animationsOn.set(false);
   } else {
     animationsOn.set(preferences.animationsOn);
+  }
+
+  if (preferences?.transparencyOn === undefined) {
+    transparencyOn.set(false);
+  } else {
+    transparencyOn.set(preferences.transparencyOn);
   }
 
   if (preferences?.backgroundAnimation !== undefined) {

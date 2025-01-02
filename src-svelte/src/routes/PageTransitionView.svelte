@@ -7,11 +7,10 @@
   let routeA = $state(true);
   interface Props {
     routeBAddress?: string;
-    animated?: boolean;
     [key: string]: any;
   }
 
-  let { routeBAddress = "/b/", animated = true, ...rest }: Props = $props();
+  let { routeBAddress = "/b/", ...rest }: Props = $props();
 
   function toggleRoute() {
     routeA = !routeA;
@@ -22,7 +21,7 @@
 
 <button class="route-toggle" onclick={toggleRoute}>Toggle route</button>
 
-<MockAppLayout {animated}>
+<MockAppLayout>
   <PageTransition {currentRoute} {...rest}>
     {#if routeA}
       <InfoBox title="Simulation">

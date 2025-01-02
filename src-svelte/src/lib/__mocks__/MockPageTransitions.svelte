@@ -2,8 +2,11 @@
   import MockAppLayout from "./MockAppLayout.svelte";
   import PageTransition from "../../routes/PageTransition.svelte";
   import { firstAppLoad, firstPageLoad } from "$lib/firstPageLoad";
-  import { animationSpeed, transparencyOn } from "$lib/preferences";
-  import Background from "../../routes/Background.svelte";
+  import {
+    animationSpeed,
+    transparencyOn,
+    animationsOn,
+  } from "$lib/preferences";
   import { onMount, type Snippet } from "svelte";
 
   interface Props {
@@ -17,6 +20,7 @@
   onMount(() => {
     firstAppLoad.set(true);
     firstPageLoad.set(true);
+    animationsOn.set(true);
     transparencyOn.set(true);
     if (!customStoreValues) {
       animationSpeed.set(0.1);
@@ -29,11 +33,7 @@
 </script>
 
 <div id="mock-transitions">
-  <MockAppLayout animated fullHeight>
-    <div class="bg">
-      <Background />
-    </div>
-
+  <MockAppLayout fullHeight>
     {#if ready}
       <PageTransition currentRoute="/storybook-demo">
         {@render children?.()}
@@ -48,14 +48,5 @@
     height: 100vh;
     margin: -1rem;
     overflow: hidden;
-  }
-
-  .bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
   }
 </style>
