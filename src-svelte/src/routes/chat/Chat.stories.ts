@@ -121,6 +121,9 @@ TypingIndicator.args = {
   expectingResponse: true,
 };
 TypingIndicator.parameters = {
+  preferences: {
+    animationsOn: true,
+  },
   stores: {
     chat: {
       conversation: shortConversation,

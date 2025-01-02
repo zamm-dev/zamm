@@ -20,6 +20,7 @@ Dynamic.args = {
 };
 Dynamic.parameters = {
   preferences: {
+    animationsOn: true,
     backgroundAnimation: true,
   },
 };
@@ -30,6 +31,7 @@ Static.args = {
 };
 Static.parameters = {
   preferences: {
+    animationsOn: true,
     backgroundAnimation: false,
   },
 };

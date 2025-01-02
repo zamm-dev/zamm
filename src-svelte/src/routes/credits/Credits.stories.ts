@@ -4,11 +4,13 @@ import {
   MockAppLayoutDecorator,
   MockPageTransitionsDecorator,
 } from "$lib/__mocks__/decorators";
+import SvelteStoresDecorator from "$lib/__mocks__/stores";
 
 export default {
   component: CreditsComponent,
   title: "Screens/Credits",
   argTypes: {},
+  decorators: [SvelteStoresDecorator],
 };
 
 const Template = ({ ...args }) => ({

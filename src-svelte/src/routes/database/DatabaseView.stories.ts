@@ -1,21 +1,21 @@
 import DatabaseView from "./DatabaseView.svelte";
-import MockFullPageLayout from "$lib/__mocks__/MockFullPageLayout.svelte";
-import type { StoryFn, StoryObj } from "@storybook/svelte";
+import type { StoryObj } from "@storybook/svelte";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
+import SvelteStoresDecorator from "$lib/__mocks__/stores";
+import { MockAppLayoutDecorator } from "$lib/__mocks__/decorators";
 
 export default {
   component: DatabaseView,
   title: "Screens/Database/List",
   argTypes: {},
   decorators: [
+    SvelteStoresDecorator,
     TauriInvokeDecorator,
-    (story: StoryFn) => {
-      return {
-        Component: MockFullPageLayout,
-        slot: story,
-      };
-    },
+    MockAppLayoutDecorator,
   ],
+  parameters: {
+    fullHeight: true,
+  },
 };
 
 const Template = ({ ...args }) => ({

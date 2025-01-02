@@ -34,6 +34,7 @@ Dynamic.args = {
 };
 Dynamic.parameters = {
   preferences: {
+    animationsOn: true,
     animationSpeed: 1,
   },
 };
@@ -44,6 +45,7 @@ SlowMotion.args = {
 };
 SlowMotion.parameters = {
   preferences: {
+    animationsOn: true,
     animationSpeed: 0.1,
   },
 };

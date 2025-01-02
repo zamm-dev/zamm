@@ -33,7 +33,7 @@
 </script>
 
 <div id="mock-transitions">
-  <MockAppLayout fullHeight>
+  <MockAppLayout fullHeight showBackground>
     {#if ready}
       <PageTransition currentRoute="/storybook-demo">
         {@render children?.()}

@@ -1,12 +1,14 @@
 import UnloadedApiCall from "./UnloadedApiCall.svelte";
 import type { StoryObj } from "@storybook/svelte";
 import TauriInvokeDecorator from "$lib/__mocks__/invoke";
+import SvelteStoresDecorator from "$lib/__mocks__/stores";
+import { MockPageTransitionsDecorator } from "$lib/__mocks__/decorators";
 
 export default {
   component: UnloadedApiCall,
   title: "Screens/Database/LLM Call",
   argTypes: {},
-  decorators: [TauriInvokeDecorator],
+  decorators: [TauriInvokeDecorator, SvelteStoresDecorator],
 };
 
 const Template = ({ ...args }) => ({
@@ -50,3 +52,17 @@ UnknownProviderPrompt.parameters = {
     "/api/sample-calls/get_api_call-unknown-provider-prompt.yaml",
   ],
 };
+
+export const FullPage: StoryObj = Template.bind({}) as any;
+FullPage.args = {
+  id: "c13c1e67-2de3-48de-a34c-a32079c03316",
+  showActions: true,
+  dateTimeLocale: "en-GB",
+  timeZone: "Asia/Phnom_Penh",
+};
+FullPage.parameters = {
+  sampleCallFiles: [
+    "/api/sample-calls/get_api_call-continue-conversation.yaml",
+  ],
+};
+FullPage.decorators = [MockPageTransitionsDecorator];
