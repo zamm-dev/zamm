@@ -41,6 +41,7 @@ interface VariantConfig {
   assertDynamic?: boolean;
   narrowWindow?: boolean;
   tallWindow?: boolean;
+  extraTimeout?: number;
   additionalAction?: (frame: Frame, page: Page) => Promise<void>;
 }
 
@@ -336,6 +337,7 @@ describe.concurrent("Storybook visual tests", () => {
     page: Page,
     tallWindow: boolean,
     selector?: string,
+    extraTimeout?: number,
     addMargins?: boolean,
   ) => {
     const screenshotMarginPx = addMargins ? 18 : 0;
@@ -363,6 +365,10 @@ describe.concurrent("Storybook visual tests", () => {
           height: currentViewport.height + extraHeightNeeded,
         });
       }
+    }
+
+    if (extraTimeout) {
+      await page.waitForTimeout(extraTimeout);
     }
 
     // https://github.com/microsoft/playwright/issues/28394#issuecomment-2329352801
@@ -487,6 +493,7 @@ describe.concurrent("Storybook visual tests", () => {
             page,
             variantConfig.tallWindow ?? false,
             variantConfig.selector,
+            variantConfig.extraTimeout,
             config.screenshotEntireBody,
           );
 
@@ -529,6 +536,7 @@ describe.concurrent("Storybook visual tests", () => {
               page,
               variantConfig.tallWindow ?? false,
               variantConfig.selector,
+              variantConfig.extraTimeout,
               config.screenshotEntireBody,
             );
 
