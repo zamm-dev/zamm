@@ -45,6 +45,16 @@ interface VariantConfig {
   additionalAction?: (frame: Frame, page: Page) => Promise<void>;
 }
 
+const waitForSidebarHeight = async (frame: Frame) => {
+  await frame.waitForFunction(() => {
+    // note: we can't seem to make use of local variables outside of the
+    // function, possibly because it's executed in the browser
+    const header = document.querySelector("header");
+    const headerDimensions = header?.getBoundingClientRect();
+    return headerDimensions?.height && headerDimensions.height > 300;
+  });
+};
+
 const components: ComponentTestConfig[] = [
   {
     path: ["reusable", "switch"],
@@ -118,7 +128,20 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["layout", "sidebar"],
-    variants: ["dashboard-selected", "settings-selected", "credits-selected"],
+    variants: [
+      {
+        name: "dashboard-selected",
+        additionalAction: waitForSidebarHeight,
+      },
+      {
+        name: "settings-selected",
+        additionalAction: waitForSidebarHeight,
+      },
+      {
+        name: "credits-selected",
+        additionalAction: waitForSidebarHeight,
+      },
+    ],
   },
   {
     path: ["layout", "snackbar", "message"],
