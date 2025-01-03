@@ -124,7 +124,12 @@ const components: ComponentTestConfig[] = [
   },
   {
     path: ["layout", "app"],
-    variants: ["static"],
+    variants: [
+      {
+        name: "static",
+        additionalAction: waitForSidebarHeight,
+      },
+    ],
   },
   {
     path: ["layout", "sidebar"],
